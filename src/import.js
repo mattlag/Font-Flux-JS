@@ -10,6 +10,7 @@ import { parseHmtx } from './otf/table_hmtx.js';
 import { parseMaxp } from './otf/table_maxp.js';
 import { parseName } from './otf/table_name.js';
 import { parseOS2 } from './otf/table_OS-2.js';
+import { parsePost } from './otf/table_post.js';
 import { DataReader } from './reader.js';
 
 /**
@@ -26,6 +27,7 @@ const tableParsers = {
 	maxp: parseMaxp,
 	name: parseName,
 	'OS/2': parseOS2,
+	post: parsePost,
 };
 
 /**

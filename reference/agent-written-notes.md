@@ -97,6 +97,7 @@ src/
     table_maxp.js   — parseMaxp(), writeMaxp() — v0.5 (6 bytes) or v1.0 (32 bytes)
     table_name.js   — parseName(), writeName() — variable-size, string encoding/decoding
     table_OS-2.js   — parseOS2(), writeOS2() — version-dependent (v0–v5, 68–100 bytes)
+    table_post.js   — parsePost(), writePost() — version-dependent (v1/v2/v2.5/v3, 32+ bytes)
 
 test/
   roundtrip.test.js       — import→export→reimport for OTF and TTF (oblegg.otf, oblegg.ttf)
@@ -112,6 +113,7 @@ test/
     table_maxp.test.js     — maxp parsing, v0.5/v1.0 variants, round-trip, size check
     table_name.test.js     — name parsing, field validation, round-trip, synthetic v0/v1/MacRoman
     table_OS-2.test.js     — OS/2 parsing, version-dependent fields, round-trip, synthetic v0/v4
+    table_post.test.js     — post parsing, version checking, round-trip, synthetic v1/v2/v3
 ```
 
 ## Completed Work
@@ -183,6 +185,18 @@ test/
 - **No cross-table deps**: Parser uses standard `(rawBytes)` signature
 - Tests: 10 in table_OS-2.test.js
 
+### post Table (`src/otf/table_post.js`)
+
+- **Version-dependent layout**: v1.0 and v3.0 are header-only (32 bytes); v2.0 adds glyph name data; v2.5 (deprecated) uses offset array
+- **Version stored as raw uint32**: 0x00010000 (1.0), 0x00020000 (2.0), 0x00025000 (2.5), 0x00030000 (3.0)
+- **258 standard Macintosh glyph names**: Built-in array + reverse lookup map. v1.0 uses these implicitly; v2.0 references them by index (0–257)
+- **Version 2.0 custom names**: Stored as Pascal strings (length byte + ASCII chars). Writer deduplicates custom name strings.
+- **Version 2.0 glyphNameIndex**: If index < 258, use standard Mac name. If ≥ 258, subtract 258 to index into custom Pascal strings.
+- **CFF v1 fonts**: Must use version 3.0 (no glyph names). OTF fonts (OTTO) are typically v3.0.
+- **italicAngle**: Fixed 16.16 signed fixed-point. Negative = leans right (forward).
+- **No cross-table deps**: Parser uses standard `(rawBytes)` signature
+- Tests: 12 in table_post.test.js
+
 ### Cross-Table Dependency System
 
 - `extractTableData()` in import.js now processes tables in a **dependency-safe order** defined by `tableParseOrder`
@@ -200,15 +214,14 @@ test/
 
 ## Pending Work (from agent-context.md project plan)
 
-Next tables for OTF, in order: **post**
+All planned OTF tables are now complete: **cmap**, **head**, **hhea**, **maxp**, **hmtx**, **name**, **OS/2**, **post**.
 
-Each follows the same workflow:
+Possible future work:
 
-1. Read the spec for the table
-2. Create `src/otf/table_<name>.js` with parse + write functions
-3. Register in `tableParsers` (import.js) and `tableWriters` (export.js)
-4. Create `test/otf/table_<name>.test.js`
-5. Verify all tests still pass (round-trip tests are the safety net)
+- Additional tables (loca, glyf, CFF, GPOS, GSUB, etc.)
+- WOFF/WOFF2 container support
+- Full JSON serialization (BigInt replacer/reviver)
+- export.js refactor to use DataWriter for header/directory
 
 ### Important Notes for Future Tables
 
@@ -224,7 +237,7 @@ Each follows the same workflow:
 - **Round-trip tests** (`test/roundtrip.test.js`) are the primary correctness check: import → export → reimport must produce identical JSON
 - **Table-specific tests** validate parsing details (field values, structure)
 - Primary test fonts: `oblegg.otf` (CFF-based, sfVersion=OTTO) and `oblegg.ttf` (TrueType outlines, sfVersion=0x00010000)
-- Currently 66 tests total, all passing
+- Currently 78 tests total, all passing
 
 ## Gotchas & Lessons Learned
 
@@ -236,3 +249,5 @@ Each follows the same workflow:
 6. **BigInt in JSON**: LONGDATETIME fields (head.created, head.modified) are BigInt. Standard `JSON.stringify` cannot serialize BigInt — if full JSON serialization is needed later, a replacer/reviver will be required.
 7. **Cross-table parse order matters**: hmtx depends on hhea and maxp being parsed first. The `tableParseOrder` array in import.js ensures this. When adding new tables with dependencies, add them AFTER their dependencies in this array.
 8. **maxp version detection**: Use `version === 0x00010000` (not `=== 1.0`) since it's stored as a raw uint32, not a Fixed 16.16.
+9. **post version detection**: Same pattern as maxp — `version === 0x00020000` etc. The version is Version16Dot16 (raw uint32), not a floating-point value.
+10. **post v2.0 custom name parsing**: Must count Pascal strings by scanning forward from the glyphNameIndex array, using the maximum index value to know how many to read. Don't assume the string count equals numGlyphs.
