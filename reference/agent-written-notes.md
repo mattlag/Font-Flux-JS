@@ -96,6 +96,7 @@ src/
     table_hmtx.js   — parseHmtx(), writeHmtx() — variable-size, cross-table deps
     table_maxp.js   — parseMaxp(), writeMaxp() — v0.5 (6 bytes) or v1.0 (32 bytes)
     table_name.js   — parseName(), writeName() — variable-size, string encoding/decoding
+    table_OS-2.js   — parseOS2(), writeOS2() — version-dependent (v0–v5, 68–100 bytes)
 
 test/
   roundtrip.test.js       — import→export→reimport for OTF and TTF (oblegg.otf, oblegg.ttf)
@@ -110,6 +111,7 @@ test/
     table_hmtx.test.js     — hmtx parsing, cross-table validation, round-trip
     table_maxp.test.js     — maxp parsing, v0.5/v1.0 variants, round-trip, size check
     table_name.test.js     — name parsing, field validation, round-trip, synthetic v0/v1/MacRoman
+    table_OS-2.test.js     — OS/2 parsing, version-dependent fields, round-trip, synthetic v0/v4
 ```
 
 ## Completed Work
@@ -170,6 +172,17 @@ test/
 - **No cross-table deps**: Parser uses standard `(rawBytes)` signature
 - Tests: 10 in table_name.test.js
 
+### OS/2 Table (`src/otf/table_OS-2.js`)
+
+- **Version-dependent size**: v0 (78 bytes), v1 (86 bytes), v2/v3/v4 (96 bytes), v5 (100 bytes)
+- **Six versions (0–5)**: Each version adds fields. v2/v3/v4 share the same binary layout; v3 and v4 only revise spec text.
+- **Legacy v0 handling**: Some legacy v0 tables may be shorter than 78 bytes (stopping at usLastCharIndex, 68 bytes). Parser checks raw byte length before reading typo/win fields.
+- **panose**: 10-byte `uint8` array, read/written with `reader.bytes(10)` / `writer.rawBytes()`
+- **achVendID**: 4-byte Tag field (4 ASCII chars)
+- **Filename vs registry key**: File is `table_OS-2.js` (no `/` in filenames), but registry key in import.js/export.js must be `'OS/2'` (matching the binary table tag)
+- **No cross-table deps**: Parser uses standard `(rawBytes)` signature
+- Tests: 10 in table_OS-2.test.js
+
 ### Cross-Table Dependency System
 
 - `extractTableData()` in import.js now processes tables in a **dependency-safe order** defined by `tableParseOrder`
@@ -187,7 +200,7 @@ test/
 
 ## Pending Work (from agent-context.md project plan)
 
-Next tables for OTF, in order: **OS-2**, **post**
+Next tables for OTF, in order: **post**
 
 Each follows the same workflow:
 
@@ -199,7 +212,7 @@ Each follows the same workflow:
 
 ### Important Notes for Future Tables
 
-- **OS/2 table**: Referred to as "OS-2" in filenames (`table_OS-2.js`) but the actual table tag in the font binary is `OS/2` — the registry key must be `'OS/2'`
+- **OS/2 table**: DONE. Referred to as "OS-2" in filenames (`table_OS-2.js`) but the actual table tag in the font binary is `OS/2` — the registry key must be `'OS/2'`
 - **Table name case**: Always honor the original case from the spec (e.g., `cmap` lowercase, `OS/2` mixed)
 - **head table**: Contains `checkSumAdjustment` field (global font checksum); during write, this may need special handling
 - **hmtx table**: DONE. Uses cross-table deps (hhea.numberOfHMetrics, maxp.numGlyphs). Parser receives `tables` as second argument.
@@ -211,7 +224,7 @@ Each follows the same workflow:
 - **Round-trip tests** (`test/roundtrip.test.js`) are the primary correctness check: import → export → reimport must produce identical JSON
 - **Table-specific tests** validate parsing details (field values, structure)
 - Primary test fonts: `oblegg.otf` (CFF-based, sfVersion=OTTO) and `oblegg.ttf` (TrueType outlines, sfVersion=0x00010000)
-- Currently 56 tests total, all passing
+- Currently 66 tests total, all passing
 
 ## Gotchas & Lessons Learned
 
