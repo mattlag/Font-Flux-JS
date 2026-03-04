@@ -53,17 +53,44 @@ This folder will be for reference materials, project notes, and possibly spec fi
 
 Here is the order in which we will build this library.
 
-We will start with OTF fonts, importing and exporting general file header data, then moving on to tables in this order:
-'cmap', 'head', 'hhea', 'hmtx', 'maxp', 'name', 'OS-2', 'post'
-
-When support for a table is being written, the flow will work like this (using 'OS/2' as an example shared table):
+We will start with OTF fonts, importing and exporting general file header data, then moving on to tables. When support for a table is being written, the flow will work like this (using 'OS/2' as an example shared table):
 
 1. read the online spec to understand that table and how it is constructed.
 2. create a file in `src\sfnt` (for shared tables) or `src\ttf`/`src\otf` (for format-specific tables) called `table_OS-2.js`, which will contain both the logic that will read binary data and convert it to JSON, as well as take well-formatted JSON data and convert it back into binary for that table.
 3. add any updates to `src\main.js` or any other JS files in src that may need to handle this new table.
 4. create a file in `test\sfnt` (or `test\ttf`/`test\otf`) called `table_OS-2.test.js` for any table specific tests.
 
-# Roadmap — Complete Table Checklist
+# Short term strategy
+
+This section will be updated based on what phase of support we are working on.
+
+Unparsed tables (sorted by frequency)
+Tag Fonts Category
+GDEF 6 Advanced Typographic
+GSUB 6 Advanced Typographic
+gasp 6 TTF Hinting
+GPOS 5 Advanced Typographic
+prep 4 TTF Hinting
+SVG 3 Color Font
+FFTM 3 Non-standard (FontForge timestamp)
+cvt 3 TTF Hinting
+fpgm 3 TTF Hinting
+vhea 2 Vertical Metrics
+vmtx 2 Vertical Metrics
+COLR 1 Color Font
+CPAL 1 Color Font
+DSIG 1 Other Shared
+ltag 1 Apple-specific
+
+Recommended implementation priority
+
+- [x] GDEF, GPOS, GSUB (Advanced Typography) — present in most fonts, essential for proper text shaping
+- [x] gasp, prep, fpgm, cvt (TTF Hinting) — present in most TTF fonts; cvt/fpgm/prep are just raw instruction/value arrays, very simple to implement
+- [ ] vhea, vmtx (Vertical Metrics) — structurally identical to hhea/hmtx, easy win
+- [ ] SVG, COLR, CPAL (Color Fonts) — needed for color/emoji font support
+- [ ] DSIG, FFTM, ltag — low priority (DSIG is deprecated, FFTM is non-standard, ltag is Apple-only)
+
+# Overall Roadmap — Complete Table Checklist
 
 Every table defined in the OpenType specification, categorized by where it lives
 in this project. Checked items are implemented and tested. Unchecked items are
@@ -142,10 +169,10 @@ Tables that are identical for both TrueType- and CFF-based fonts.
 
 ### Hinting Tables (optional)
 
-- [ ] cvt — Control Value Table
-- [ ] fpgm — Font program
-- [ ] prep — Control Value Program
-- [ ] gasp — Grid-fitting/Scan-conversion
+- [x] cvt — Control Value Table
+- [x] fpgm — Font program
+- [x] prep — Control Value Program
+- [x] gasp — Grid-fitting/Scan-conversion
 
 ### TrueType Variation Tables
 

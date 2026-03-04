@@ -16,8 +16,12 @@ import { writeMaxp } from './sfnt/table_maxp.js';
 import { writeName } from './sfnt/table_name.js';
 import { writeOS2 } from './sfnt/table_OS-2.js';
 import { writePost } from './sfnt/table_post.js';
+import { writeCvt } from './ttf/table_cvt.js';
+import { writeFpgm } from './ttf/table_fpgm.js';
+import { writeGasp } from './ttf/table_gasp.js';
 import { writeGlyf, writeGlyfComputeOffsets } from './ttf/table_glyf.js';
 import { writeLoca } from './ttf/table_loca.js';
+import { writePrep } from './ttf/table_prep.js';
 
 /**
  * Registry of table writers.
@@ -40,6 +44,10 @@ const tableWriters = {
 	GDEF: writeGDEF,
 	GPOS: writeGPOS,
 	GSUB: writeGSUB,
+	'cvt ': writeCvt,
+	fpgm: writeFpgm,
+	prep: writePrep,
+	gasp: writeGasp,
 };
 
 /** Size of the font file header (Offset Table) in bytes. */

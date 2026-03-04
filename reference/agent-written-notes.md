@@ -96,6 +96,10 @@ src/
   ttf/
     table_loca.js   — parseLoca(), writeLoca() — glyph offset index (cross-table: head, maxp)
     table_glyf.js   — parseGlyf(), writeGlyf(), writeGlyfComputeOffsets() — TrueType outlines (cross-table: loca, maxp)
+    table_cvt.js    — parseCvt(), writeCvt() — Control Value Table (FWORD array)
+    table_fpgm.js   — parseFpgm(), writeFpgm() — Font Program (uint8 instruction array)
+    table_prep.js   — parsePrep(), writePrep() — Control Value Program (uint8 instruction array)
+    table_gasp.js   — parseGasp(), writeGasp() — Grid-fitting/Scan-conversion (version + GaspRange records)
   sfnt/
     opentype_layout_common.js — shared parse/write utilities for OpenType Layout tables (GDEF/GPOS/GSUB)
     table_cmap.js   — parseCmap(), writeCmap() — fully refactored to use DataReader/DataWriter
@@ -120,6 +124,10 @@ test/
     table_CFF2.test.js     — CFF2 INDEX v2, synthetic round-trip (10 tests)
   ttf/
     table_loca.test.js     — loca parsing, writing, round-trip (9 tests)
+    table_cvt.test.js      — cvt parsing, round-trip, synthetic FWORD values (8 tests)
+    table_fpgm.test.js     — fpgm parsing, round-trip, uint8 validation (9 tests)
+    table_prep.test.js     — prep parsing, round-trip, uint8 validation (9 tests)
+    table_gasp.test.js     — gasp parsing, v0/v1, round-trip, multi-range synthetic (8 tests)
     table_glyf.test.js     — glyf parsing, simple/composite glyphs, writing, round-trip (14 tests)
   sfnt/
     sfnt.test.js               — header parsing, table directory, required tables
@@ -265,6 +273,40 @@ test/
 - **glyf ↔ loca export coordination**: `coordinateTableWrites()` in export.js pre-computes glyf bytes, derives loca offsets, and optionally updates head.indexToLocFormat. No mutation of input data.
 - Tests: 14 in table_glyf.test.js
 
+### cvt Table (`src/ttf/table_cvt.js`)
+
+- **Trivial structure**: Just an array of FWORD (int16) values. Count = table byte length / 2.
+- **No header**: The entire table is the flat int16 array.
+- **JSON shape**: `{ values: number[] }` — each value is a signed 16-bit integer (-32768..32767)
+- **No cross-table deps**: Parser uses standard `(rawBytes)` signature
+- **Tag has trailing space**: Binary tag is `'cvt '` (4 chars with trailing space), registry key must be `'cvt '`
+- Tests: 8 in table_cvt.test.js
+
+### fpgm Table (`src/ttf/table_fpgm.js`)
+
+- **Trivial structure**: Just an array of uint8 TrueType instructions. Count = table byte length.
+- **JSON shape**: `{ instructions: number[] }` — each value is 0..255
+- **Purpose**: Contains FDEFs/IDEFs (function and instruction definitions), run once when font first used
+- **No DataReader/DataWriter needed**: Direct byte copy via `Array.from()`
+- Tests: 9 in table_fpgm.test.js
+
+### prep Table (`src/ttf/table_prep.js`)
+
+- **Trivial structure**: Just an array of uint8 TrueType instructions. Count = table byte length.
+- **JSON shape**: `{ instructions: number[] }` — identical structure to fpgm
+- **Purpose**: Control Value Program — runs whenever point size, font, or transformation changes
+- **No DataReader/DataWriter needed**: Direct byte copy via `Array.from()`
+- Tests: 9 in table_prep.test.js
+
+### gasp Table (`src/ttf/table_gasp.js`)
+
+- **Two versions**: v0 and v1 (same binary format, v1 adds two ClearType-specific behavior flags)
+- **Structure**: Header (uint16 version, uint16 numRanges) + array of GaspRange records (uint16 rangeMaxPPEM, uint16 rangeGaspBehavior)
+- **JSON shape**: `{ version: number, gaspRanges: Array<{ rangeMaxPPEM: number, rangeGaspBehavior: number }> }`
+- **Behavior flags**: 0x0001 GASP_GRIDFIT, 0x0002 GASP_DOGRAY, 0x0004 GASP_SYMMETRIC_GRIDFIT (v1), 0x0008 GASP_SYMMETRIC_SMOOTHING (v1)
+- **Sentinel**: Last range should use rangeMaxPPEM = 0xFFFF to cover all remaining sizes
+- Tests: 8 in table_gasp.test.js
+
 ### OpenType Layout Common Module (`src/sfnt/opentype_layout_common.js`)
 
 - **Shared by GDEF, GPOS, GSUB** — ~1473 lines of shared parse/write utilities
@@ -350,10 +392,11 @@ All planned shared SFNT tables are now complete: **cmap**, **head**, **hhea**, *
 OTF CFF-specific tables complete: **CFF** (v1), **CFF2**.
 TTF outline tables complete: **loca**, **glyf**.
 Advanced Typographic tables complete: **GDEF**, **GPOS**, **GSUB** (with shared OpenType Layout common module).
+TTF Hinting tables complete: **cvt**, **fpgm**, **prep**, **gasp**.
 
 Possible future work:
 
-- Additional tables (kern, MATH, BASE, JSTF, COLR, CPAL, optional TTF hinting tables, etc.)
+- Additional tables (kern, MATH, BASE, JSTF, COLR, CPAL, vhea, vmtx, etc.)
 
 - WOFF/WOFF2 container support
 - Full JSON serialization (BigInt replacer/reviver)
@@ -373,7 +416,7 @@ Possible future work:
 - **Round-trip tests** (`test/roundtrip.test.js`) are the primary correctness check: import → export → reimport must produce identical JSON
 - **Table-specific tests** validate parsing details (field values, structure)
 - Primary test fonts: `oblegg.otf` (CFF-based, sfVersion=OTTO) and `oblegg.ttf` (TrueType outlines, sfVersion=0x00010000)
-- Currently 160 tests total, all passing
+- Currently 194 tests total, all passing
 
 ## Gotchas & Lessons Learned
 
@@ -403,3 +446,6 @@ Possible future work:
 24. **GPOS ValueRecord variable size**: A GPOS ValueRecord's byte count depends on the `valueFormat` bitfield (up to 8 fields × 2 bytes). The parser reads only the fields indicated by set bits. `valueFormatSize(vf)` uses bit-counting (popcount) to compute byte size without branching.
 25. **GDEF ItemVariationStore as raw bytes**: Stored as `itemVarStoreRaw` (byte array) rather than a fully parsed structure. This is consistent with CFF2's treatment of VariationStore. Full parsing can be added later.
 26. **OpenType Layout write pattern**: All layout writers use bottom-up serialization. Example: to write a ScriptList, first serialize each LangSys → then each Script (with offsets to LangSys) → then the ScriptList header (with offsets to Scripts). Child sizes must be known before parent offsets can be computed.
+27. **cvt tag has trailing space**: The binary tag is `'cvt '` (4 bytes, with trailing space). The registry key in import.js/export.js must be `'cvt '`. Same pattern as `'CFF '`.
+28. **fpgm and prep are identical in structure**: Both are just `{ instructions: uint8[] }`. They differ only in when the rasterizer executes them (fpgm: once at font load; prep: on every size/transform change).
+29. **gasp is technically not TTF-only**: The spec says gasp can appear in any font, but in practice it only occurs in TTF fonts (TrueType outlines). We place it in `src/ttf/` since it's part of the TTF hinting ecosystem.

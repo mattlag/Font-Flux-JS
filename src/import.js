@@ -17,8 +17,12 @@ import { parseMaxp } from './sfnt/table_maxp.js';
 import { parseName } from './sfnt/table_name.js';
 import { parseOS2 } from './sfnt/table_OS-2.js';
 import { parsePost } from './sfnt/table_post.js';
+import { parseCvt } from './ttf/table_cvt.js';
+import { parseFpgm } from './ttf/table_fpgm.js';
+import { parseGasp } from './ttf/table_gasp.js';
 import { parseGlyf } from './ttf/table_glyf.js';
 import { parseLoca } from './ttf/table_loca.js';
+import { parsePrep } from './ttf/table_prep.js';
 
 /**
  * Registry of table parsers.
@@ -42,6 +46,10 @@ const tableParsers = {
 	GDEF: parseGDEF,
 	GPOS: parseGPOS,
 	GSUB: parseGSUB,
+	'cvt ': parseCvt,
+	fpgm: parseFpgm,
+	prep: parsePrep,
+	gasp: parseGasp,
 };
 
 /**
