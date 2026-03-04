@@ -4,6 +4,7 @@
  */
 
 import { writeCmap } from './otf/table_cmap.js';
+import { writeHead } from './otf/table_head.js';
 
 /**
  * Registry of table writers.
@@ -12,6 +13,7 @@ import { writeCmap } from './otf/table_cmap.js';
  */
 const tableWriters = {
 	cmap: writeCmap,
+	head: writeHead,
 };
 
 /** Size of the font file header (Offset Table) in bytes. */

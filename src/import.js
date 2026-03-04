@@ -4,6 +4,7 @@
  */
 
 import { parseCmap } from './otf/table_cmap.js';
+import { parseHead } from './otf/table_head.js';
 import { DataReader } from './reader.js';
 
 /**
@@ -13,6 +14,7 @@ import { DataReader } from './reader.js';
  */
 const tableParsers = {
 	cmap: parseCmap,
+	head: parseHead,
 };
 
 /**

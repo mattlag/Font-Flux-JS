@@ -91,6 +91,7 @@ src/
   writer.js         — DataWriter class
   otf/
     table_cmap.js   — parseCmap(), writeCmap() — fully refactored to use DataReader/DataWriter
+    table_head.js   — parseHead(), writeHead() — fixed-size 54-byte table
 
 test/
   roundtrip.test.js       — import→export→reimport for OTF and TTF (oblegg.otf, oblegg.ttf)
@@ -100,6 +101,7 @@ test/
   otf/
     otf.test.js            — header parsing, table directory, required tables
     table_cmap.test.js     — cmap parsing, round-trip, format 4 specifics
+    table_head.test.js     — head parsing, field validation, round-trip, size check
 ```
 
 ## Completed Work
@@ -118,6 +120,14 @@ test/
 - **Format 14 complexity**: Has nested sub-structures (DefaultUVS, NonDefaultUVS) at offsets relative to the format 14 subtable start. Uses reader.seek/save pattern for random-access parsing.
 - Tests: 7 in table_cmap.test.js
 
+### head Table (`src/otf/table_head.js`)
+
+- **Fixed-size**: Always 54 bytes, no variable-length data
+- **LONGDATETIME fields**: `created` and `modified` are BigInt values (seconds since 1904-01-01). Vitest `toEqual` handles BigInt comparison correctly.
+- **fontRevision**: Stored as Fixed (16.16 signed fixed-point) — uses `reader.fixed()` / `writer.fixed()`
+- **checksumAdjustment**: Global font checksum adjustment — we preserve the original value on round-trip (no recalculation)
+- Tests: 9 in table_head.test.js
+
 ### DataReader / DataWriter Refactor
 
 - `import.js` fully uses DataReader
@@ -126,7 +136,7 @@ test/
 
 ## Pending Work (from agent-context.md project plan)
 
-Next tables for OTF, in order: **head**, **hhea**, **hmtx**, **maxp**, **name**, **OS-2**, **post**
+Next tables for OTF, in order: **hhea**, **hmtx**, **maxp**, **name**, **OS-2**, **post**
 
 Each follows the same workflow:
 
@@ -150,7 +160,7 @@ Each follows the same workflow:
 - **Round-trip tests** (`test/roundtrip.test.js`) are the primary correctness check: import → export → reimport must produce identical JSON
 - **Table-specific tests** validate parsing details (field values, structure)
 - Primary test fonts: `oblegg.otf` (CFF-based, sfVersion=OTTO) and `oblegg.ttf` (TrueType outlines, sfVersion=0x00010000)
-- Currently 15 tests total, all passing
+- Currently 24 tests total, all passing
 
 ## Gotchas & Lessons Learned
 
@@ -159,3 +169,4 @@ Each follows the same workflow:
 3. **Format 14 offsets**: DefaultUVS/NonDefaultUVS offsets are relative to the START of the format 14 subtable, not the start of the cmap table. In parsing, these offsets are added to `subtableOffset`.
 4. **DataWriter.rawBytes()**: Accepts both `number[]` and `Uint8Array`. This is used when embedding serialized sub-structures (e.g., format 14 UVS data blocks).
 5. **4-byte table padding**: export.js pads each table's data to 4-byte boundaries (padding bytes are zero). The `paddedLength` calculation: `length + ((4 - (length % 4)) % 4)`.
+6. **BigInt in JSON**: LONGDATETIME fields (head.created, head.modified) are BigInt. Standard `JSON.stringify` cannot serialize BigInt — if full JSON serialization is needed later, a replacer/reviver will be required.
