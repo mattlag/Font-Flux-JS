@@ -14,6 +14,8 @@ import { parseMaxp } from './sfnt/table_maxp.js';
 import { parseName } from './sfnt/table_name.js';
 import { parseOS2 } from './sfnt/table_OS-2.js';
 import { parsePost } from './sfnt/table_post.js';
+import { parseGlyf } from './ttf/table_glyf.js';
+import { parseLoca } from './ttf/table_loca.js';
 
 /**
  * Registry of table parsers.
@@ -32,6 +34,8 @@ const tableParsers = {
 	post: parsePost,
 	'CFF ': parseCFF,
 	CFF2: parseCFF2,
+	loca: parseLoca,
+	glyf: parseGlyf,
 };
 
 /**
@@ -50,6 +54,8 @@ const tableParseOrder = [
 	'post',
 	'CFF ',
 	'CFF2',
+	'loca',
+	'glyf',
 ];
 
 /**
@@ -172,6 +178,14 @@ function extractTableData(buffer, tableDirectory) {
 				_checksum: entry.checksum,
 			};
 		}
+	}
+
+	// loca offsets are a binary-layout artifact — they describe byte positions
+	// inside a specific glyf encoding and are fully derived from glyf during
+	// export.  Keeping them in JSON would break round-trip equality whenever
+	// the glyf writer produces a more compact (or differently packed) binary.
+	if (tables.loca && tables.glyf && !tables.glyf._raw) {
+		delete tables.loca.offsets;
 	}
 
 	return tables;

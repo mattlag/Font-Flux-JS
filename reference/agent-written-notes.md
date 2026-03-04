@@ -93,7 +93,9 @@ src/
     cff_common.js   — shared CFF/CFF2 utilities: DICT, INDEX, number encoding, charset, FDSelect
     table_CFF.js    — parseCFF(), writeCFF() — CFF v1 parser/writer
     table_CFF2.js   — parseCFF2(), writeCFF2() — CFF2 parser/writer
-  ttf/               — future: TrueType-specific table parsers (glyf, loca)
+  ttf/
+    table_loca.js   — parseLoca(), writeLoca() — glyph offset index (cross-table: head, maxp)
+    table_glyf.js   — parseGlyf(), writeGlyf(), writeGlyfComputeOffsets() — TrueType outlines (cross-table: loca, maxp)
   sfnt/
     table_cmap.js   — parseCmap(), writeCmap() — fully refactored to use DataReader/DataWriter
     table_head.js   — parseHead(), writeHead() — fixed-size 54-byte table
@@ -112,7 +114,9 @@ test/
   otf/
     table_CFF.test.js      — CFF v1 parsing, common utilities, round-trip (23 tests)
     table_CFF2.test.js     — CFF2 INDEX v2, synthetic round-trip (10 tests)
-  ttf/                         — future: TrueType-specific tests
+  ttf/
+    table_loca.test.js     — loca parsing, writing, round-trip (9 tests)
+    table_glyf.test.js     — glyf parsing, simple/composite glyphs, writing, round-trip (14 tests)
   sfnt/
     sfnt.test.js               — header parsing, table directory, required tables
     table_cmap.test.js     — cmap parsing, round-trip, format 4 specifics
@@ -228,14 +232,41 @@ test/
 - **Same offset strategy as CFF1**: Forced int32 for offset operators
 - Tests: 10 in table_CFF2.test.js (INDEX v2 round-trip, synthetic CFF2 table write/parse/round-trip, charstrings/globalsubrs/privatedict/localsubrs preservation)
 
+### loca Table (`src/ttf/table_loca.js`)
+
+- **Binary index table**: Maps glyph IDs to byte positions inside the glyf table. Purely a binary-layout artifact — offsets depend on the specific glyf encoding.
+- **Two formats**: Short (head.indexToLocFormat=0): uint16 values × 2 = actual offset; Long (head.indexToLocFormat=1): uint32 actual offsets. Always numGlyphs+1 entries.
+- **Cross-table deps (parse)**: `head.indexToLocFormat` (format selector), `maxp.numGlyphs` (entry count)
+- **JSON representation**: loca.offsets are **stripped from the JSON output** by import.js after glyf parsing. They are a binary-layout artifact that changes whenever glyf is re-encoded. During export, offsets are recomputed from glyf bytes via `writeGlyfComputeOffsets()`.
+- **writeLoca auto-detects format**: Chooses short format if all offsets are even and ≤ 0xFFFE×2; otherwise long.
+- Tests: 9 in table_loca.test.js
+
+### glyf Table (`src/ttf/table_glyf.js`)
+
+- **TrueType outlines**: Contains glyph descriptions. Each glyph is either simple (Bézier control points) or composite (references to other glyphs).
+- **Cross-table deps (parse)**: `loca.offsets` (byte positions), `maxp.numGlyphs` (glyph count)
+- **Simple glyph JSON shape**: `{ type: 'simple', xMin, yMin, xMax, yMax, contours: [[{x, y, onCurve},...]], instructions: number[], overlapSimple: boolean }`
+  - Coordinates stored as **absolute values** (converted from delta encoding during parse, converted back during write)
+  - Flag packing with REPEAT_FLAG compression, coordinate short/same optimization
+- **Composite glyph JSON shape**: `{ type: 'composite', xMin, yMin, xMax, yMax, components: [{glyphIndex, flags: {argsAreXYValues, ...}, argument1, argument2, transform?: {...}}], instructions: number[] }`
+  - Flags stored as human-readable object (e.g., `{argsAreXYValues: true, useMyMetrics: true}`)
+  - `rebuildComponentFlags()` reconstructs the binary uint16 from the flag object
+  - Transform variants: single scale, x+y scale, or full 2×2 matrix
+- **Empty glyphs**: null in the glyphs array (space characters, etc.)
+- **writeGlyfComputeOffsets(glyf)**: Returns `{ bytes, offsets }` — bytes for glyf table, offsets for loca coordination
+- **2-byte alignment**: Each glyph is padded to even byte boundary (required for loca short format)
+- **glyf ↔ loca export coordination**: `coordinateTableWrites()` in export.js pre-computes glyf bytes, derives loca offsets, and optionally updates head.indexToLocFormat. No mutation of input data.
+- Tests: 14 in table_glyf.test.js
+
 ### Cross-Table Dependency System
 
 - `extractTableData()` in import.js now processes tables in a **dependency-safe order** defined by `tableParseOrder`
-- `tableParseOrder = ['head', 'maxp', 'hhea', 'cmap', 'hmtx', 'name', 'OS/2', 'post']`
+- `tableParseOrder = ['head', 'maxp', 'hhea', 'cmap', 'hmtx', 'name', 'OS/2', 'post', 'CFF ', 'CFF2', 'loca', 'glyf']`
 - Tables in the order list are parsed first, remaining tables after
 - Each parser receives `(rawBytes, tables)` — the `tables` object contains all previously-parsed tables
 - Existing parsers (cmap, head, hhea) simply ignore the second argument
 - Writers do NOT need cross-table deps — they only serialize their own data
+- **Exception**: glyf ↔ loca coordination. Writing glyf may change glyph byte positions, so loca offsets must be recomputed. `coordinateTableWrites()` in export.js handles this: writes glyf first (via `writeGlyfComputeOffsets`), rebuilds loca from new offsets, and updates head.indexToLocFormat if needed. Pre-computed bytes are cached and used directly by the export loop.
 
 ### DataReader / DataWriter Refactor
 
@@ -247,10 +278,14 @@ test/
 
 All planned shared SFNT tables are now complete: **cmap**, **head**, **hhea**, **maxp**, **hmtx**, **name**, **OS/2**, **post**.
 OTF CFF-specific tables complete: **CFF** (v1), **CFF2**.
+TTF outline tables complete: **loca**, **glyf**.
 
 Possible future work:
 
 - Additional tables (loca, glyf, CFF, GPOS, GSUB, etc.)
+
+* Additional tables (GPOS, GSUB, kern, optional TTF hinting tables, etc.)
+
 - WOFF/WOFF2 container support
 - Full JSON serialization (BigInt replacer/reviver)
 - export.js refactor to use DataWriter for header/directory
@@ -269,7 +304,7 @@ Possible future work:
 - **Round-trip tests** (`test/roundtrip.test.js`) are the primary correctness check: import → export → reimport must produce identical JSON
 - **Table-specific tests** validate parsing details (field values, structure)
 - Primary test fonts: `oblegg.otf` (CFF-based, sfVersion=OTTO) and `oblegg.ttf` (TrueType outlines, sfVersion=0x00010000)
-- Currently 111 tests total, all passing
+- Currently 134 tests total, all passing
 
 ## Gotchas & Lessons Learned
 
@@ -288,3 +323,7 @@ Possible future work:
 13. **CFF Private DICT Subrs offset is relative**: The Subrs offset in Private DICT is relative to the start of the Private DICT, not to the start of the CFF data. Local Subr INDEX must be positioned accordingly.
 14. **CFF INDEX v1 vs v2**: CFF v1 INDEX uses uint16 count (empty = 2 bytes). CFF2 INDEX uses uint32 count (empty = 4 bytes). Offsets are 1-based in both.
 15. **CFF does not use DataReader/DataWriter**: CFF has its own number encoding scheme that doesn't map to OpenType's standard data types. The CFF parser works directly on byte arrays using the utilities in `cff_common.js`.
+16. **loca offsets stripped from JSON**: `import.js` deletes `tables.loca.offsets` after glyf parsing. loca offsets are binary-layout artifacts that change when glyf is re-encoded (e.g., more compact flag packing). During export, `coordinateTableWrites()` regenerates them from `writeGlyfComputeOffsets()`.
+17. **glyf ↔ loca export coordination**: `export.js` has a `coordinateTableWrites()` function that pre-computes glyf bytes and derived loca bytes before the main write loop. It uses a `Map<tag, number[]>` of pre-computed bytes, checked first in the table processing loop. Does NOT mutate input data.
+18. **glyf flag packing may differ from original**: Our writer uses optimal REPEAT_FLAG compression and short/same coordinate encoding. Original fonts may not be optimally packed, so the re-encoded glyf may be slightly smaller. This is why loca offsets can't be preserved as-is.
+19. **Composite glyph argument sizing**: Writer re-evaluates `ARG_1_AND_2_ARE_WORDS` based on actual argument values via `needsWordArgs()`. If the original font used word-size args unnecessarily, the writer may switch to byte-size, changing the binary layout.

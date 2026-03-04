@@ -13,6 +13,8 @@ import { writeMaxp } from './sfnt/table_maxp.js';
 import { writeName } from './sfnt/table_name.js';
 import { writeOS2 } from './sfnt/table_OS-2.js';
 import { writePost } from './sfnt/table_post.js';
+import { writeGlyf, writeGlyfComputeOffsets } from './ttf/table_glyf.js';
+import { writeLoca } from './ttf/table_loca.js';
 
 /**
  * Registry of table writers.
@@ -30,6 +32,8 @@ const tableWriters = {
 	post: writePost,
 	'CFF ': writeCFF,
 	CFF2: writeCFF2,
+	loca: writeLoca,
+	glyf: writeGlyf,
 };
 
 /** Size of the font file header (Offset Table) in bytes. */
@@ -52,12 +56,23 @@ export function exportFont(fontData) {
 	const tableNames = Object.keys(tables);
 	const numTables = tableNames.length;
 
+	// --- Coordinate cross-table write dependencies ---------------------------
+	// glyf ↔ loca: writing glyf may produce a different binary layout than the
+	// original, so loca offsets must be recomputed from the new glyf bytes.
+	// Additionally, head.indexToLocFormat must match the loca format actually
+	// used.  We pre-compute these tables here so the main loop can use cached
+	// bytes instead of the (now-stale) parsed data.
+	const precomputed = coordinateTableWrites(tables);
+
 	// --- Build per-table byte arrays and compute padded sizes ----------------
 	const tableEntries = tableNames.map((tag) => {
 		const tableData = tables[tag];
 		let rawArray;
 
-		if (tableData._raw) {
+		if (precomputed.has(tag)) {
+			// Use pre-computed bytes from cross-table coordination
+			rawArray = precomputed.get(tag);
+		} else if (tableData._raw) {
 			// Unparsed table — use stored bytes directly
 			rawArray = tableData._raw;
 		} else {
@@ -123,4 +138,52 @@ export function exportFont(fontData) {
 	}
 
 	return buffer;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Cross-table write coordination
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Pre-compute tables that have cross-table write dependencies.
+ *
+ * Currently handles:
+ *   glyf ↔ loca — loca offsets must reflect the actual byte positions of
+ *                  glyphs inside the written glyf data.
+ *   head.indexToLocFormat — must agree with the loca format actually emitted.
+ *
+ * Returns a Map<tag, number[]> of pre-computed table bytes.  Tables in this
+ * map are used verbatim by the main export loop (skipping the normal writer).
+ *
+ * This function does NOT mutate anything on the input `tables` object.
+ */
+function coordinateTableWrites(tables) {
+	const precomputed = new Map();
+
+	const hasGlyf = tables.glyf && !tables.glyf._raw;
+	const hasLoca = tables.loca && !tables.loca._raw;
+
+	if (hasGlyf && hasLoca) {
+		// Write glyf and capture the new per-glyph offsets
+		const { bytes: glyfBytes, offsets } = writeGlyfComputeOffsets(tables.glyf);
+		precomputed.set('glyf', glyfBytes);
+
+		// Build loca from the freshly-computed offsets
+		precomputed.set('loca', writeLoca({ offsets }));
+
+		// If the loca format changed, head.indexToLocFormat must match
+		if (tables.head && !tables.head._raw) {
+			const canUseShort = offsets.every((o) => o % 2 === 0 && o / 2 <= 0xffff);
+			const newFormat = canUseShort ? 0 : 1;
+
+			if (tables.head.indexToLocFormat !== newFormat) {
+				precomputed.set(
+					'head',
+					writeHead({ ...tables.head, indexToLocFormat: newFormat }),
+				);
+			}
+		}
+	}
+
+	return precomputed;
 }
