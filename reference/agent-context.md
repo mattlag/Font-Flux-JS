@@ -32,7 +32,7 @@ This will be where all main code is written. It should be organized in a way tha
 There are three child folders:
 
 - `src/sfnt/` — shared tables that are identical for both OTF and TTF (e.g. cmap, head, hhea, hmtx, maxp, name, OS/2, post, and shared optional tables like kern, GPOS, GSUB). Files follow the naming convention `table_XYZ.js`.
-- `src/otf/` — CFF/CFF2-specific table parsers (future: CFF outline data).
+- `src/otf/` — CFF/CFF2-specific table parsers (CFF v1 and CFF2 implemented).
 - `src/ttf/` — TrueType-specific table parsers (future: glyf, loca outline data).
 
 One special note is the "OS/2" table, this should be referred to in code and file names as "OS-2". Font tables have mixed uppercase / lowercase, and table name case should always be honored.
@@ -156,8 +156,8 @@ Tables that are identical for both TrueType- and CFF-based fonts.
 
 ### Outline Tables (one required for CFF-based fonts)
 
-- [ ] CFF — Compact Font Format 1.0
-- [ ] CFF2 — Compact Font Format 2.0
+- [x] CFF — Compact Font Format 1.0
+- [x] CFF2 — Compact Font Format 2.0
 
 ### Optional
 

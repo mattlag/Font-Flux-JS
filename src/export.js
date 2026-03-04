@@ -3,6 +3,8 @@
  * Takes a JSON font object and converts it back to binary font data.
  */
 
+import { writeCFF } from './otf/table_CFF.js';
+import { writeCFF2 } from './otf/table_CFF2.js';
 import { writeCmap } from './sfnt/table_cmap.js';
 import { writeHead } from './sfnt/table_head.js';
 import { writeHhea } from './sfnt/table_hhea.js';
@@ -26,6 +28,8 @@ const tableWriters = {
 	name: writeName,
 	'OS/2': writeOS2,
 	post: writePost,
+	'CFF ': writeCFF,
+	CFF2: writeCFF2,
 };
 
 /** Size of the font file header (Offset Table) in bytes. */

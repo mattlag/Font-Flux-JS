@@ -3,6 +3,8 @@
  * Reads binary font data and converts it to a JSON representation.
  */
 
+import { parseCFF } from './otf/table_CFF.js';
+import { parseCFF2 } from './otf/table_CFF2.js';
 import { DataReader } from './reader.js';
 import { parseCmap } from './sfnt/table_cmap.js';
 import { parseHead } from './sfnt/table_head.js';
@@ -28,6 +30,8 @@ const tableParsers = {
 	name: parseName,
 	'OS/2': parseOS2,
 	post: parsePost,
+	'CFF ': parseCFF,
+	CFF2: parseCFF2,
 };
 
 /**
@@ -44,6 +48,8 @@ const tableParseOrder = [
 	'name',
 	'OS/2',
 	'post',
+	'CFF ',
+	'CFF2',
 ];
 
 /**

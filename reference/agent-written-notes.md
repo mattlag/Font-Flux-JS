@@ -89,7 +89,10 @@ src/
   export.js         — exportFont(), tableWriters registry (NOTE: not yet refactored to use DataWriter)
   reader.js         — DataReader class
   writer.js         — DataWriter class
-  otf/               — future: CFF/CFF2-specific table parsers
+  otf/
+    cff_common.js   — shared CFF/CFF2 utilities: DICT, INDEX, number encoding, charset, FDSelect
+    table_CFF.js    — parseCFF(), writeCFF() — CFF v1 parser/writer
+    table_CFF2.js   — parseCFF2(), writeCFF2() — CFF2 parser/writer
   ttf/               — future: TrueType-specific table parsers (glyf, loca)
   sfnt/
     table_cmap.js   — parseCmap(), writeCmap() — fully refactored to use DataReader/DataWriter
@@ -106,7 +109,9 @@ test/
   sample fonts/            — binary font files for testing
     oblegg.otf, oblegg.ttf — primary test fonts (small, simple)
     (others: BungeeTint, EmojiOneColor, fira, mtextra, noto, Multicoloure, Reinebow, oblegg.woff/woff2)
-  otf/                         — future: CFF-specific tests
+  otf/
+    table_CFF.test.js      — CFF v1 parsing, common utilities, round-trip (23 tests)
+    table_CFF2.test.js     — CFF2 INDEX v2, synthetic round-trip (10 tests)
   ttf/                         — future: TrueType-specific tests
   sfnt/
     sfnt.test.js               — header parsing, table directory, required tables
@@ -201,6 +206,28 @@ test/
 - **No cross-table deps**: Parser uses standard `(rawBytes)` signature
 - Tests: 12 in table_post.test.js
 
+### CFF Table (`src/otf/table_CFF.js` + `src/otf/cff_common.js`)
+
+- **Full CFF v1 parse/write**: Header, Name INDEX, Top DICT INDEX, String INDEX, Global Subr INDEX, per-font data
+- **Shared utilities** (`cff_common.js`): Encoded number decode/encode (1-5 byte integers, BCD reals), DICT decode/encode, INDEX v1/v2 parse/write, charset parse/write, encoding parse, FDSelect parse/write, operator name mappings
+- **Top DICT**: All CFF1 operators mapped to human-readable names; offset-based entries (CharStrings, charset, Encoding, Private) are resolved and removed from topDict, stored as separate font fields
+- **Private DICT**: All CFF1 Private DICT operators; Subrs offset resolved, localSubrs stored separately
+- **CIDFont support**: FDArray INDEX parsing (each with its own Private DICT + Local Subrs), FDSelect
+- **CharStrings/Subroutines**: Stored as raw byte arrays (no charstring operator decoding)
+- **Writer offset strategy**: Uses forced 5-byte int32 encoding for all offset-bearing DICT operators, making Top DICT size deterministic and avoiding multi-pass offset resolution
+- **Data layout** (write order): Header → Name INDEX → Top DICT INDEX → String INDEX → Global Subr INDEX → CharStrings INDEX → Charset → Encoding → Private DICT → Local Subrs → FDSelect → FDArray
+- Tests: 23 in table_CFF.test.js (number encoding, INDEX round-trip, DICT round-trip, real-font parsing from oblegg.otf, CFF write/round-trip)
+
+### CFF2 Table (`src/otf/table_CFF2.js`)
+
+- **Full CFF2 parse/write**: 5-byte header (topDictLength field), inline Top DICT (not INDEX), Global Subr INDEX (v2), CharStrings INDEX (v2)
+- **Key differences from CFF1**: No Name/String INDEX, no Encoding, INDEX uses uint32 count, Top DICT has only 5 operators
+- **Font DICT INDEX**: Each Font DICT has Private entry → Private DICT → optional Local Subrs
+- **VariationStore**: Stored as raw bytes (full ItemVariationStore parsing deferred)
+- **FDSelect**: Formats 0, 3, and 4 (CFF2-specific uint32 format)
+- **Same offset strategy as CFF1**: Forced int32 for offset operators
+- Tests: 10 in table_CFF2.test.js (INDEX v2 round-trip, synthetic CFF2 table write/parse/round-trip, charstrings/globalsubrs/privatedict/localsubrs preservation)
+
 ### Cross-Table Dependency System
 
 - `extractTableData()` in import.js now processes tables in a **dependency-safe order** defined by `tableParseOrder`
@@ -218,7 +245,8 @@ test/
 
 ## Pending Work (from agent-context.md project plan)
 
-All planned OTF tables are now complete: **cmap**, **head**, **hhea**, **maxp**, **hmtx**, **name**, **OS/2**, **post**.
+All planned shared SFNT tables are now complete: **cmap**, **head**, **hhea**, **maxp**, **hmtx**, **name**, **OS/2**, **post**.
+OTF CFF-specific tables complete: **CFF** (v1), **CFF2**.
 
 Possible future work:
 
@@ -241,7 +269,7 @@ Possible future work:
 - **Round-trip tests** (`test/roundtrip.test.js`) are the primary correctness check: import → export → reimport must produce identical JSON
 - **Table-specific tests** validate parsing details (field values, structure)
 - Primary test fonts: `oblegg.otf` (CFF-based, sfVersion=OTTO) and `oblegg.ttf` (TrueType outlines, sfVersion=0x00010000)
-- Currently 78 tests total, all passing
+- Currently 111 tests total, all passing
 
 ## Gotchas & Lessons Learned
 
@@ -255,3 +283,8 @@ Possible future work:
 8. **maxp version detection**: Use `version === 0x00010000` (not `=== 1.0`) since it's stored as a raw uint32, not a Fixed 16.16.
 9. **post version detection**: Same pattern as maxp — `version === 0x00020000` etc. The version is Version16Dot16 (raw uint32), not a floating-point value.
 10. **post v2.0 custom name parsing**: Must count Pascal strings by scanning forward from the glyphNameIndex array, using the maximum index value to know how many to read. Don't assume the string count equals numGlyphs.
+11. **CFF table tag has trailing space**: The binary tag is `'CFF '` (4 bytes, with trailing space). The registry key in import.js/export.js must be `'CFF '`. CFF2 tag is `'CFF2'` (no space).
+12. **CFF DICT offset encoding**: Writers use forced 5-byte int32 encoding for all offset-bearing operators (charset, Encoding, CharStrings, Private, FDArray, FDSelect, Subrs). This makes Top DICT byte size deterministic and avoids needing multi-pass offset resolution.
+13. **CFF Private DICT Subrs offset is relative**: The Subrs offset in Private DICT is relative to the start of the Private DICT, not to the start of the CFF data. Local Subr INDEX must be positioned accordingly.
+14. **CFF INDEX v1 vs v2**: CFF v1 INDEX uses uint16 count (empty = 2 bytes). CFF2 INDEX uses uint32 count (empty = 4 bytes). Offsets are 1-based in both.
+15. **CFF does not use DataReader/DataWriter**: CFF has its own number encoding scheme that doesn't map to OpenType's standard data types. The CFF parser works directly on byte arrays using the utilities in `cff_common.js`.
