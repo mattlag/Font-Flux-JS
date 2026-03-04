@@ -86,7 +86,7 @@ Recommended implementation priority
 
 - [x] GDEF, GPOS, GSUB (Advanced Typography) — present in most fonts, essential for proper text shaping
 - [x] gasp, prep, fpgm, cvt (TTF Hinting) — present in most TTF fonts; cvt/fpgm/prep are just raw instruction/value arrays, very simple to implement
-- [ ] vhea, vmtx (Vertical Metrics) — structurally identical to hhea/hmtx, easy win
+- [x] vhea, vmtx (Vertical Metrics) — structurally identical to hhea/hmtx, easy win
 - [ ] SVG, COLR, CPAL (Color Fonts) — needed for color/emoji font support
 - [ ] DSIG, FFTM, ltag — low priority (DSIG is deprecated, FFTM is non-standard, ltag is Apple-only)
 
@@ -122,8 +122,8 @@ Tables that are identical for both TrueType- and CFF-based fonts.
 
 ### Vertical Metrics
 
-- [ ] vhea — Vertical metrics header
-- [ ] vmtx — Vertical metrics
+- [x] vhea — Vertical metrics header
+- [x] vmtx — Vertical metrics
 
 ### Other Shared Tables
 

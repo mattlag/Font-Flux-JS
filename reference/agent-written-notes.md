@@ -113,6 +113,8 @@ src/
     table_name.js   — parseName(), writeName() — variable-size, string encoding/decoding
     table_OS-2.js   — parseOS2(), writeOS2() — version-dependent (v0–v5, 68–100 bytes)
     table_post.js   — parsePost(), writePost() — version-dependent (v1/v2/v2.5/v3, 32+ bytes)
+    table_vhea.js   — parseVhea(), writeVhea() — Vertical header (36 bytes, v1.0/1.1)
+    table_vmtx.js   — parseVmtx(), writeVmtx() — Vertical metrics (cross-table: vhea, maxp)
 
 test/
   roundtrip.test.js       — import→export→reimport for OTF and TTF (oblegg.otf, oblegg.ttf)
@@ -142,6 +144,8 @@ test/
     table_name.test.js     — name parsing, field validation, round-trip, synthetic v0/v1/MacRoman
     table_OS-2.test.js     — OS/2 parsing, version-dependent fields, round-trip, synthetic v0/v4
     table_post.test.js     — post parsing, version checking, round-trip, synthetic v1/v2/v3
+    table_vhea.test.js     — vhea parsing, v1.0/v1.1, round-trip, size check (8 tests)
+    table_vmtx.test.js     — vmtx parsing, cross-table validation, round-trip (7 tests)
 ```
 
 ## Completed Work
@@ -307,6 +311,25 @@ test/
 - **Sentinel**: Last range should use rangeMaxPPEM = 0xFFFF to cover all remaining sizes
 - Tests: 8 in table_gasp.test.js
 
+### vhea Table (`src/sfnt/table_vhea.js`)
+
+- **Fixed-size**: Always 36 bytes — structurally identical to hhea but for vertical metrics
+- **Two spec versions**: v1.0 (0x00010000) and v1.1 (0x00011000) — same binary layout, field names differ (v1.0: ascent/descent/lineGap → v1.1: vertTypoAscender/vertTypoDescender/vertTypoLineGap)
+- **Version stored as raw uint32**: Unlike hhea which stores majorVersion/minorVersion as two uint16s, vhea uses Version16Dot16 (single uint32)
+- **JSON field names**: Uses v1.1 names (vertTypoAscender, vertTypoDescender, vertTypoLineGap) regardless of version
+- **Key field**: `numOfLongVerMetrics` — used by vmtx to determine how many full LongVerMetric records exist
+- **No cross-table deps**: Parser uses standard `(rawBytes)` signature
+- Tests: 8 in table_vhea.test.js
+
+### vmtx Table (`src/sfnt/table_vmtx.js`)
+
+- **Variable-size**: vMetrics array (4 bytes each) + topSideBearings array (2 bytes each) — mirrors hmtx exactly
+- **Cross-table dependencies**: Requires `vhea.numOfLongVerMetrics` and `maxp.numGlyphs` (passed via `tables` argument)
+- **JSON shape**: `{ vMetrics: [{advanceHeight, topSideBearing}], topSideBearings: number[] }`
+- **topSideBearings**: Additional tsb values for glyphs beyond numOfLongVerMetrics; count = numGlyphs - numOfLongVerMetrics (often 0 for CJK fonts where all glyphs have unique heights)
+- **Parse order**: Added to `tableParseOrder` in import.js — vhea before vmtx, both after glyf
+- Tests: 7 in table_vmtx.test.js
+
 ### OpenType Layout Common Module (`src/sfnt/opentype_layout_common.js`)
 
 - **Shared by GDEF, GPOS, GSUB** — ~1473 lines of shared parse/write utilities
@@ -393,10 +416,11 @@ OTF CFF-specific tables complete: **CFF** (v1), **CFF2**.
 TTF outline tables complete: **loca**, **glyf**.
 Advanced Typographic tables complete: **GDEF**, **GPOS**, **GSUB** (with shared OpenType Layout common module).
 TTF Hinting tables complete: **cvt**, **fpgm**, **prep**, **gasp**.
+Vertical Metrics tables complete: **vhea**, **vmtx**.
 
 Possible future work:
 
-- Additional tables (kern, MATH, BASE, JSTF, COLR, CPAL, vhea, vmtx, etc.)
+- Additional tables (kern, MATH, BASE, JSTF, COLR, CPAL, SVG, etc.)
 
 - WOFF/WOFF2 container support
 - Full JSON serialization (BigInt replacer/reviver)
@@ -416,7 +440,7 @@ Possible future work:
 - **Round-trip tests** (`test/roundtrip.test.js`) are the primary correctness check: import → export → reimport must produce identical JSON
 - **Table-specific tests** validate parsing details (field values, structure)
 - Primary test fonts: `oblegg.otf` (CFF-based, sfVersion=OTTO) and `oblegg.ttf` (TrueType outlines, sfVersion=0x00010000)
-- Currently 194 tests total, all passing
+- Currently 209 tests total, all passing
 
 ## Gotchas & Lessons Learned
 
@@ -449,3 +473,5 @@ Possible future work:
 27. **cvt tag has trailing space**: The binary tag is `'cvt '` (4 bytes, with trailing space). The registry key in import.js/export.js must be `'cvt '`. Same pattern as `'CFF '`.
 28. **fpgm and prep are identical in structure**: Both are just `{ instructions: uint8[] }`. They differ only in when the rasterizer executes them (fpgm: once at font load; prep: on every size/transform change).
 29. **gasp is technically not TTF-only**: The spec says gasp can appear in any font, but in practice it only occurs in TTF fonts (TrueType outlines). We place it in `src/ttf/` since it's part of the TTF hinting ecosystem.
+30. **vhea version field differs from hhea**: hhea stores version as two separate uint16 fields (`majorVersion`, `minorVersion`), but vhea uses a single Version16Dot16 uint32 field. v1.0 = `0x00010000`, v1.1 = `0x00011000`.
+31. **vmtx mirrors hmtx exactly**: Same structure — array of {advanceHeight, topSideBearing} records followed by extra topSideBearing array. Uses `vhea.numOfLongVerMetrics` instead of `hhea.numberOfHMetrics`. Both live in `src/sfnt/` (shared tables).

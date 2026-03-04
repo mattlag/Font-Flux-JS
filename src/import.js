@@ -17,6 +17,8 @@ import { parseMaxp } from './sfnt/table_maxp.js';
 import { parseName } from './sfnt/table_name.js';
 import { parseOS2 } from './sfnt/table_OS-2.js';
 import { parsePost } from './sfnt/table_post.js';
+import { parseVhea } from './sfnt/table_vhea.js';
+import { parseVmtx } from './sfnt/table_vmtx.js';
 import { parseCvt } from './ttf/table_cvt.js';
 import { parseFpgm } from './ttf/table_fpgm.js';
 import { parseGasp } from './ttf/table_gasp.js';
@@ -50,6 +52,8 @@ const tableParsers = {
 	fpgm: parseFpgm,
 	prep: parsePrep,
 	gasp: parseGasp,
+	vhea: parseVhea,
+	vmtx: parseVmtx,
 };
 
 /**
@@ -70,6 +74,8 @@ const tableParseOrder = [
 	'CFF2',
 	'loca',
 	'glyf',
+	'vhea',
+	'vmtx',
 ];
 
 /**

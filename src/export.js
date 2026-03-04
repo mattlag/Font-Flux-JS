@@ -16,6 +16,8 @@ import { writeMaxp } from './sfnt/table_maxp.js';
 import { writeName } from './sfnt/table_name.js';
 import { writeOS2 } from './sfnt/table_OS-2.js';
 import { writePost } from './sfnt/table_post.js';
+import { writeVhea } from './sfnt/table_vhea.js';
+import { writeVmtx } from './sfnt/table_vmtx.js';
 import { writeCvt } from './ttf/table_cvt.js';
 import { writeFpgm } from './ttf/table_fpgm.js';
 import { writeGasp } from './ttf/table_gasp.js';
@@ -48,6 +50,8 @@ const tableWriters = {
 	fpgm: writeFpgm,
 	prep: writePrep,
 	gasp: writeGasp,
+	vhea: writeVhea,
+	vmtx: writeVmtx,
 };
 
 /** Size of the font file header (Offset Table) in bytes. */
