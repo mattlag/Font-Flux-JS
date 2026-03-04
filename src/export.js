@@ -6,6 +6,8 @@
 import { writeCmap } from './otf/table_cmap.js';
 import { writeHead } from './otf/table_head.js';
 import { writeHhea } from './otf/table_hhea.js';
+import { writeHmtx } from './otf/table_hmtx.js';
+import { writeMaxp } from './otf/table_maxp.js';
 
 /**
  * Registry of table writers.
@@ -16,6 +18,8 @@ const tableWriters = {
 	cmap: writeCmap,
 	head: writeHead,
 	hhea: writeHhea,
+	hmtx: writeHmtx,
+	maxp: writeMaxp,
 };
 
 /** Size of the font file header (Offset Table) in bytes. */

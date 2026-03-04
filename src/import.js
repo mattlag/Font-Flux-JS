@@ -6,18 +6,39 @@
 import { parseCmap } from './otf/table_cmap.js';
 import { parseHead } from './otf/table_head.js';
 import { parseHhea } from './otf/table_hhea.js';
+import { parseHmtx } from './otf/table_hmtx.js';
+import { parseMaxp } from './otf/table_maxp.js';
 import { DataReader } from './reader.js';
 
 /**
  * Registry of table parsers.
- * Each key is a table tag; the value is a function (number[]) → object.
+ * Each key is a table tag; the value is a function (number[], tables?) → object.
  * Tables not listed here are stored as raw bytes.
+ * Parsers may accept a second argument: the tables object (for cross-table deps).
  */
 const tableParsers = {
 	cmap: parseCmap,
 	head: parseHead,
 	hhea: parseHhea,
+	hmtx: parseHmtx,
+	maxp: parseMaxp,
 };
+
+/**
+ * Parse order — tables are parsed in this order so that cross-table
+ * dependencies are satisfied (e.g. hmtx needs hhea.numberOfHMetrics).
+ * Tables not in this list are parsed after those that are.
+ */
+const tableParseOrder = [
+	'head',
+	'maxp',
+	'hhea',
+	'cmap',
+	'hmtx',
+	'name',
+	'OS/2',
+	'post',
+];
 
 /**
  * Import a font from binary data (ArrayBuffer) and return a JSON-friendly object.
@@ -96,12 +117,14 @@ function readTableDirectory(reader, numTables) {
 /**
  * Extract raw table data for every entry in the table directory.
  *
+ * Tables are processed in a dependency-safe order defined by tableParseOrder.
  * Each table is stored as an object keyed by its tag name.  The value contains:
- *   - _raw:      Array of byte values (the table's actual data)
+ *   - _raw:      Array of byte values (for unparsed tables)
  *   - _checksum: The checksum recorded in the table directory
  *
- * As individual table parsers are added (e.g. for 'cmap', 'head', etc.) the
- * _raw bytes will be replaced with structured, human-readable JSON data.
+ * Parsed tables receive structured, human-readable JSON data instead of _raw.
+ * Parsers may receive the already-parsed tables object as a second argument
+ * so they can reference values from other tables (cross-table dependencies).
  *
  * @param {ArrayBuffer} buffer
  * @param {Array}       tableDirectory
@@ -110,18 +133,29 @@ function readTableDirectory(reader, numTables) {
 function extractTableData(buffer, tableDirectory) {
 	const tables = {};
 
-	for (const entry of tableDirectory) {
+	// Build a lookup from tag → directory entry
+	const entryByTag = new Map(tableDirectory.map((e) => [e.tag, e]));
+
+	// Sort tags: ordered tags first (in parse order), then remaining tags
+	const orderedTags = tableParseOrder.filter((tag) => entryByTag.has(tag));
+	const remainingTags = tableDirectory
+		.map((e) => e.tag)
+		.filter((tag) => !orderedTags.includes(tag));
+	const sortedTags = [...orderedTags, ...remainingTags];
+
+	for (const tag of sortedTags) {
+		const entry = entryByTag.get(tag);
 		const raw = new Uint8Array(buffer, entry.offset, entry.length);
 		const rawArray = Array.from(raw);
-		const parser = tableParsers[entry.tag];
+		const parser = tableParsers[tag];
 
 		if (parser) {
-			tables[entry.tag] = {
-				...parser(rawArray),
+			tables[tag] = {
+				...parser(rawArray, tables),
 				_checksum: entry.checksum,
 			};
 		} else {
-			tables[entry.tag] = {
+			tables[tag] = {
 				_raw: rawArray,
 				_checksum: entry.checksum,
 			};

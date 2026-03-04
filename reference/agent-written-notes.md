@@ -85,7 +85,7 @@ The returned object from a parser should NOT include `_checksum` or `_raw` — t
 ```
 src/
   main.js           — entry point, re-exports importFont + exportFont
-  import.js         — importFont(), readFontHeader(), readTableDirectory(), extractTableData(), tableParsers registry
+  import.js         — importFont(), tableParsers registry, tableParseOrder, dependency-aware extractTableData()
   export.js         — exportFont(), tableWriters registry (NOTE: not yet refactored to use DataWriter)
   reader.js         — DataReader class
   writer.js         — DataWriter class
@@ -93,6 +93,8 @@ src/
     table_cmap.js   — parseCmap(), writeCmap() — fully refactored to use DataReader/DataWriter
     table_head.js   — parseHead(), writeHead() — fixed-size 54-byte table
     table_hhea.js   — parseHhea(), writeHhea() — fixed-size 36-byte table
+    table_hmtx.js   — parseHmtx(), writeHmtx() — variable-size, cross-table deps
+    table_maxp.js   — parseMaxp(), writeMaxp() — v0.5 (6 bytes) or v1.0 (32 bytes)
 
 test/
   roundtrip.test.js       — import→export→reimport for OTF and TTF (oblegg.otf, oblegg.ttf)
@@ -104,6 +106,8 @@ test/
     table_cmap.test.js     — cmap parsing, round-trip, format 4 specifics
     table_head.test.js     — head parsing, field validation, round-trip, size check
     table_hhea.test.js     — hhea parsing, metrics, reserved fields, round-trip, size check
+    table_hmtx.test.js     — hmtx parsing, cross-table validation, round-trip
+    table_maxp.test.js     — maxp parsing, v0.5/v1.0 variants, round-trip, size check
 ```
 
 ## Completed Work
@@ -138,6 +142,29 @@ test/
 - **FWORD/UFWORD types**: ascender, descender, lineGap use fword (signed int16); advanceWidthMax uses ufword (unsigned uint16)
 - Tests: 9 in table_hhea.test.js
 
+### maxp Table (`src/otf/table_maxp.js`)
+
+- **Two versions**: v0.5 (0x00005000, CFF/OTF, 6 bytes) has only version+numGlyphs; v1.0 (0x00010000, TrueType/TTF, 32 bytes) has 13 additional uint16 fields
+- **Key field**: `numGlyphs` — used by hmtx to know total glyph count
+- Tests: 6 in table_maxp.test.js
+
+### hmtx Table (`src/otf/table_hmtx.js`)
+
+- **Variable-size**: hMetrics array (4 bytes each) + leftSideBearings array (2 bytes each)
+- **Cross-table dependencies**: Requires `hhea.numberOfHMetrics` and `maxp.numGlyphs` (passed via `tables` argument)
+- **First table to use cross-table deps**: Parser signature is `parseHmtx(rawBytes, tables)` — the `tables` param contains already-parsed tables
+- **leftSideBearings**: Additional lsb values for glyphs beyond numberOfHMetrics; count = numGlyphs - numberOfHMetrics (often 0 for variable-width fonts)
+- Tests: 7 in table_hmtx.test.js
+
+### Cross-Table Dependency System
+
+- `extractTableData()` in import.js now processes tables in a **dependency-safe order** defined by `tableParseOrder`
+- `tableParseOrder = ['head', 'maxp', 'hhea', 'cmap', 'hmtx', 'name', 'OS/2', 'post']`
+- Tables in the order list are parsed first, remaining tables after
+- Each parser receives `(rawBytes, tables)` — the `tables` object contains all previously-parsed tables
+- Existing parsers (cmap, head, hhea) simply ignore the second argument
+- Writers do NOT need cross-table deps — they only serialize their own data
+
 ### DataReader / DataWriter Refactor
 
 - `import.js` fully uses DataReader
@@ -146,7 +173,7 @@ test/
 
 ## Pending Work (from agent-context.md project plan)
 
-Next tables for OTF, in order: **hmtx**, **maxp**, **name**, **OS-2**, **post**
+Next tables for OTF, in order: **name**, **OS-2**, **post**
 
 Each follows the same workflow:
 
@@ -161,7 +188,7 @@ Each follows the same workflow:
 - **OS/2 table**: Referred to as "OS-2" in filenames (`table_OS-2.js`) but the actual table tag in the font binary is `OS/2` — the registry key must be `'OS/2'`
 - **Table name case**: Always honor the original case from the spec (e.g., `cmap` lowercase, `OS/2` mixed)
 - **head table**: Contains `checkSumAdjustment` field (global font checksum); during write, this may need special handling
-- **hmtx table**: Depends on values from `hhea` (numOfLongHorMetrics) and `maxp` (numGlyphs) — parser will need access to those values. Consider how to pass cross-table dependencies (currently parsers only receive their own raw bytes).
+- **hmtx table**: DONE. Uses cross-table deps (hhea.numberOfHMetrics, maxp.numGlyphs). Parser receives `tables` as second argument.
 - **name table**: Has platform-specific string encodings — will need encoding/decoding logic
 - **export.js refactor**: Still uses raw ArrayBuffer/DataView for the font header and table directory writing. Could be converted to DataWriter but works fine as-is.
 
@@ -170,7 +197,7 @@ Each follows the same workflow:
 - **Round-trip tests** (`test/roundtrip.test.js`) are the primary correctness check: import → export → reimport must produce identical JSON
 - **Table-specific tests** validate parsing details (field values, structure)
 - Primary test fonts: `oblegg.otf` (CFF-based, sfVersion=OTTO) and `oblegg.ttf` (TrueType outlines, sfVersion=0x00010000)
-- Currently 33 tests total, all passing
+- Currently 46 tests total, all passing
 
 ## Gotchas & Lessons Learned
 
@@ -180,3 +207,5 @@ Each follows the same workflow:
 4. **DataWriter.rawBytes()**: Accepts both `number[]` and `Uint8Array`. This is used when embedding serialized sub-structures (e.g., format 14 UVS data blocks).
 5. **4-byte table padding**: export.js pads each table's data to 4-byte boundaries (padding bytes are zero). The `paddedLength` calculation: `length + ((4 - (length % 4)) % 4)`.
 6. **BigInt in JSON**: LONGDATETIME fields (head.created, head.modified) are BigInt. Standard `JSON.stringify` cannot serialize BigInt — if full JSON serialization is needed later, a replacer/reviver will be required.
+7. **Cross-table parse order matters**: hmtx depends on hhea and maxp being parsed first. The `tableParseOrder` array in import.js ensures this. When adding new tables with dependencies, add them AFTER their dependencies in this array.
+8. **maxp version detection**: Use `version === 0x00010000` (not `=== 1.0`) since it's stored as a raw uint32, not a Fixed 16.16.
