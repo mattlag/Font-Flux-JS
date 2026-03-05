@@ -158,10 +158,16 @@ test/
   ### TTC Collections (`ttcf`) support
 
   - `importFont()` now detects `ttcf` signature and parses TTC header + face offsets + optional DSIG fields for v2+
-  - TTC JSON shape: `{ collection: { tag, majorVersion, minorVersion, numFonts, offsetTable, ... }, fonts: [{ header, tables }, ...] }`
+  - TTC/OTC JSON shape: `{ collection: { tag, majorVersion, minorVersion, numFonts, ... }, fonts: [{ header, tables }, ...] }`
   - `exportFont()` now accepts the TTC shape and emits a collection file with per-face SFNTs and adjusted table record offsets
   - Added TTC round-trip coverage in `test/roundtrip.test.js` (full round-trip on `msgothic-test.ttc`)
-  - `cambria-test.ttc` is currently import-covered but excluded from all-samples round-trip stabilization due to an existing GPOS writer edge case in that sample
+
+## Test policy (do not sidestep behavior gaps)
+
+- `test/roundtrip-all-samples-double.test.js` should run against all `.ttf/.otf/.ttc` fixtures by default.
+- Avoid `KNOWN_*_EXCLUSIONS` patterns as a way to keep CI green; exclusions hide missing import/export behavior.
+- If a fixture fails, fix parser/writer logic first and keep the fixture in the suite so failures remain visible.
+- Only temporary exclusions are acceptable when a fix is actively in progress in the same change set; remove them before completion.
 ```
 
 ## Completed Work
