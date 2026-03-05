@@ -5,6 +5,7 @@
 
 import { parseCFF } from './otf/table_CFF.js';
 import { parseCFF2 } from './otf/table_CFF2.js';
+import { parseVORG } from './otf/table_VORG.js';
 import { DataReader } from './reader.js';
 import { parseAvar } from './sfnt/table_avar.js';
 import { parseBASE } from './sfnt/table_BASE.js';
@@ -21,6 +22,7 @@ import { parseFvar } from './sfnt/table_fvar.js';
 import { parseGDEF } from './sfnt/table_GDEF.js';
 import { parseGPOS } from './sfnt/table_GPOS.js';
 import { parseGSUB } from './sfnt/table_GSUB.js';
+import { parseHdmx } from './sfnt/table_hdmx.js';
 import { parseHead } from './sfnt/table_head.js';
 import { parseHhea } from './sfnt/table_hhea.js';
 import { parseHmtx } from './sfnt/table_hmtx.js';
@@ -30,14 +32,17 @@ import { parseKern } from './sfnt/table_kern.js';
 import { parseLTSH } from './sfnt/table_LTSH.js';
 import { parseMATH } from './sfnt/table_MATH.js';
 import { parseMaxp } from './sfnt/table_maxp.js';
+import { parseMERG } from './sfnt/table_MERG.js';
+import { parseMeta } from './sfnt/table_meta.js';
 import { parseMVAR } from './sfnt/table_MVAR.js';
 import { parseName } from './sfnt/table_name.js';
-import { parseHdmx } from './sfnt/table_hdmx.js';
 import { parseOS2 } from './sfnt/table_OS-2.js';
+import { parsePCLT } from './sfnt/table_PCLT.js';
 import { parsePost } from './sfnt/table_post.js';
 import { parseSbix } from './sfnt/table_sbix.js';
 import { parseSTAT } from './sfnt/table_STAT.js';
 import { parseSVG } from './sfnt/table_SVG.js';
+import { parseVDMX } from './sfnt/table_VDMX.js';
 import { parseVhea } from './sfnt/table_vhea.js';
 import { parseVmtx } from './sfnt/table_vmtx.js';
 import { parseVVAR } from './sfnt/table_VVAR.js';
@@ -69,16 +74,21 @@ const tableParsers = {
 	BASE: parseBASE,
 	JSTF: parseJSTF,
 	MATH: parseMATH,
+	MERG: parseMERG,
+	meta: parseMeta,
 	DSIG: parseDSIG,
 	LTSH: parseLTSH,
 	CBLC: parseCBLC,
 	CBDT: parseCBDT,
 	'OS/2': parseOS2,
 	kern: parseKern,
+	PCLT: parsePCLT,
+	VDMX: parseVDMX,
 	post: parsePost,
 	STAT: parseSTAT,
 	'CFF ': parseCFF,
 	CFF2: parseCFF2,
+	VORG: parseVORG,
 	fvar: parseFvar,
 	avar: parseAvar,
 	loca: parseLoca,
@@ -129,10 +139,15 @@ const tableParseOrder = [
 	'kern',
 	'hdmx',
 	'LTSH',
+	'MERG',
+	'meta',
 	'DSIG',
+	'PCLT',
+	'VDMX',
 	'post',
 	'CFF ',
 	'CFF2',
+	'VORG',
 	'loca',
 	'glyf',
 	'gvar',

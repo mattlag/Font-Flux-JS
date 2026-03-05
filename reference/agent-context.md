@@ -112,10 +112,10 @@ Tables that are identical for both TrueType- and CFF-based fonts.
 - [x] DSIG — Digital signature
 - [x] hdmx — Horizontal device metrics
 - [x] LTSH — Linear threshold data
-- [ ] MERG — Merge
-- [ ] meta — Metadata
-- [ ] PCLT — PCL 5 data
-- [ ] VDMX — Vertical device metrics
+- [x] MERG — Merge
+- [x] meta — Metadata
+- [x] PCLT — PCL 5 data
+- [x] VDMX — Vertical device metrics
 
 ### Bitmap Glyph Tables
 
@@ -169,4 +169,4 @@ Tables that are identical for both TrueType- and CFF-based fonts.
 
 ### Optional
 
-- [ ] VORG — Vertical Origin
+- [x] VORG — Vertical Origin

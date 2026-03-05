@@ -5,6 +5,7 @@
 
 import { writeCFF } from './otf/table_CFF.js';
 import { writeCFF2 } from './otf/table_CFF2.js';
+import { writeVORG } from './otf/table_VORG.js';
 import { writeAvar } from './sfnt/table_avar.js';
 import { writeBASE } from './sfnt/table_BASE.js';
 import { writeCBDT } from './sfnt/table_CBDT.js';
@@ -20,6 +21,7 @@ import { writeFvar } from './sfnt/table_fvar.js';
 import { writeGDEF } from './sfnt/table_GDEF.js';
 import { writeGPOS } from './sfnt/table_GPOS.js';
 import { writeGSUB } from './sfnt/table_GSUB.js';
+import { writeHdmx } from './sfnt/table_hdmx.js';
 import { writeHead } from './sfnt/table_head.js';
 import { writeHhea } from './sfnt/table_hhea.js';
 import { writeHmtx } from './sfnt/table_hmtx.js';
@@ -29,14 +31,17 @@ import { writeKern } from './sfnt/table_kern.js';
 import { writeLTSH } from './sfnt/table_LTSH.js';
 import { writeMATH } from './sfnt/table_MATH.js';
 import { writeMaxp } from './sfnt/table_maxp.js';
+import { writeMERG } from './sfnt/table_MERG.js';
+import { writeMeta } from './sfnt/table_meta.js';
 import { writeMVAR } from './sfnt/table_MVAR.js';
 import { writeName } from './sfnt/table_name.js';
-import { writeHdmx } from './sfnt/table_hdmx.js';
 import { writeOS2 } from './sfnt/table_OS-2.js';
+import { writePCLT } from './sfnt/table_PCLT.js';
 import { writePost } from './sfnt/table_post.js';
 import { writeSbix } from './sfnt/table_sbix.js';
 import { writeSTAT } from './sfnt/table_STAT.js';
 import { writeSVG } from './sfnt/table_SVG.js';
+import { writeVDMX } from './sfnt/table_VDMX.js';
 import { writeVhea } from './sfnt/table_vhea.js';
 import { writeVmtx } from './sfnt/table_vmtx.js';
 import { writeVVAR } from './sfnt/table_VVAR.js';
@@ -67,16 +72,21 @@ const tableWriters = {
 	BASE: writeBASE,
 	JSTF: writeJSTF,
 	MATH: writeMATH,
+	MERG: writeMERG,
+	meta: writeMeta,
 	DSIG: writeDSIG,
 	LTSH: writeLTSH,
 	CBLC: writeCBLC,
 	CBDT: writeCBDT,
 	'OS/2': writeOS2,
 	kern: writeKern,
+	PCLT: writePCLT,
+	VDMX: writeVDMX,
 	post: writePost,
 	STAT: writeSTAT,
 	'CFF ': writeCFF,
 	CFF2: writeCFF2,
+	VORG: writeVORG,
 	fvar: writeFvar,
 	avar: writeAvar,
 	loca: writeLoca,

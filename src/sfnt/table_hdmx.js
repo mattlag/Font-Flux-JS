@@ -53,7 +53,10 @@ export function parseHdmx(rawBytes, tables) {
 export function writeHdmx(hdmx) {
 	const version = hdmx.version ?? 0;
 	const records = hdmx.records ?? [];
-	const inferredWidths = Math.max(0, ...records.map((r) => (r.widths ?? []).length));
+	const inferredWidths = Math.max(
+		0,
+		...records.map((r) => (r.widths ?? []).length),
+	);
 	const inferredRecordSize = alignTo4(2 + inferredWidths);
 	const sizeDeviceRecord = hdmx.sizeDeviceRecord ?? inferredRecordSize;
 	const safeRecordSize = Math.max(2, sizeDeviceRecord);

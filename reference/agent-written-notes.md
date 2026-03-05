@@ -546,7 +546,7 @@ test/
 ## Pending Work (from agent-context.md project plan)
 
 All planned shared SFNT tables are now complete: **cmap**, **head**, **hhea**, **maxp**, **hmtx**, **name**, **OS/2**, **post**.
-OTF CFF-specific tables complete: **CFF** (v1), **CFF2**.
+OTF CFF-specific tables complete: **CFF** (v1), **CFF2**, **VORG**.
 TTF outline tables complete: **loca**, **glyf**.
 Advanced Typographic tables complete: **GDEF**, **GPOS**, **GSUB** (with shared OpenType Layout common module).
 Additional advanced typographic tables complete: **BASE**, **JSTF**, **MATH**.
@@ -557,10 +557,12 @@ Variation tables complete: **fvar**, **avar**, **STAT**, **gvar**, **HVAR**, **M
 Additional OpenType tables complete: **kern**, **BASE**.
 Bitmap glyph tables complete: **EBLC**, **EBDT**, **EBSC**, **CBLC**, **CBDT**, **sbix**.
 Additional shared tables complete: **DSIG**, **hdmx**, **LTSH**.
+Additional shared tables complete: **MERG**, **meta**.
+Additional shared tables complete: **PCLT**, **VDMX**.
 
 Possible future work:
 
-- Additional tables (MATH, JSTF, VORG, feat/morx, etc.)
+- Additional tables (feat/morx, etc.)
 
 - WOFF/WOFF2 container support
 - Full JSON serialization (BigInt replacer/reviver)
@@ -627,3 +629,8 @@ Possible future work:
 41. **DSIG implementation scope**: `DSIG` parses header/signature records (`format`, `length`, `offset`) and preserves each signature block as `_raw` bytes. Writer rebuilds offsets from serialized block lengths.
 42. **hdmx implementation scope**: `hdmx` parses per-device records (`pixelSize`, `maxWidth`, width array) and preserves record padding. If `maxp.numGlyphs` is available it is used to split widths vs padding; otherwise payload bytes are treated as widths.
 43. **LTSH implementation scope**: `LTSH` is fully parsed (`version`, `numGlyphs`, `yPels[]`) and written directly with truncation/padding safeguards when explicit `numGlyphs` and `yPels.length` differ.
+44. **MERG implementation scope**: `MERG` currently exposes a leading `version` field plus raw payload bytes (`data`) to keep round-trip fidelity while deferring deeper format semantics.
+45. **meta implementation scope**: `meta` parses header fields and `DataMap` records (`tag`, `dataOffset`, `dataLength`) and preserves each metadata payload as byte arrays in `dataMaps[].data`; writer recomputes offsets from serialized payload order.
+46. **PCLT implementation scope**: `PCLT` is implemented as a fixed-size structured table (54 bytes) with explicit numeric fields and fixed-length ASCII strings (`typeface`, `characterComplement`, `fileName`). Non-ASCII characters are replaced with `?` during write.
+47. **VDMX implementation scope**: `VDMX` parses ratio records and deduplicated VDMX groups, mapping each ratio to a `groupIndex`. Writer serializes group blocks, computes offsets, and emits ratio-to-group mapping through the offset array.
+48. **VORG implementation scope**: `VORG` is fully parsed/written as structured data (`majorVersion`, `minorVersion`, `defaultVertOriginY`, and per-glyph `vertOriginYMetrics`). Writer supports explicit `numVertOriginYMetrics` with safe truncation/padding behavior.
