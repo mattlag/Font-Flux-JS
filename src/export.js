@@ -16,7 +16,9 @@ import { writeGSUB } from './sfnt/table_GSUB.js';
 import { writeHead } from './sfnt/table_head.js';
 import { writeHhea } from './sfnt/table_hhea.js';
 import { writeHmtx } from './sfnt/table_hmtx.js';
+import { writeHVAR } from './sfnt/table_HVAR.js';
 import { writeMaxp } from './sfnt/table_maxp.js';
+import { writeMVAR } from './sfnt/table_MVAR.js';
 import { writeName } from './sfnt/table_name.js';
 import { writeOS2 } from './sfnt/table_OS-2.js';
 import { writePost } from './sfnt/table_post.js';
@@ -24,6 +26,8 @@ import { writeSTAT } from './sfnt/table_STAT.js';
 import { writeSVG } from './sfnt/table_SVG.js';
 import { writeVhea } from './sfnt/table_vhea.js';
 import { writeVmtx } from './sfnt/table_vmtx.js';
+import { writeVVAR } from './sfnt/table_VVAR.js';
+import { writeCvar } from './ttf/table_cvar.js';
 import { writeCvt } from './ttf/table_cvt.js';
 import { writeFpgm } from './ttf/table_fpgm.js';
 import { writeGasp } from './ttf/table_gasp.js';
@@ -41,8 +45,10 @@ const tableWriters = {
 	cmap: writeCmap,
 	head: writeHead,
 	hhea: writeHhea,
+	HVAR: writeHVAR,
 	hmtx: writeHmtx,
 	maxp: writeMaxp,
+	MVAR: writeMVAR,
 	name: writeName,
 	'OS/2': writeOS2,
 	post: writePost,
@@ -58,10 +64,12 @@ const tableWriters = {
 	GPOS: writeGPOS,
 	GSUB: writeGSUB,
 	'cvt ': writeCvt,
+	cvar: writeCvar,
 	fpgm: writeFpgm,
 	prep: writePrep,
 	gasp: writeGasp,
 	vhea: writeVhea,
+	VVAR: writeVVAR,
 	vmtx: writeVmtx,
 	COLR: writeCOLR,
 	CPAL: writeCPAL,

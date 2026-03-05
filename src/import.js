@@ -17,7 +17,9 @@ import { parseGSUB } from './sfnt/table_GSUB.js';
 import { parseHead } from './sfnt/table_head.js';
 import { parseHhea } from './sfnt/table_hhea.js';
 import { parseHmtx } from './sfnt/table_hmtx.js';
+import { parseHVAR } from './sfnt/table_HVAR.js';
 import { parseMaxp } from './sfnt/table_maxp.js';
+import { parseMVAR } from './sfnt/table_MVAR.js';
 import { parseName } from './sfnt/table_name.js';
 import { parseOS2 } from './sfnt/table_OS-2.js';
 import { parsePost } from './sfnt/table_post.js';
@@ -25,6 +27,8 @@ import { parseSTAT } from './sfnt/table_STAT.js';
 import { parseSVG } from './sfnt/table_SVG.js';
 import { parseVhea } from './sfnt/table_vhea.js';
 import { parseVmtx } from './sfnt/table_vmtx.js';
+import { parseVVAR } from './sfnt/table_VVAR.js';
+import { parseCvar } from './ttf/table_cvar.js';
 import { parseCvt } from './ttf/table_cvt.js';
 import { parseFpgm } from './ttf/table_fpgm.js';
 import { parseGasp } from './ttf/table_gasp.js';
@@ -43,8 +47,10 @@ const tableParsers = {
 	cmap: parseCmap,
 	head: parseHead,
 	hhea: parseHhea,
+	HVAR: parseHVAR,
 	hmtx: parseHmtx,
 	maxp: parseMaxp,
+	MVAR: parseMVAR,
 	name: parseName,
 	'OS/2': parseOS2,
 	post: parsePost,
@@ -60,10 +66,12 @@ const tableParsers = {
 	GPOS: parseGPOS,
 	GSUB: parseGSUB,
 	'cvt ': parseCvt,
+	cvar: parseCvar,
 	fpgm: parseFpgm,
 	prep: parsePrep,
 	gasp: parseGasp,
 	vhea: parseVhea,
+	VVAR: parseVVAR,
 	vmtx: parseVmtx,
 	COLR: parseCOLR,
 	CPAL: parseCPAL,
@@ -80,11 +88,14 @@ const tableParseOrder = [
 	'maxp',
 	'fvar',
 	'avar',
+	'cvt ',
 	'hhea',
 	'cmap',
 	'hmtx',
+	'HVAR',
 	'name',
 	'STAT',
+	'MVAR',
 	'OS/2',
 	'post',
 	'CFF ',
@@ -92,8 +103,10 @@ const tableParseOrder = [
 	'loca',
 	'glyf',
 	'gvar',
+	'cvar',
 	'vhea',
 	'vmtx',
+	'VVAR',
 ];
 
 /**

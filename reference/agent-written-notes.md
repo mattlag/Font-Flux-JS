@@ -308,6 +308,33 @@ test/
   - Variable table suites (`fvar`, `avar`, `gvar`, `STAT`) pass (`12/12`)
   - `test/roundtrip.test.js` still passes (`2/2`)
 
+### Variable Font Tables — Next Priority Block (`HVAR`, `MVAR`, `VVAR`, `cvar`)
+
+- Implemented and registered:
+  - `src/sfnt/table_HVAR.js` — `parseHVAR()`, `writeHVAR()`
+  - `src/sfnt/table_MVAR.js` — `parseMVAR()`, `writeMVAR()`
+  - `src/sfnt/table_VVAR.js` — `parseVVAR()`, `writeVVAR()`
+  - `src/ttf/table_cvar.js` — `parseCvar()`, `writeCvar()`
+  - `src/import.js` parser registry updated for `HVAR`, `MVAR`, `VVAR`, `cvar`
+  - `src/export.js` writer registry updated for `HVAR`, `MVAR`, `VVAR`, `cvar`
+- Parse-order updates in `src/import.js`:
+  - `cvt ` before `cvar` (so CVT table exists before cvar parse if needed)
+  - `HVAR` after `hmtx`, `MVAR` after `STAT`, `VVAR` after `vmtx`
+- Implementation scope notes:
+  - `HVAR` / `VVAR`: parse/write table headers + optional DeltaSetIndexMap subtables
+  - DeltaSetIndexMap format 0/1 decode+encode implemented (packed outer/inner index fields)
+  - ItemVariationStore content is preserved as raw bytes (`_raw`) for now
+  - `MVAR`: parse/write header + ValueRecords (including variable `valueRecordSize` and per-record `_extra` bytes); ItemVariationStore preserved raw
+  - `cvar`: container-level parse/write with version, packed tupleVariationCount field, headers-raw block, serialized-data block; tuple headers are also minimally decoded when axis count is available from `fvar`
+- New tests added:
+  - `test/sfnt/table_HVAR.test.js`
+  - `test/sfnt/table_MVAR.test.js`
+  - `test/sfnt/table_VVAR.test.js`
+  - `test/ttf/table_cvar.test.js`
+- Validation run:
+  - New block suites pass (`12/12`)
+  - `test/roundtrip.test.js` still passes (`2/2`)
+
 - **Binary index table**: Maps glyph IDs to byte positions inside the glyf table. Purely a binary-layout artifact — offsets depend on the specific glyf encoding.
 - **Two formats**: Short (head.indexToLocFormat=0): uint16 values × 2 = actual offset; Long (head.indexToLocFormat=1): uint32 actual offsets. Always numGlyphs+1 entries.
 - **Cross-table deps (parse)**: `head.indexToLocFormat` (format selector), `maxp.numGlyphs` (entry count)
