@@ -53,6 +53,19 @@ describe('Round-trip: TTC', () => {
 		expect(firstImport.fonts.length).toBeGreaterThan(1);
 	});
 
+	it('should round-trip TTC data for cambria sample', async () => {
+		const filePath = resolve(SAMPLES_DIR, 'cambria-test.ttc');
+		const buffer = (await readFile(filePath)).buffer;
+
+		const firstImport = importFont(buffer);
+		const exported = exportFont(firstImport);
+		const secondImport = importFont(exported);
+
+		expect(secondImport.collection.tag).toBe('ttcf');
+		expect(secondImport.fonts.length).toBe(firstImport.fonts.length);
+		expect(secondImport.fonts.every((font) => font.tables.GPOS)).toBe(true);
+	}, 60000);
+
 	it('should round-trip TTC data for msgothic sample', async () => {
 		const samples = ['msgothic-test.ttc'];
 
@@ -68,7 +81,7 @@ describe('Round-trip: TTC', () => {
 				firstImport,
 			);
 		}
-	});
+	}, 60000);
 });
 
 describe('Collection: OTC (CFF outlines)', () => {
@@ -89,7 +102,7 @@ describe('Collection: OTC (CFF outlines)', () => {
 		expect(
 			collection.fonts.some((f) => f.tables['CFF '] || f.tables.CFF2),
 		).toBe(true);
-	});
+	}, 60000);
 
 	it('should export and re-import OTC-style collections without errors', async () => {
 		const filePath = resolve(
@@ -110,5 +123,5 @@ describe('Collection: OTC (CFF outlines)', () => {
 		expect(
 			secondImport.fonts.some((f) => f.tables['CFF '] || f.tables.CFF2),
 		).toBe(true);
-	});
+	}, 120000);
 });

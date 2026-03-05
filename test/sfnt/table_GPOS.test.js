@@ -100,4 +100,31 @@ describe('GPOS table round-trip', () => {
 			expect(reparsed).toEqual(gposData);
 		});
 	}
+
+	it('should round-trip oversized PairPos format 1 from cambria-test.ttc face 0', async () => {
+		const buffer = (await readFile(resolve(SAMPLES_DIR, 'cambria-test.ttc')))
+			.buffer;
+		const collection = importFont(buffer);
+		const { _checksum, ...gposData } = collection.fonts[0].tables.GPOS;
+
+		const writtenBytes = writeGPOS(gposData);
+		const reparsed = parseGPOS(writtenBytes);
+
+		expect(reparsed.majorVersion).toBe(gposData.majorVersion);
+		expect(reparsed.minorVersion).toBe(gposData.minorVersion);
+		expect(reparsed.lookupList.lookups.length).toBe(
+			gposData.lookupList.lookups.length,
+		);
+
+		const originalPairSetCount = gposData.lookupList.lookups
+			.flatMap((lookup) => lookup.subtables)
+			.filter((subtable) => subtable.format === 1 && subtable.pairSets)
+			.reduce((sum, subtable) => sum + subtable.pairSets.length, 0);
+		const reparsedPairSetCount = reparsed.lookupList.lookups
+			.flatMap((lookup) => lookup.subtables)
+			.filter((subtable) => subtable.format === 1 && subtable.pairSets)
+			.reduce((sum, subtable) => sum + subtable.pairSets.length, 0);
+
+		expect(reparsedPairSetCount).toBe(originalPairSetCount);
+	}, 120000);
 });

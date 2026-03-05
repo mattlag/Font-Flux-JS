@@ -13,17 +13,12 @@ import { exportFont, importFont } from '../src/main.js';
 
 const SAMPLES_DIR = resolve(import.meta.dirname, 'sample fonts');
 const SUPPORTED_EXT_RE = /\.(ttf|otf|ttc)$/i;
-const KNOWN_ROUNDTRIP_EXCLUSIONS = new Set([
-	'cambria-test.ttc',
-	'NotoSerifCJK-Regular-otc-online-test.ttc',
-]);
 
 describe('double round-trip on all sample fonts', () => {
 	it('should be stable across two export/import cycles for every sample SFNT font', async () => {
 		const names = await readdir(SAMPLES_DIR);
 		const sampleFonts = names
 			.filter((name) => SUPPORTED_EXT_RE.test(name))
-			.filter((name) => !KNOWN_ROUNDTRIP_EXCLUSIONS.has(name))
 			.sort((a, b) => a.localeCompare(b));
 		const failures = [];
 

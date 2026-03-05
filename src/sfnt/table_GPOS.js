@@ -643,16 +643,17 @@ function writeMarkArray(markArray) {
  */
 export function writeGPOS(gpos) {
 	const { majorVersion, minorVersion } = gpos;
+	const normalizedGpos = normalizeGposForWriting(gpos);
 
-	const scriptListBytes = writeScriptList(gpos.scriptList);
-	const featureListBytes = writeFeatureList(gpos.featureList);
+	const scriptListBytes = writeScriptList(normalizedGpos.scriptList);
+	const featureListBytes = writeFeatureList(normalizedGpos.featureList);
 	const lookupListBytes = writeLookupList(
-		gpos.lookupList,
+		normalizedGpos.lookupList,
 		writeGPOSSubtable,
 		9,
 	);
-	const featureVarBytes = gpos.featureVariations
-		? writeFeatureVariations(gpos.featureVariations)
+	const featureVarBytes = normalizedGpos.featureVariations
+		? writeFeatureVariations(normalizedGpos.featureVariations)
 		: null;
 
 	let headerSize = 10;
@@ -688,6 +689,127 @@ export function writeGPOS(gpos) {
 	}
 
 	return w.toArray();
+}
+
+function normalizeGposForWriting(gpos) {
+	const lookups = gpos.lookupList.lookups.map((lookup) => {
+		if (lookup.lookupType !== 2 || !Array.isArray(lookup.subtables)) {
+			return lookup;
+		}
+
+		const expandedSubtables = lookup.subtables.flatMap((subtable) => {
+			if (subtable?.format !== 1 || !Array.isArray(subtable.pairSets)) {
+				return [subtable];
+			}
+			return splitPairPosFormat1Subtable(subtable);
+		});
+
+		return {
+			...lookup,
+			subtables: expandedSubtables,
+		};
+	});
+
+	return {
+		...gpos,
+		lookupList: {
+			...gpos.lookupList,
+			lookups,
+		},
+	};
+}
+
+function splitPairPosFormat1Subtable(subtable) {
+	const coverageGlyphs = expandCoverageGlyphs(subtable.coverage);
+	if (coverageGlyphs.length !== subtable.pairSets.length) {
+		return [subtable];
+	}
+
+	const valueRecordSize =
+		valueFormatSize(subtable.valueFormat1) +
+		valueFormatSize(subtable.valueFormat2);
+	const pairSetSizes = subtable.pairSets.map(
+		(pairSet) => 2 + pairSet.length * (2 + valueRecordSize),
+	);
+	const totalPairSetBytes = pairSetSizes.reduce((sum, size) => sum + size, 0);
+	const wholeSize = estimatePairPosFormat1Size(
+		subtable.pairSets.length,
+		totalPairSetBytes,
+	);
+
+	if (wholeSize <= 0xffff) {
+		return [subtable];
+	}
+
+	const splitSubtables = [];
+	let start = 0;
+
+	while (start < subtable.pairSets.length) {
+		let end = start;
+		let runningPairSetBytes = 0;
+		let foundAny = false;
+
+		while (end < subtable.pairSets.length) {
+			const nextRunningPairSetBytes = runningPairSetBytes + pairSetSizes[end];
+			const nextCount = end - start + 1;
+			const totalSize = estimatePairPosFormat1Size(
+				nextCount,
+				nextRunningPairSetBytes,
+			);
+
+			if (totalSize > 0xffff) {
+				break;
+			}
+
+			runningPairSetBytes = nextRunningPairSetBytes;
+			end += 1;
+			foundAny = true;
+		}
+
+		if (!foundAny) {
+			throw new Error(
+				'Cannot encode PairPos format 1: single PairSet exceeds 16-bit offset range',
+			);
+		}
+
+		splitSubtables.push({
+			...subtable,
+			coverage: {
+				format: 1,
+				glyphs: coverageGlyphs.slice(start, end),
+			},
+			pairSets: subtable.pairSets.slice(start, end),
+		});
+
+		start = end;
+	}
+
+	return splitSubtables;
+}
+
+function estimatePairPosFormat1Size(pairSetCount, pairSetBytesTotal) {
+	const headerSize = 10 + pairSetCount * 2;
+	const coverageSize = 4 + pairSetCount * 2;
+	return headerSize + coverageSize + pairSetBytesTotal;
+}
+
+function expandCoverageGlyphs(coverage) {
+	if (!coverage) {
+		return [];
+	}
+	if (coverage.format === 1) {
+		return coverage.glyphs;
+	}
+	if (coverage.format === 2) {
+		const glyphs = [];
+		for (const range of coverage.ranges) {
+			for (let glyph = range.startGlyphID; glyph <= range.endGlyphID; glyph++) {
+				glyphs.push(glyph);
+			}
+		}
+		return glyphs;
+	}
+	return [];
 }
 
 // ─── GPOS subtable writer dispatcher ────────────────────────────────────────

@@ -236,7 +236,6 @@ function importCollection(buffer) {
 		majorVersion,
 		minorVersion,
 		numFonts,
-		offsetTable,
 	};
 	if (majorVersion >= 2) {
 		collection.dsigTag = dsigTag;

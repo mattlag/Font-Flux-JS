@@ -64,7 +64,6 @@ function parseOpenTypeKern(rawBytes) {
 
 		const subtable = {
 			version: subVersion,
-			length,
 			coverage,
 			format,
 		};
@@ -100,9 +99,9 @@ function parseOpenTypeKernFormat0(bodyRaw) {
 	}
 
 	const nPairs = reader.uint16();
-	const searchRange = reader.uint16();
-	const entrySelector = reader.uint16();
-	const rangeShift = reader.uint16();
+	reader.uint16();
+	reader.uint16();
+	reader.uint16();
 	const pairs = [];
 
 	for (let i = 0; i < nPairs; i++) {
@@ -116,11 +115,18 @@ function parseOpenTypeKernFormat0(bodyRaw) {
 		});
 	}
 
+	const normalizedNPairs = pairs.length;
+	const normalizedEntrySelector = Math.floor(
+		Math.log2(Math.max(1, normalizedNPairs)),
+	);
+	const normalizedSearchRange = Math.pow(2, normalizedEntrySelector) * 6;
+	const normalizedRangeShift = normalizedNPairs * 6 - normalizedSearchRange;
+
 	return {
-		nPairs,
-		searchRange,
-		entrySelector,
-		rangeShift,
+		nPairs: normalizedNPairs,
+		searchRange: normalizedSearchRange,
+		entrySelector: normalizedEntrySelector,
+		rangeShift: normalizedRangeShift,
 		pairs,
 	};
 }
@@ -153,7 +159,6 @@ function parseAppleKern(rawBytes) {
 		);
 
 		subtables.push({
-			length,
 			coverage,
 			format,
 			tupleIndex,
