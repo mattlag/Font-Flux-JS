@@ -41,7 +41,9 @@ function parseBitmapLocationTable(rawBytes) {
 			bitDepth: reader.uint8(),
 			flags: reader.int8(),
 		};
-		table._raw = Array.from(rawBytes.slice(start, start + BITMAP_SIZE_TABLE_SIZE));
+		table._raw = Array.from(
+			rawBytes.slice(start, start + BITMAP_SIZE_TABLE_SIZE),
+		);
 		sizes.push(table);
 	}
 

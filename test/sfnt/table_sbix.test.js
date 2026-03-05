@@ -19,7 +19,9 @@ describe('sbix table', () => {
 		expect(parsed.version).toBe(1);
 		expect(parsed.flags).toBe(1);
 		expect(parsed.strikes.length).toBe(2);
-		expect(parsed.strikes[0]._raw).toEqual([0x00, 0x0c, 0x00, 0x48, 0xaa, 0xbb]);
+		expect(parsed.strikes[0]._raw).toEqual([
+			0x00, 0x0c, 0x00, 0x48, 0xaa, 0xbb,
+		]);
 		expect(parsed.strikes[1]._raw).toEqual([0x00, 0x10, 0x00, 0x48, 0xcc]);
 	});
 });
