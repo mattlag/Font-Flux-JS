@@ -6,6 +6,7 @@
 import { writeCFF } from './otf/table_CFF.js';
 import { writeCFF2 } from './otf/table_CFF2.js';
 import { writeAvar } from './sfnt/table_avar.js';
+import { writeBASE } from './sfnt/table_BASE.js';
 import { writeCmap } from './sfnt/table_cmap.js';
 import { writeCOLR } from './sfnt/table_COLR.js';
 import { writeCPAL } from './sfnt/table_CPAL.js';
@@ -17,6 +18,7 @@ import { writeHead } from './sfnt/table_head.js';
 import { writeHhea } from './sfnt/table_hhea.js';
 import { writeHmtx } from './sfnt/table_hmtx.js';
 import { writeHVAR } from './sfnt/table_HVAR.js';
+import { writeKern } from './sfnt/table_kern.js';
 import { writeMaxp } from './sfnt/table_maxp.js';
 import { writeMVAR } from './sfnt/table_MVAR.js';
 import { writeName } from './sfnt/table_name.js';
@@ -50,7 +52,9 @@ const tableWriters = {
 	maxp: writeMaxp,
 	MVAR: writeMVAR,
 	name: writeName,
+	BASE: writeBASE,
 	'OS/2': writeOS2,
+	kern: writeKern,
 	post: writePost,
 	STAT: writeSTAT,
 	'CFF ': writeCFF,

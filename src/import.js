@@ -7,6 +7,7 @@ import { parseCFF } from './otf/table_CFF.js';
 import { parseCFF2 } from './otf/table_CFF2.js';
 import { DataReader } from './reader.js';
 import { parseAvar } from './sfnt/table_avar.js';
+import { parseBASE } from './sfnt/table_BASE.js';
 import { parseCmap } from './sfnt/table_cmap.js';
 import { parseCOLR } from './sfnt/table_COLR.js';
 import { parseCPAL } from './sfnt/table_CPAL.js';
@@ -18,6 +19,7 @@ import { parseHead } from './sfnt/table_head.js';
 import { parseHhea } from './sfnt/table_hhea.js';
 import { parseHmtx } from './sfnt/table_hmtx.js';
 import { parseHVAR } from './sfnt/table_HVAR.js';
+import { parseKern } from './sfnt/table_kern.js';
 import { parseMaxp } from './sfnt/table_maxp.js';
 import { parseMVAR } from './sfnt/table_MVAR.js';
 import { parseName } from './sfnt/table_name.js';
@@ -52,7 +54,9 @@ const tableParsers = {
 	maxp: parseMaxp,
 	MVAR: parseMVAR,
 	name: parseName,
+	BASE: parseBASE,
 	'OS/2': parseOS2,
+	kern: parseKern,
 	post: parsePost,
 	STAT: parseSTAT,
 	'CFF ': parseCFF,
@@ -94,9 +98,11 @@ const tableParseOrder = [
 	'hmtx',
 	'HVAR',
 	'name',
+	'BASE',
 	'STAT',
 	'MVAR',
 	'OS/2',
+	'kern',
 	'post',
 	'CFF ',
 	'CFF2',

@@ -97,7 +97,7 @@ Tables that are identical for both TrueType- and CFF-based fonts.
 - [x] GDEF — Glyph definition data
 - [x] GPOS — Glyph positioning data
 - [x] GSUB — Glyph substitution data
-- [ ] BASE — Baseline data
+- [x] BASE — Baseline data
 - [ ] JSTF — Justification data
 - [ ] MATH — Math layout data
 
@@ -108,7 +108,7 @@ Tables that are identical for both TrueType- and CFF-based fonts.
 
 ### Other Shared Tables
 
-- [ ] kern — Kerning (legacy, prefer GPOS)
+- [x] kern — Kerning (legacy, prefer GPOS)
 - [ ] DSIG — Digital signature
 - [ ] hdmx — Horizontal device metrics
 - [ ] LTSH — Linear threshold data
@@ -134,12 +134,12 @@ Tables that are identical for both TrueType- and CFF-based fonts.
 
 ### Font Variations Tables (shared)
 
-- [ ] fvar — Font variations (defines axes)
-- [ ] avar — Axis variations (axis mapping)
-- [ ] STAT — Style attributes (required for variable, optional otherwise)
-- [ ] MVAR — Metrics variations
-- [ ] HVAR — Horizontal metrics variations
-- [ ] VVAR — Vertical metrics variations
+- [x] fvar — Font variations (defines axes)
+- [x] avar — Axis variations (axis mapping)
+- [x] STAT — Style attributes (required for variable, optional otherwise)
+- [x] MVAR — Metrics variations
+- [x] HVAR — Horizontal metrics variations
+- [x] VVAR — Vertical metrics variations
 
 ## TTF — TrueType-Specific Tables (src/ttf)
 
@@ -157,8 +157,8 @@ Tables that are identical for both TrueType- and CFF-based fonts.
 
 ### TrueType Variation Tables
 
-- [ ] gvar — Glyph variations
-- [ ] cvar — CVT variations
+- [x] gvar — Glyph variations
+- [x] cvar — CVT variations
 
 ## OTF — CFF-Specific Tables (src/otf)
 

@@ -335,6 +335,27 @@ test/
   - New block suites pass (`12/12`)
   - `test/roundtrip.test.js` still passes (`2/2`)
 
+### Block 3 — `kern` and `BASE`
+
+- Implemented and registered:
+  - `src/sfnt/table_kern.js` — `parseKern()`, `writeKern()`
+  - `src/sfnt/table_BASE.js` — `parseBASE()`, `writeBASE()`
+  - `src/import.js` parser registry + parse order includes `kern` and `BASE`
+  - `src/export.js` writer registry includes `kern` and `BASE`
+- `kern` behavior:
+  - Supports OpenType `kern` v0 container, with structural parse/write for subtable format 0 (pair kerning)
+  - Supports Apple `kern` v1.0 container at top level with raw-preserved subtables
+  - Unknown subtable formats are preserved as raw bytes for round-trip safety
+- `BASE` behavior:
+  - Container-level parse/write for version 1.0 and 1.1 (including optional ItemVariationStore offset)
+  - Referenced subtables (`horizAxis`, `vertAxis`, `itemVariationStore`) are preserved as raw bytes
+- New tests added:
+  - `test/sfnt/table_kern.test.js`
+  - `test/sfnt/table_BASE.test.js`
+- Validation run:
+  - New `kern` + `BASE` suites pass (`7/7`)
+  - `test/roundtrip.test.js` still passes (`2/2`)
+
 - **Binary index table**: Maps glyph IDs to byte positions inside the glyf table. Purely a binary-layout artifact — offsets depend on the specific glyf encoding.
 - **Two formats**: Short (head.indexToLocFormat=0): uint16 values × 2 = actual offset; Long (head.indexToLocFormat=1): uint32 actual offsets. Always numGlyphs+1 entries.
 - **Cross-table deps (parse)**: `head.indexToLocFormat` (format selector), `maxp.numGlyphs` (entry count)
