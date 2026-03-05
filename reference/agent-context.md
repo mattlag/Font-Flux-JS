@@ -64,31 +64,12 @@ We will start with OTF fonts, importing and exporting general file header data, 
 
 This section will be updated based on what phase of support we are working on.
 
-Unparsed tables (sorted by frequency)
-Tag Fonts Category
-GDEF 6 Advanced Typographic
-GSUB 6 Advanced Typographic
-gasp 6 TTF Hinting
-GPOS 5 Advanced Typographic
-prep 4 TTF Hinting
-SVG 3 Color Font
-FFTM 3 Non-standard (FontForge timestamp)
-cvt 3 TTF Hinting
-fpgm 3 TTF Hinting
-vhea 2 Vertical Metrics
-vmtx 2 Vertical Metrics
-COLR 1 Color Font
-CPAL 1 Color Font
-DSIG 1 Other Shared
-ltag 1 Apple-specific
-
-Recommended implementation priority
-
-- [x] GDEF, GPOS, GSUB (Advanced Typography) — present in most fonts, essential for proper text shaping
-- [x] gasp, prep, fpgm, cvt (TTF Hinting) — present in most TTF fonts; cvt/fpgm/prep are just raw instruction/value arrays, very simple to implement
-- [x] vhea, vmtx (Vertical Metrics) — structurally identical to hhea/hmtx, easy win
-- [x] SVG, COLR, CPAL (Color Fonts) — needed for color/emoji font support
-- [ ] DSIG, FFTM, ltag — low priority (DSIG is deprecated, FFTM is non-standard, ltag is Apple-only)
+1: fvar, avar, STAT, gvar (variable-font support is the biggest modern gap)
+2: HVAR, MVAR, VVAR, cvar (variation refinements; important after core variable support)
+3: kern (legacy, still common in older fonts), BASE (useful for complex scripts)
+4: CBLC/CBDT, sbix, EBLC/EBDT/EBSC (emoji/image-heavy ecosystems)
+Low priority: JSTF, MATH (domain-specific), meta, hdmx, LTSH, VDMX, PCLT, VORG, ltag
+Very low/skip for now: DSIG (deprecated), FFTM (non-standard), MERG (rare)
 
 # Overall Roadmap — Complete Table Checklist
 

@@ -5,9 +5,11 @@
 
 import { writeCFF } from './otf/table_CFF.js';
 import { writeCFF2 } from './otf/table_CFF2.js';
+import { writeAvar } from './sfnt/table_avar.js';
 import { writeCmap } from './sfnt/table_cmap.js';
 import { writeCOLR } from './sfnt/table_COLR.js';
 import { writeCPAL } from './sfnt/table_CPAL.js';
+import { writeFvar } from './sfnt/table_fvar.js';
 import { writeGDEF } from './sfnt/table_GDEF.js';
 import { writeGPOS } from './sfnt/table_GPOS.js';
 import { writeGSUB } from './sfnt/table_GSUB.js';
@@ -18,6 +20,7 @@ import { writeMaxp } from './sfnt/table_maxp.js';
 import { writeName } from './sfnt/table_name.js';
 import { writeOS2 } from './sfnt/table_OS-2.js';
 import { writePost } from './sfnt/table_post.js';
+import { writeSTAT } from './sfnt/table_STAT.js';
 import { writeSVG } from './sfnt/table_SVG.js';
 import { writeVhea } from './sfnt/table_vhea.js';
 import { writeVmtx } from './sfnt/table_vmtx.js';
@@ -25,6 +28,7 @@ import { writeCvt } from './ttf/table_cvt.js';
 import { writeFpgm } from './ttf/table_fpgm.js';
 import { writeGasp } from './ttf/table_gasp.js';
 import { writeGlyf, writeGlyfComputeOffsets } from './ttf/table_glyf.js';
+import { writeGvar } from './ttf/table_gvar.js';
 import { writeLoca } from './ttf/table_loca.js';
 import { writePrep } from './ttf/table_prep.js';
 
@@ -42,10 +46,14 @@ const tableWriters = {
 	name: writeName,
 	'OS/2': writeOS2,
 	post: writePost,
+	STAT: writeSTAT,
 	'CFF ': writeCFF,
 	CFF2: writeCFF2,
+	fvar: writeFvar,
+	avar: writeAvar,
 	loca: writeLoca,
 	glyf: writeGlyf,
+	gvar: writeGvar,
 	GDEF: writeGDEF,
 	GPOS: writeGPOS,
 	GSUB: writeGSUB,

@@ -259,6 +259,55 @@ test/
 
 ### loca Table (`src/ttf/table_loca.js`)
 
+### Variable Font Tables — Phase 1 (`fvar`, `avar`, `gvar`)
+
+- Implemented and registered:
+  - `src/sfnt/table_fvar.js` — `parseFvar()`, `writeFvar()`
+  - `src/sfnt/table_avar.js` — `parseAvar()`, `writeAvar()`
+  - `src/ttf/table_gvar.js` — `parseGvar()`, `writeGvar()`
+- Registry wiring complete:
+  - `src/import.js` tableParsers includes `fvar`, `avar`, `gvar`
+  - `src/export.js` tableWriters includes `fvar`, `avar`, `gvar`
+  - parse order updated in `src/import.js`: `fvar` then `avar` early; `gvar` after `glyf`
+- `fvar` implementation notes:
+  - Parses/writes axis records and instance records, including optional `postScriptNameID`
+  - Writer auto-upgrades `instanceSize` to include `postScriptNameID` for all instances if any instance includes it (missing values become `0xFFFF`)
+- `avar` implementation notes:
+  - v1-style segment map parse/write (`F2DOT14` from/to coordinate pairs)
+  - Stores per-axis maps as `segmentMaps[]` with `axisValueMaps[]`
+- `gvar` implementation notes:
+  - Container-level parse/write only (header, offset array, shared tuples, per-glyph variation blobs)
+  - Per-glyph tuple variation internals are intentionally left raw for now (`glyphVariationData[]` as byte arrays)
+  - Writer chooses short vs long offset encoding automatically and updates flag bit 0 accordingly
+  - Important: `sharedTuplesOffset` and `glyphVariationDataArrayOffset` are distinct; glyph offsets are relative to glyph data array start
+- New tests added:
+  - `test/sfnt/table_fvar.test.js`
+  - `test/sfnt/table_avar.test.js`
+  - `test/ttf/table_gvar.test.js`
+- Validation run:
+  - New table suites pass (`8/8`)
+  - `test/roundtrip.test.js` still passes (`2/2`)
+
+### Variable Font Tables — Phase 2 (`STAT`)
+
+- Implemented and registered:
+  - `src/sfnt/table_STAT.js` — `parseSTAT()`, `writeSTAT()`
+  - `src/import.js` tableParsers includes `STAT`
+  - `src/export.js` tableWriters includes `STAT`
+  - parse order in `src/import.js` includes `STAT` after `name`
+- Header support:
+  - Parses/writes STAT v1.0 (no `elidedFallbackNameID`) and v1.1/v1.2 (with `elidedFallbackNameID`)
+  - Preserves `designAxisSize` and supports axis-record extension bytes via per-axis `_extra`
+- Axis value table support:
+  - Format 1, 2, 3, and 4 fully parsed/written
+  - Unknown formats are preserved as `{ format, _raw }` for lossless round-trip
+  - `axisValueOffsets` are handled as relative to the axis-value-offsets-array origin (per spec)
+- New tests added:
+  - `test/sfnt/table_STAT.test.js` (v1.0 + v1.2, formats 1/2/3/4, unknown format preservation, stability)
+- Validation run:
+  - Variable table suites (`fvar`, `avar`, `gvar`, `STAT`) pass (`12/12`)
+  - `test/roundtrip.test.js` still passes (`2/2`)
+
 - **Binary index table**: Maps glyph IDs to byte positions inside the glyf table. Purely a binary-layout artifact — offsets depend on the specific glyf encoding.
 - **Two formats**: Short (head.indexToLocFormat=0): uint16 values × 2 = actual offset; Long (head.indexToLocFormat=1): uint32 actual offsets. Always numGlyphs+1 entries.
 - **Cross-table deps (parse)**: `head.indexToLocFormat` (format selector), `maxp.numGlyphs` (entry count)
