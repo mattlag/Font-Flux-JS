@@ -552,10 +552,13 @@ Advanced Typographic tables complete: **GDEF**, **GPOS**, **GSUB** (with shared 
 TTF Hinting tables complete: **cvt**, **fpgm**, **prep**, **gasp**.
 Vertical Metrics tables complete: **vhea**, **vmtx**.
 Color Font tables complete: **COLR**, **CPAL**, **SVG**.
+Variation tables complete: **fvar**, **avar**, **STAT**, **gvar**, **HVAR**, **MVAR**, **VVAR**, **cvar**.
+Additional OpenType tables complete: **kern**, **BASE**.
+Bitmap glyph tables complete: **EBLC**, **EBDT**, **EBSC**, **CBLC**, **CBDT**, **sbix**.
 
 Possible future work:
 
-- Additional tables (kern, MATH, BASE, JSTF, etc.)
+- Additional tables (MATH, JSTF, VORG, feat/morx, etc.)
 
 - WOFF/WOFF2 container support
 - Full JSON serialization (BigInt replacer/reviver)
@@ -615,3 +618,5 @@ Possible future work:
 34. **COLR v1 not fully parsed**: v1 has 32 Paint formats forming a complex DAG. We store the entire table as `_v1RawBytes` for round-trip fidelity rather than attempting full parsing. v0 is fully parsed.
 35. **SVG documents can be gzip-compressed**: Check for gzip magic bytes (0x1F, 0x8B, 0x08) at start of document data. Compressed docs stored as byte arrays; plain text as strings via TextDecoder/TextEncoder.
 36. **DataWriter method is `toArray()`, not `finish()`**: Easy to confuse. Always use `w.toArray()` to get the final byte array.
+37. **Bitmap table scope (block 4)**: `CBLC/CBDT/EBLC/EBDT/EBSC/sbix` are currently implemented as container-level parse/write with raw payload preservation for complex internals. This keeps round-trip stable while deferring deeper format-specific decoding.
+38. **No bitmap fixtures in sample fonts**: Current repository sample fonts did not expose these bitmap tags, so block-4 tests are synthetic round-trip tests focused on parser/writer fidelity and registry wiring.

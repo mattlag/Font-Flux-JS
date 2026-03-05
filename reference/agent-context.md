@@ -119,12 +119,12 @@ Tables that are identical for both TrueType- and CFF-based fonts.
 
 ### Bitmap Glyph Tables
 
-- [ ] EBLC — Embedded bitmap location data
-- [ ] EBDT — Embedded bitmap data
-- [ ] EBSC — Embedded bitmap scaling data
-- [ ] CBLC — Color bitmap location data
-- [ ] CBDT — Color bitmap data
-- [ ] sbix — Standard bitmap graphics
+- [x] EBLC — Embedded bitmap location data
+- [x] EBDT — Embedded bitmap data
+- [x] EBSC — Embedded bitmap scaling data
+- [x] CBLC — Color bitmap location data
+- [x] CBDT — Color bitmap data
+- [x] sbix — Standard bitmap graphics
 
 ### Color Font Tables
 

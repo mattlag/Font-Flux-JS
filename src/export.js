@@ -7,6 +7,8 @@ import { writeCFF } from './otf/table_CFF.js';
 import { writeCFF2 } from './otf/table_CFF2.js';
 import { writeAvar } from './sfnt/table_avar.js';
 import { writeBASE } from './sfnt/table_BASE.js';
+import { writeCBLC } from './sfnt/table_CBLC.js';
+import { writeCBDT } from './sfnt/table_CBDT.js';
 import { writeCmap } from './sfnt/table_cmap.js';
 import { writeCOLR } from './sfnt/table_COLR.js';
 import { writeCPAL } from './sfnt/table_CPAL.js';
@@ -26,6 +28,10 @@ import { writeOS2 } from './sfnt/table_OS-2.js';
 import { writePost } from './sfnt/table_post.js';
 import { writeSTAT } from './sfnt/table_STAT.js';
 import { writeSVG } from './sfnt/table_SVG.js';
+import { writeEBDT } from './sfnt/table_EBDT.js';
+import { writeEBLC } from './sfnt/table_EBLC.js';
+import { writeEBSC } from './sfnt/table_EBSC.js';
+import { writeSbix } from './sfnt/table_sbix.js';
 import { writeVhea } from './sfnt/table_vhea.js';
 import { writeVmtx } from './sfnt/table_vmtx.js';
 import { writeVVAR } from './sfnt/table_VVAR.js';
@@ -53,6 +59,8 @@ const tableWriters = {
 	MVAR: writeMVAR,
 	name: writeName,
 	BASE: writeBASE,
+	CBLC: writeCBLC,
+	CBDT: writeCBDT,
 	'OS/2': writeOS2,
 	kern: writeKern,
 	post: writePost,
@@ -77,6 +85,10 @@ const tableWriters = {
 	vmtx: writeVmtx,
 	COLR: writeCOLR,
 	CPAL: writeCPAL,
+	EBDT: writeEBDT,
+	EBLC: writeEBLC,
+	EBSC: writeEBSC,
+	sbix: writeSbix,
 	'SVG ': writeSVG,
 };
 
