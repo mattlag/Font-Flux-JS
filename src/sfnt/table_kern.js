@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : kern table
+ * Font Flux JS : kern table
  * Kerning Table (legacy)
  *
  * Supports OpenType 'kern' version 0 and Apple 'kern' version 1.0.

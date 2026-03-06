@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : OTF name table
+ * Font Flux JS : OTF name table
  * Naming Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/name

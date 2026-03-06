@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : OTF head table
+ * Font Flux JS : OTF head table
  * Font Header Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/head

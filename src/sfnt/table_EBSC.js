@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : EBSC table
+ * Font Flux JS : EBSC table
  * Embedded Bitmap Scaling Table
  */
 

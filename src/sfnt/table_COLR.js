@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : COLR table
+ * Font Flux JS : COLR table
  * Color Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/colr

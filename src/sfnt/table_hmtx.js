@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : OTF hmtx table
+ * Font Flux JS : OTF hmtx table
  * Horizontal Metrics Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/hmtx

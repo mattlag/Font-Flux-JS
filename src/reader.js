@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : DataReader
+ * Font Flux JS : DataReader
  * Cursor-based binary reader that wraps a DataView with auto-advancing
  * typed read methods for every OpenType data type.
  *

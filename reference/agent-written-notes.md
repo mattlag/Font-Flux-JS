@@ -1,11 +1,11 @@
-# Agent Working Notes — Font-to-JSON
+# Agent Working Notes — Font Flux JS
 
 > These notes are written BY agents FOR future agents. Optimized for fast onboarding.
 
 ## Quick Start
 
 - **Runtime**: Node.js, ES modules (`"type": "module"` in package.json)
-- **Bundler**: Vite ^7.3.1 — library build, entry `src/main.js`, output `dist/font-to-json.es.js`
+- **Bundler**: Vite ^7.3.1 — library build, entry `src/main.js`, output `dist/font-flux-js.es.js`
 - **Testing**: Vitest ^4.0.18 — run with `npx vitest run`, watch with `npx vitest`
 - **Test glob**: `test/**/*.test.js`
 - **All data is big-endian** (OpenType spec). DataReader/DataWriter default to big-endian.

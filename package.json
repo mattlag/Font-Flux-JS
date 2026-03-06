@@ -1,5 +1,5 @@
 {
-	"name": "font-to-json",
+	"name": "font-flux-js",
 	"version": "1.0.0",
 	"description": "Convert a font file to JSON... and back!",
 	"main": "src/main.js",
@@ -12,15 +12,15 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/mattlag/Font-to-JSON.git"
+		"url": "git+https://github.com/mattlag/Font-Flux-JS.git"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"bugs": {
-		"url": "https://github.com/mattlag/Font-to-JSON/issues"
+		"url": "https://github.com/mattlag/Font-Flux-JS/issues"
 	},
-	"homepage": "https://github.com/mattlag/Font-to-JSON#readme",
+	"homepage": "https://github.com/mattlag/Font-Flux-JS#readme",
 	"devDependencies": {
 		"vite": "^7.3.1",
 		"vitest": "^4.0.18"

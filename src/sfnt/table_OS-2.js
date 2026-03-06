@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : OTF OS/2 table
+ * Font Flux JS : OTF OS/2 table
  * OS/2 and Windows Metrics Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/os2

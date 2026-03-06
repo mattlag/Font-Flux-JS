@@ -1,4 +1,4 @@
-# Font-to-JSON
+# Font Flux JS
 
 This project aims to create a JavaScript library that can read in a binary font file (OTF, TTF, WOFF) and convert it's data into JSON format. Secondarily, this library will be able to take a properly formatted JSON file and convert it back to a font file. This will be distributed as a single .js file using JavaScript modules to be included in front-end HTML5 font editor programs.
 

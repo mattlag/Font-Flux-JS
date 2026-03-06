@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : GDEF — Glyph Definition Table
+ * Font Flux JS : GDEF — Glyph Definition Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/gdef
  *

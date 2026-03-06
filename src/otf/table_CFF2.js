@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : CFF2 (Compact Font Format version 2) table parser / writer.
+ * Font Flux JS : CFF2 (Compact Font Format version 2) table parser / writer.
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/cff2
  *

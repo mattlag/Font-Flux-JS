@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : sbix table
+ * Font Flux JS : sbix table
  * Standard Bitmap Graphics Table
  */
 

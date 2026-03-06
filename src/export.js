@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : Export
+ * Font Flux JS : Export
  * Takes a JSON font object and converts it back to binary font data.
  */
 

@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : OpenType Layout Common Table Formats
+ * Font Flux JS : OpenType Layout Common Table Formats
  *
  * Shared parse/write utilities for structures used by GDEF, GPOS, and GSUB.
  *

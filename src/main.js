@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON
+ * Font Flux JS
  * Main entry point - exposes import and export functionality.
  */
 

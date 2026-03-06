@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : VDMX table
+ * Font Flux JS : VDMX table
  * Vertical Device Metrics Table
  */
 

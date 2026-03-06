@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : OTF cmap table
+ * Font Flux JS : OTF cmap table
  * Character to Glyph Index Mapping Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/cmap

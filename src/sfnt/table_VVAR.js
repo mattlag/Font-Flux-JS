@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : VVAR table
+ * Font Flux JS : VVAR table
  * Vertical Metrics Variations Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/vvar

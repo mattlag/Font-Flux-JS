@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : OTF post table
+ * Font Flux JS : OTF post table
  * PostScript Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/post

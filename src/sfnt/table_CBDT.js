@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : CBDT table
+ * Font Flux JS : CBDT table
  * Color Bitmap Data Table
  */
 

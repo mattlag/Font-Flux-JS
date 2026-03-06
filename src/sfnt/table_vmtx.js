@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : vmtx table
+ * Font Flux JS : vmtx table
  * Vertical Metrics Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/vmtx

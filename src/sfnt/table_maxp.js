@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : OTF maxp table
+ * Font Flux JS : OTF maxp table
  * Maximum Profile Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/maxp

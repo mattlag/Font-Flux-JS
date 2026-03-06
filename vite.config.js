@@ -5,8 +5,8 @@ export default defineConfig({
 	build: {
 		lib: {
 			entry: resolve(__dirname, 'src/main.js'),
-			name: 'FontToJSON',
-			fileName: 'font-to-json',
+			name: 'FontFluxJS',
+			fileName: 'font-flux-js',
 			formats: ['es'],
 		},
 		outDir: 'dist',

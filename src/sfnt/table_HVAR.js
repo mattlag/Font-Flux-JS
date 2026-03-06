@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : HVAR table
+ * Font Flux JS : HVAR table
  * Horizontal Metrics Variations Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/hvar

@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : EBDT table
+ * Font Flux JS : EBDT table
  * Embedded Bitmap Data Table
  */
 

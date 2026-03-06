@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : OTF hhea table
+ * Font Flux JS : OTF hhea table
  * Horizontal Header Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/hhea

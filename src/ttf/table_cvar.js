@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : cvar table
+ * Font Flux JS : cvar table
  * CVT Variations Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/cvar

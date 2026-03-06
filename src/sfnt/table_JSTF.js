@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : JSTF table
+ * Font Flux JS : JSTF table
  * Justification Table
  *
  * Container-level parse/write preserving per-script subtables as raw bytes.

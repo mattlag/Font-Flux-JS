@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : Import
+ * Font Flux JS : Import
  * Reads binary font data and converts it to a JSON representation.
  */
 

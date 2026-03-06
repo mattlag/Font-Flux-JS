@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : MATH table
+ * Font Flux JS : MATH table
  * Mathematical Typesetting Table
  *
  * Container-level parse/write preserving referenced subtables as raw bytes.

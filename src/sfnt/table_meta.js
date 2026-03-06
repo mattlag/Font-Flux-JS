@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : meta table
+ * Font Flux JS : meta table
  * Metadata table
  */
 

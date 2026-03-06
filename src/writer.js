@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : DataWriter
+ * Font Flux JS : DataWriter
  * Cursor-based binary writer with auto-advancing typed write methods
  * for every OpenType data type.
  *

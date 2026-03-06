@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : DSIG table
+ * Font Flux JS : DSIG table
  * Digital Signature Table
  */
 

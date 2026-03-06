@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : VORG table
+ * Font Flux JS : VORG table
  * Vertical Origin Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/vorg

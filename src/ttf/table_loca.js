@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : loca (Index to Location) table parser / writer.
+ * Font Flux JS : loca (Index to Location) table parser / writer.
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/loca
  *

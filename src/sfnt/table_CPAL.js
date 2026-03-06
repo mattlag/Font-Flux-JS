@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : CPAL table
+ * Font Flux JS : CPAL table
  * Color Palette Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/cpal

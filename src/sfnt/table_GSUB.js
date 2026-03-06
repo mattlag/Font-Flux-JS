@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : GSUB — Glyph Substitution Table
+ * Font Flux JS : GSUB — Glyph Substitution Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/gsub
  *

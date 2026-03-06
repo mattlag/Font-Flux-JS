@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : CBLC table
+ * Font Flux JS : CBLC table
  * Color Bitmap Location Table
  *
  * Structurally identical to EBLC at top level.

@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : gvar table
+ * Font Flux JS : gvar table
  * Glyph Variations Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/gvar

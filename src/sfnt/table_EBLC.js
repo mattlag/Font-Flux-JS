@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : EBLC table
+ * Font Flux JS : EBLC table
  * Embedded Bitmap Location Table
  */
 

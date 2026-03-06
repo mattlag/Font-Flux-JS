@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : vhea table
+ * Font Flux JS : vhea table
  * Vertical Header Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/vhea

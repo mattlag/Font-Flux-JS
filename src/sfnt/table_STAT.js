@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : STAT table
+ * Font Flux JS : STAT table
  * Style Attributes Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/stat

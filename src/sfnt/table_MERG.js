@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : MERG table
+ * Font Flux JS : MERG table
  * Merge table (rare)
  *
  * Conservative implementation: preserves all bytes while exposing the

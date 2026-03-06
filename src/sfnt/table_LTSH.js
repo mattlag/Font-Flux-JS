@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : LTSH table
+ * Font Flux JS : LTSH table
  * Linear Threshold Table
  */
 

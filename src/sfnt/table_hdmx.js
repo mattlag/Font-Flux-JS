@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : hdmx table
+ * Font Flux JS : hdmx table
  * Horizontal Device Metrics Table
  */
 

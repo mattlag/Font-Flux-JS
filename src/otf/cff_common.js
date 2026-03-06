@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : CFF Common Utilities
+ * Font Flux JS : CFF Common Utilities
  * Shared DICT, INDEX, and number encoding/decoding for CFF v1 and CFF2.
  *
  * CFF spec:  Adobe Technical Note #5176

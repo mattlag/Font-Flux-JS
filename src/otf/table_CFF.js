@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : CFF (Compact Font Format) v1 table parser / writer.
+ * Font Flux JS : CFF (Compact Font Format) v1 table parser / writer.
  *
  * Spec: Adobe Technical Note #5176 — The Compact Font Format Specification.
  *

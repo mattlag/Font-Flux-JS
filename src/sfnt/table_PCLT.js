@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : PCLT table
+ * Font Flux JS : PCLT table
  * PCL 5 Table
  */
 

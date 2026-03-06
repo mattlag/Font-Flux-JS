@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : GPOS — Glyph Positioning Table
+ * Font Flux JS : GPOS — Glyph Positioning Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/gpos
  *

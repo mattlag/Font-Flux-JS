@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : glyf (Glyph Data) table parser / writer.
+ * Font Flux JS : glyf (Glyph Data) table parser / writer.
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/glyf
  *

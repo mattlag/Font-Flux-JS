@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : BASE table
+ * Font Flux JS : BASE table
  * Baseline Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/base

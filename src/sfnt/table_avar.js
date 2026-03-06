@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : avar table
+ * Font Flux JS : avar table
  * Axis Variations Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/avar

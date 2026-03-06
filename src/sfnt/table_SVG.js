@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : SVG table
+ * Font Flux JS : SVG table
  * SVG (Scalable Vector Graphics) Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/svg

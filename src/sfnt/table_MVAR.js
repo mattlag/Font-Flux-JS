@@ -1,5 +1,5 @@
 /**
- * Font-to-JSON : MVAR table
+ * Font Flux JS : MVAR table
  * Metrics Variations Table
  *
  * Spec: https://learn.microsoft.com/en-us/typography/opentype/spec/mvar
