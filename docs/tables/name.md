@@ -3,45 +3,81 @@
 ## Scope
 
 - Format family: Shared SFNT
-- Related tables: None
+- Table tag in JSON: `name`
 
-## JSON fragment patterns
+## Specs
 
-### Parsed form (recommended when this table is supported)
+- https://learn.microsoft.com/en-us/typography/opentype/spec/name
+- OpenType table registry: https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables
+
+## JSON Skeleton
+
+This skeleton reflects fields currently parsed/written by Font Flux JS for this table.
 
 ```json
 {
   "tables": {
     "name": {
+      "version": 0,
+      "names": null,
+      "langTagRecords": null,
       "_checksum": 0
     }
   }
 }
 ```
 
-### Raw fallback form (safe for unknown or WIP content)
+## Top-level Fields
+
+- `version` - number (0..65535) [spec type: `uint16`] (0)
+- `names` - implementation-defined
+- `langTagRecords` - implementation-defined
+
+
+
+
+## Validation Constraints
+
+- `version` supports 0 or 1 in this implementation.
+- Each entry in `names[]` should include `platformID`, `encodingID`, `languageID`, `nameID`, and `value`.
+- For `version = 1`, optional `langTagRecords[]` entries provide BCP 47 tags.
+- String encoding is platform-sensitive; unsupported data can be preserved with `"0x:..."` value form.
+
+## Authoring Example
 
 ```json
 {
-  "tables": {
-    "name": {
-      "_raw": [0, 1, 2, 3],
-      "_checksum": 0
-    }
-  }
+	"tables": {
+		"name": {
+			"version": 0,
+			"names": [
+				{ "platformID": 3, "encodingID": 1, "languageID": 1033, "nameID": 1, "value": "Example Family" },
+				{ "platformID": 3, "encodingID": 1, "languageID": 1033, "nameID": 2, "value": "Regular" }
+			],
+			"_checksum": 0
+		}
+	}
 }
 ```
 
-## Authoring notes
 
-- Keep table tag exactly as `name` (4 chars, including spaces where applicable).
-- Use parsed fields only when you understand the table structure and dependencies.
-- If you are unsure, preserve or author this table via `_raw` bytes.
-- Re-run `validateJSON` after every edit to catch cross-table issues early.
 
-## Common mistakes to avoid
+## Additional Nested Keys Seen In Implementation
 
-- Using the wrong tag case (for example `name` vs `NAME`).
-- Removing a dependency table without updating this table.
-- Supplying out-of-range byte values in `_raw`.
-- Mixing parsed and raw assumptions without re-validating and round-tripping.
+- `platformID`
+- `encodingID`
+- `languageID`
+- `nameID`
+- `length`
+- `stringOffset`
+- `tag`
+- `value`
+- `langTagRecords`
+- `bytes`
+- `stringLength`
+
+## Notes
+
+- Preserve `_checksum` for stable round-tripping.
+- If a table is only partially understood, prefer keeping unknown bytes in `_raw` instead of dropping data.
+- Validate with `validateJSON` after edits.

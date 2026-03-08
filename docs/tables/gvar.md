@@ -3,45 +3,106 @@
 ## Scope
 
 - Format family: TTF-specific
-- Related tables: `glyf`, `fvar`
+- Table tag in JSON: `gvar`
 
-## JSON fragment patterns
+## Specs
 
-### Parsed form (recommended when this table is supported)
+- https://learn.microsoft.com/en-us/typography/opentype/spec/gvar
+- OpenType table registry: https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables
+
+## JSON Skeleton
+
+This skeleton reflects fields currently parsed/written by Font Flux JS for this table.
 
 ```json
 {
   "tables": {
     "gvar": {
+      "majorVersion": 0,
+      "minorVersion": 0,
+      "axisCount": 0,
+      "sharedTuples": null,
+      "glyphVariationData": null,
+      "flags": 0,
       "_checksum": 0
     }
   }
 }
 ```
 
-### Raw fallback form (safe for unknown or WIP content)
+## Top-level Fields
+
+- `majorVersion` - number (0..65535) [spec type: `uint16`]
+- `minorVersion` - number (0..65535) [spec type: `uint16`]
+- `axisCount` - number (0..65535) [spec type: `uint16`]
+- `sharedTuples` - implementation-defined
+- `glyphVariationData` - implementation-defined
+- `flags` - number (0..65535) [spec type: `uint16`]
+
+
+## Nested JSON Structure
+
+Parsed gvar container shape:
 
 ```json
 {
-  "tables": {
-    "gvar": {
-      "_raw": [0, 1, 2, 3],
-      "_checksum": 0
-    }
-  }
+	"majorVersion": 1,
+	"minorVersion": 0,
+	"axisCount": 2,
+	"flags": 0,
+	"sharedTuples": [
+		[1.0, 0.0],
+		[0.5, -0.25]
+	],
+	"glyphVariationData": [
+		[0, 16, 32],
+		[]
+	]
 }
 ```
 
-## Authoring notes
+Notes:
 
-- Keep table tag exactly as `gvar` (4 chars, including spaces where applicable).
-- Use parsed fields only when you understand the table structure and dependencies.
-- If you are unsure, preserve or author this table via `_raw` bytes.
-- Re-run `validateJSON` after every edit to catch cross-table issues early.
+- This implementation parses/writes gvar container metadata and stores per-glyph variation tuple data as raw bytes.
+- `glyphVariationData` length defines glyph count for write.
+- Short vs long internal offsets are selected automatically on write based on payload size/alignment.
 
-## Common mistakes to avoid
 
-- Using the wrong tag case (for example `name` vs `NAME`).
-- Removing a dependency table without updating this table.
-- Supplying out-of-range byte values in `_raw`.
-- Mixing parsed and raw assumptions without re-validating and round-tripping.
+
+
+## Validation Constraints
+
+- `gvar` is meaningful with variable-font axis definitions from `fvar` (validator warns when missing).
+- `axisCount` should match the number of variation axes.
+- `glyphVariationData.length` defines glyph count for writing offsets.
+- Per-glyph tuple payloads are raw bytes in this implementation; preserve exact bytes when editing.
+
+## Authoring Example
+
+```json
+{
+	"tables": {
+		"gvar": {
+			"majorVersion": 1,
+			"minorVersion": 0,
+			"axisCount": 2,
+			"flags": 0,
+			"sharedTuples": [[1.0, 0.0]],
+			"glyphVariationData": [[], []],
+			"_checksum": 0
+		}
+	}
+}
+```
+
+
+
+## Additional Nested Keys Seen In Implementation
+
+- None inferred from source.
+
+## Notes
+
+- Preserve `_checksum` for stable round-tripping.
+- If a table is only partially understood, prefer keeping unknown bytes in `_raw` instead of dropping data.
+- Validate with `validateJSON` after edits.

@@ -3,45 +3,86 @@
 ## Scope
 
 - Format family: Shared SFNT
-- Related tables: `name`
+- Table tag in JSON: `fvar`
 
-## JSON fragment patterns
+## Specs
 
-### Parsed form (recommended when this table is supported)
+- https://learn.microsoft.com/en-us/typography/opentype/spec/fvar
+- OpenType table registry: https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables
+
+## JSON Skeleton
+
+This skeleton reflects fields currently parsed/written by Font Flux JS for this table.
 
 ```json
 {
   "tables": {
     "fvar": {
+      "majorVersion": 0,
+      "minorVersion": 0,
+      "reserved": 0,
+      "axes": null,
+      "instances": null,
       "_checksum": 0
     }
   }
 }
 ```
 
-### Raw fallback form (safe for unknown or WIP content)
+## Top-level Fields
+
+- `majorVersion` - number (0..65535) [spec type: `uint16`]
+- `minorVersion` - number (0..65535) [spec type: `uint16`]
+- `reserved` - number (0..65535)
+- `axes` - implementation-defined
+- `instances` - implementation-defined
+
+
+
+
+## Validation Constraints
+
+- `axisSize` is 20 for the current format; each axis needs `axisTag`, min/default/max values, and name/flags metadata.
+- Instance coordinate count should match the number of axes.
+- `instanceSize` grows by 2 bytes when any instance uses `postScriptNameID`.
+- `reserved` is typically `2`.
+
+## Authoring Example
 
 ```json
 {
-  "tables": {
-    "fvar": {
-      "_raw": [0, 1, 2, 3],
-      "_checksum": 0
-    }
-  }
+	"tables": {
+		"fvar": {
+			"majorVersion": 1,
+			"minorVersion": 0,
+			"reserved": 2,
+			"axes": [
+				{ "axisTag": "wght", "minValue": 100, "defaultValue": 400, "maxValue": 900, "flags": 0, "axisNameID": 256 }
+			],
+			"instances": [
+				{ "subfamilyNameID": 257, "flags": 0, "coordinates": [400], "postScriptNameID": 258 }
+			],
+			"_checksum": 0
+		}
+	}
 }
 ```
 
-## Authoring notes
 
-- Keep table tag exactly as `fvar` (4 chars, including spaces where applicable).
-- Use parsed fields only when you understand the table structure and dependencies.
-- If you are unsure, preserve or author this table via `_raw` bytes.
-- Re-run `validateJSON` after every edit to catch cross-table issues early.
 
-## Common mistakes to avoid
+## Additional Nested Keys Seen In Implementation
 
-- Using the wrong tag case (for example `name` vs `NAME`).
-- Removing a dependency table without updating this table.
-- Supplying out-of-range byte values in `_raw`.
-- Mixing parsed and raw assumptions without re-validating and round-tripping.
+- `axisTag`
+- `minValue`
+- `defaultValue`
+- `maxValue`
+- `flags`
+- `axisNameID`
+- `subfamilyNameID`
+- `coordinates`
+
+## Notes
+
+- Preserve `_checksum` for stable round-tripping.
+- If a table is only partially understood, prefer keeping unknown bytes in `_raw` instead of dropping data.
+- Validate with `validateJSON` after edits.

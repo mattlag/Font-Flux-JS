@@ -9,6 +9,7 @@
 - **Testing**: Vitest ^4.0.18 — run with `npx vitest run`, watch with `npx vitest`
 - **Test glob**: `test/**/*.test.js`
 - **All data is big-endian** (OpenType spec). DataReader/DataWriter default to big-endian.
+- **Table docs generator**: `npm run docs:tables` rebuilds `docs/tables/*.md` from `src/**/table_*.js` parse/write shapes and embedded spec links.
 
 ## Architecture
 

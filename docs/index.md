@@ -11,6 +11,10 @@ This site is for humans writing or editing font JSON by hand.
 ## Quick links
 
 - [Validation guide](./guide/validation.md)
+- [Creating Fonts](./creating-fonts.md)
+- [Creating an OTF](./creating-otf.md)
+- [Creating a TTF](./creating-ttf.md)
+- [Creating a TTC / OTC Collection](./creating-ttc-otc.md)
 - [Table references](./tables/index.md)
 
 ## Top-level JSON shape

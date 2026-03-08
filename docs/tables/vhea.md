@@ -3,45 +3,90 @@
 ## Scope
 
 - Format family: Shared SFNT
-- Related tables: `vmtx`
+- Table tag in JSON: `vhea`
 
-## JSON fragment patterns
+## Specs
 
-### Parsed form (recommended when this table is supported)
+- https://learn.microsoft.com/en-us/typography/opentype/spec/vhea
+- OpenType table registry: https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables
+
+## JSON Skeleton
+
+This skeleton reflects fields currently parsed/written by Font Flux JS for this table.
 
 ```json
 {
   "tables": {
     "vhea": {
+      "version": 0,
+      "vertTypoAscender": 0,
+      "vertTypoDescender": 0,
+      "vertTypoLineGap": 0,
+      "advanceHeightMax": 0,
+      "minTopSideBearing": 0,
+      "minBottomSideBearing": 0,
+      "yMaxExtent": 0,
+      "caretSlopeRise": 0,
+      "caretSlopeRun": 0,
+      "caretOffset": 0,
+      "reserved1": 0,
+      "reserved2": 0,
+      "reserved3": 0,
+      "reserved4": 0,
+      "metricDataFormat": 0,
+      "numOfLongVerMetrics": 0,
       "_checksum": 0
     }
   }
 }
 ```
 
-### Raw fallback form (safe for unknown or WIP content)
+## Top-level Fields
 
-```json
-{
-  "tables": {
-    "vhea": {
-      "_raw": [0, 1, 2, 3],
-      "_checksum": 0
-    }
-  }
-}
-```
+- `version` - number [spec type: `Version16Dot16`] (0x00010000 (1.0) or 0x00011000 (1.1))
+- `vertTypoAscender` - number [spec type: `FWORD`] ((v1.0: "ascent"))
+- `vertTypoDescender` - number [spec type: `FWORD`] ((v1.0: "descent"))
+- `vertTypoLineGap` - number [spec type: `FWORD`] ((v1.0: "lineGap"))
+- `advanceHeightMax` - number [spec type: `UFWORD`]
+- `minTopSideBearing` - number [spec type: `FWORD`]
+- `minBottomSideBearing` - number [spec type: `FWORD`]
+- `yMaxExtent` - number [spec type: `FWORD`]
+- `caretSlopeRise` - number (-32768..32767) [spec type: `int16`]
+- `caretSlopeRun` - number (-32768..32767) [spec type: `int16`]
+- `caretOffset` - number (-32768..32767) [spec type: `int16`]
+- `reserved1` - number (-32768..32767)
+- `reserved2` - number (-32768..32767)
+- `reserved3` - number (-32768..32767)
+- `reserved4` - number (-32768..32767)
+- `metricDataFormat` - number (-32768..32767) [spec type: `int16`] (0 for current format)
+- `numOfLongVerMetrics` - number (0..65535) [spec type: `uint16`]
 
-## Authoring notes
 
-- Keep table tag exactly as `vhea` (4 chars, including spaces where applicable).
-- Use parsed fields only when you understand the table structure and dependencies.
-- If you are unsure, preserve or author this table via `_raw` bytes.
-- Re-run `validateJSON` after every edit to catch cross-table issues early.
 
-## Common mistakes to avoid
 
-- Using the wrong tag case (for example `name` vs `NAME`).
-- Removing a dependency table without updating this table.
-- Supplying out-of-range byte values in `_raw`.
-- Mixing parsed and raw assumptions without re-validating and round-tripping.
+
+## Additional Nested Keys Seen In Implementation
+
+- `version`
+- `vertTypoAscender`
+- `vertTypoDescender`
+- `vertTypoLineGap`
+- `advanceHeightMax`
+- `minTopSideBearing`
+- `minBottomSideBearing`
+- `yMaxExtent`
+- `caretSlopeRise`
+- `caretSlopeRun`
+- `caretOffset`
+- `reserved1`
+- `reserved2`
+- `reserved3`
+- `reserved4`
+- `metricDataFormat`
+- `numOfLongVerMetrics`
+
+## Notes
+
+- Preserve `_checksum` for stable round-tripping.
+- If a table is only partially understood, prefer keeping unknown bytes in `_raw` instead of dropping data.
+- Validate with `validateJSON` after edits.

@@ -3,45 +3,81 @@
 ## Scope
 
 - Format family: Shared SFNT
-- Related tables: `fvar`
+- Table tag in JSON: `avar`
 
-## JSON fragment patterns
+## Specs
 
-### Parsed form (recommended when this table is supported)
+- https://learn.microsoft.com/en-us/typography/opentype/spec/avar
+- OpenType table registry: https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables
+
+## JSON Skeleton
+
+This skeleton reflects fields currently parsed/written by Font Flux JS for this table.
 
 ```json
 {
   "tables": {
     "avar": {
+      "majorVersion": 0,
+      "minorVersion": 0,
+      "reserved": 0,
+      "segmentMaps": null,
       "_checksum": 0
     }
   }
 }
 ```
 
-### Raw fallback form (safe for unknown or WIP content)
+## Top-level Fields
+
+- `majorVersion` - number (0..65535)
+- `minorVersion` - number (0..65535)
+- `reserved` - number (0..65535)
+- `segmentMaps` - implementation-defined
+
+
+
+
+## Validation Constraints
+
+- `segmentMaps.length` should match axis count from `fvar`.
+- Each segment map should include monotonic `axisValueMaps` pairs from normalized `fromCoordinate` to `toCoordinate` values.
+- Coordinates are F2DOT14 values in normalized axis space.
+- `reserved` is typically `0`.
+
+## Authoring Example
 
 ```json
 {
-  "tables": {
-    "avar": {
-      "_raw": [0, 1, 2, 3],
-      "_checksum": 0
-    }
-  }
+	"tables": {
+		"avar": {
+			"majorVersion": 1,
+			"minorVersion": 0,
+			"reserved": 0,
+			"segmentMaps": [
+				{
+					"axisValueMaps": [
+						{ "fromCoordinate": -1.0, "toCoordinate": -1.0 },
+						{ "fromCoordinate": 0.0, "toCoordinate": 0.0 },
+						{ "fromCoordinate": 1.0, "toCoordinate": 1.0 }
+					]
+				}
+			],
+			"_checksum": 0
+		}
+	}
 }
 ```
 
-## Authoring notes
 
-- Keep table tag exactly as `avar` (4 chars, including spaces where applicable).
-- Use parsed fields only when you understand the table structure and dependencies.
-- If you are unsure, preserve or author this table via `_raw` bytes.
-- Re-run `validateJSON` after every edit to catch cross-table issues early.
 
-## Common mistakes to avoid
+## Additional Nested Keys Seen In Implementation
 
-- Using the wrong tag case (for example `name` vs `NAME`).
-- Removing a dependency table without updating this table.
-- Supplying out-of-range byte values in `_raw`.
-- Mixing parsed and raw assumptions without re-validating and round-tripping.
+- `fromCoordinate`
+- `toCoordinate`
+
+## Notes
+
+- Preserve `_checksum` for stable round-tripping.
+- If a table is only partially understood, prefer keeping unknown bytes in `_raw` instead of dropping data.
+- Validate with `validateJSON` after edits.

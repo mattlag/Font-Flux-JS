@@ -7,6 +7,7 @@ export default defineConfig({
 	themeConfig: {
 		nav: [
 			{ text: 'Home', link: '/' },
+			{ text: 'Creating Fonts', link: '/creating-fonts' },
 			{ text: 'Validation', link: '/guide/validation' },
 			{ text: 'Tables', link: '/tables/' },
 		],
@@ -15,6 +16,10 @@ export default defineConfig({
 				text: 'Guide',
 				items: [
 					{ text: 'Overview', link: '/' },
+					{ text: 'Creating Fonts', link: '/creating-fonts' },
+					{ text: 'Creating an OTF', link: '/creating-otf' },
+					{ text: 'Creating a TTF', link: '/creating-ttf' },
+					{ text: 'Creating a TTC / OTC', link: '/creating-ttc-otc' },
 					{ text: 'Validation', link: '/guide/validation' },
 				],
 			},

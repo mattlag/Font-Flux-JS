@@ -3,45 +3,93 @@
 ## Scope
 
 - Format family: Shared SFNT
-- Related tables: `hmtx`
+- Table tag in JSON: `hhea`
 
-## JSON fragment patterns
+## Specs
 
-### Parsed form (recommended when this table is supported)
+- https://learn.microsoft.com/en-us/typography/opentype/spec/hhea
+- OpenType table registry: https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables
+
+## JSON Skeleton
+
+This skeleton reflects fields currently parsed/written by Font Flux JS for this table.
 
 ```json
 {
   "tables": {
     "hhea": {
+      "majorVersion": 0,
+      "minorVersion": 0,
+      "ascender": 0,
+      "descender": 0,
+      "lineGap": 0,
+      "advanceWidthMax": 0,
+      "minLeftSideBearing": 0,
+      "minRightSideBearing": 0,
+      "xMaxExtent": 0,
+      "caretSlopeRise": 0,
+      "caretSlopeRun": 0,
+      "caretOffset": 0,
+      "reserved1": 0,
+      "reserved2": 0,
+      "reserved3": 0,
+      "reserved4": 0,
+      "metricDataFormat": 0,
+      "numberOfHMetrics": 0,
       "_checksum": 0
     }
   }
 }
 ```
 
-### Raw fallback form (safe for unknown or WIP content)
+## Top-level Fields
 
-```json
-{
-  "tables": {
-    "hhea": {
-      "_raw": [0, 1, 2, 3],
-      "_checksum": 0
-    }
-  }
-}
-```
+- `majorVersion` - number (0..65535) [spec type: `uint16`] (must be 1)
+- `minorVersion` - number (0..65535) [spec type: `uint16`] (must be 0)
+- `ascender` - number [spec type: `FWORD`]
+- `descender` - number [spec type: `FWORD`]
+- `lineGap` - number [spec type: `FWORD`]
+- `advanceWidthMax` - number [spec type: `UFWORD`]
+- `minLeftSideBearing` - number [spec type: `FWORD`]
+- `minRightSideBearing` - number [spec type: `FWORD`]
+- `xMaxExtent` - number [spec type: `FWORD`]
+- `caretSlopeRise` - number (-32768..32767) [spec type: `int16`]
+- `caretSlopeRun` - number (-32768..32767) [spec type: `int16`]
+- `caretOffset` - number (-32768..32767) [spec type: `int16`]
+- `reserved1` - number (-32768..32767)
+- `reserved2` - number (-32768..32767)
+- `reserved3` - number (-32768..32767)
+- `reserved4` - number (-32768..32767)
+- `metricDataFormat` - number (-32768..32767) [spec type: `int16`] (0 for current format)
+- `numberOfHMetrics` - number (0..65535) [spec type: `uint16`]
 
-## Authoring notes
 
-- Keep table tag exactly as `hhea` (4 chars, including spaces where applicable).
-- Use parsed fields only when you understand the table structure and dependencies.
-- If you are unsure, preserve or author this table via `_raw` bytes.
-- Re-run `validateJSON` after every edit to catch cross-table issues early.
 
-## Common mistakes to avoid
 
-- Using the wrong tag case (for example `name` vs `NAME`).
-- Removing a dependency table without updating this table.
-- Supplying out-of-range byte values in `_raw`.
-- Mixing parsed and raw assumptions without re-validating and round-tripping.
+
+## Additional Nested Keys Seen In Implementation
+
+- `majorVersion`
+- `minorVersion`
+- `ascender`
+- `descender`
+- `lineGap`
+- `advanceWidthMax`
+- `minLeftSideBearing`
+- `minRightSideBearing`
+- `xMaxExtent`
+- `caretSlopeRise`
+- `caretSlopeRun`
+- `caretOffset`
+- `reserved1`
+- `reserved2`
+- `reserved3`
+- `reserved4`
+- `metricDataFormat`
+- `numberOfHMetrics`
+
+## Notes
+
+- Preserve `_checksum` for stable round-tripping.
+- If a table is only partially understood, prefer keeping unknown bytes in `_raw` instead of dropping data.
+- Validate with `validateJSON` after edits.

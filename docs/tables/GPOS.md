@@ -3,45 +3,126 @@
 ## Scope
 
 - Format family: Shared SFNT
-- Related tables: `GDEF`
+- Table tag in JSON: `GPOS`
 
-## JSON fragment patterns
+## Specs
 
-### Parsed form (recommended when this table is supported)
+- https://learn.microsoft.com/en-us/typography/opentype/spec/gpos
+- OpenType table registry: https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables
+
+## JSON Skeleton
+
+This skeleton reflects fields currently parsed/written by Font Flux JS for this table.
 
 ```json
 {
   "tables": {
     "GPOS": {
+      "majorVersion": 0,
+      "minorVersion": 0,
       "_checksum": 0
     }
   }
 }
 ```
 
-### Raw fallback form (safe for unknown or WIP content)
+## Top-level Fields
+
+- `majorVersion` - number (0..65535)
+- `minorVersion` - number (0..65535)
+
+
+## Nested JSON Structure
+
+Top-level layout (shared OpenType Layout container):
 
 ```json
 {
-  "tables": {
-    "GPOS": {
-      "_raw": [0, 1, 2, 3],
-      "_checksum": 0
-    }
-  }
+	"majorVersion": 1,
+	"minorVersion": 1,
+	"scriptList": { "scriptRecords": [] },
+	"featureList": { "featureRecords": [] },
+	"lookupList": {
+		"lookups": [
+			{
+				"lookupType": 1,
+				"lookupFlag": 0,
+				"subtables": [
+					{
+						"format": 1,
+						"coverage": { "format": 1, "glyphArray": [10, 11] },
+						"valueFormat": 5,
+						"valueRecord": { "xPlacement": 20, "xAdvance": 30 }
+					}
+				]
+			}
+		]
+	},
+	"featureVariations": { "featureVariationRecords": [] }
 }
 ```
 
-## Authoring notes
+Lookup subtable families by `lookupType`:
 
-- Keep table tag exactly as `GPOS` (4 chars, including spaces where applicable).
-- Use parsed fields only when you understand the table structure and dependencies.
-- If you are unsure, preserve or author this table via `_raw` bytes.
-- Re-run `validateJSON` after every edit to catch cross-table issues early.
+- `1` SinglePos: `valueFormat` + `valueRecord` or `valueRecords[]`.
+- `2` PairPos: either `pairSets[]` (format 1) or class-based `class1Records` (format 2).
+- `3` CursivePos: `entryExitRecords[]` with `entryAnchor`/`exitAnchor`.
+- `4` MarkBasePos: `markArray` + `baseArray`.
+- `5` MarkLigPos: `markArray` + `ligatureArray`.
+- `6` MarkMarkPos: `mark1Array` + `mark2Array`.
+- `7` ContextPos and `8` ChainedContextPos: shared Sequence/ChainedSequence context structures.
+- `9` ExtensionPos: wraps another positioning subtable in `subtable` with `extensionLookupType`.
 
-## Common mistakes to avoid
 
-- Using the wrong tag case (for example `name` vs `NAME`).
-- Removing a dependency table without updating this table.
-- Supplying out-of-range byte values in `_raw`.
-- Mixing parsed and raw assumptions without re-validating and round-tripping.
+
+
+## Validation Constraints
+
+- `majorVersion` is typically `1`.
+- `minorVersion >= 1` may include `featureVariations`.
+- Each lookup's `lookupType` must match the subtable shapes it contains.
+- ValueRecord fields must match `valueFormat` bits (for Single/Pair positioning subtables).
+- Practical dependency: keep `GDEF` present when using mark attachment lookups (types 4, 5, 6).
+
+## Authoring Example
+
+```json
+{
+	"tables": {
+		"GPOS": {
+			"majorVersion": 1,
+			"minorVersion": 0,
+			"scriptList": { "scriptRecords": [] },
+			"featureList": { "featureRecords": [] },
+			"lookupList": { "lookups": [] },
+			"_checksum": 0
+		}
+	}
+}
+```
+
+
+
+## Additional Nested Keys Seen In Implementation
+
+- `markClass`
+- `markAnchor`
+- `scriptList`
+- `featureList`
+- `lookupList`
+- `featureVariations`
+- `entryAnchor`
+- `exitAnchor`
+- `subtables`
+- `coverage`
+- `format`
+- `glyphs`
+- `pairSets`
+- `entry`
+- `exit`
+
+## Notes
+
+- Preserve `_checksum` for stable round-tripping.
+- If a table is only partially understood, prefer keeping unknown bytes in `_raw` instead of dropping data.
+- Validate with `validateJSON` after edits.

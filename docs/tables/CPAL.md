@@ -3,45 +3,86 @@
 ## Scope
 
 - Format family: Shared SFNT
-- Related tables: `COLR`
+- Table tag in JSON: `CPAL`
 
-## JSON fragment patterns
+## Specs
 
-### Parsed form (recommended when this table is supported)
+- https://learn.microsoft.com/en-us/typography/opentype/spec/cpal
+- OpenType table registry: https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables
+
+## JSON Skeleton
+
+This skeleton reflects fields currently parsed/written by Font Flux JS for this table.
 
 ```json
 {
   "tables": {
     "CPAL": {
+      "version": 0,
+      "numPaletteEntries": 0,
+      "palettes": null,
+      "paletteTypes": null,
+      "paletteLabels": null,
+      "paletteEntryLabels": null,
       "_checksum": 0
     }
   }
 }
 ```
 
-### Raw fallback form (safe for unknown or WIP content)
+## Top-level Fields
+
+- `version` - number (0..65535) [spec type: `uint16`]
+- `numPaletteEntries` - number (0..65535) [spec type: `uint16`] (entries per palette)
+- `palettes` - implementation-defined
+- `paletteTypes` - implementation-defined
+- `paletteLabels` - implementation-defined
+- `paletteEntryLabels` - implementation-defined
+
+
+
+
+## Validation Constraints
+
+- `numPaletteEntries` should match the length of each palette in `palettes[]`.
+- `version = 0` supports basic palette arrays only.
+- `version >= 1` may include `paletteTypes`, `paletteLabels`, and `paletteEntryLabels`.
+- All color channels are uint8 BGRA values (`blue`, `green`, `red`, `alpha`).
+
+## Authoring Example
 
 ```json
 {
-  "tables": {
-    "CPAL": {
-      "_raw": [0, 1, 2, 3],
-      "_checksum": 0
-    }
-  }
+	"tables": {
+		"CPAL": {
+			"version": 0,
+			"numPaletteEntries": 2,
+			"palettes": [
+				[
+					{ "blue": 0, "green": 0, "red": 0, "alpha": 255 },
+					{ "blue": 255, "green": 255, "red": 255, "alpha": 255 }
+				]
+			],
+			"_checksum": 0
+		}
+	}
 }
 ```
 
-## Authoring notes
 
-- Keep table tag exactly as `CPAL` (4 chars, including spaces where applicable).
-- Use parsed fields only when you understand the table structure and dependencies.
-- If you are unsure, preserve or author this table via `_raw` bytes.
-- Re-run `validateJSON` after every edit to catch cross-table issues early.
 
-## Common mistakes to avoid
+## Additional Nested Keys Seen In Implementation
 
-- Using the wrong tag case (for example `name` vs `NAME`).
-- Removing a dependency table without updating this table.
-- Supplying out-of-range byte values in `_raw`.
-- Mixing parsed and raw assumptions without re-validating and round-tripping.
+- `blue`
+- `green`
+- `red`
+- `alpha`
+- `paletteTypes`
+- `paletteLabels`
+- `paletteEntryLabels`
+
+## Notes
+
+- Preserve `_checksum` for stable round-tripping.
+- If a table is only partially understood, prefer keeping unknown bytes in `_raw` instead of dropping data.
+- Validate with `validateJSON` after edits.

@@ -3,11 +3,16 @@
 ## Scope
 
 - Format family: Shared SFNT
-- Related tables: `EBLC`
+- Table tag in JSON: `EBDT`
 
-## JSON fragment patterns
+## Specs
 
-### Parsed form (recommended when this table is supported)
+- (No explicit spec URL found in implementation source)
+- OpenType table registry: https://learn.microsoft.com/en-us/typography/opentype/spec/otff#font-tables
+
+## JSON Skeleton
+
+This skeleton reflects fields currently parsed/written by Font Flux JS for this table.
 
 ```json
 {
@@ -19,29 +24,20 @@
 }
 ```
 
-### Raw fallback form (safe for unknown or WIP content)
+## Top-level Fields
 
-```json
-{
-  "tables": {
-    "EBDT": {
-      "_raw": [0, 1, 2, 3],
-      "_checksum": 0
-    }
-  }
-}
-```
+- No strongly inferred top-level parsed fields found (table may be raw/opaque or heavily nested).
 
-## Authoring notes
 
-- Keep table tag exactly as `EBDT` (4 chars, including spaces where applicable).
-- Use parsed fields only when you understand the table structure and dependencies.
-- If you are unsure, preserve or author this table via `_raw` bytes.
-- Re-run `validateJSON` after every edit to catch cross-table issues early.
 
-## Common mistakes to avoid
 
-- Using the wrong tag case (for example `name` vs `NAME`).
-- Removing a dependency table without updating this table.
-- Supplying out-of-range byte values in `_raw`.
-- Mixing parsed and raw assumptions without re-validating and round-tripping.
+
+## Additional Nested Keys Seen In Implementation
+
+- None inferred from source.
+
+## Notes
+
+- Preserve `_checksum` for stable round-tripping.
+- If a table is only partially understood, prefer keeping unknown bytes in `_raw` instead of dropping data.
+- Validate with `validateJSON` after edits.
