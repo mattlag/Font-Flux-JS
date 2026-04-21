@@ -69,15 +69,21 @@ export function buildRawFromSimplified(simplified) {
 		if (wantGpos) {
 			// Build or merge GPOS kerning
 			const existingGPOS = simplified.features?.GPOS;
-			if (existingGPOS) {
-				tables.GPOS = mergeKerningIntoGPOS(
+			const hasValidGPOS =
+				existingGPOS?.scriptList?.scriptRecords &&
+				existingGPOS?.featureList?.featureRecords &&
+				existingGPOS?.lookupList?.lookups;
+			let gpos;
+			if (hasValidGPOS) {
+				gpos = mergeKerningIntoGPOS(
 					existingGPOS,
 					simplified.kerning,
 					glyphs,
 				);
 			} else {
-				tables.GPOS = buildGPOSFromKerning(simplified.kerning, glyphs);
+				gpos = buildGPOSFromKerning(simplified.kerning, glyphs);
 			}
+			if (gpos) tables.GPOS = gpos;
 		}
 
 		if (wantKern) {
@@ -1472,6 +1478,11 @@ function buildGPOSFromKerning(kerning, glyphs) {
 function mergeKerningIntoGPOS(existingGPOS, kerning, glyphs) {
 	const { pairs } = resolveKerningPairs(kerning, glyphs);
 	const gpos = JSON.parse(JSON.stringify(existingGPOS)); // deep clone
+
+	// Guard against incomplete GPOS structure
+	if (!gpos.scriptList?.scriptRecords || !gpos.featureList?.featureRecords || !gpos.lookupList?.lookups) {
+		return buildGPOSFromKerning(kerning, glyphs);
+	}
 
 	if (pairs.length === 0) return gpos;
 

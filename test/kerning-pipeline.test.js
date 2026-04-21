@@ -819,3 +819,72 @@ describe('cross-format kerning conversion', () => {
 		expect(result.tables.kern).toBeUndefined();
 	});
 });
+describe('GPOS kerning with incomplete features.GPOS', () => {
+	const glyphs = Array.from({ length: 10 }, (_, i) => ({
+		name: `glyph${i}`,
+		advanceWidth: 500,
+		codePoint: i > 0 ? 64 + i : null,
+	}));
+
+	const baseFont = {
+		font: {
+			family: 'Test',
+			unitsPerEm: 1000,
+			ascender: 800,
+			descender: -200,
+		},
+		glyphs,
+		kerning: [{ left: 'glyph1', right: 'glyph2', value: -80 }],
+	};
+
+	it('should build GPOS when features.GPOS is an empty object', () => {
+		const fontData = { ...baseFont, features: { GPOS: {} } };
+		const result = buildRawFromSimplified(fontData);
+		expect(result.tables.GPOS).toBeDefined();
+		expect(result.tables.GPOS.scriptList.scriptRecords.length).toBeGreaterThan(0);
+
+		const bytes = writeGPOS(result.tables.GPOS);
+		expect(bytes.length).toBeGreaterThan(0);
+	});
+
+	it('should build GPOS when features.GPOS has no scriptList', () => {
+		const fontData = {
+			...baseFont,
+			features: {
+				GPOS: {
+					majorVersion: 1,
+					minorVersion: 0,
+					featureList: { featureRecords: [] },
+					lookupList: { lookups: [] },
+				},
+			},
+		};
+		const result = buildRawFromSimplified(fontData);
+		expect(result.tables.GPOS).toBeDefined();
+		expect(result.tables.GPOS.scriptList.scriptRecords.length).toBeGreaterThan(0);
+	});
+
+	it('should build GPOS when features.GPOS has no featureList', () => {
+		const fontData = {
+			...baseFont,
+			features: {
+				GPOS: {
+					majorVersion: 1,
+					minorVersion: 0,
+					scriptList: { scriptRecords: [] },
+					lookupList: { lookups: [] },
+				},
+			},
+		};
+		const result = buildRawFromSimplified(fontData);
+		expect(result.tables.GPOS).toBeDefined();
+		expect(result.tables.GPOS.featureList.featureRecords.length).toBeGreaterThan(0);
+	});
+
+	it('should build GPOS when features.GPOS is true (truthy non-object)', () => {
+		const fontData = { ...baseFont, features: { GPOS: true } };
+		const result = buildRawFromSimplified(fontData);
+		expect(result.tables.GPOS).toBeDefined();
+		expect(result.tables.GPOS.scriptList.scriptRecords.length).toBeGreaterThan(0);
+	});
+});
