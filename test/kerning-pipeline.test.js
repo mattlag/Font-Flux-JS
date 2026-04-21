@@ -841,7 +841,9 @@ describe('GPOS kerning with incomplete features.GPOS', () => {
 		const fontData = { ...baseFont, features: { GPOS: {} } };
 		const result = buildRawFromSimplified(fontData);
 		expect(result.tables.GPOS).toBeDefined();
-		expect(result.tables.GPOS.scriptList.scriptRecords.length).toBeGreaterThan(0);
+		expect(result.tables.GPOS.scriptList.scriptRecords.length).toBeGreaterThan(
+			0,
+		);
 
 		const bytes = writeGPOS(result.tables.GPOS);
 		expect(bytes.length).toBeGreaterThan(0);
@@ -861,7 +863,9 @@ describe('GPOS kerning with incomplete features.GPOS', () => {
 		};
 		const result = buildRawFromSimplified(fontData);
 		expect(result.tables.GPOS).toBeDefined();
-		expect(result.tables.GPOS.scriptList.scriptRecords.length).toBeGreaterThan(0);
+		expect(result.tables.GPOS.scriptList.scriptRecords.length).toBeGreaterThan(
+			0,
+		);
 	});
 
 	it('should build GPOS when features.GPOS has no featureList', () => {
@@ -878,13 +882,17 @@ describe('GPOS kerning with incomplete features.GPOS', () => {
 		};
 		const result = buildRawFromSimplified(fontData);
 		expect(result.tables.GPOS).toBeDefined();
-		expect(result.tables.GPOS.featureList.featureRecords.length).toBeGreaterThan(0);
+		expect(
+			result.tables.GPOS.featureList.featureRecords.length,
+		).toBeGreaterThan(0);
 	});
 
 	it('should build GPOS when features.GPOS is true (truthy non-object)', () => {
 		const fontData = { ...baseFont, features: { GPOS: true } };
 		const result = buildRawFromSimplified(fontData);
 		expect(result.tables.GPOS).toBeDefined();
-		expect(result.tables.GPOS.scriptList.scriptRecords.length).toBeGreaterThan(0);
+		expect(result.tables.GPOS.scriptList.scriptRecords.length).toBeGreaterThan(
+			0,
+		);
 	});
 });
