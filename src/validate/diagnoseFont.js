@@ -362,6 +362,23 @@ function phaseDirectory(sfnt, header, issues) {
 		entries.push(entry);
 	}
 
+	// Spec: table directory entries must be sorted in ascending order by tag
+	// (4-byte big-endian comparison).  Some sanitizers (e.g. Firefox/OTS)
+	// reject fonts that violate this rule.
+	for (let i = 1; i < entries.length; i++) {
+		const prev = entries[i - 1].tag.padEnd(4, ' ');
+		const curr = entries[i].tag.padEnd(4, ' ');
+		if (prev >= curr) {
+			addIssue(
+				issues,
+				'error',
+				'DIRECTORY_NOT_SORTED',
+				`Table directory is not sorted: '${entries[i - 1].tag}' precedes '${entries[i].tag}'. Tables must be sorted in ascending order by 4-byte tag.`,
+			);
+			break;
+		}
+	}
+
 	return entries;
 }
 
@@ -602,6 +619,92 @@ function phaseCrossTableChecks(parsedTables, entries, issues) {
 				'NO_STYLE_NAME',
 				'name table has no style name (nameID 2).',
 			);
+		}
+
+		// Spec: name records must be sorted in ascending order by
+		// (platformID, encodingID, languageID, nameID).  Some sanitizers
+		// (e.g. Firefox/OTS) reject fonts with out-of-order name records.
+		for (let i = 1; i < records.length; i++) {
+			const a = records[i - 1];
+			const b = records[i];
+			const cmp =
+				a.platformID - b.platformID ||
+				a.encodingID - b.encodingID ||
+				a.languageID - b.languageID ||
+				a.nameID - b.nameID;
+			if (cmp >= 0) {
+				addIssue(
+					issues,
+					'error',
+					'NAME_RECORDS_NOT_SORTED',
+					`name records are not sorted: record ${i - 1} (pid=${a.platformID}, eid=${a.encodingID}, lid=${a.languageID}, nid=${a.nameID}) precedes record ${i} (pid=${b.platformID}, eid=${b.encodingID}, lid=${b.languageID}, nid=${b.nameID}).`,
+				);
+				break;
+			}
+		}
+	}
+
+	// cmap encoding records: spec requires ascending order by
+	// (platformID, encodingID, language).  Some sanitizers (e.g. Firefox/OTS)
+	// reject fonts with out-of-order subtables.
+	if (parsedTables.cmap?.encodingRecords) {
+		const recs = parsedTables.cmap.encodingRecords;
+		const subs = parsedTables.cmap.subtables || [];
+		for (let i = 1; i < recs.length; i++) {
+			const a = recs[i - 1];
+			const b = recs[i];
+			const langA = (subs[a.subtableIndex] || {}).language || 0;
+			const langB = (subs[b.subtableIndex] || {}).language || 0;
+			const cmp =
+				a.platformID - b.platformID ||
+				a.encodingID - b.encodingID ||
+				langA - langB;
+			if (cmp >= 0) {
+				addIssue(
+					issues,
+					'error',
+					'CMAP_SUBTABLES_NOT_SORTED',
+					`cmap encoding records are not sorted: record ${i - 1} (pid=${a.platformID}, eid=${a.encodingID}, lang=${langA}) precedes record ${i} (pid=${b.platformID}, eid=${b.encodingID}, lang=${langB}).`,
+				);
+				break;
+			}
+		}
+	}
+
+	// CFF CharStrings INDEX: every charstring must end with the endchar
+	// operator (0x0E = 14) at top level, otherwise font sanitizers will
+	// reject the table with "Failed validating CharStrings INDEX".
+	const cffParsed = parsedTables['CFF '];
+	if (cffParsed?.fonts) {
+		for (let f = 0; f < cffParsed.fonts.length; f++) {
+			const cs = cffParsed.fonts[f].charStrings || [];
+			for (let i = 0; i < cs.length; i++) {
+				const bytes = cs[i];
+				if (!bytes || bytes.length === 0) {
+					addIssue(
+						issues,
+						'error',
+						'CFF_EMPTY_CHARSTRING',
+						`CFF font ${f}: charstring for glyph ${i} is empty (must contain at least an endchar operator).`,
+					);
+					break;
+				}
+				const last = bytes[bytes.length - 1];
+				// 14 = endchar (Type 2). Charstrings using subroutines may end
+				// with the endchar inside the subr, but the last byte of the
+				// outer string is normally still endchar after our parser
+				// converts items to byte arrays.  Operator 11 (return) is also
+				// permitted as a tail when a subr is the final call site.
+				if (last !== 14 && last !== 11) {
+					addIssue(
+						issues,
+						'warning',
+						'CFF_CHARSTRING_NO_ENDCHAR',
+						`CFF font ${f}: charstring for glyph ${i} does not terminate with endchar (last byte = 0x${last.toString(16).padStart(2, '0')}).`,
+					);
+					break;
+				}
+			}
 		}
 	}
 

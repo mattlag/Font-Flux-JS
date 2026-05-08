@@ -370,7 +370,16 @@ function buildFontSections(font) {
 	let cursor = 0;
 
 	// == CharStrings INDEX ==============================================
-	const csItems = (font.charStrings || []).map((s) => new Uint8Array(s));
+	// Every Type 2 charstring must terminate with the endchar operator
+	// (0x0E = 14) at top level, otherwise font sanitizers (e.g. Firefox/OTS)
+	// will reject the entire CFF table with "Failed validating CharStrings
+	// INDEX".  Some source fonts (or fonts produced by other tooling) contain
+	// empty entries for blank glyphs — we substitute a minimal valid
+	// charstring (`endchar`) here so the resulting font is still loadable.
+	const csItems = (font.charStrings || []).map((s) => {
+		if (!s || s.length === 0) return new Uint8Array([14]);
+		return new Uint8Array(s);
+	});
 	const csBytes = writeINDEXv1(csItems);
 	offsets.charStrings = cursor;
 	sections.push(csBytes);

@@ -7,9 +7,9 @@
  */
 
 import {
-	buildNameToGlyphIdMap,
-	hexToBGRA,
-	resolvePaintGlyphNames,
+    buildNameToGlyphIdMap,
+    hexToBGRA,
+    resolvePaintGlyphNames,
 } from './color.js';
 import { resolveGlyphId } from './glyph.js';
 import { compileCharString } from './otf/charstring_compiler.js';
@@ -970,12 +970,14 @@ function buildCFFShell(font, glyphs) {
 	const fontName = font.postScriptName || buildPostScriptName(font);
 	const charset = glyphs.slice(1).map((g) => g.name || '.notdef');
 	const charStrings = glyphs.map((g) => {
-		if (g.charString) return g.charString;
-		// Auto-compile CFF contours to charstring bytes if not provided
-		if (g.contours && g.contours.length > 0 && g.contours[0]?.[0]?.type) {
-			return compileCharString(g.contours);
-		}
-		return [];
+		if (g.charString && g.charString.length > 0) return g.charString;
+		// Auto-compile CFF contours to charstring bytes if not provided.
+		// compileCharString() also handles the empty case by emitting
+		// `0 0 rmoveto endchar`, ensuring every entry in the CharStrings
+		// INDEX is a valid Type 2 charstring (terminated by endchar 0x0E).
+		// An empty byte sequence here would be rejected by font sanitizers
+		// (e.g. Firefox/OTS: "Failed validating CharStrings INDEX").
+		return compileCharString(g.contours || []);
 	});
 
 	// CFF Top DICT string values (FullName, FamilyName, Weight) must be

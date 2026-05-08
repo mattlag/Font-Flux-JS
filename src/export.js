@@ -129,6 +129,25 @@ const HEADER_SIZE = 12;
 const TABLE_RECORD_SIZE = 16;
 
 /**
+ * Compare two SFNT table tags as 4-byte big-endian uint32 values.
+ * The OpenType spec mandates that table directory entries appear in
+ * ascending order by this comparison.  Tags are padded with spaces if
+ * shorter than 4 characters (e.g. "OS/2", "cvt ").
+ * @param {string} a
+ * @param {string} b
+ * @returns {number}
+ */
+function compareSfntTag(a, b) {
+	const pa = a.padEnd(4, ' ');
+	const pb = b.padEnd(4, ' ');
+	for (let i = 0; i < 4; i++) {
+		const diff = pa.charCodeAt(i) - pb.charCodeAt(i);
+		if (diff !== 0) return diff;
+	}
+	return 0;
+}
+
+/**
  * Compute the OpenType checksum for a table's raw bytes.
  * The checksum is the low 32 bits of the sum of uint32 values,
  * with the last partial word padded with zeroes.
@@ -382,7 +401,10 @@ function resolveExportSource(fontData) {
 
 function exportSFNT(fontData, directoryOffsetBase) {
 	const { header, tables } = fontData;
-	const tableNames = Object.keys(tables);
+	// OpenType spec requires the table directory to be sorted in ascending
+	// order by 4-byte tag (case-sensitive ASCII / big-endian uint32).  Some
+	// font sanitizers (e.g. Firefox/OTS) reject fonts that violate this rule.
+	const tableNames = Object.keys(tables).sort(compareSfntTag);
 	const numTables = tableNames.length;
 
 	// --- Coordinate cross-table write dependencies ---------------------------

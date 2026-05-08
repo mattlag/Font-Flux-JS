@@ -273,8 +273,18 @@ export function parseName(rawBytes) {
 export function writeName(table) {
 	const { version, names, langTagRecords = [] } = table;
 
+	// OpenType spec: name records must be sorted in ascending order by
+	// (platformID, encodingID, languageID, nameID).  Some font sanitizers
+	// (e.g. Firefox/OTS) reject fonts with out-of-order name records.
+	const sortedNames = [...names].sort((a, b) => {
+		if (a.platformID !== b.platformID) return a.platformID - b.platformID;
+		if (a.encodingID !== b.encodingID) return a.encodingID - b.encodingID;
+		if (a.languageID !== b.languageID) return a.languageID - b.languageID;
+		return a.nameID - b.nameID;
+	});
+
 	// Encode all name strings
-	const encodedNames = names.map((rec) => ({
+	const encodedNames = sortedNames.map((rec) => ({
 		platformID: rec.platformID,
 		encodingID: rec.encodingID,
 		languageID: rec.languageID,

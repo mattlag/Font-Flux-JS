@@ -347,12 +347,31 @@ function parseFormatRaw(reader, subtableOffset, format) {
 export function writeCmap(cmapData) {
 	const { version, encodingRecords, subtables } = cmapData;
 
+	// OpenType spec: cmap encoding records must be sorted in ascending order
+	// by (platformID, encodingID, language).  Some font sanitizers (e.g.
+	// Firefox/OTS) reject fonts with out-of-order subtables.  language is a
+	// property of the linked subtable, not the encoding record itself.
+	const sortedEncodingRecords = encodingRecords
+		.map((rec, originalIndex) => ({ rec, originalIndex }))
+		.sort((a, b) => {
+			if (a.rec.platformID !== b.rec.platformID) {
+				return a.rec.platformID - b.rec.platformID;
+			}
+			if (a.rec.encodingID !== b.rec.encodingID) {
+				return a.rec.encodingID - b.rec.encodingID;
+			}
+			const langA = (subtables[a.rec.subtableIndex] || {}).language || 0;
+			const langB = (subtables[b.rec.subtableIndex] || {}).language || 0;
+			return langA - langB;
+		})
+		.map(({ rec }) => rec);
+
 	// Serialize each unique subtable to bytes
 	const subtableByteArrays = subtables.map(writeSubtable);
 
 	// cmap header: version(2) + numTables(2) = 4 bytes
 	// Encoding records: 8 bytes each
-	const headerSize = 4 + encodingRecords.length * 8;
+	const headerSize = 4 + sortedEncodingRecords.length * 8;
 
 	// Compute offsets for each subtable (placed contiguously after header)
 	const subtableOffsets = [];
@@ -367,10 +386,10 @@ export function writeCmap(cmapData) {
 
 	// Write header
 	w.uint16(version);
-	w.uint16(encodingRecords.length);
+	w.uint16(sortedEncodingRecords.length);
 
 	// Write encoding records
-	for (const rec of encodingRecords) {
+	for (const rec of sortedEncodingRecords) {
 		w.uint16(rec.platformID);
 		w.uint16(rec.encodingID);
 		w.offset32(subtableOffsets[rec.subtableIndex]);

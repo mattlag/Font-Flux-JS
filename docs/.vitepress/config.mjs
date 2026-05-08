@@ -39,6 +39,7 @@ export default defineConfig({
 					{ text: 'Default Technology', link: '/default-technology' },
 					{ text: 'Creating Fonts', link: '/creating-fonts' },
 					{ text: 'Validation', link: '/validation' },
+					{ text: 'Diagnostics', link: '/diagnostics' },
 				],
 			},
 			{

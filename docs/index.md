@@ -14,7 +14,8 @@ Learn the basics of Font Flux JS and how to create fonts from scratch.
 
 - [Default Technology](./default-technology.md) — What format decisions Font Flux makes for you, and why.
 - [Creating Fonts](./creating-fonts.md) — Create a new font, set metadata, add glyphs, and export.
-- [Validation](./validation.md) — Check for structural issues before exporting.
+- [Validation](./validation.md) — Check for structural issues in JSON before exporting.
+- [Diagnostics](./diagnostics.md) — Inspect a binary font file for spec violations and corruption.
 
 ## Font Features
 
