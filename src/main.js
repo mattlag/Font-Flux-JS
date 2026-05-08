@@ -12,6 +12,7 @@
  */
 
 import { FontFlux } from './font_flux.js';
+import { fontFromJSON, fontToJSON } from './json.js';
 import { diagnoseFont } from './validate/index.js';
 import { initBrotli } from './woff/woff2.js';
 
@@ -26,4 +27,4 @@ async function initWoff2() {
 	return initBrotli();
 }
 
-export { diagnoseFont, FontFlux, initWoff2 };
+export { diagnoseFont, FontFlux, fontFromJSON, fontToJSON, initWoff2 };

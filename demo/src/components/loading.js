@@ -3,7 +3,9 @@
  * Calls onFontLoaded(arrayBuffer, fileName) when a font is selected.
  */
 export function createLoadingScreen(container, onFontLoaded) {
-	const ACCEPT = '.otf,.ttf,.woff,.woff2,.ttc,.otc,.cff,.pfb,.pfa';
+	const ACCEPT = '.otf,.ttf,.woff,.woff2,.ttc,.otc,.cff,.pfb,.pfa,.json';
+
+	const versionLine = `Version ${__APP_VERSION__}, updated ${formatBuildDate(__BUILD_DATE__)}.`;
 
 	container.innerHTML = `
 		<div class="loading-screen">
@@ -12,9 +14,10 @@ export function createLoadingScreen(container, onFontLoaded) {
 				<p class="hero-tagline">Convert fonts to JSON, make edits, then convert them back!</p>
 				<p class="hero-links">An open source frontend library. Read the <a href="docs/" target="_blank" rel="noopener">Docs</a>, use it with <a href="https://www.npmjs.com/package/font-flux-js" target="_blank" rel="noopener">NPM</a> or <a href="https://github.com/mattlag/Font-Flux-JS" target="_blank" rel="noopener">GitHub</a></p>
 				<p class="hero-demo-hint">This demo app can edit metadata, subset glyphs, and change file formats.</p>
-				<div class="beta-notice"><strong>April 2026</strong><br>Actively adding exciting new features!</div>
+				<p class="hero-version">${versionLine}</p>
+				<div class="beta-notice"><strong>May 2026</strong><br>Battle testing real world scenarios. Is it working for you? <a href="mailto:mail@glyphrstudio.com">mail@glyphrstudio.com</a></div>
 				<p class="tagline">Drop a font file anywhere, or <a href="#" class="browse-link">browse for files</a></p>
-				<p class="supported-formats">Supports OTF, TTF, WOFF, WOFF2, TTC, OTC, CFF, PFB, PFA</p>
+				<p class="supported-formats">Supports OTF, TTF, WOFF, WOFF2, TTC, OTC, CFF, PFB, PFA, JSON</p>
 				<input type="file" accept="${ACCEPT}" hidden>
 				<div class="status-area"></div>
 			</div>
@@ -82,10 +85,11 @@ export function createLoadingScreen(container, onFontLoaded) {
 			'cff',
 			'pfb',
 			'pfa',
+			'json',
 		];
 		if (!valid.includes(ext)) {
 			showError(
-				`Unsupported file type ".${ext}". Please use OTF, TTF, WOFF, WOFF2, TTC, OTC, CFF, PFB, or PFA.`,
+				`Unsupported file type ".${ext}". Please use OTF, TTF, WOFF, WOFF2, TTC, OTC, CFF, PFB, PFA, or JSON.`,
 			);
 			return;
 		}
@@ -100,7 +104,11 @@ export function createLoadingScreen(container, onFontLoaded) {
 		reader.onerror = () => {
 			showError('Failed to read the file. Please try again.');
 		};
-		reader.readAsArrayBuffer(file);
+		if (ext === 'json') {
+			reader.readAsText(file, 'utf-8');
+		} else {
+			reader.readAsArrayBuffer(file);
+		}
 	}
 
 	function showError(message) {
@@ -166,4 +174,46 @@ export function createLoadingScreen(container, onFontLoaded) {
 			showDiagnosticReport(fileName, report);
 		},
 	};
+}
+
+/**
+ * Format an ISO `YYYY-MM-DD` build date as e.g. "May 8th 2026".
+ * Falls back to the input string if parsing fails.
+ */
+function formatBuildDate(iso) {
+	if (typeof iso !== 'string') return String(iso ?? '');
+	const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+	if (!m) return iso;
+	const year = Number(m[1]);
+	const month = Number(m[2]) - 1;
+	const day = Number(m[3]);
+	const months = [
+		'January',
+		'February',
+		'March',
+		'April',
+		'May',
+		'June',
+		'July',
+		'August',
+		'September',
+		'October',
+		'November',
+		'December',
+	];
+	const ord = (n) => {
+		const mod100 = n % 100;
+		if (mod100 >= 11 && mod100 <= 13) return 'th';
+		switch (n % 10) {
+			case 1:
+				return 'st';
+			case 2:
+				return 'nd';
+			case 3:
+				return 'rd';
+			default:
+				return 'th';
+		}
+	};
+	return `${months[month]} ${day}${ord(day)} ${year}`;
 }

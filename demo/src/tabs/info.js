@@ -17,7 +17,7 @@ export function renderInfoTab(container) {
 				<p class="info-version">Version ${version}${buildDate ? ` · Built ${buildDate}` : ''}</p>
 			</div>
 
-			<div class="beta-notice"><strong>April 2026</strong><br>Actively adding exciting new features!</div>
+			<div class="beta-notice"><strong>May 2026</strong><br>Battle testing real world scenarios. Is it working for you? <a href="mailto:mail@glyphrstudio.com">mail@glyphrstudio.com</a></div>
 
 			<div class="info-links-row">
 				<a class="info-card info-link-card" href="docs/" target="_blank" rel="noopener">

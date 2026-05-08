@@ -170,14 +170,14 @@ When creating fonts from scratch, Font Flux JS automatically uses the most moder
 
 See [Creating Fonts](https://www.glyphrstudio.com/fontfluxjs/creating-fonts) for a full guide with examples.
 
-| Method                                   | Description                                                                                                    |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `FontFlux.open(buffer)`                  | Parse an `ArrayBuffer` into a `FontFlux` instance. Handles TTF, OTF, TTC, OTC, WOFF, WOFF2, CFF, PFB, and PFA. |
-| `FontFlux.openAll(buffer)`               | Parse a font collection (TTC/OTC), returning an array of `FontFlux` instances.                                 |
-| `FontFlux.create(options)`               | Create a new empty font from metadata (family, unitsPerEm, etc.).                                              |
-| `FontFlux.fromJSON(jsonString)`          | Deserialize a JSON string into a `FontFlux` instance.                                                          |
-| `FontFlux.exportCollection(fonts, opts)` | Export multiple `FontFlux` instances as a single TTC/OTC collection.                                           |
-| `FontFlux.initWoff2()` / `initWoff2()`   | Initialize WOFF2 support (async). Must be awaited once before WOFF2 use.                                       |
+| Method                                   | Description                                                                                                                                                                                                                               |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FontFlux.open(input)`                   | Parse a font into a `FontFlux` instance. Accepts an `ArrayBuffer` of a binary font (TTF, OTF, TTC, OTC, WOFF, WOFF2, CFF, PFB, PFA), a JSON `string` produced by `font.toJSON()`, or a `Uint8Array` of either binary or UTF-8 JSON bytes. |
+| `FontFlux.openAll(input)`                | Parse a font collection (TTC/OTC), returning an array of `FontFlux` instances. Accepts the same input types as `open()`.                                                                                                                  |
+| `FontFlux.create(options)`               | Create a new empty font from metadata (family, unitsPerEm, etc.).                                                                                                                                                                         |
+| `FontFlux.fromJSON(jsonString)`          | Deserialize a JSON string into a `FontFlux` instance.                                                                                                                                                                                     |
+| `FontFlux.exportCollection(fonts, opts)` | Export multiple `FontFlux` instances as a single TTC/OTC collection.                                                                                                                                                                      |
+| `FontFlux.initWoff2()` / `initWoff2()`   | Initialize WOFF2 support (async). Must be awaited once before WOFF2 use.                                                                                                                                                                  |
 
 ### Instance properties (live references)
 

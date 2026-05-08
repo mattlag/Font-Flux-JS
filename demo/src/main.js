@@ -1,7 +1,7 @@
 import { diagnoseFont, initWoff2 } from 'font-flux-js';
 import { exportFont } from 'font-flux-js/export';
 import { importFont } from 'font-flux-js/import';
-import { fontToJSON } from 'font-flux-js/json';
+import { fontFromJSON, fontToJSON } from 'font-flux-js/json';
 import { validateJSON } from 'font-flux-js/validate';
 import { createLoadingScreen } from './components/loading.js';
 import { createSaveDialog } from './components/save-dialog.js';
@@ -30,6 +30,41 @@ function showLoadingScreen() {
 
 	async function onFontLoaded(buffer, fileName) {
 		try {
+			// JSON file: buffer is actually a string of JSON text.
+			if (typeof buffer === 'string') {
+				const fontData = fontFromJSON(buffer);
+
+				// Try to produce a binary blob for live @font-face preview.
+				// If export fails, the preview tab will simply not have a
+				// custom font available — the rest of the app still works.
+				try {
+					const exported = exportFont(fontData, { format: 'sfnt' });
+					injectFontFace(exported, fileName.replace(/\.json$/i, '.otf'));
+				} catch (exportErr) {
+					console.warn(
+						'JSON imported but could not be exported for live preview:',
+						exportErr,
+					);
+				}
+
+				if (fontData.collection) {
+					for (let i = 0; i < fontData.fonts.length; i++) {
+						const f = fontData.fonts[i];
+						f._collection = fontData.collection;
+						f._collectionFonts = fontData.fonts;
+						f._collectionIndex = i;
+						f._fileName = fileName;
+						f._dirty = false;
+					}
+					showApp(fontData.fonts[0]);
+				} else {
+					fontData._fileName = fileName;
+					fontData._dirty = false;
+					showApp(fontData);
+				}
+				return;
+			}
+
 			const fontData = importFont(buffer);
 
 			// Inject @font-face from original binary for live preview
@@ -58,6 +93,10 @@ function showLoadingScreen() {
 			showApp(displayData);
 		} catch (err) {
 			console.error('Import error:', err);
+			if (typeof buffer === 'string') {
+				screen.showError(`Failed to parse JSON font: ${err.message}`);
+				return;
+			}
 			try {
 				const report = diagnoseFont(buffer);
 				screen.showDiagnosticReport(fileName, report);

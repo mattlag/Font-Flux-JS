@@ -6,6 +6,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { exportFont } from '../src/export.js';
+import { FontFlux } from '../src/font_flux.js';
 import { importFont } from '../src/import.js';
 import { fontFromJSON, fontToJSON } from '../src/json.js';
 
@@ -156,5 +157,69 @@ describe('fontToJSON / fontFromJSON with real fonts', () => {
 		const reimported = importFont(binary);
 		expect(reimported.font.familyName).toBe(fontData.font.familyName);
 		expect(reimported.glyphs).toHaveLength(fontData.glyphs.length);
+	});
+});
+
+describe('FontFlux.open() with JSON input', () => {
+	it('should accept a JSON string and return a FontFlux instance', async () => {
+		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
+		const original = FontFlux.open(buffer);
+		const json = original.toJSON();
+
+		const restored = FontFlux.open(json);
+		expect(restored).toBeInstanceOf(FontFlux);
+		expect(restored.info.familyName).toBe(original.info.familyName);
+		expect(restored.glyphs.length).toBe(original.glyphs.length);
+	});
+
+	it('should accept a Uint8Array of UTF-8 JSON bytes', async () => {
+		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
+		const original = FontFlux.open(buffer);
+		const json = original.toJSON();
+		const jsonBytes = new TextEncoder().encode(json);
+
+		const restored = FontFlux.open(jsonBytes);
+		expect(restored).toBeInstanceOf(FontFlux);
+		expect(restored.info.familyName).toBe(original.info.familyName);
+	});
+
+	it('should accept JSON bytes with a UTF-8 BOM and leading whitespace', async () => {
+		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
+		const original = FontFlux.open(buffer);
+		const json = '   \n' + original.toJSON();
+		const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
+		const body = new TextEncoder().encode(json);
+		const combined = new Uint8Array(bom.length + body.length);
+		combined.set(bom, 0);
+		combined.set(body, bom.length);
+
+		const restored = FontFlux.open(combined);
+		expect(restored.info.familyName).toBe(original.info.familyName);
+	});
+
+	it('should still accept ArrayBuffer binary input', async () => {
+		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
+		const font = FontFlux.open(buffer);
+		expect(font).toBeInstanceOf(FontFlux);
+		expect(font.info.familyName).toBeDefined();
+	});
+
+	it('should roundtrip JSON → FontFlux → binary → re-import', async () => {
+		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
+		const original = FontFlux.open(buffer);
+		const json = original.toJSON();
+
+		const restored = FontFlux.open(json);
+		const binary = restored.export({ format: 'sfnt' });
+		expect(binary).toBeInstanceOf(ArrayBuffer);
+
+		const reimported = FontFlux.open(binary);
+		expect(reimported.info.familyName).toBe(original.info.familyName);
+		expect(reimported.glyphs.length).toBe(original.glyphs.length);
+	});
+
+	it('should throw a clear error for unsupported input types', () => {
+		expect(() => FontFlux.open(42)).toThrow(/ArrayBuffer/);
+		expect(() => FontFlux.open(null)).toThrow();
 	});
 });

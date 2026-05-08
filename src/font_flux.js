@@ -31,6 +31,76 @@ import { validateJSON } from './validate/index.js';
 import { initBrotli } from './woff/woff2.js';
 
 // ============================================================================
+//  INPUT DETECTION — distinguish JSON vs. binary font input
+// ============================================================================
+
+/**
+ * Detect whether an input is a JSON string/bytes or a binary font.
+ *
+ * Returns `{ kind: 'json', text }` for JSON inputs and
+ * `{ kind: 'binary', buffer }` (always an ArrayBuffer) for everything else.
+ *
+ * Detection rules:
+ *  - String → JSON.
+ *  - ArrayBuffer/Uint8Array whose first non-whitespace byte is `{` or `[` → JSON
+ *    (decoded as UTF-8, with optional BOM stripped).
+ *  - Otherwise → binary.
+ *
+ * @param {ArrayBuffer|Uint8Array|string} input
+ * @returns {{ kind: 'json', text: string } | { kind: 'binary', buffer: ArrayBuffer }}
+ */
+function detectInput(input) {
+	if (typeof input === 'string') {
+		return { kind: 'json', text: input };
+	}
+
+	let bytes;
+	let buffer;
+	if (input instanceof ArrayBuffer) {
+		buffer = input;
+		bytes = new Uint8Array(input);
+	} else if (ArrayBuffer.isView(input)) {
+		bytes = new Uint8Array(input.buffer, input.byteOffset, input.byteLength);
+		// Make a contiguous copy so importFont gets a clean ArrayBuffer.
+		buffer = bytes.slice().buffer;
+	} else {
+		throw new TypeError(
+			'FontFlux.open() expects an ArrayBuffer, Uint8Array, or JSON string.',
+		);
+	}
+
+	// Look for `{` or `[` as the first non-whitespace byte.  Skip a UTF-8 BOM
+	// (EF BB BF) if present.  Whitespace per JSON spec: space, tab, LF, CR.
+	let i = 0;
+	if (
+		bytes.length >= 3 &&
+		bytes[0] === 0xef &&
+		bytes[1] === 0xbb &&
+		bytes[2] === 0xbf
+	) {
+		i = 3;
+	}
+	while (
+		i < bytes.length &&
+		(bytes[i] === 0x20 ||
+			bytes[i] === 0x09 ||
+			bytes[i] === 0x0a ||
+			bytes[i] === 0x0d)
+	) {
+		i++;
+	}
+	if (
+		i < bytes.length &&
+		(bytes[i] === 0x7b /* { */ || bytes[i] === 0x5b) /* [ */
+	) {
+		const decoder = new TextDecoder('utf-8', { fatal: false });
+		return { kind: 'json', text: decoder.decode(bytes) };
+	}
+
+	return { kind: 'binary', buffer };
+}
+
+// ============================================================================
 //  NOTDEF GLYPH — minimal rectangle used by createFont
 // ============================================================================
 
@@ -115,14 +185,33 @@ export class FontFlux {
 	}
 
 	/**
-	 * Open an existing font from binary data (Scenario 1).
+	 * Open an existing font from binary data, a JSON string, or a JSON byte
+	 * sequence (Scenario 1).
 	 *
-	 * @param {ArrayBuffer} buffer - Binary font data (TTF/OTF/WOFF/WOFF2/TTC/OTC).
+	 * Accepted inputs:
+	 *  - `ArrayBuffer` — binary TTF/OTF/WOFF/WOFF2/TTC/OTC.
+	 *  - `Uint8Array`  — binary font bytes, or UTF-8 bytes of a JSON file.
+	 *  - `string`      — JSON produced by `font.toJSON()`.
+	 *
+	 * @param {ArrayBuffer|Uint8Array|string} input
 	 * @returns {FontFlux} Single-font instance. For collections, use openAll().
-	 * @throws {Error} If buffer is a collection (TTC/OTC) — use openAll() instead.
+	 * @throws {Error} If input is a collection (TTC/OTC) — use openAll() instead.
 	 */
-	static open(buffer) {
-		const result = importFont(buffer);
+	static open(input) {
+		const detected = detectInput(input);
+
+		if (detected.kind === 'json') {
+			const data = fontFromJSON(detected.text);
+			if (data && data.collection && Array.isArray(data.fonts)) {
+				throw new Error(
+					'FontFlux.open() received a font collection JSON. ' +
+						'Use FontFlux.openAll() for collections.',
+				);
+			}
+			return new FontFlux(data);
+		}
+
+		const result = importFont(detected.buffer);
 
 		// Collection check
 		if (result.collection && result.fonts) {
@@ -136,13 +225,24 @@ export class FontFlux {
 	}
 
 	/**
-	 * Open all fonts from a binary file. Works for both single fonts and collections.
+	 * Open all fonts from a binary file or JSON. Works for both single fonts
+	 * and collections.  Accepts the same input types as `FontFlux.open()`.
 	 *
-	 * @param {ArrayBuffer} buffer - Binary font data.
+	 * @param {ArrayBuffer|Uint8Array|string} input
 	 * @returns {FontFlux[]} Array of FontFlux instances (one per face).
 	 */
-	static openAll(buffer) {
-		const result = importFont(buffer);
+	static openAll(input) {
+		const detected = detectInput(input);
+
+		if (detected.kind === 'json') {
+			const data = fontFromJSON(detected.text);
+			if (data && data.collection && Array.isArray(data.fonts)) {
+				return data.fonts.map((face) => new FontFlux(face));
+			}
+			return [new FontFlux(data)];
+		}
+
+		const result = importFont(detected.buffer);
 
 		if (result.collection && result.fonts) {
 			return result.fonts.map((face) => new FontFlux(face));
