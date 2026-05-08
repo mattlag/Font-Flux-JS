@@ -391,6 +391,39 @@ body {
 	border-bottom-color: var(--accent-light);
 }
 
+.l1-tab.l1-tab-disabled,
+.l1-tab.l1-tab-disabled:hover {
+	color: var(--text-secondary);
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.l1-tab-badge {
+	display: inline-block;
+	margin-left: 6px;
+	min-width: 18px;
+	padding: 1px 6px;
+	font-size: 0.7rem;
+	font-weight: 700;
+	line-height: 1.4;
+	text-align: center;
+	color: white;
+	border-radius: 999px;
+	vertical-align: baseline;
+}
+
+.l1-tab-badge-error {
+	background: #dc2626;
+}
+
+.l1-tab-badge-warning {
+	background: #d97706;
+}
+
+.l1-tab-badge-neutral {
+	background: #9ca3af;
+}
+
 /* L1 Content */
 .app-content {
 	flex: 1;
@@ -417,7 +450,10 @@ body {
 
 /* ===== Diagnose Tab ===== */
 .diagnose-page {
-	max-width: 760px;
+	/* Fixed inline-size on wide screens prevents the centered column from
+	 * jumping when sections expand/collapse or cards have short messages.
+	 * On narrow screens it shrinks down to fill the available padded area. */
+	width: min(760px, 100%);
 	margin: 0 auto;
 	display: flex;
 	flex-direction: column;
@@ -427,6 +463,39 @@ body {
 .dx-empty {
 	color: var(--text-secondary);
 	font-style: italic;
+}
+
+/* Parse-error banner (shown when the font failed to fully import) */
+.dx-parse-error {
+	background: #fef2f2;
+	border: 1px solid #fca5a5;
+	border-left: 4px solid #dc2626;
+	border-radius: var(--radius);
+	padding: 14px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.dx-parse-error-title {
+	font-weight: 600;
+	color: #b91c1c;
+}
+
+.dx-parse-error-msg code {
+	font-family: var(--font-mono);
+	font-size: 0.85rem;
+	background: rgba(220, 38, 38, 0.08);
+	color: #991b1b;
+	padding: 4px 8px;
+	border-radius: 3px;
+	display: inline-block;
+	word-break: break-word;
+}
+
+.dx-parse-error-hint {
+	font-size: 0.85rem;
+	color: var(--text-secondary);
 }
 
 /* Banner */

@@ -500,6 +500,477 @@ function phaseParseTables(sfnt, entries, issues) {
 	return parsedTables;
 }
 
+// =========================================================================
+//  cmap deep validation (Tier 2 — Firefox/OTS parity)
+// =========================================================================
+
+/**
+ * Valid Unicode variation-selector ranges (cmap format 14).
+ * Mongolian Free Variation Selectors: 0x180B–0x180D
+ * Variation Selectors (VS1–VS16):     0xFE00–0xFE0F
+ * Variation Selectors Supplement:     0xE0100–0xE01EF (VS17–VS256)
+ */
+function isValidVariationSelector(cp) {
+	if (cp >= 0x180b && cp <= 0x180d) return true;
+	if (cp >= 0xfe00 && cp <= 0xfe0f) return true;
+	if (cp >= 0xe0100 && cp <= 0xe01ef) return true;
+	return false;
+}
+
+/**
+ * Compute the maximum glyph ID a cmap format-4 segment can produce.
+ * Returns null when the segment uses idRangeOffset (we'd need the raw
+ * glyphIdArray to walk it, but the parser already inlines mappings into
+ * `glyphIdArray`; deep walking is left to a future tier).
+ */
+function format4MaxGlyphId(seg) {
+	if (seg.idRangeOffset === 0) {
+		// Direct mapping: glyph = (charCode + idDelta) & 0xFFFF
+		const lo = (seg.startCode + seg.idDelta) & 0xffff;
+		const hi = (seg.endCode + seg.idDelta) & 0xffff;
+		return Math.max(lo, hi);
+	}
+	return null;
+}
+
+function validateCmapDeep(cmap, maxp, issues) {
+	// Per spec, cmap.version must be 0.
+	if (typeof cmap.version === 'number' && cmap.version !== 0) {
+		addIssue(
+			issues,
+			'error',
+			'CMAP_VERSION_INVALID',
+			`cmap.version is ${cmap.version}; must be 0.`,
+		);
+	}
+
+	const recs = cmap.encodingRecords || [];
+	const subs = cmap.subtables || [];
+
+	if (recs.length === 0) {
+		addIssue(
+			issues,
+			'error',
+			'CMAP_NO_SUBTABLES',
+			'cmap has no encoding records.',
+		);
+		return;
+	}
+
+	// Firefox requires at least one of the well-known Unicode subtables:
+	//   (3, 1, 4)   Windows Unicode BMP
+	//   (3, 10, 12) Windows Unicode full
+	//   (0, 3, 4)   Unicode BMP
+	//   (3, 0, 4)   Symbol
+	//   (3, 10, 13) Windows Unicode full (last-resort)
+	let hasSupported = false;
+	for (const r of recs) {
+		const sub = subs[r.subtableIndex];
+		if (!sub) continue;
+		const fmt = sub.format;
+		const key = `${r.platformID}-${r.encodingID}-${fmt}`;
+		if (
+			key === '3-1-4' ||
+			key === '3-10-12' ||
+			key === '3-10-13' ||
+			key === '0-3-4' ||
+			key === '3-0-4'
+		) {
+			hasSupported = true;
+			break;
+		}
+	}
+	if (!hasSupported) {
+		addIssue(
+			issues,
+			'error',
+			'CMAP_NO_SUPPORTED_SUBTABLE',
+			'cmap has no supported Unicode subtable (expected one of (3,1,4), (3,10,12), (3,10,13), (0,3,4), or (3,0,4)).',
+		);
+	}
+
+	// Windows-platform subtables (platformID 3) must use language = 0.
+	for (const r of recs) {
+		if (r.platformID !== 3) continue;
+		const sub = subs[r.subtableIndex];
+		if (!sub) continue;
+		if (sub.language !== undefined && sub.language !== 0) {
+			addIssue(
+				issues,
+				'error',
+				'CMAP_LANGUAGE_NONZERO_FOR_WINDOWS',
+				`cmap subtable (pid=3, eid=${r.encodingID}, fmt=${sub.format}) has language=${sub.language}; Windows-platform subtables must use language=0.`,
+			);
+			break;
+		}
+	}
+
+	const numGlyphs = maxp?.numGlyphs;
+
+	// Per-subtable structural checks.
+	for (let s = 0; s < subs.length; s++) {
+		const sub = subs[s];
+		if (!sub) continue;
+		const fmt = sub.format;
+
+		if (fmt === 4) {
+			const segs = sub.segments || [];
+			if (segs.length < 1) {
+				addIssue(
+					issues,
+					'error',
+					'CMAP_FORMAT4_SEGCOUNT_INVALID',
+					`cmap format-4 subtable ${s} has no segments.`,
+				);
+				continue;
+			}
+			// Final segment must be 0xFFFF–0xFFFF.
+			const last = segs[segs.length - 1];
+			if (last.startCode !== 0xffff || last.endCode !== 0xffff) {
+				addIssue(
+					issues,
+					'error',
+					'CMAP_FORMAT4_INVALID_TERMINATOR',
+					`cmap format-4 subtable ${s}: final segment is [${last.startCode.toString(16)}-${last.endCode.toString(16)}], must be [FFFF-FFFF].`,
+				);
+			}
+			// Range ordering: each segment must have startCode <= endCode,
+			// and segments must be non-overlapping in ascending order.
+			let prevEnd = -1;
+			for (let i = 0; i < segs.length; i++) {
+				const seg = segs[i];
+				if (seg.startCode > seg.endCode) {
+					addIssue(
+						issues,
+						'error',
+						'CMAP_FORMAT4_RANGES_OUT_OF_ORDER',
+						`cmap format-4 subtable ${s} segment ${i}: startCode (0x${seg.startCode.toString(16)}) > endCode (0x${seg.endCode.toString(16)}).`,
+					);
+					break;
+				}
+				if (seg.endCode <= prevEnd) {
+					addIssue(
+						issues,
+						'error',
+						'CMAP_FORMAT4_RANGES_OUT_OF_ORDER',
+						`cmap format-4 subtable ${s} segment ${i}: endCode (0x${seg.endCode.toString(16)}) is not greater than previous endCode (0x${prevEnd.toString(16)}).`,
+					);
+					break;
+				}
+				prevEnd = seg.endCode;
+			}
+			// Glyph-out-of-range (best-effort: only direct-mapping segments).
+			if (numGlyphs !== undefined) {
+				let flagged = false;
+				for (let i = 0; i < segs.length && !flagged; i++) {
+					const seg = segs[i];
+					// Skip the 0xFFFF terminator segment, whose mapped glyph
+					// is conventionally 0 via wraparound.
+					if (seg.startCode === 0xffff && seg.endCode === 0xffff) continue;
+					const maxGid = format4MaxGlyphId(seg);
+					if (maxGid !== null && maxGid >= numGlyphs) {
+						addIssue(
+							issues,
+							'error',
+							'CMAP_GLYPH_OUT_OF_RANGE',
+							`cmap format-4 subtable ${s} segment ${i}: glyph id ${maxGid} >= numGlyphs (${numGlyphs}).`,
+						);
+						flagged = true;
+					}
+				}
+				// Also walk the inlined glyphIdArray for any explicit overflows.
+				const gids = sub.glyphIdArray || [];
+				for (let i = 0; i < gids.length && !flagged; i++) {
+					if (gids[i] !== 0 && gids[i] >= numGlyphs) {
+						addIssue(
+							issues,
+							'error',
+							'CMAP_GLYPH_OUT_OF_RANGE',
+							`cmap format-4 subtable ${s} glyphIdArray[${i}] = ${gids[i]} >= numGlyphs (${numGlyphs}).`,
+						);
+						flagged = true;
+					}
+				}
+			}
+		} else if (fmt === 12 || fmt === 13) {
+			const groups = sub.groups || [];
+			let prevEnd = -1;
+			let flaggedRange = false;
+			let flaggedGid = false;
+			for (let i = 0; i < groups.length; i++) {
+				const g = groups[i];
+				if (g.endCharCode < g.startCharCode && !flaggedRange) {
+					addIssue(
+						issues,
+						'error',
+						'CMAP_FORMAT12_END_BEFORE_START',
+						`cmap format-${fmt} subtable ${s} group ${i}: endCharCode (0x${g.endCharCode.toString(16)}) < startCharCode (0x${g.startCharCode.toString(16)}).`,
+					);
+					flaggedRange = true;
+					break;
+				}
+				if (g.startCharCode <= prevEnd && !flaggedRange) {
+					addIssue(
+						issues,
+						'error',
+						'CMAP_FORMAT12_GROUPS_OUT_OF_ORDER',
+						`cmap format-${fmt} subtable ${s} group ${i}: startCharCode (0x${g.startCharCode.toString(16)}) is not greater than previous endCharCode (0x${prevEnd.toString(16)}).`,
+					);
+					flaggedRange = true;
+					break;
+				}
+				prevEnd = g.endCharCode;
+				if (numGlyphs !== undefined && !flaggedGid) {
+					if (fmt === 12) {
+						const span = g.endCharCode - g.startCharCode;
+						const lastGid = g.startGlyphID + span;
+						if (lastGid >= numGlyphs) {
+							addIssue(
+								issues,
+								'error',
+								'CMAP_GLYPH_OUT_OF_RANGE',
+								`cmap format-12 subtable ${s} group ${i}: maps to glyph id ${lastGid} >= numGlyphs (${numGlyphs}).`,
+							);
+							flaggedGid = true;
+						}
+					} else if (fmt === 13) {
+						if (g.glyphID >= numGlyphs) {
+							addIssue(
+								issues,
+								'error',
+								'CMAP_GLYPH_OUT_OF_RANGE',
+								`cmap format-13 subtable ${s} group ${i}: glyphID ${g.glyphID} >= numGlyphs (${numGlyphs}).`,
+							);
+							flaggedGid = true;
+						}
+					}
+				}
+			}
+		} else if (fmt === 14) {
+			const records = sub.varSelectorRecords || [];
+			let prev = -1;
+			let flaggedOrder = false;
+			let flaggedRange = false;
+			for (let i = 0; i < records.length; i++) {
+				const r = records[i];
+				if (!isValidVariationSelector(r.varSelector) && !flaggedRange) {
+					addIssue(
+						issues,
+						'error',
+						'CMAP_FORMAT14_VS_OUT_OF_RANGE',
+						`cmap format-14 subtable ${s} record ${i}: varSelector U+${r.varSelector.toString(16).toUpperCase()} is not in a valid variation-selector range.`,
+					);
+					flaggedRange = true;
+					break;
+				}
+				if (r.varSelector <= prev && !flaggedOrder) {
+					addIssue(
+						issues,
+						'error',
+						'CMAP_FORMAT14_VS_OUT_OF_ORDER',
+						`cmap format-14 subtable ${s} record ${i}: varSelector U+${r.varSelector.toString(16).toUpperCase()} is not greater than previous (U+${prev.toString(16).toUpperCase()}).`,
+					);
+					flaggedOrder = true;
+					break;
+				}
+				prev = r.varSelector;
+				// Glyph-out-of-range for non-default UVS mappings.
+				if (numGlyphs !== undefined && r.nonDefaultUVS) {
+					for (const m of r.nonDefaultUVS) {
+						if (m.glyphID >= numGlyphs) {
+							addIssue(
+								issues,
+								'error',
+								'CMAP_GLYPH_OUT_OF_RANGE',
+								`cmap format-14 subtable ${s} record ${i}: nonDefaultUVS mapping has glyphID ${m.glyphID} >= numGlyphs (${numGlyphs}).`,
+							);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// =========================================================================
+//  OS/2 sanitization (Tier 3 — Firefox/OTS parity)
+//
+//  OTS treats most of these as Warning() with silent auto-fix (clamp or
+//  bit-mask).  FFJS reports them at `warning` severity so they're visible
+//  but don't block export.  Future work: thread an `autoFix` option that
+//  mutates the parsed table in-place.
+// =========================================================================
+
+/**
+ * Mask of valid OS/2 fsType bits per spec: bits 0–3 (embedding levels),
+ * bits 8 (no-subset) and 9 (bitmap-only).  All other bits are reserved
+ * and OTS silently strips them.
+ */
+const OS2_FSTYPE_VALID_MASK = 0x030f;
+
+/**
+ * Mask of valid head.macStyle bits: 0..6 per spec.
+ */
+const HEAD_MACSTYLE_VALID_MASK = 0x007f;
+
+function validateOS2Sanitization(os2, head, issues) {
+	// usWeightClass must be in [1, 1000].
+	if (typeof os2.usWeightClass === 'number') {
+		if (os2.usWeightClass < 1 || os2.usWeightClass > 1000) {
+			addIssue(
+				issues,
+				'warning',
+				'OS2_WEIGHT_CLAMPED',
+				`OS/2.usWeightClass is ${os2.usWeightClass}; must be in [1, 1000].`,
+			);
+		}
+	}
+
+	// usWidthClass must be in [1, 9].
+	if (typeof os2.usWidthClass === 'number') {
+		if (os2.usWidthClass < 1 || os2.usWidthClass > 9) {
+			addIssue(
+				issues,
+				'warning',
+				'OS2_WIDTH_CLAMPED',
+				`OS/2.usWidthClass is ${os2.usWidthClass}; must be in [1, 9].`,
+			);
+		}
+	}
+
+	// fsType reserved bits — anything outside 0x030F is invalid.
+	if (typeof os2.fsType === 'number') {
+		if ((os2.fsType & ~OS2_FSTYPE_VALID_MASK) !== 0) {
+			addIssue(
+				issues,
+				'warning',
+				'OS2_FSTYPE_RESERVED_BITS_SET',
+				`OS/2.fsType has reserved bits set (0x${(os2.fsType >>> 0).toString(16).padStart(4, '0')}); valid mask is 0x${OS2_FSTYPE_VALID_MASK.toString(16).padStart(4, '0')}.`,
+			);
+		}
+	}
+
+	// Sub/super-script and strikeout sizes must be non-negative.
+	const NON_NEGATIVE_SIZE_FIELDS = [
+		'ySubscriptXSize',
+		'ySubscriptYSize',
+		'ySuperscriptXSize',
+		'ySuperscriptYSize',
+		'yStrikeoutSize',
+	];
+	for (const f of NON_NEGATIVE_SIZE_FIELDS) {
+		if (typeof os2[f] === 'number' && os2[f] < 0) {
+			addIssue(
+				issues,
+				'warning',
+				'OS2_NEGATIVE_SIZE',
+				`OS/2.${f} is ${os2[f]}; must be ≥ 0.`,
+			);
+			break; // one report per font is enough
+		}
+	}
+
+	// usFirstCharIndex must be ≤ usLastCharIndex.
+	if (
+		typeof os2.usFirstCharIndex === 'number' &&
+		typeof os2.usLastCharIndex === 'number' &&
+		os2.usFirstCharIndex > os2.usLastCharIndex
+	) {
+		addIssue(
+			issues,
+			'warning',
+			'OS2_FIRST_LAST_CHAR_INVERTED',
+			`OS/2.usFirstCharIndex (${os2.usFirstCharIndex}) > usLastCharIndex (${os2.usLastCharIndex}).`,
+		);
+	}
+
+	// sTypoLineGap must be non-negative.
+	if (typeof os2.sTypoLineGap === 'number' && os2.sTypoLineGap < 0) {
+		addIssue(
+			issues,
+			'warning',
+			'OS2_TYPO_LINEGAP_NEGATIVE',
+			`OS/2.sTypoLineGap is ${os2.sTypoLineGap}; must be ≥ 0.`,
+		);
+	}
+
+	// sxHeight / sCapHeight must be non-negative when present (v2+).
+	if (typeof os2.sxHeight === 'number' && os2.sxHeight < 0) {
+		addIssue(
+			issues,
+			'warning',
+			'OS2_X_HEIGHT_NEGATIVE',
+			`OS/2.sxHeight is ${os2.sxHeight}; must be ≥ 0.`,
+		);
+	}
+	if (typeof os2.sCapHeight === 'number' && os2.sCapHeight < 0) {
+		addIssue(
+			issues,
+			'warning',
+			'OS2_CAP_HEIGHT_NEGATIVE',
+			`OS/2.sCapHeight is ${os2.sCapHeight}; must be ≥ 0.`,
+		);
+	}
+
+	// Optical-point-size range: lower must be ≤ 0xFFFE, upper must be ≥ 2.
+	// Only meaningful for v5.
+	if (
+		typeof os2.usLowerOpticalPointSize === 'number' &&
+		os2.usLowerOpticalPointSize > 0xfffe
+	) {
+		addIssue(
+			issues,
+			'warning',
+			'OS2_OPTICAL_POINTSIZE_OUT_OF_RANGE',
+			`OS/2.usLowerOpticalPointSize is ${os2.usLowerOpticalPointSize}; must be ≤ 0xFFFE.`,
+		);
+	}
+	if (
+		typeof os2.usUpperOpticalPointSize === 'number' &&
+		os2.usUpperOpticalPointSize < 2
+	) {
+		addIssue(
+			issues,
+			'warning',
+			'OS2_OPTICAL_POINTSIZE_OUT_OF_RANGE',
+			`OS/2.usUpperOpticalPointSize is ${os2.usUpperOpticalPointSize}; must be ≥ 2.`,
+		);
+	}
+
+	// fsSelection ↔ head.macStyle italic/bold/regular consistency.
+	// fsSelection bits: 0 = italic, 5 = bold, 6 = regular.
+	// macStyle bits:    0 = bold,   1 = italic.
+	if (
+		head &&
+		typeof os2.fsSelection === 'number' &&
+		typeof head.macStyle === 'number'
+	) {
+		const fsItalic = (os2.fsSelection & 0x01) !== 0;
+		const fsBold = (os2.fsSelection & 0x20) !== 0;
+		const msBold = (head.macStyle & 0x01) !== 0;
+		const msItalic = (head.macStyle & 0x02) !== 0;
+		if (fsItalic !== msItalic || fsBold !== msBold) {
+			addIssue(
+				issues,
+				'warning',
+				'OS2_FSSELECTION_HEAD_MACSTYLE_MISMATCH',
+				`OS/2.fsSelection (italic=${fsItalic}, bold=${fsBold}) does not match head.macStyle (italic=${msItalic}, bold=${msBold}).`,
+			);
+		}
+
+		// head.macStyle reserved bits (anything beyond bits 0..6) must be 0.
+		if ((head.macStyle & ~HEAD_MACSTYLE_VALID_MASK) !== 0) {
+			addIssue(
+				issues,
+				'warning',
+				'HEAD_MACSTYLE_RESERVED_BITS_SET',
+				`head.macStyle has reserved bits set (0x${head.macStyle.toString(16).padStart(4, '0')}); valid mask is 0x${HEAD_MACSTYLE_VALID_MASK.toString(16).padStart(4, '0')}.`,
+			);
+		}
+	}
+}
+
 /**
  * Phase 7: Cross-table consistency checks.
  */
@@ -667,6 +1138,13 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 		}
 	}
 
+	// OS/2 sanitization checks (Tier 3 — Firefox/OTS parity).
+	// OTS auto-fixes most of these via Warning(); FFJS reports them as
+	// `warning` so users can fix the JSON or rely on a future autoFix pass.
+	if (parsedTables['OS/2']) {
+		validateOS2Sanitization(parsedTables['OS/2'], parsedTables.head, issues);
+	}
+
 	// maxp.numGlyphs vs hmtx
 	if (parsedTables.maxp && parsedTables.hmtx) {
 		const numGlyphs = parsedTables.maxp.numGlyphs;
@@ -807,6 +1285,11 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 				break;
 			}
 		}
+	}
+
+	// cmap deep structural validation (Tier 2 — Firefox/OTS parity).
+	if (parsedTables.cmap) {
+		validateCmapDeep(parsedTables.cmap, parsedTables.maxp, issues);
 	}
 
 	// CFF CharStrings INDEX: every charstring must end with the endchar
@@ -1027,3 +1510,12 @@ export function diagnoseFont(buffer) {
 
 	return buildReport(issues);
 }
+
+// =========================================================================
+//  Internal helpers exposed for unit testing
+// =========================================================================
+
+export const _internal = {
+	validateCmapDeep,
+	validateOS2Sanitization,
+};

@@ -13,8 +13,7 @@ export function createLoadingScreen(container, onFontLoaded) {
 				<img class="hero-logo" src="${new URL('../assets/font-flux-js-logo.svg', import.meta.url).href}" alt="font flux js">
 				<p class="hero-tagline">Convert fonts to JSON, make edits, then convert them back!</p>
 				<p class="hero-links">An open source frontend library. Read the <a href="docs/" target="_blank" rel="noopener">Docs</a>, use it with <a href="https://www.npmjs.com/package/font-flux-js" target="_blank" rel="noopener">NPM</a> or <a href="https://github.com/mattlag/Font-Flux-JS" target="_blank" rel="noopener">GitHub</a></p>
-				<p class="hero-demo-hint">This demo app can edit metadata, subset glyphs, and change file formats.</p>
-				<p class="hero-version">${versionLine}</p>
+				<p class="hero-demo-hint">This demo app can edit metadata, subset glyphs, and change file formats.<br>${versionLine}</p>
 				<div class="beta-notice"><strong>May 2026</strong><br>Battle testing real world scenarios. Is it working for you? <a href="mailto:mail@glyphrstudio.com">mail@glyphrstudio.com</a></div>
 				<p class="tagline">Drop a font file anywhere, or <a href="#" class="browse-link">browse for files</a></p>
 				<p class="supported-formats">Supports OTF, TTF, WOFF, WOFF2, TTC, OTC, CFF, PFB, PFA, JSON</p>
@@ -115,48 +114,6 @@ export function createLoadingScreen(container, onFontLoaded) {
 		statusArea.innerHTML = `<div class="loading-error">${message}</div>`;
 	}
 
-	function showDiagnosticReport(fileName, report) {
-		const severityIcon = { error: '❌', warning: '⚠️', info: 'ℹ️' };
-		const severityClass = {
-			error: 'diag-error',
-			warning: 'diag-warning',
-			info: 'diag-info',
-		};
-
-		// Filter: show errors and warnings prominently, infos collapsed
-		const errorWarnings = report.issues.filter(
-			(i) => i.severity === 'error' || i.severity === 'warning',
-		);
-		const infos = report.issues.filter((i) => i.severity === 'info');
-
-		let issuesHTML = '';
-		for (const issue of errorWarnings) {
-			issuesHTML += `<div class="diag-issue ${severityClass[issue.severity]}">${severityIcon[issue.severity]} <code>${issue.code}</code> ${issue.message}</div>`;
-		}
-		if (infos.length > 0) {
-			issuesHTML += `<details class="diag-details"><summary>${infos.length} informational note${infos.length > 1 ? 's' : ''}</summary>`;
-			for (const issue of infos) {
-				issuesHTML += `<div class="diag-issue ${severityClass[issue.severity]}">${severityIcon[issue.severity]} <code>${issue.code}</code> ${issue.message}</div>`;
-			}
-			issuesHTML += `</details>`;
-		}
-
-		const summaryClass = report.valid ? 'diag-valid' : 'diag-invalid';
-		const summaryLabel = report.valid
-			? 'No blocking errors'
-			: 'Font has problems';
-
-		statusArea.innerHTML = `
-			<div class="diagnostic-report">
-				<div class="diag-header">
-					<span class="diag-title">${report.valid ? '✅' : '🚫'} Diagnostic Report for ${fileName}</span>
-					<span class="diag-summary ${summaryClass}">${report.summary.errorCount} error${report.summary.errorCount !== 1 ? 's' : ''}, ${report.summary.warningCount} warning${report.summary.warningCount !== 1 ? 's' : ''}</span>
-				</div>
-				<div class="diag-issues">${issuesHTML || '<div class="diag-issue diag-info">No issues found.</div>'}</div>
-			</div>
-		`;
-	}
-
 	function showLoading(fileName) {
 		statusArea.innerHTML = `
 			<div class="loading-spinner">
@@ -169,9 +126,6 @@ export function createLoadingScreen(container, onFontLoaded) {
 	return {
 		showError(message) {
 			showError(message);
-		},
-		showDiagnosticReport(fileName, report) {
-			showDiagnosticReport(fileName, report);
 		},
 	};
 }

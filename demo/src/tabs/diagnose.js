@@ -232,6 +232,23 @@ function render(container, fontData, appContext) {
 
 	const report = diagnoseFont(buffer);
 
+	// ── Parse-error banner ──────────────────────────────────────────────
+	// When the font failed to fully import, the loader stashes the thrown
+	// error on `_loadError`.  Surface it prominently above the diagnostic
+	// report — it explains *why* we're stuck on this tab.
+	if (fontData._loadError) {
+		const errBanner = document.createElement('div');
+		errBanner.className = 'dx-parse-error';
+		const msg = fontData._loadError.message || String(fontData._loadError);
+		errBanner.innerHTML = `
+			<div class="dx-parse-error-title">🚫 This font could not be loaded</div>
+			<div class="dx-parse-error-msg"><code></code></div>
+			<div class="dx-parse-error-hint">The diagnostic report below should explain what's wrong.</div>
+		`;
+		errBanner.querySelector('code').textContent = msg;
+		wrap.appendChild(errBanner);
+	}
+
 	// ── Summary banner ──────────────────────────────────────────────────
 	const banner = document.createElement('div');
 	banner.className = report.valid

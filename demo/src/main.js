@@ -97,10 +97,26 @@ function showLoadingScreen() {
 				screen.showError(`Failed to parse JSON font: ${err.message}`);
 				return;
 			}
+			// Binary font failed to fully parse. Switch into the regular
+			// tabs UI but in "diagnose-only" mode, landing on the Diagnose
+			// tab so the user immediately sees what went wrong.
+			let canDiagnose = false;
 			try {
-				const report = diagnoseFont(buffer);
-				screen.showDiagnosticReport(fileName, report);
+				diagnoseFont(buffer);
+				canDiagnose = true;
 			} catch (_) {
+				// diagnose itself blew up — fall back to a flat error.
+			}
+			if (canDiagnose) {
+				const stub = {
+					_fileName: fileName,
+					_originalBuffer: buffer,
+					_dirty: false,
+					_diagnoseOnly: true,
+					_loadError: err,
+				};
+				showApp(stub, { initialTab: 'diagnose', errorMode: true });
+			} else {
 				screen.showError(`Failed to parse font: ${err.message}`);
 			}
 		}
@@ -137,7 +153,8 @@ function injectFontFace(buffer, fileName) {
 	document.head.appendChild(style);
 }
 
-function showApp(fontData) {
+function showApp(fontData, options = {}) {
+	const { initialTab = 'overview', errorMode = false } = options;
 	app.className = 'app-loaded';
 	app.innerHTML = '';
 
@@ -225,42 +242,87 @@ function showApp(fontData) {
 		const btn = document.createElement('button');
 		btn.className = 'l1-tab';
 		btn.textContent = label;
-		btn.addEventListener('click', () => setL1Active(key));
+		const disabled = errorMode && key !== 'diagnose' && key !== 'info';
+		if (disabled) {
+			btn.disabled = true;
+			btn.classList.add('l1-tab-disabled');
+			btn.title = 'Not available — fix the font errors first.';
+		} else {
+			btn.addEventListener('click', () => setL1Active(key));
+		}
 		l1Nav.appendChild(btn);
 		l1Buttons[key] = btn;
 	});
 
-	// Right: Download JSON + Export Font
+	// Diagnose tab badge: red error count, or orange warning count.
+	if (fontData._originalBuffer) {
+		try {
+			const diag = diagnoseFont(fontData._originalBuffer);
+			const errs = diag.summary.errorCount || 0;
+			const warns = diag.summary.warningCount || 0;
+			if (errs > 0 || warns > 0) {
+				const badge = document.createElement('span');
+				badge.className =
+					'l1-tab-badge ' +
+					(errs > 0 ? 'l1-tab-badge-error' : 'l1-tab-badge-warning');
+				badge.textContent = String(errs > 0 ? errs : warns);
+				badge.title =
+					errs > 0
+						? `${errs} error${errs !== 1 ? 's' : ''}`
+						: `${warns} warning${warns !== 1 ? 's' : ''}`;
+				l1Buttons.diagnose.appendChild(badge);
+			}
+		} catch (_) {
+			// Diagnose itself failed — leave the tab unbadged.
+		}
+	}
+
+	// Tables tab badge: medium-gray count of parsed tables.
+	if (fontData.tables) {
+		const tableCount = Object.keys(fontData.tables).length;
+		if (tableCount > 0) {
+			const badge = document.createElement('span');
+			badge.className = 'l1-tab-badge l1-tab-badge-neutral';
+			badge.textContent = String(tableCount);
+			badge.title = `${tableCount} parsed table${tableCount !== 1 ? 's' : ''}`;
+			l1Buttons.tables.appendChild(badge);
+		}
+	}
+
+	// Right: Download JSON + Export Font (hidden in error mode — there is
+	// no parsed font data to export.)
 	const headerRight = document.createElement('div');
 	headerRight.className = 'header-right';
 
-	const jsonBtn = document.createElement('button');
-	jsonBtn.className = 'header-btn';
-	jsonBtn.textContent = 'Download JSON';
-	jsonBtn.addEventListener('click', () => {
-		const name =
-			fontData.font?.familyName ||
-			fontData.font?.fullName ||
-			fontData._fileName?.replace(/\.[^.]+$/, '') ||
-			'font';
-		const json = fontToJSON(fontData);
-		const blob = new Blob([json], { type: 'application/json' });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = `${name}.json`;
-		a.click();
-		URL.revokeObjectURL(url);
-	});
+	if (!errorMode) {
+		const jsonBtn = document.createElement('button');
+		jsonBtn.className = 'header-btn';
+		jsonBtn.textContent = 'Download JSON';
+		jsonBtn.addEventListener('click', () => {
+			const name =
+				fontData.font?.familyName ||
+				fontData.font?.fullName ||
+				fontData._fileName?.replace(/\.[^.]+$/, '') ||
+				'font';
+			const json = fontToJSON(fontData);
+			const blob = new Blob([json], { type: 'application/json' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `${name}.json`;
+			a.click();
+			URL.revokeObjectURL(url);
+		});
 
-	const exportBtn = document.createElement('button');
-	exportBtn.className = 'header-btn header-btn-primary';
-	exportBtn.textContent = 'Export Font';
-	exportBtn.addEventListener('click', () => {
-		createSaveDialog(app, fontData, { exportFont, validateJSON });
-	});
+		const exportBtn = document.createElement('button');
+		exportBtn.className = 'header-btn header-btn-primary';
+		exportBtn.textContent = 'Export Font';
+		exportBtn.addEventListener('click', () => {
+			createSaveDialog(app, fontData, { exportFont, validateJSON });
+		});
 
-	headerRight.append(jsonBtn, exportBtn);
+		headerRight.append(jsonBtn, exportBtn);
+	}
 	header.append(headerLeft, l1Nav, headerRight);
 	app.appendChild(header);
 
@@ -312,7 +374,7 @@ function showApp(fontData) {
 		content.appendChild(l1Cache[key]);
 	}
 
-	setL1Active('overview');
+	setL1Active(initialTab);
 }
 
 function renderTablesPanel(panel, fontData) {

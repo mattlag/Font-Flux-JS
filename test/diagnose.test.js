@@ -501,3 +501,477 @@ describe('diagnoseFont — Tier 1 TTC checks', () => {
 		);
 	});
 });
+
+// ============================================================================
+//  Tier 2 — Firefox/OTS parity: cmap deep validation
+// ============================================================================
+
+import { _internal as diagInternal } from '../src/validate/diagnoseFont.js';
+
+/**
+ * Find the offset of a format-4 subtable inside a cmap table in a font buffer.
+ * Returns the absolute byte offset of the subtable's first byte (its `format`
+ * uint16), or null if no format-4 subtable is present.
+ */
+function findCmapFormat4Offset(buffer) {
+	const cmap = findTableEntry(buffer, 'cmap');
+	if (!cmap) return null;
+	const view = new DataView(buffer);
+	const numTables = view.getUint16(cmap.offset + 2);
+	const offsets = new Set();
+	for (let i = 0; i < numTables; i++) {
+		const recOff = cmap.offset + 4 + i * 8;
+		offsets.add(view.getUint32(recOff + 4));
+	}
+	for (const subOff of offsets) {
+		const abs = cmap.offset + subOff;
+		const format = view.getUint16(abs);
+		if (format === 4) return abs;
+	}
+	return null;
+}
+
+describe('diagnoseFont — Tier 2 cmap header / structural', () => {
+	it('flags non-zero cmap.version as CMAP_VERSION_INVALID', async () => {
+		const buffer = cloneBuffer(await loadSample('oblegg.ttf'));
+		const cmap = findTableEntry(buffer, 'cmap');
+		// version at offset 0 of cmap (uint16)
+		new DataView(buffer).setUint16(cmap.offset, 1);
+		const report = diagnoseFont(buffer);
+		expect(report.errors.some((e) => e.code === 'CMAP_VERSION_INVALID')).toBe(
+			true,
+		);
+	});
+});
+
+describe('diagnoseFont — Tier 2 cmap format 4', () => {
+	it('flags a non-FFFF terminator segment as CMAP_FORMAT4_INVALID_TERMINATOR', async () => {
+		const buffer = cloneBuffer(await loadSample('oblegg.ttf'));
+		const f4 = findCmapFormat4Offset(buffer);
+		expect(f4).not.toBeNull();
+		const view = new DataView(buffer);
+		// Within format 4: length@2, language@4, segCountX2@6
+		const segCount = view.getUint16(f4 + 6) / 2;
+		// endCode array starts at offset 14 inside subtable.
+		// Mutate the LAST endCode (i.e. the 0xFFFF terminator) to 0x1234.
+		view.setUint16(f4 + 14 + (segCount - 1) * 2, 0x1234);
+		// Also mutate the LAST startCode so startCode <= endCode still holds.
+		// startCode array begins after endCodes + reservedPad.
+		const startCodeBase = f4 + 14 + segCount * 2 + 2;
+		view.setUint16(startCodeBase + (segCount - 1) * 2, 0x1234);
+		const report = diagnoseFont(buffer);
+		expect(
+			report.errors.some((e) => e.code === 'CMAP_FORMAT4_INVALID_TERMINATOR'),
+		).toBe(true);
+	});
+
+	it('flags startCode > endCode as CMAP_FORMAT4_RANGES_OUT_OF_ORDER', async () => {
+		const buffer = cloneBuffer(await loadSample('oblegg.ttf'));
+		const f4 = findCmapFormat4Offset(buffer);
+		const view = new DataView(buffer);
+		const segCount = view.getUint16(f4 + 6) / 2;
+		// First segment (index 0): set startCode > endCode
+		const endCode0 = view.getUint16(f4 + 14);
+		const startCodeBase = f4 + 14 + segCount * 2 + 2;
+		view.setUint16(startCodeBase, endCode0 + 1); // start > end
+		const report = diagnoseFont(buffer);
+		expect(
+			report.errors.some((e) => e.code === 'CMAP_FORMAT4_RANGES_OUT_OF_ORDER'),
+		).toBe(true);
+	});
+
+	it('flags glyph id >= numGlyphs as CMAP_GLYPH_OUT_OF_RANGE', async () => {
+		const buffer = cloneBuffer(await loadSample('oblegg.ttf'));
+		const maxp = findTableEntry(buffer, 'maxp');
+		// Lower numGlyphs to 1 — every cmap mapping now points "out of range".
+		// (We can't lower it to 0 because that triggers MAXP_NUMGLYPHS_ZERO
+		// and short-circuits other checks; 1 is enough.)
+		new DataView(buffer).setUint16(maxp.offset + 4, 1);
+		const report = diagnoseFont(buffer);
+		expect(
+			report.errors.some((e) => e.code === 'CMAP_GLYPH_OUT_OF_RANGE'),
+		).toBe(true);
+	});
+});
+
+describe('diagnoseFont — Tier 2 cmap format 12 / 13 (synthetic)', () => {
+	it('flags endCharCode < startCharCode as CMAP_FORMAT12_END_BEFORE_START', () => {
+		const issues = [];
+		const cmap = {
+			version: 0,
+			encodingRecords: [{ platformID: 3, encodingID: 10, subtableIndex: 0 }],
+			subtables: [
+				{
+					format: 12,
+					language: 0,
+					groups: [
+						{ startCharCode: 0x100, endCharCode: 0x80, startGlyphID: 1 },
+					],
+				},
+			],
+		};
+		diagInternal.validateCmapDeep(cmap, { numGlyphs: 1000 }, issues);
+		expect(
+			issues.some((i) => i.code === 'CMAP_FORMAT12_END_BEFORE_START'),
+		).toBe(true);
+	});
+
+	it('flags overlapping groups as CMAP_FORMAT12_GROUPS_OUT_OF_ORDER', () => {
+		const issues = [];
+		const cmap = {
+			version: 0,
+			encodingRecords: [{ platformID: 3, encodingID: 10, subtableIndex: 0 }],
+			subtables: [
+				{
+					format: 12,
+					language: 0,
+					groups: [
+						{ startCharCode: 0x100, endCharCode: 0x200, startGlyphID: 1 },
+						{ startCharCode: 0x150, endCharCode: 0x250, startGlyphID: 257 },
+					],
+				},
+			],
+		};
+		diagInternal.validateCmapDeep(cmap, { numGlyphs: 1000 }, issues);
+		expect(
+			issues.some((i) => i.code === 'CMAP_FORMAT12_GROUPS_OUT_OF_ORDER'),
+		).toBe(true);
+	});
+
+	it('flags format-12 group glyph id overflow as CMAP_GLYPH_OUT_OF_RANGE', () => {
+		const issues = [];
+		const cmap = {
+			version: 0,
+			encodingRecords: [{ platformID: 3, encodingID: 10, subtableIndex: 0 }],
+			subtables: [
+				{
+					format: 12,
+					language: 0,
+					groups: [
+						{ startCharCode: 0x20, endCharCode: 0x40, startGlyphID: 90 },
+					],
+				},
+			],
+		};
+		diagInternal.validateCmapDeep(cmap, { numGlyphs: 100 }, issues);
+		expect(issues.some((i) => i.code === 'CMAP_GLYPH_OUT_OF_RANGE')).toBe(true);
+	});
+
+	it('flags format-13 glyphID overflow as CMAP_GLYPH_OUT_OF_RANGE', () => {
+		const issues = [];
+		const cmap = {
+			version: 0,
+			encodingRecords: [{ platformID: 3, encodingID: 10, subtableIndex: 0 }],
+			subtables: [
+				{
+					format: 13,
+					language: 0,
+					groups: [{ startCharCode: 0x20, endCharCode: 0x40, glyphID: 999 }],
+				},
+			],
+		};
+		diagInternal.validateCmapDeep(cmap, { numGlyphs: 100 }, issues);
+		expect(issues.some((i) => i.code === 'CMAP_GLYPH_OUT_OF_RANGE')).toBe(true);
+	});
+});
+
+describe('diagnoseFont — Tier 2 cmap format 14 (synthetic)', () => {
+	it('flags an invalid VS code point as CMAP_FORMAT14_VS_OUT_OF_RANGE', () => {
+		const issues = [];
+		const cmap = {
+			version: 0,
+			encodingRecords: [{ platformID: 0, encodingID: 5, subtableIndex: 0 }],
+			subtables: [
+				{
+					format: 14,
+					varSelectorRecords: [
+						{ varSelector: 0x1234, defaultUVS: null, nonDefaultUVS: null },
+					],
+				},
+			],
+		};
+		diagInternal.validateCmapDeep(cmap, { numGlyphs: 100 }, issues);
+		expect(issues.some((i) => i.code === 'CMAP_FORMAT14_VS_OUT_OF_RANGE')).toBe(
+			true,
+		);
+	});
+
+	it('flags out-of-order VS records as CMAP_FORMAT14_VS_OUT_OF_ORDER', () => {
+		const issues = [];
+		const cmap = {
+			version: 0,
+			encodingRecords: [{ platformID: 0, encodingID: 5, subtableIndex: 0 }],
+			subtables: [
+				{
+					format: 14,
+					varSelectorRecords: [
+						{ varSelector: 0xfe05, defaultUVS: null, nonDefaultUVS: null },
+						{ varSelector: 0xfe00, defaultUVS: null, nonDefaultUVS: null },
+					],
+				},
+			],
+		};
+		diagInternal.validateCmapDeep(cmap, { numGlyphs: 100 }, issues);
+		expect(issues.some((i) => i.code === 'CMAP_FORMAT14_VS_OUT_OF_ORDER')).toBe(
+			true,
+		);
+	});
+
+	it('flags format-14 nonDefaultUVS glyph id overflow as CMAP_GLYPH_OUT_OF_RANGE', () => {
+		const issues = [];
+		const cmap = {
+			version: 0,
+			encodingRecords: [{ platformID: 0, encodingID: 5, subtableIndex: 0 }],
+			subtables: [
+				{
+					format: 14,
+					varSelectorRecords: [
+						{
+							varSelector: 0xfe00,
+							defaultUVS: null,
+							nonDefaultUVS: [{ unicodeValue: 0x4e00, glyphID: 999 }],
+						},
+					],
+				},
+			],
+		};
+		diagInternal.validateCmapDeep(cmap, { numGlyphs: 100 }, issues);
+		expect(issues.some((i) => i.code === 'CMAP_GLYPH_OUT_OF_RANGE')).toBe(true);
+	});
+});
+
+describe('diagnoseFont — Tier 2 cmap top-level structural (synthetic)', () => {
+	it('flags an empty encodingRecords as CMAP_NO_SUBTABLES', () => {
+		const issues = [];
+		diagInternal.validateCmapDeep(
+			{ version: 0, encodingRecords: [], subtables: [] },
+			{ numGlyphs: 100 },
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'CMAP_NO_SUBTABLES')).toBe(true);
+	});
+
+	it('flags missing well-known Unicode subtable as CMAP_NO_SUPPORTED_SUBTABLE', () => {
+		const issues = [];
+		// Only a format-0 subtable on Macintosh — not a recognized Unicode entry.
+		const cmap = {
+			version: 0,
+			encodingRecords: [{ platformID: 1, encodingID: 0, subtableIndex: 0 }],
+			subtables: [
+				{ format: 0, language: 0, glyphIdArray: new Array(256).fill(0) },
+			],
+		};
+		diagInternal.validateCmapDeep(cmap, { numGlyphs: 100 }, issues);
+		expect(issues.some((i) => i.code === 'CMAP_NO_SUPPORTED_SUBTABLE')).toBe(
+			true,
+		);
+	});
+
+	it('flags non-zero language on a Windows subtable as CMAP_LANGUAGE_NONZERO_FOR_WINDOWS', () => {
+		const issues = [];
+		const cmap = {
+			version: 0,
+			encodingRecords: [{ platformID: 3, encodingID: 1, subtableIndex: 0 }],
+			subtables: [
+				{
+					format: 4,
+					language: 9, // non-zero on a Windows subtable
+					segments: [
+						{ startCode: 0x20, endCode: 0x20, idDelta: 0, idRangeOffset: 0 },
+						{
+							startCode: 0xffff,
+							endCode: 0xffff,
+							idDelta: 1,
+							idRangeOffset: 0,
+						},
+					],
+					glyphIdArray: [],
+				},
+			],
+		};
+		diagInternal.validateCmapDeep(cmap, { numGlyphs: 100 }, issues);
+		expect(
+			issues.some((i) => i.code === 'CMAP_LANGUAGE_NONZERO_FOR_WINDOWS'),
+		).toBe(true);
+	});
+});
+
+// ============================================================================
+//  Tier 3: OS/2 sanitization (Firefox/OTS parity)
+// ============================================================================
+
+describe('diagnoseFont — OS/2 sanitization (Tier 3)', () => {
+	function baseOS2() {
+		// Plausible v4 OS/2 values that should produce zero warnings.
+		return {
+			version: 4,
+			usWeightClass: 400,
+			usWidthClass: 5,
+			fsType: 0,
+			ySubscriptXSize: 100,
+			ySubscriptYSize: 100,
+			ySuperscriptXSize: 100,
+			ySuperscriptYSize: 100,
+			yStrikeoutSize: 50,
+			fsSelection: 0x40, // regular
+			usFirstCharIndex: 0x20,
+			usLastCharIndex: 0xfffd,
+			sTypoLineGap: 0,
+			sxHeight: 500,
+			sCapHeight: 700,
+		};
+	}
+
+	function baseHead() {
+		return { macStyle: 0 };
+	}
+
+	it('reports clean baseline (no Tier 3 warnings)', () => {
+		const issues = [];
+		diagInternal.validateOS2Sanitization(baseOS2(), baseHead(), issues);
+		expect(issues).toHaveLength(0);
+	});
+
+	it('flags usWeightClass out of range', () => {
+		const os2 = { ...baseOS2(), usWeightClass: 1500 };
+		const issues = [];
+		diagInternal.validateOS2Sanitization(os2, baseHead(), issues);
+		expect(issues.some((i) => i.code === 'OS2_WEIGHT_CLAMPED')).toBe(true);
+	});
+
+	it('flags usWidthClass out of range', () => {
+		const os2 = { ...baseOS2(), usWidthClass: 0 };
+		const issues = [];
+		diagInternal.validateOS2Sanitization(os2, baseHead(), issues);
+		expect(issues.some((i) => i.code === 'OS2_WIDTH_CLAMPED')).toBe(true);
+	});
+
+	it('flags fsType reserved bits', () => {
+		const os2 = { ...baseOS2(), fsType: 0x8000 };
+		const issues = [];
+		diagInternal.validateOS2Sanitization(os2, baseHead(), issues);
+		expect(issues.some((i) => i.code === 'OS2_FSTYPE_RESERVED_BITS_SET')).toBe(
+			true,
+		);
+	});
+
+	it('accepts all valid fsType bits', () => {
+		const os2 = { ...baseOS2(), fsType: 0x030f };
+		const issues = [];
+		diagInternal.validateOS2Sanitization(os2, baseHead(), issues);
+		expect(issues.some((i) => i.code === 'OS2_FSTYPE_RESERVED_BITS_SET')).toBe(
+			false,
+		);
+	});
+
+	it('flags negative subscript/superscript/strikeout sizes', () => {
+		const os2 = { ...baseOS2(), ySubscriptXSize: -10 };
+		const issues = [];
+		diagInternal.validateOS2Sanitization(os2, baseHead(), issues);
+		expect(issues.some((i) => i.code === 'OS2_NEGATIVE_SIZE')).toBe(true);
+	});
+
+	it('flags inverted first/last char index', () => {
+		const os2 = {
+			...baseOS2(),
+			usFirstCharIndex: 0x100,
+			usLastCharIndex: 0x20,
+		};
+		const issues = [];
+		diagInternal.validateOS2Sanitization(os2, baseHead(), issues);
+		expect(issues.some((i) => i.code === 'OS2_FIRST_LAST_CHAR_INVERTED')).toBe(
+			true,
+		);
+	});
+
+	it('flags negative sTypoLineGap', () => {
+		const os2 = { ...baseOS2(), sTypoLineGap: -50 };
+		const issues = [];
+		diagInternal.validateOS2Sanitization(os2, baseHead(), issues);
+		expect(issues.some((i) => i.code === 'OS2_TYPO_LINEGAP_NEGATIVE')).toBe(
+			true,
+		);
+	});
+
+	it('flags negative sxHeight', () => {
+		const os2 = { ...baseOS2(), sxHeight: -1 };
+		const issues = [];
+		diagInternal.validateOS2Sanitization(os2, baseHead(), issues);
+		expect(issues.some((i) => i.code === 'OS2_X_HEIGHT_NEGATIVE')).toBe(true);
+	});
+
+	it('flags negative sCapHeight', () => {
+		const os2 = { ...baseOS2(), sCapHeight: -1 };
+		const issues = [];
+		diagInternal.validateOS2Sanitization(os2, baseHead(), issues);
+		expect(issues.some((i) => i.code === 'OS2_CAP_HEIGHT_NEGATIVE')).toBe(true);
+	});
+
+	it('flags optical point size out of range (lower too big)', () => {
+		const os2 = {
+			...baseOS2(),
+			version: 5,
+			usLowerOpticalPointSize: 0xffff,
+			usUpperOpticalPointSize: 100,
+		};
+		const issues = [];
+		diagInternal.validateOS2Sanitization(os2, baseHead(), issues);
+		expect(
+			issues.some((i) => i.code === 'OS2_OPTICAL_POINTSIZE_OUT_OF_RANGE'),
+		).toBe(true);
+	});
+
+	it('flags optical point size out of range (upper too small)', () => {
+		const os2 = {
+			...baseOS2(),
+			version: 5,
+			usLowerOpticalPointSize: 50,
+			usUpperOpticalPointSize: 1,
+		};
+		const issues = [];
+		diagInternal.validateOS2Sanitization(os2, baseHead(), issues);
+		expect(
+			issues.some((i) => i.code === 'OS2_OPTICAL_POINTSIZE_OUT_OF_RANGE'),
+		).toBe(true);
+	});
+
+	it('flags fsSelection vs head.macStyle italic mismatch', () => {
+		const os2 = { ...baseOS2(), fsSelection: 0x01 }; // italic
+		const head = { macStyle: 0 }; // not italic
+		const issues = [];
+		diagInternal.validateOS2Sanitization(os2, head, issues);
+		expect(
+			issues.some((i) => i.code === 'OS2_FSSELECTION_HEAD_MACSTYLE_MISMATCH'),
+		).toBe(true);
+	});
+
+	it('flags fsSelection vs head.macStyle bold mismatch', () => {
+		const os2 = { ...baseOS2(), fsSelection: 0x20 }; // bold
+		const head = { macStyle: 0 }; // not bold
+		const issues = [];
+		diagInternal.validateOS2Sanitization(os2, head, issues);
+		expect(
+			issues.some((i) => i.code === 'OS2_FSSELECTION_HEAD_MACSTYLE_MISMATCH'),
+		).toBe(true);
+	});
+
+	it('accepts matched bold+italic fsSelection and macStyle', () => {
+		const os2 = { ...baseOS2(), fsSelection: 0x21 }; // italic + bold
+		const head = { macStyle: 0x03 }; // bold + italic
+		const issues = [];
+		diagInternal.validateOS2Sanitization(os2, head, issues);
+		expect(
+			issues.some((i) => i.code === 'OS2_FSSELECTION_HEAD_MACSTYLE_MISMATCH'),
+		).toBe(false);
+	});
+
+	it('flags head.macStyle reserved bits', () => {
+		const os2 = baseOS2();
+		const head = { macStyle: 0x0100 };
+		const issues = [];
+		diagInternal.validateOS2Sanitization(os2, head, issues);
+		expect(
+			issues.some((i) => i.code === 'HEAD_MACSTYLE_RESERVED_BITS_SET'),
+		).toBe(true);
+	});
+});

@@ -10,7 +10,7 @@
 
 Firefox does not load a font directly. Every font file goes through **OTS — the OpenType Sanitizer** — a C++ library Mozilla vendors from <https://github.com/khaledhosny/ots>. OTS does one of three things to every value it reads:
 
-- **`Error()`** → reject the font (Firefox refuses to render it; surfaced as a console warning like *"downloadable font: Failed to read or incorrect magicNumber"*).
+- **`Error()`** → reject the font (Firefox refuses to render it; surfaced as a console warning like _"downloadable font: Failed to read or incorrect magicNumber"_).
 - **`Drop()`** → silently discard the offending table and continue with the rest of the font.
 - **`Warning()`** → emit a console warning **and auto-fix** the value (clamp, recompute, mask reserved bits).
 
@@ -18,11 +18,11 @@ OTS is therefore the canonical "what does Firefox accept?" reference. If FFJS's 
 
 ### Source locations
 
-| Source | URL |
-|---|---|
-| Canonical OTS repo | <https://github.com/khaledhosny/ots> |
-| Raw source root | `https://raw.githubusercontent.com/khaledhosny/ots/main/src/<file>.cc` |
-| Mozilla's vendored copy (identical) | <https://searchfox.org/mozilla-central/source/gfx/ots/src> |
+| Source                              | URL                                                                    |
+| ----------------------------------- | ---------------------------------------------------------------------- |
+| Canonical OTS repo                  | <https://github.com/khaledhosny/ots>                                   |
+| Raw source root                     | `https://raw.githubusercontent.com/khaledhosny/ots/main/src/<file>.cc` |
+| Mozilla's vendored copy (identical) | <https://searchfox.org/mozilla-central/source/gfx/ots/src>             |
 
 ### Key OTS macros / patterns to look for when reading the source
 
@@ -81,186 +81,186 @@ Legend: 🔴 Error · 🟡 Warning (auto-fixed) · ⚫ Drop · ✓ FFJS covers �
 
 ### 3.1 Top-level / SFNT directory (`ots.cc`)
 
-| OTS message | Sev | FFJS code | Match |
-|---|---|---|---|
-| `file less than 4 bytes` | 🔴 | `TOO_SHORT` | ✓ |
-| `file exceeds 1GB` | 🔴 | — | ✗ |
-| `error reading sfntVersion` | 🔴 | `HEADER_UNREADABLE` | ✓ |
-| `invalid sfntVersion: %d` | 🔴 | `BAD_SF_VERSION` | ✓ |
-| `excessive (or zero) number of tables` (cap 4096) | 🔴 | `EXCESSIVE_TABLES` | ✓ partial (no upper cap) |
-| `bad table directory searchRange` | 🟡 fix | `BAD_SEARCH_RANGE` (info, auto-fixed) | ✓ |
-| `bad table directory entrySelector` | 🟡 fix | `BAD_ENTRY_SELECTOR` | ✓ |
-| `bad table directory rangeShift` | 🟡 fix | `BAD_RANGE_SHIFT` | ✓ |
-| `error reading table directory` | 🔴 | `DIRECTORY_TRUNCATED` / `DIRECTORY_ENTRY_UNREADABLE` | ✓ |
-| `Table directory is not correctly ordered` | 🟡 | `DIRECTORY_NOT_SORTED` | ✓ |
-| `Invalid table tag: 0x%X` (non-ASCII chars) | 🟡 | `BAD_TABLE_TAG` | ✓ |
-| `misaligned table` (offset & 3) | 🔴 | `TABLE_MISALIGNED` | ✓ |
-| `invalid table offset` | 🔴 | `TABLE_OUT_OF_BOUNDS` | ✓ |
-| `zero-length table` | 🔴 | `EMPTY_TABLE` | ✓ |
-| `table length exceeds 1GB` | 🔴 | — | ✗ |
-| `table overruns end of file` | 🔴 | `TABLE_OUT_OF_BOUNDS` | ✓ |
-| `overlapping tables` (pairwise) | 🔴 | — | ✗ **gap** |
-| `missing required table` | 🔴 | `MISSING_REQUIRED_TABLE` | ✓ |
-| `Failed to parse table` | 🔴 | `TABLE_PARSE_FAILED` | ✓ |
-| `wrong sfntVersion for glyph data` (TT vs CFF mismatch — auto-fix) | 🟡 fix | `MIXED_OUTLINES` (warn only) | partial |
-| `wrong maxp version for glyph data` | 🔴 | — | ✗ **gap** |
-| `font contains both CFF and glyf/loca tables` (drops one) | ⚫ | `MIXED_OUTLINES` (warn only) | partial |
-| `no supported glyph data table(s) present` | 🔴 | `NO_OUTLINES` | ✓ |
-| (duplicate tag detection) | 🔴 | `DUPLICATE_TABLE` | ✓ FFJS extra |
-| (table checksum verification) | — | `BAD_CHECKSUM` | ✓ FFJS extra (OTS recomputes silently) |
+| OTS message                                                        | Sev    | FFJS code                                            | Match                                  |
+| ------------------------------------------------------------------ | ------ | ---------------------------------------------------- | -------------------------------------- |
+| `file less than 4 bytes`                                           | 🔴     | `TOO_SHORT`                                          | ✓                                      |
+| `file exceeds 1GB`                                                 | 🔴     | —                                                    | ✗                                      |
+| `error reading sfntVersion`                                        | 🔴     | `HEADER_UNREADABLE`                                  | ✓                                      |
+| `invalid sfntVersion: %d`                                          | 🔴     | `BAD_SF_VERSION`                                     | ✓                                      |
+| `excessive (or zero) number of tables` (cap 4096)                  | 🔴     | `EXCESSIVE_TABLES`                                   | ✓ partial (no upper cap)               |
+| `bad table directory searchRange`                                  | 🟡 fix | `BAD_SEARCH_RANGE` (info, auto-fixed)                | ✓                                      |
+| `bad table directory entrySelector`                                | 🟡 fix | `BAD_ENTRY_SELECTOR`                                 | ✓                                      |
+| `bad table directory rangeShift`                                   | 🟡 fix | `BAD_RANGE_SHIFT`                                    | ✓                                      |
+| `error reading table directory`                                    | 🔴     | `DIRECTORY_TRUNCATED` / `DIRECTORY_ENTRY_UNREADABLE` | ✓                                      |
+| `Table directory is not correctly ordered`                         | 🟡     | `DIRECTORY_NOT_SORTED`                               | ✓                                      |
+| `Invalid table tag: 0x%X` (non-ASCII chars)                        | 🟡     | `BAD_TABLE_TAG`                                      | ✓                                      |
+| `misaligned table` (offset & 3)                                    | 🔴     | `TABLE_MISALIGNED`                                   | ✓                                      |
+| `invalid table offset`                                             | 🔴     | `TABLE_OUT_OF_BOUNDS`                                | ✓                                      |
+| `zero-length table`                                                | 🔴     | `EMPTY_TABLE`                                        | ✓                                      |
+| `table length exceeds 1GB`                                         | 🔴     | —                                                    | ✗                                      |
+| `table overruns end of file`                                       | 🔴     | `TABLE_OUT_OF_BOUNDS`                                | ✓                                      |
+| `overlapping tables` (pairwise)                                    | 🔴     | —                                                    | ✗ **gap**                              |
+| `missing required table`                                           | 🔴     | `MISSING_REQUIRED_TABLE`                             | ✓                                      |
+| `Failed to parse table`                                            | 🔴     | `TABLE_PARSE_FAILED`                                 | ✓                                      |
+| `wrong sfntVersion for glyph data` (TT vs CFF mismatch — auto-fix) | 🟡 fix | `MIXED_OUTLINES` (warn only)                         | partial                                |
+| `wrong maxp version for glyph data`                                | 🔴     | —                                                    | ✗ **gap**                              |
+| `font contains both CFF and glyf/loca tables` (drops one)          | ⚫     | `MIXED_OUTLINES` (warn only)                         | partial                                |
+| `no supported glyph data table(s) present`                         | 🔴     | `NO_OUTLINES`                                        | ✓                                      |
+| (duplicate tag detection)                                          | 🔴     | `DUPLICATE_TABLE`                                    | ✓ FFJS extra                           |
+| (table checksum verification)                                      | —      | `BAD_CHECKSUM`                                       | ✓ FFJS extra (OTS recomputes silently) |
 
 ### 3.2 TTC container (`ots.cc::ProcessTTC`)
 
-| OTS message | Sev | FFJS |
-|---|---|---|
-| `Error reading TTC tag` / `Invalid TTC tag` | 🔴 | `COLLECTION_HEADER_UNREADABLE` ✓ |
-| `Invalid TTC version` (must be 0x10000 or 0x20000) | 🔴 | — ✗ |
-| `Too many fonts in TTC` (>0x10000) | 🔴 | — ✗ |
-| `Error reading offset to OffsetTable` | 🔴 | `COLLECTION_HEADER_UNREADABLE` ✓ |
+| OTS message                                        | Sev | FFJS                             |
+| -------------------------------------------------- | --- | -------------------------------- |
+| `Error reading TTC tag` / `Invalid TTC tag`        | 🔴  | `COLLECTION_HEADER_UNREADABLE` ✓ |
+| `Invalid TTC version` (must be 0x10000 or 0x20000) | 🔴  | — ✗                              |
+| `Too many fonts in TTC` (>0x10000)                 | 🔴  | — ✗                              |
+| `Error reading offset to OffsetTable`              | 🔴  | `COLLECTION_HEADER_UNREADABLE` ✓ |
 
 ### 3.3 WOFF1 / WOFF2 wrappers
 
-| OTS message | Sev | FFJS |
-|---|---|---|
-| `invalid WOFF marker` | 🔴 | covered by `WOFF1_UNWRAP_FAILED` ✓ |
-| `incorrect file size in WOFF header` | 🔴 | — ✗ |
-| `error in reserved field of WOFF header` | 🔴 | — ✗ |
-| `Invalid metadata block offset/length` | 🔴 | — ✗ |
-| `Invalid private block offset/length` | 🔴 | — ✗ |
-| `uncompressed sfnt size mismatch` | 🔴 | — ✗ |
-| `junk before tables in WOFF file` | 🔴 | — ✗ |
-| `File length mismatch (trailing junk?)` | 🔴 | — ✗ |
-| `Failed to convert WOFF 2.0 font to SFNT` | 🔴 | `WOFF2_UNWRAP_FAILED` ✓ |
-| `Size of decompressed WOFF 2.0 exceeds %gMB` | 🔴 | — ✗ |
+| OTS message                                  | Sev | FFJS                               |
+| -------------------------------------------- | --- | ---------------------------------- |
+| `invalid WOFF marker`                        | 🔴  | covered by `WOFF1_UNWRAP_FAILED` ✓ |
+| `incorrect file size in WOFF header`         | 🔴  | — ✗                                |
+| `error in reserved field of WOFF header`     | 🔴  | — ✗                                |
+| `Invalid metadata block offset/length`       | 🔴  | — ✗                                |
+| `Invalid private block offset/length`        | 🔴  | — ✗                                |
+| `uncompressed sfnt size mismatch`            | 🔴  | — ✗                                |
+| `junk before tables in WOFF file`            | 🔴  | — ✗                                |
+| `File length mismatch (trailing junk?)`      | 🔴  | — ✗                                |
+| `Failed to convert WOFF 2.0 font to SFNT`    | 🔴  | `WOFF2_UNWRAP_FAILED` ✓            |
+| `Size of decompressed WOFF 2.0 exceeds %gMB` | 🔴  | — ✗                                |
 
 → **Major gap**: FFJS only checks "did the unwrap succeed", not WOFF header integrity.
 
 ### 3.4 `head` (`head.cc`)
 
-| OTS message | Sev | FFJS |
-|---|---|---|
-| `Failed to read table header` | 🔴 | `TABLE_PARSE_FAILED` ✓ |
-| `Unsupported majorVersion` (must be 1) | 🔴 | — ✗ |
-| `Failed to read or incorrect magicNumber` (≠ 0x5F0F3CF5) | 🔴 | `BAD_MAGIC_NUMBER` ✓ |
-| `unitsPerEm on in the range [16, 16384]` | 🔴 | `BAD_UNITS_PER_EM` ✓ |
-| `Bad x dimension in the font bounding box` (xmin > xmax) | 🔴 | — ✗ |
-| `Bad y dimension in the font bounding box` (ymin > ymax) | 🔴 | — ✗ |
-| `Bad indexToLocFormat` (not 0/1) | 🔴 | — ✗ |
-| `Failed to read or bad glyphDataFormat` (must be 0) | 🔴 | — ✗ |
-| Silent: masks `flags` to allowed bits (0..4, 11..13 → `0x381f`) | 🟡 | — ✗ |
-| Silent: masks `macStyle` to bits 0..6 (`0x7f`) | 🟡 | — ✗ |
+| OTS message                                                     | Sev | FFJS                   |
+| --------------------------------------------------------------- | --- | ---------------------- |
+| `Failed to read table header`                                   | 🔴  | `TABLE_PARSE_FAILED` ✓ |
+| `Unsupported majorVersion` (must be 1)                          | 🔴  | — ✗                    |
+| `Failed to read or incorrect magicNumber` (≠ 0x5F0F3CF5)        | 🔴  | `BAD_MAGIC_NUMBER` ✓   |
+| `unitsPerEm on in the range [16, 16384]`                        | 🔴  | `BAD_UNITS_PER_EM` ✓   |
+| `Bad x dimension in the font bounding box` (xmin > xmax)        | 🔴  | — ✗                    |
+| `Bad y dimension in the font bounding box` (ymin > ymax)        | 🔴  | — ✗                    |
+| `Bad indexToLocFormat` (not 0/1)                                | 🔴  | — ✗                    |
+| `Failed to read or bad glyphDataFormat` (must be 0)             | 🔴  | — ✗                    |
+| Silent: masks `flags` to allowed bits (0..4, 11..13 → `0x381f`) | 🟡  | — ✗                    |
+| Silent: masks `macStyle` to bits 0..6 (`0x7f`)                  | 🟡  | — ✗                    |
 
 ### 3.5 `maxp` (`maxp.cc`)
 
-| OTS message | Sev | FFJS |
-|---|---|---|
-| `Unsupported table version 0x%x` | 🔴 | — ✗ |
-| `numGlyphs is 0` | 🔴 | — ✗ |
-| `Unexpected version 0x%08x; attempting to read as 1.0` | 🟡 | — ✗ |
-| `Failed to read v1.0 fields, downgrading to 0.5` | 🟡 | — ✗ |
-| `Bad maxZones` (auto-clamps to [1,2]) | 🟡 | — ✗ |
+| OTS message                                            | Sev | FFJS |
+| ------------------------------------------------------ | --- | ---- |
+| `Unsupported table version 0x%x`                       | 🔴  | — ✗  |
+| `numGlyphs is 0`                                       | 🔴  | — ✗  |
+| `Unexpected version 0x%08x; attempting to read as 1.0` | 🟡  | — ✗  |
+| `Failed to read v1.0 fields, downgrading to 0.5`       | 🟡  | — ✗  |
+| `Bad maxZones` (auto-clamps to [1,2])                  | 🟡  | — ✗  |
 
 ### 3.6 `hhea` / `vhea`
 
-| Check | FFJS |
-|---|---|
-| `Unsupported majorVersion` | — ✗ |
+| Check                                      | FFJS                                                    |
+| ------------------------------------------ | ------------------------------------------------------- |
+| `Unsupported majorVersion`                 | — ✗                                                     |
 | numberOfHMetrics ↔ hmtx length consistency | `HHEA_HMTX_MISMATCH`, `VHEA_VMTX_MISMATCH` ✓ FFJS extra |
 
 ### 3.7 `cmap` (`cmap.cc`) — heaviest validator in OTS
 
-| OTS message | Sev | FFJS |
-|---|---|---|
-| `Non zero cmap version` | 🔴 | — ✗ |
-| `No subtables in cmap!` | 🔴 | — ✗ |
-| `Bad subtable offset in cmap subtable %d` | 🔴 | — ✗ |
-| `Excessive overlap count` | 🔴 | — ✗ |
-| out-of-order subtables (warning) | 🟡 | `CMAP_SUBTABLES_NOT_SORTED` ✓ |
-| `No maxp table in font! Needed by cmap.` | 🔴 | (caught upstream by `MISSING_REQUIRED_TABLE`) ~✓ |
-| `Required OS/2 table missing` (from format 4) | 🔴 | — ✗ |
-| Format 4: `Languages should be 0` | 🔴 | — ✗ |
-| Format 4: `Bad subcmap structure` | 🔴 | — ✗ |
-| Format 4: `Segcount < 1` | 🔴 | — ✗ |
-| Format 4: `expected search range != search range` | 🔴 | — ✗ |
-| Format 4: `entry selector != log2(segment count)` | 🔴 | — ✗ |
-| Format 4: `Non zero cmap subtable segment padding` | 🔴 | — ✗ |
-| Format 4: `bad id_range_offset` (auto-fix at terminator) | 🟡 | — ✗ |
-| Format 4: `Out of order end range` / `out of order start range` | 🔴 | — ✗ |
-| Format 4: `multiple 0xffff terminators found` | 🟡 | — ✗ |
-| Format 4: `Final segment start and end must be 0xFFFF` | 🔴 | — ✗ |
-| Format 4: `Range glyph reference too high` (glyphID ≥ numGlyphs) | 🔴 | — ✗ **important** |
-| Format 4: `bad glyph id offset` | 🔴 | — ✗ |
-| Format 12/13: `subtable language should be zero` | 🔴 | — ✗ |
-| Format 12/13: bad startCharCode/endCharCode/startGlyphID (>0x10FFFF or >65535) | 🔴 | — ✗ |
-| Format 12: `endCharCode before startCharCode` | 🔴 | — ✗ |
-| Format 12: `bad startGlyphID` (range exceeds numGlyphs) | 🔴 | — ✗ |
-| Format 12/13: out-of-order/overlapping groups | 🔴 | — ✗ |
-| Format 14: `Bad record variation selector` (must be Mongolian/VS/IVS ranges) | 🔴 | — ✗ |
-| Format 14: `Out of order variation selector` | 🔴 | — ✗ |
-| `no supported subtables were found` (no 3-0-4 / 3-1-4 / 0-3-4 / 3-10-12 / 3-10-13) | 🔴 | — ✗ |
+| OTS message                                                                        | Sev | FFJS                                             |
+| ---------------------------------------------------------------------------------- | --- | ------------------------------------------------ |
+| `Non zero cmap version`                                                            | 🔴  | — ✗                                              |
+| `No subtables in cmap!`                                                            | 🔴  | — ✗                                              |
+| `Bad subtable offset in cmap subtable %d`                                          | 🔴  | — ✗                                              |
+| `Excessive overlap count`                                                          | 🔴  | — ✗                                              |
+| out-of-order subtables (warning)                                                   | 🟡  | `CMAP_SUBTABLES_NOT_SORTED` ✓                    |
+| `No maxp table in font! Needed by cmap.`                                           | 🔴  | (caught upstream by `MISSING_REQUIRED_TABLE`) ~✓ |
+| `Required OS/2 table missing` (from format 4)                                      | 🔴  | — ✗                                              |
+| Format 4: `Languages should be 0`                                                  | 🔴  | — ✗                                              |
+| Format 4: `Bad subcmap structure`                                                  | 🔴  | — ✗                                              |
+| Format 4: `Segcount < 1`                                                           | 🔴  | — ✗                                              |
+| Format 4: `expected search range != search range`                                  | 🔴  | — ✗                                              |
+| Format 4: `entry selector != log2(segment count)`                                  | 🔴  | — ✗                                              |
+| Format 4: `Non zero cmap subtable segment padding`                                 | 🔴  | — ✗                                              |
+| Format 4: `bad id_range_offset` (auto-fix at terminator)                           | 🟡  | — ✗                                              |
+| Format 4: `Out of order end range` / `out of order start range`                    | 🔴  | — ✗                                              |
+| Format 4: `multiple 0xffff terminators found`                                      | 🟡  | — ✗                                              |
+| Format 4: `Final segment start and end must be 0xFFFF`                             | 🔴  | — ✗                                              |
+| Format 4: `Range glyph reference too high` (glyphID ≥ numGlyphs)                   | 🔴  | — ✗ **important**                                |
+| Format 4: `bad glyph id offset`                                                    | 🔴  | — ✗                                              |
+| Format 12/13: `subtable language should be zero`                                   | 🔴  | — ✗                                              |
+| Format 12/13: bad startCharCode/endCharCode/startGlyphID (>0x10FFFF or >65535)     | 🔴  | — ✗                                              |
+| Format 12: `endCharCode before startCharCode`                                      | 🔴  | — ✗                                              |
+| Format 12: `bad startGlyphID` (range exceeds numGlyphs)                            | 🔴  | — ✗                                              |
+| Format 12/13: out-of-order/overlapping groups                                      | 🔴  | — ✗                                              |
+| Format 14: `Bad record variation selector` (must be Mongolian/VS/IVS ranges)       | 🔴  | — ✗                                              |
+| Format 14: `Out of order variation selector`                                       | 🔴  | — ✗                                              |
+| `no supported subtables were found` (no 3-0-4 / 3-1-4 / 0-3-4 / 3-10-12 / 3-10-13) | 🔴  | — ✗                                              |
 
 → **Major gap**: cmap subtable internals are essentially unvalidated.
 
 ### 3.8 `name` (`name.cc`)
 
-| OTS message | Sev | FFJS |
-|---|---|---|
-| `Failed to read table format or bad format` (>1) | 🔴 | — ✗ |
-| `Failed to read or bad stringOffset` | 🔴 | — ✗ |
-| `name records are not sorted.` (auto-sort) | 🟡 fix | `NAME_RECORDS_NOT_SORTED` ✓ |
-| Skips records with unknown platform/encoding (silent drop) | ⚫ | — ✗ |
-| `bad end of tag` (lang tag overruns) | 🔴 | — ✗ |
-| `Too long language tag` (>200 bytes UTF-16) | 🔴 | — ✗ |
-| `Bad table offset` (string overlaps records) | 🔴 | — ✗ |
-| Synthesizes nameIDs 1, 2, 4, 5, 6 if missing | 🟡 fix | `NO_FAMILY_NAME`, `NO_STYLE_NAME` (warn only, no synthesis) ~✓ |
-| Sanitizes PostScript name (nameID 6) — replaces non-URI chars with `_` | 🟡 fix | — ✗ |
+| OTS message                                                            | Sev    | FFJS                                                           |
+| ---------------------------------------------------------------------- | ------ | -------------------------------------------------------------- |
+| `Failed to read table format or bad format` (>1)                       | 🔴     | — ✗                                                            |
+| `Failed to read or bad stringOffset`                                   | 🔴     | — ✗                                                            |
+| `name records are not sorted.` (auto-sort)                             | 🟡 fix | `NAME_RECORDS_NOT_SORTED` ✓                                    |
+| Skips records with unknown platform/encoding (silent drop)             | ⚫     | — ✗                                                            |
+| `bad end of tag` (lang tag overruns)                                   | 🔴     | — ✗                                                            |
+| `Too long language tag` (>200 bytes UTF-16)                            | 🔴     | — ✗                                                            |
+| `Bad table offset` (string overlaps records)                           | 🔴     | — ✗                                                            |
+| Synthesizes nameIDs 1, 2, 4, 5, 6 if missing                           | 🟡 fix | `NO_FAMILY_NAME`, `NO_STYLE_NAME` (warn only, no synthesis) ~✓ |
+| Sanitizes PostScript name (nameID 6) — replaces non-URI chars with `_` | 🟡 fix | — ✗                                                            |
 
 ### 3.9 `post` (`post.cc`)
 
-| OTS message | Sev | FFJS |
-|---|---|---|
-| `Unsupported table version` (must be 1.0/2.0/3.0) | 🔴 | — ✗ |
-| `Bad number of glyphs` (≠ maxp.numGlyphs) | 🔴 | — ✗ |
-| `Bad string length` / `Bad string of length` | 🔴 | — ✗ |
-| `Bad string index` (≥ num_strings) | 🔴 | — ✗ |
+| OTS message                                                                       | Sev    | FFJS                                                      |
+| --------------------------------------------------------------------------------- | ------ | --------------------------------------------------------- |
+| `Unsupported table version` (must be 1.0/2.0/3.0)                                 | 🔴     | — ✗                                                       |
+| `Bad number of glyphs` (≠ maxp.numGlyphs)                                         | 🔴     | — ✗                                                       |
+| `Bad string length` / `Bad string of length`                                      | 🔴     | — ✗                                                       |
+| `Bad string index` (≥ num_strings)                                                | 🔴     | — ✗                                                       |
 | `Only version supported for fonts with CFF table is 0x00030000` (auto-fix to 3.0) | 🟡 fix | `POST_VERSION_INVALID_FOR_CFF` ✓ (the recent Firefox fix) |
 
 ### 3.10 `OS/2` (`os2.cc`) — heavily lenient/auto-fixing
 
-| OTS message | Sev | FFJS |
-|---|---|---|
-| `Unsupported table version` (>5) | 🔴 | — ✗ |
-| `Bad usWeightClass` (clamp to [1,1000]) | 🟡 fix | — ✗ |
-| `Bad usWidthClass` (clamp to [1,9]) | 🟡 fix | — ✗ |
-| Masks `fsType` reserved bits (`& 0x30f`) | 🟡 silent | — ✗ |
-| `Bad ySubscriptXSize/...` (clamp neg→0) | 🟡 fix | — ✗ |
-| `Adjusting head.macStyle (italic/bold/regular) to match fsSelection` | 🟡 fix | — ✗ |
-| `fsSelection bits 8 and 9 must be unset for table version <4` | 🟡 | — ✗ |
-| `usFirstCharIndex > usLastCharIndex` (clamp) | 🟡 fix | — ✗ |
-| `Bad sTypoLineGap, setting to 0` (was negative) | 🟡 fix | — ✗ |
-| `Bad sxHeight / sCapHeight` (negative → 0) | 🟡 fix | — ✗ |
-| `usLowerOpticalPointSize > 0xFFFE` (clamp) | 🟡 fix | — ✗ |
-| `usUpperOpticalPointSize < 2` (clamp) | 🟡 fix | — ✗ |
+| OTS message                                                          | Sev       | FFJS |
+| -------------------------------------------------------------------- | --------- | ---- |
+| `Unsupported table version` (>5)                                     | 🔴        | — ✗  |
+| `Bad usWeightClass` (clamp to [1,1000])                              | 🟡 fix    | — ✗  |
+| `Bad usWidthClass` (clamp to [1,9])                                  | 🟡 fix    | — ✗  |
+| Masks `fsType` reserved bits (`& 0x30f`)                             | 🟡 silent | — ✗  |
+| `Bad ySubscriptXSize/...` (clamp neg→0)                              | 🟡 fix    | — ✗  |
+| `Adjusting head.macStyle (italic/bold/regular) to match fsSelection` | 🟡 fix    | — ✗  |
+| `fsSelection bits 8 and 9 must be unset for table version <4`        | 🟡        | — ✗  |
+| `usFirstCharIndex > usLastCharIndex` (clamp)                         | 🟡 fix    | — ✗  |
+| `Bad sTypoLineGap, setting to 0` (was negative)                      | 🟡 fix    | — ✗  |
+| `Bad sxHeight / sCapHeight` (negative → 0)                           | 🟡 fix    | — ✗  |
+| `usLowerOpticalPointSize > 0xFFFE` (clamp)                           | 🟡 fix    | — ✗  |
+| `usUpperOpticalPointSize < 2` (clamp)                                | 🟡 fix    | — ✗  |
 
 ### 3.11 CFF / CFF2 (`cff.cc`, `cff_charstring.cc`)
 
 OTS validates: header version, Top DICT operands, charstring opcodes, endchar presence, subroutine recursion depth, hint counts, etc. FFJS has:
 
-| Check | FFJS |
-|---|---|
-| Empty charstring | `CFF_EMPTY_CHARSTRING` ✓ |
-| Charstring missing endchar | `CFF_CHARSTRING_NO_ENDCHAR` ✓ |
-| Glyph count mismatch (CFF vs maxp) | `CFF_GLYPH_MISMATCH` ✓ |
-| Operator validity / stack underflow / subr depth | — ✗ |
+| Check                                            | FFJS                          |
+| ------------------------------------------------ | ----------------------------- |
+| Empty charstring                                 | `CFF_EMPTY_CHARSTRING` ✓      |
+| Charstring missing endchar                       | `CFF_CHARSTRING_NO_ENDCHAR` ✓ |
+| Glyph count mismatch (CFF vs maxp)               | `CFF_GLYPH_MISMATCH` ✓        |
+| Operator validity / stack underflow / subr depth | — ✗                           |
 
 ### 3.12 `glyf` / `loca`
 
-| Check | FFJS |
-|---|---|
-| Loca offset table within bounds | `LOCA_BEYOND_GLYF` ✓ |
-| Glyph header bounds (numContours, xMin/xMax, etc.) | — ✗ |
-| Composite glyph component cycle / depth | — ✗ |
-| TrueType instructions safety (storage, stack limits) | — ✗ |
+| Check                                                | FFJS                 |
+| ---------------------------------------------------- | -------------------- |
+| Loca offset table within bounds                      | `LOCA_BEYOND_GLYF` ✓ |
+| Glyph header bounds (numContours, xMin/xMax, etc.)   | — ✗                  |
+| Composite glyph component cycle / depth              | — ✗                  |
+| TrueType instructions safety (storage, stack limits) | — ✗                  |
 
 ### 3.13 Variable-font tables (`fvar`, `gvar`, `avar`, `cvar`, `HVAR`, `MVAR`, `STAT`, `VVAR`)
 
@@ -274,20 +274,20 @@ OTS validates Lookup/Coverage/ClassDef/Subtable structure deeply (hundreds of ch
 
 ## 4. Coverage summary
 
-| Category | OTS checks | FFJS coverage |
-|---|---|---|
-| Container & directory | ~25 | **strong** (~18 covered) |
-| WOFF1/2 wrapper validation | ~12 | **weak** (just unwrap success/fail) |
-| `head` | 10 | partial (3/10) |
-| `maxp` | 5 | none (0/5) |
-| `cmap` | ~30 | **very weak** (1/30 — sort order only) |
-| `name` | 7 | partial (1 auto-fix + 2 warnings) |
-| `post` | 5 | partial (1 critical CFF check covered) |
-| `OS/2` | ~12 sanitizations | none |
-| CFF/CFF2 | dozens | basic (3 charstring-level) |
-| `glyf` / `loca` | ~15 | bounds only |
-| Variable-font tables | ~50 across tables | one cross-table check |
-| Layout tables | hundreds | none |
+| Category                   | OTS checks        | FFJS coverage                          |
+| -------------------------- | ----------------- | -------------------------------------- |
+| Container & directory      | ~25               | **strong** (~18 covered)               |
+| WOFF1/2 wrapper validation | ~12               | **weak** (just unwrap success/fail)    |
+| `head`                     | 10                | partial (3/10)                         |
+| `maxp`                     | 5                 | none (0/5)                             |
+| `cmap`                     | ~30               | **very weak** (1/30 — sort order only) |
+| `name`                     | 7                 | partial (1 auto-fix + 2 warnings)      |
+| `post`                     | 5                 | partial (1 critical CFF check covered) |
+| `OS/2`                     | ~12 sanitizations | none                                   |
+| CFF/CFF2                   | dozens            | basic (3 charstring-level)             |
+| `glyf` / `loca`            | ~15               | bounds only                            |
+| Variable-font tables       | ~50 across tables | one cross-table check                  |
+| Layout tables              | hundreds          | none                                   |
 
 ---
 
@@ -323,19 +323,22 @@ Recommend a new `phaseCmapDeep` phase or a `validateCmapSubtables(cmapTable, num
 - `CMAP_FORMAT14_VS_OUT_OF_RANGE` (must be in Mongolian/VS/IVS ranges)
 - `CMAP_LANGUAGE_NONZERO_FOR_WINDOWS` (platform 3 subtables must have language=0)
 
-### Tier 3 — OS/2 sanitization (lots of small clamps)
+### Tier 3 — OS/2 sanitization (lots of small clamps) ✅ Shipped in v2.4.2
 
-Add an `OS2_*` family of info-level codes (since OTS auto-fixes). Each is essentially `if (val < min || val > max) clamp + addIssue('info', 'OS2_*_CLAMPED', ...)`:
+Implemented as `warning`-severity codes (matches OTS `Warning()` semantics).
+Auto-fix is not yet wired through writers; callers can manually correct
+the JSON before re-export. Codes shipped:
 
 - `OS2_WEIGHT_CLAMPED` (1..1000)
 - `OS2_WIDTH_CLAMPED` (1..9)
-- `OS2_FSTYPE_RESERVED_BITS_MASKED`
-- `OS2_NEGATIVE_SIZE_CLAMPED` (sub/superscript x/y, strikeout)
+- `OS2_FSTYPE_RESERVED_BITS_SET` (mask `0x030F`)
+- `OS2_NEGATIVE_SIZE` (sub/superscript x/y, strikeout)
 - `OS2_FIRST_LAST_CHAR_INVERTED`
 - `OS2_TYPO_LINEGAP_NEGATIVE`
 - `OS2_X_HEIGHT_NEGATIVE` / `OS2_CAP_HEIGHT_NEGATIVE`
-- `OS2_OPTICAL_POINTSIZE_OUT_OF_RANGE`
-- `OS2_FSSELECTION_HEAD_MACSTYLE_MISMATCH` (cross-table; needs head reference)
+- `OS2_OPTICAL_POINTSIZE_OUT_OF_RANGE` (lower ≤ 0xFFFE, upper ≥ 2; v5)
+- `OS2_FSSELECTION_HEAD_MACSTYLE_MISMATCH` (cross-table italic/bold check)
+- `HEAD_MACSTYLE_RESERVED_BITS_SET` (bonus — mask `0x007F`)
 
 ### Tier 4 — directory robustness
 
@@ -383,12 +386,12 @@ Variable-font tables, layout tables (GSUB/GPOS/GDEF), CFF charstring opcode vali
 ```js
 // In an appropriate phase function:
 if (head.unitsPerEm < 16 || head.unitsPerEm > 16384) {
-    addIssue(
-        issues,
-        'error',
-        'BAD_UNITS_PER_EM',
-        `unitsPerEm must be in range [16, 16384], got ${head.unitsPerEm}`
-    );
+	addIssue(
+		issues,
+		'error',
+		'BAD_UNITS_PER_EM',
+		`unitsPerEm must be in range [16, 16384], got ${head.unitsPerEm}`,
+	);
 }
 ```
 
@@ -396,9 +399,13 @@ For auto-fix style (info severity), mutate the parsed table object in place and 
 
 ```js
 if (os2.usWeightClass < 1) {
-    addIssue(issues, 'info', 'OS2_WEIGHT_CLAMPED',
-        `usWeightClass ${os2.usWeightClass} clamped to 1`);
-    os2.usWeightClass = 1;
+	addIssue(
+		issues,
+		'info',
+		'OS2_WEIGHT_CLAMPED',
+		`usWeightClass ${os2.usWeightClass} clamped to 1`,
+	);
+	os2.usWeightClass = 1;
 }
 ```
 
