@@ -322,3 +322,182 @@ describe('diagnoseFont — round-trip fix for invalid-example.otf', () => {
 		expect(report2.summary.errorCount).toBe(0);
 	});
 });
+
+// ============================================================================
+//  Tier 1 — Firefox/OTS parity: head/maxp/post/hhea/OS-2/TTC version checks
+// ============================================================================
+
+/**
+ * Locate a table entry by tag in a raw SFNT buffer.
+ * Returns { offset, length } or null.
+ */
+function findTableEntry(buffer, tag) {
+	const view = new DataView(buffer);
+	const numTables = view.getUint16(4);
+	const tagBytes = new TextEncoder().encode(tag);
+	for (let i = 0; i < numTables; i++) {
+		const recOff = 12 + i * 16;
+		let match = true;
+		for (let j = 0; j < 4; j++) {
+			if (view.getUint8(recOff + j) !== tagBytes[j]) {
+				match = false;
+				break;
+			}
+		}
+		if (match) {
+			return {
+				offset: view.getUint32(recOff + 8),
+				length: view.getUint32(recOff + 12),
+			};
+		}
+	}
+	return null;
+}
+
+/** Clone an ArrayBuffer so we can mutate without affecting other tests. */
+function cloneBuffer(buffer) {
+	const out = new ArrayBuffer(buffer.byteLength);
+	new Uint8Array(out).set(new Uint8Array(buffer));
+	return out;
+}
+
+describe('diagnoseFont — Tier 1 head checks', () => {
+	it('flags head.majorVersion ≠ 1 as HEAD_MAJOR_VERSION_UNSUPPORTED', async () => {
+		const buffer = cloneBuffer(await loadSample('oblegg.ttf'));
+		const head = findTableEntry(buffer, 'head');
+		// majorVersion is the first uint16 of the head table
+		new DataView(buffer).setUint16(head.offset + 0, 2);
+		const report = diagnoseFont(buffer);
+		expect(
+			report.errors.some((e) => e.code === 'HEAD_MAJOR_VERSION_UNSUPPORTED'),
+		).toBe(true);
+	});
+
+	it('flags inverted bbox (xMin > xMax) as HEAD_BBOX_INVERTED', async () => {
+		const buffer = cloneBuffer(await loadSample('oblegg.ttf'));
+		const head = findTableEntry(buffer, 'head');
+		// xMin at offset 36, xMax at offset 40
+		const view = new DataView(buffer);
+		view.setInt16(head.offset + 36, 1000);
+		view.setInt16(head.offset + 40, -1000);
+		const report = diagnoseFont(buffer);
+		expect(report.errors.some((e) => e.code === 'HEAD_BBOX_INVERTED')).toBe(
+			true,
+		);
+	});
+
+	it('flags inverted bbox (yMin > yMax) as HEAD_BBOX_INVERTED', async () => {
+		const buffer = cloneBuffer(await loadSample('oblegg.ttf'));
+		const head = findTableEntry(buffer, 'head');
+		// yMin at offset 38, yMax at offset 42
+		const view = new DataView(buffer);
+		view.setInt16(head.offset + 38, 500);
+		view.setInt16(head.offset + 42, -500);
+		const report = diagnoseFont(buffer);
+		expect(report.errors.some((e) => e.code === 'HEAD_BBOX_INVERTED')).toBe(
+			true,
+		);
+	});
+
+	it('flags invalid indexToLocFormat as HEAD_INDEX_TO_LOC_FORMAT_INVALID', async () => {
+		const buffer = cloneBuffer(await loadSample('oblegg.ttf'));
+		const head = findTableEntry(buffer, 'head');
+		// indexToLocFormat at offset 50
+		new DataView(buffer).setInt16(head.offset + 50, 5);
+		const report = diagnoseFont(buffer);
+		expect(
+			report.errors.some((e) => e.code === 'HEAD_INDEX_TO_LOC_FORMAT_INVALID'),
+		).toBe(true);
+	});
+
+	it('flags non-zero glyphDataFormat as HEAD_GLYPH_DATA_FORMAT_INVALID', async () => {
+		const buffer = cloneBuffer(await loadSample('oblegg.ttf'));
+		const head = findTableEntry(buffer, 'head');
+		// glyphDataFormat at offset 52
+		new DataView(buffer).setInt16(head.offset + 52, 1);
+		const report = diagnoseFont(buffer);
+		expect(
+			report.errors.some((e) => e.code === 'HEAD_GLYPH_DATA_FORMAT_INVALID'),
+		).toBe(true);
+	});
+});
+
+describe('diagnoseFont — Tier 1 maxp checks', () => {
+	it('flags an unknown maxp version as MAXP_VERSION_INVALID', async () => {
+		const buffer = cloneBuffer(await loadSample('oblegg.ttf'));
+		const maxp = findTableEntry(buffer, 'maxp');
+		// version at offset 0 of maxp
+		new DataView(buffer).setUint32(maxp.offset, 0x00020000);
+		const report = diagnoseFont(buffer);
+		expect(report.errors.some((e) => e.code === 'MAXP_VERSION_INVALID')).toBe(
+			true,
+		);
+	});
+
+	it('flags maxp.numGlyphs = 0 as MAXP_NUMGLYPHS_ZERO', async () => {
+		const buffer = cloneBuffer(await loadSample('oblegg.ttf'));
+		const maxp = findTableEntry(buffer, 'maxp');
+		// numGlyphs at offset 4 of maxp
+		new DataView(buffer).setUint16(maxp.offset + 4, 0);
+		const report = diagnoseFont(buffer);
+		expect(report.errors.some((e) => e.code === 'MAXP_NUMGLYPHS_ZERO')).toBe(
+			true,
+		);
+	});
+});
+
+describe('diagnoseFont — Tier 1 hhea / post / OS-2 checks', () => {
+	it('flags hhea.majorVersion ≠ 1 as HHEA_MAJOR_VERSION_UNSUPPORTED', async () => {
+		const buffer = cloneBuffer(await loadSample('oblegg.ttf'));
+		const hhea = findTableEntry(buffer, 'hhea');
+		new DataView(buffer).setUint16(hhea.offset + 0, 2);
+		const report = diagnoseFont(buffer);
+		expect(
+			report.errors.some((e) => e.code === 'HHEA_MAJOR_VERSION_UNSUPPORTED'),
+		).toBe(true);
+	});
+
+	it('flags an unknown post version as POST_VERSION_UNSUPPORTED', async () => {
+		const buffer = cloneBuffer(await loadSample('oblegg.ttf'));
+		const post = findTableEntry(buffer, 'post');
+		// Use 0x00040000 (4.0) — not in the spec list
+		new DataView(buffer).setUint32(post.offset, 0x00040000);
+		const report = diagnoseFont(buffer);
+		expect(
+			report.errors.some((e) => e.code === 'POST_VERSION_UNSUPPORTED'),
+		).toBe(true);
+	});
+
+	it('flags an unknown OS/2 version as OS2_VERSION_INVALID', async () => {
+		const buffer = cloneBuffer(await loadSample('oblegg.ttf'));
+		const os2 = findTableEntry(buffer, 'OS/2');
+		// version at offset 0 of OS/2 (uint16)
+		new DataView(buffer).setUint16(os2.offset + 0, 99);
+		const report = diagnoseFont(buffer);
+		expect(report.errors.some((e) => e.code === 'OS2_VERSION_INVALID')).toBe(
+			true,
+		);
+	});
+});
+
+describe('diagnoseFont — Tier 1 TTC checks', () => {
+	it('flags an invalid TTC majorVersion as TTC_VERSION_INVALID', async () => {
+		const buffer = cloneBuffer(await loadSample('cambria-test.ttc'));
+		// majorVersion at offset 4 (after 'ttcf')
+		new DataView(buffer).setUint16(4, 7);
+		const report = diagnoseFont(buffer);
+		expect(report.errors.some((e) => e.code === 'TTC_VERSION_INVALID')).toBe(
+			true,
+		);
+	});
+
+	it('flags an excessive TTC numFonts as TTC_TOO_MANY_FONTS', async () => {
+		const buffer = cloneBuffer(await loadSample('cambria-test.ttc'));
+		// numFonts at offset 8 (uint32)
+		new DataView(buffer).setUint32(8, 0x10001);
+		const report = diagnoseFont(buffer);
+		expect(report.errors.some((e) => e.code === 'TTC_TOO_MANY_FONTS')).toBe(
+			true,
+		);
+	});
+});

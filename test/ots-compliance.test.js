@@ -182,4 +182,43 @@ describe('OTS compliance — diagnoseFont validator', () => {
 		expect(parsed.names[0].platformID).toBe(0);
 		expect(parsed.names[1].platformID).toBe(3);
 	});
+
+	it('forces post version 3.0 on exported CFF fonts (Firefox/OTS requirement)', async () => {
+		const ff = await FontFlux.open(await load('oblegg.otf'));
+		const out = await ff.export();
+		const tables = importFontTables(out);
+		expect(tables.tables['CFF ']).toBeDefined();
+		expect(tables.tables.post.version).toBe(0x00030000);
+	});
+
+	it('flags POST_VERSION_INVALID_FOR_CFF when a CFF font has post 2.0', async () => {
+		const ff = await FontFlux.open(await load('oblegg.otf'));
+		// Force the simplified table to carry post 2.0 with glyph names
+		// and bypass the export-time coercion by writing the raw bytes
+		// through writePost directly into a hand-stitched font.  Easier:
+		// patch the exported binary's post.version field.
+		const out = await ff.export();
+		const u8 = new Uint8Array(out.slice(0));
+		// Find the 'post' table directory entry and read its offset.
+		const dv = new DataView(u8.buffer);
+		const numTables = dv.getUint16(4);
+		let postOffset = -1;
+		for (let i = 0; i < numTables; i++) {
+			const recOff = 12 + i * 16;
+			const tag = String.fromCharCode(
+				u8[recOff], u8[recOff + 1], u8[recOff + 2], u8[recOff + 3],
+			);
+			if (tag === 'post') {
+				postOffset = dv.getUint32(recOff + 8);
+				break;
+			}
+		}
+		expect(postOffset).toBeGreaterThan(0);
+		// Overwrite version field (first 4 bytes of post) with 0x00020000.
+		dv.setUint32(postOffset, 0x00020000);
+		const report = diagnoseFont(u8.buffer);
+		expect(
+			report.errors.some((e) => e.code === 'POST_VERSION_INVALID_FOR_CFF'),
+		).toBe(true);
+	});
 });

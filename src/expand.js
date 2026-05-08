@@ -41,7 +41,7 @@ export function buildRawFromSimplified(simplified) {
 	tables.maxp = buildMaxpTable(glyphs, isCFF);
 	tables['OS/2'] = buildOS2Table(font, metrics);
 	tables.name = buildNameTable(font);
-	tables.post = buildPostTable(font, glyphs);
+	tables.post = buildPostTable(font, glyphs, isCFF);
 	tables.cmap = buildCmapTable(glyphs);
 	tables.hmtx = buildHmtxTable(glyphs);
 
@@ -679,16 +679,20 @@ function buildPostScriptName(font) {
 
 /**
  * Build the post table.
+ *
+ * Per the OpenType spec and OTS sanitizer, CFF-flavored fonts (those with a
+ * `CFF ` table) MUST use post version 3.0 — which omits glyph names because
+ * CFF carries them in its own Charset.  Using version 2.0 in a CFF font causes
+ * Firefox to reject the font with an OTS warning.
  */
-function buildPostTable(font, glyphs) {
+function buildPostTable(font, glyphs, isCFF = false) {
 	const italicAngle = font.italicAngle || 0;
 	const underlinePosition =
 		font.underlinePosition || Math.round(-(font.unitsPerEm || 1000) * 0.1);
 	const underlineThickness =
 		font.underlineThickness || Math.round((font.unitsPerEm || 1000) * 0.05);
 
-	return {
-		version: 0x00020000,
+	const base = {
 		italicAngle,
 		underlinePosition,
 		underlineThickness,
@@ -697,6 +701,16 @@ function buildPostTable(font, glyphs) {
 		maxMemType42: 0,
 		minMemType1: 0,
 		maxMemType1: 0,
+	};
+
+	if (isCFF) {
+		// Version 3.0: header only, no glyph names.
+		return { version: 0x00030000, ...base };
+	}
+
+	return {
+		version: 0x00020000,
+		...base,
 		glyphNames: glyphs.map((g) => String(g.name ?? '.notdef')),
 	};
 }

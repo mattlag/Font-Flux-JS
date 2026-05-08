@@ -580,6 +580,30 @@ function exportCollection(collectionData) {
 function coordinateTableWrites(tables) {
 	const precomputed = new Map();
 
+	// CFF-flavored fonts MUST use post version 3.0 (per OpenType spec & OTS).
+	// Force-rewrite the post table at version 3.0 if a CFF/CFF2 outline is
+	// present and the post table is not stored as opaque _raw bytes.
+	const hasCFFOutline =
+		(tables['CFF '] && !tables['CFF ']._raw) ||
+		(tables.CFF2 && !tables.CFF2._raw);
+	if (hasCFFOutline && tables.post && !tables.post._raw) {
+		const post = tables.post;
+		if (post.version !== 0x00030000) {
+			const post3 = {
+				version: 0x00030000,
+				italicAngle: post.italicAngle ?? 0,
+				underlinePosition: post.underlinePosition ?? 0,
+				underlineThickness: post.underlineThickness ?? 0,
+				isFixedPitch: post.isFixedPitch ?? 0,
+				minMemType42: post.minMemType42 ?? 0,
+				maxMemType42: post.maxMemType42 ?? 0,
+				minMemType1: post.minMemType1 ?? 0,
+				maxMemType1: post.maxMemType1 ?? 0,
+			};
+			precomputed.set('post', writePost(post3));
+		}
+	}
+
 	const hasGlyf = tables.glyf && !tables.glyf._raw;
 	const hasLoca = tables.loca && !tables.loca._raw;
 

@@ -503,7 +503,7 @@ function phaseParseTables(sfnt, entries, issues) {
 /**
  * Phase 7: Cross-table consistency checks.
  */
-function phaseCrossTableChecks(parsedTables, entries, issues) {
+function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 	const tags = new Set(entries.map((e) => e.tag));
 
 	// head.magicNumber
@@ -525,6 +525,144 @@ function phaseCrossTableChecks(parsedTables, entries, issues) {
 				'error',
 				'BAD_UNITS_PER_EM',
 				`head.unitsPerEm is ${upm} — must be between 16 and 16384.`,
+			);
+		}
+
+		// head.majorVersion must be 1 (Firefox/OTS rejects otherwise).
+		if (
+			parsedTables.head.majorVersion !== undefined &&
+			parsedTables.head.majorVersion !== 1
+		) {
+			addIssue(
+				issues,
+				'error',
+				'HEAD_MAJOR_VERSION_UNSUPPORTED',
+				`head.majorVersion is ${parsedTables.head.majorVersion}, expected 1.`,
+			);
+		}
+
+		// Bounding box sanity — xMin must be ≤ xMax and yMin ≤ yMax.
+		const { xMin, xMax, yMin, yMax } = parsedTables.head;
+		if (xMin !== undefined && xMax !== undefined && xMin > xMax) {
+			addIssue(
+				issues,
+				'error',
+				'HEAD_BBOX_INVERTED',
+				`head.xMin (${xMin}) is greater than head.xMax (${xMax}).`,
+			);
+		}
+		if (yMin !== undefined && yMax !== undefined && yMin > yMax) {
+			addIssue(
+				issues,
+				'error',
+				'HEAD_BBOX_INVERTED',
+				`head.yMin (${yMin}) is greater than head.yMax (${yMax}).`,
+			);
+		}
+
+		// indexToLocFormat must be 0 (short) or 1 (long).
+		const itl = parsedTables.head.indexToLocFormat;
+		if (itl !== undefined && itl !== 0 && itl !== 1) {
+			addIssue(
+				issues,
+				'error',
+				'HEAD_INDEX_TO_LOC_FORMAT_INVALID',
+				`head.indexToLocFormat is ${itl}; must be 0 (short offsets) or 1 (long offsets).`,
+			);
+		}
+
+		// glyphDataFormat must be 0 for the current OpenType format.
+		const gdf = parsedTables.head.glyphDataFormat;
+		if (gdf !== undefined && gdf !== 0) {
+			addIssue(
+				issues,
+				'error',
+				'HEAD_GLYPH_DATA_FORMAT_INVALID',
+				`head.glyphDataFormat is ${gdf}; must be 0.`,
+			);
+		}
+	}
+
+	// maxp.version + numGlyphs sanity (Firefox/OTS).
+	if (parsedTables.maxp) {
+		const v = parsedTables.maxp.version;
+		if (v !== undefined && v !== 0x00005000 && v !== 0x00010000) {
+			addIssue(
+				issues,
+				'error',
+				'MAXP_VERSION_INVALID',
+				`maxp.version is 0x${(v >>> 0).toString(16).padStart(8, '0')}; must be 0x00005000 (0.5) or 0x00010000 (1.0).`,
+			);
+		}
+		if (parsedTables.maxp.numGlyphs === 0) {
+			addIssue(
+				issues,
+				'error',
+				'MAXP_NUMGLYPHS_ZERO',
+				'maxp.numGlyphs is 0 — font contains no glyphs.',
+			);
+		}
+	}
+
+	// hhea.majorVersion must be 1.
+	if (
+		parsedTables.hhea &&
+		parsedTables.hhea.majorVersion !== undefined &&
+		parsedTables.hhea.majorVersion !== 1
+	) {
+		addIssue(
+			issues,
+			'error',
+			'HHEA_MAJOR_VERSION_UNSUPPORTED',
+			`hhea.majorVersion is ${parsedTables.hhea.majorVersion}, expected 1.`,
+		);
+	}
+
+	// post.version must be 1.0, 2.0, 2.5, or 3.0 (per OpenType spec).
+	if (parsedTables.post && typeof parsedTables.post.version === 'number') {
+		const pv = parsedTables.post.version;
+		const valid =
+			pv === 0x00010000 ||
+			pv === 0x00020000 ||
+			pv === 0x00025000 ||
+			pv === 0x00030000;
+		if (!valid) {
+			addIssue(
+				issues,
+				'error',
+				'POST_VERSION_UNSUPPORTED',
+				`post.version is 0x${(pv >>> 0).toString(16).padStart(8, '0')}; must be 1.0, 2.0, 2.5, or 3.0.`,
+			);
+		}
+
+		// post 2.0 carries its own glyph count which must match maxp.numGlyphs.
+		if (
+			pv === 0x00020000 &&
+			parsedTables.maxp &&
+			typeof parsedTables.post.numGlyphs === 'number' &&
+			parsedTables.post.numGlyphs !== parsedTables.maxp.numGlyphs
+		) {
+			addIssue(
+				issues,
+				'error',
+				'POST_NUMGLYPHS_MISMATCH',
+				`post.numGlyphs (${parsedTables.post.numGlyphs}) does not match maxp.numGlyphs (${parsedTables.maxp.numGlyphs}).`,
+			);
+		}
+	}
+
+	// OS/2 version must be 0..5 (Firefox/OTS rejects unknown versions).
+	if (
+		parsedTables['OS/2'] &&
+		typeof parsedTables['OS/2'].version === 'number'
+	) {
+		const v = parsedTables['OS/2'].version;
+		if (v < 0 || v > 5) {
+			addIssue(
+				issues,
+				'error',
+				'OS2_VERSION_INVALID',
+				`OS/2.version is ${v}; must be in range 0..5.`,
 			);
 		}
 	}
@@ -708,6 +846,39 @@ function phaseCrossTableChecks(parsedTables, entries, issues) {
 		}
 	}
 
+	// CFF + post version compatibility.  Per OpenType spec, CFF-flavored
+	// fonts (those with a CFF or CFF2 table) MUST use post version 3.0 —
+	// glyph names live in the CFF Charset, so the post table omits them.
+	// Firefox/OTS rejects CFF fonts with post 2.0 ("Only version supported
+	// for fonts with CFF table is 0x00030000").
+	if (tags.has('CFF ') || tags.has('CFF2')) {
+		// Prefer the parsed table; fall back to reading the version field
+		// directly from the raw bytes if the parser failed (e.g. a malformed
+		// post 2.0 with no glyph-name data).
+		let postVersion;
+		if (parsedTables.post && typeof parsedTables.post.version === 'number') {
+			postVersion = parsedTables.post.version;
+		} else if (sfnt) {
+			const postEntry = entries.find((e) => e.tag === 'post');
+			if (
+				postEntry &&
+				postEntry.length >= 4 &&
+				postEntry.offset + 4 <= sfnt.byteLength
+			) {
+				postVersion = new DataView(sfnt).getUint32(postEntry.offset);
+			}
+		}
+		if (postVersion !== undefined && postVersion !== 0x00030000) {
+			const vStr = `0x${(postVersion >>> 0).toString(16).padStart(8, '0')}`;
+			addIssue(
+				issues,
+				'error',
+				'POST_VERSION_INVALID_FOR_CFF',
+				`post table version is ${vStr} but CFF-flavored fonts must use 0x00030000 (3.0).`,
+			);
+		}
+	}
+
 	// vmtx + vhea consistency
 	if (parsedTables.vhea && parsedTables.vmtx) {
 		const expected =
@@ -786,6 +957,26 @@ export function diagnoseFont(buffer) {
 				);
 				return buildReport(issues);
 			}
+			// TTC majorVersion must be 1 or 2 (Firefox/OTS rejects other values).
+			if (info.majorVersion !== 1 && info.majorVersion !== 2) {
+				addIssue(
+					issues,
+					'error',
+					'TTC_VERSION_INVALID',
+					`TTC majorVersion is ${info.majorVersion}; must be 1 or 2.`,
+				);
+				return buildReport(issues);
+			}
+			// Sanity-cap numFonts (OTS rejects > 0x10000).
+			if (info.numFonts > 0x10000) {
+				addIssue(
+					issues,
+					'error',
+					'TTC_TOO_MANY_FONTS',
+					`TTC numFonts is ${info.numFonts}; must be ≤ ${0x10000}.`,
+				);
+				return buildReport(issues);
+			}
 			addIssue(
 				issues,
 				'info',
@@ -832,7 +1023,7 @@ export function diagnoseFont(buffer) {
 	const parsedTables = phaseParseTables(sfnt, entries, issues);
 
 	// --- Phase 7: Cross-table consistency -------------------------------
-	phaseCrossTableChecks(parsedTables, entries, issues);
+	phaseCrossTableChecks(parsedTables, entries, issues, sfnt);
 
 	return buildReport(issues);
 }

@@ -114,22 +114,33 @@ if (!report.valid) {
 
 ### Phase 7 — Cross-table consistency
 
-| Code                        | Severity | What it catches                                                                                                                           |
-| --------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `BAD_MAGIC_NUMBER`          | error    | `head.magicNumber` is not `0x5F0F3CF5`                                                                                                    |
-| `BAD_UNITS_PER_EM`          | error    | `head.unitsPerEm` is outside the spec range (16–16384)                                                                                    |
-| `HMTX_GLYPH_MISMATCH`       | warning  | `hmtx` total entry count (metrics + LSBs) does not equal `maxp.numGlyphs`                                                                 |
-| `HHEA_HMTX_MISMATCH`        | warning  | `hhea.numberOfHMetrics` does not equal the number of full metric entries in `hmtx`                                                        |
-| `LOCA_BEYOND_GLYF`          | error    | The final `loca` offset extends past the end of the `glyf` table                                                                          |
-| `CFF_GLYPH_MISMATCH`        | warning  | CFF charstrings count does not equal `maxp.numGlyphs`                                                                                     |
-| `NO_FAMILY_NAME`            | warning  | `name` table contains no family name record (nameID 1)                                                                                    |
-| `NO_STYLE_NAME`             | warning  | `name` table contains no style name record (nameID 2)                                                                                     |
-| `NAME_RECORDS_NOT_SORTED`   | error    | `name` records are not in ascending order by `(platformID, encodingID, languageID, nameID)` — Firefox/OTS rejects this                    |
-| `CMAP_SUBTABLES_NOT_SORTED` | error    | `cmap` encoding records are not in ascending order by `(platformID, encodingID, language)` — Firefox/OTS rejects this                     |
-| `CFF_EMPTY_CHARSTRING`      | error    | A CFF glyph charstring is empty (must contain at least an `endchar` operator) — Firefox/OTS reports `Failed validating CharStrings INDEX` |
-| `CFF_CHARSTRING_NO_ENDCHAR` | warning  | A CFF glyph charstring does not terminate with `endchar` (0x0E) or `return` (0x0B)                                                        |
-| `VHEA_VMTX_MISMATCH`        | warning  | `vhea.numOfLongVerMetrics` does not equal the number of full metric entries in `vmtx`                                                     |
-| `GVAR_WITHOUT_FVAR`         | error    | `gvar` is present without `fvar` — glyph variations require an axis definition                                                            |
+| Code                               | Severity | What it catches                                                                                                                                                             |
+| ---------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BAD_MAGIC_NUMBER`                 | error    | `head.magicNumber` is not `0x5F0F3CF5`                                                                                                                                      |
+| `BAD_UNITS_PER_EM`                 | error    | `head.unitsPerEm` is outside the spec range (16–16384)                                                                                                                      |
+| `HEAD_MAJOR_VERSION_UNSUPPORTED`   | error    | `head.majorVersion` is not `1` — Firefox/OTS rejects this                                                                                                                   |
+| `HEAD_BBOX_INVERTED`               | error    | `head.xMin > head.xMax` or `head.yMin > head.yMax`                                                                                                                          |
+| `HEAD_INDEX_TO_LOC_FORMAT_INVALID` | error    | `head.indexToLocFormat` is not `0` (short offsets) or `1` (long offsets)                                                                                                    |
+| `HEAD_GLYPH_DATA_FORMAT_INVALID`   | error    | `head.glyphDataFormat` is not `0` (the only currently-defined value)                                                                                                        |
+| `MAXP_VERSION_INVALID`             | error    | `maxp.version` is not `0x00005000` (0.5) or `0x00010000` (1.0)                                                                                                              |
+| `MAXP_NUMGLYPHS_ZERO`              | error    | `maxp.numGlyphs` is `0` — font contains no glyphs                                                                                                                           |
+| `HHEA_MAJOR_VERSION_UNSUPPORTED`   | error    | `hhea.majorVersion` is not `1` — Firefox/OTS rejects this                                                                                                                   |
+| `POST_VERSION_UNSUPPORTED`         | error    | `post.version` is not `1.0`, `2.0`, `2.5`, or `3.0`                                                                                                                         |
+| `POST_NUMGLYPHS_MISMATCH`          | error    | `post.numGlyphs` (version 2.0) does not equal `maxp.numGlyphs`                                                                                                              |
+| `OS2_VERSION_INVALID`              | error    | `OS/2.version` is outside the supported range `0..5`                                                                                                                        |
+| `HMTX_GLYPH_MISMATCH`              | warning  | `hmtx` total entry count (metrics + LSBs) does not equal `maxp.numGlyphs`                                                                                                   |
+| `HHEA_HMTX_MISMATCH`               | warning  | `hhea.numberOfHMetrics` does not equal the number of full metric entries in `hmtx`                                                                                          |
+| `LOCA_BEYOND_GLYF`                 | error    | The final `loca` offset extends past the end of the `glyf` table                                                                                                            |
+| `CFF_GLYPH_MISMATCH`               | warning  | CFF charstrings count does not equal `maxp.numGlyphs`                                                                                                                       |
+| `NO_FAMILY_NAME`                   | warning  | `name` table contains no family name record (nameID 1)                                                                                                                      |
+| `NO_STYLE_NAME`                    | warning  | `name` table contains no style name record (nameID 2)                                                                                                                       |
+| `NAME_RECORDS_NOT_SORTED`          | error    | `name` records are not in ascending order by `(platformID, encodingID, languageID, nameID)` — Firefox/OTS rejects this                                                      |
+| `CMAP_SUBTABLES_NOT_SORTED`        | error    | `cmap` encoding records are not in ascending order by `(platformID, encodingID, language)` — Firefox/OTS rejects this                                                       |
+| `CFF_EMPTY_CHARSTRING`             | error    | A CFF glyph charstring is empty (must contain at least an `endchar` operator) — Firefox/OTS reports `Failed validating CharStrings INDEX`                                   |
+| `CFF_CHARSTRING_NO_ENDCHAR`        | warning  | A CFF glyph charstring does not terminate with `endchar` (0x0E) or `return` (0x0B)                                                                                          |
+| `POST_VERSION_INVALID_FOR_CFF`     | error    | A CFF-flavored font (with `CFF` or `CFF2`) uses a `post` version other than 3.0 — Firefox rejects this with "Only version supported for fonts with CFF table is 0x00030000" |
+| `VHEA_VMTX_MISMATCH`               | warning  | `vhea.numOfLongVerMetrics` does not equal the number of full metric entries in `vmtx`                                                                                       |
+| `GVAR_WITHOUT_FVAR`                | error    | `gvar` is present without `fvar` — glyph variations require an axis definition                                                                                              |
 
 ### Collection (TTC/OTC) checks
 
@@ -139,6 +150,8 @@ if (!report.valid) {
 | `COLLECTION_INFO`              | info     | Reports the collection version and font count                     |
 | `COLLECTION_HEADER_UNREADABLE` | error    | Could not read the collection header                              |
 | `NO_READABLE_ENTRIES`          | error    | None of the offsets in the collection header point to valid SFNTs |
+| `TTC_VERSION_INVALID`          | error    | TTC `majorVersion` is not `1` or `2` — Firefox/OTS rejects this   |
+| `TTC_TOO_MANY_FONTS`           | error    | TTC `numFonts` exceeds `0x10000` — Firefox/OTS rejects this       |
 
 ## Best practices
 
