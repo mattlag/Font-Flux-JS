@@ -1044,3 +1044,201 @@ describe('diagnoseFont — Tier 4 directory robustness', () => {
 		).toBe(true);
 	});
 });
+
+// ============================================================================
+//  Tier 5: name table deep validation (Firefox/OTS parity)
+// ============================================================================
+
+describe('diagnoseFont — Tier 5 name deep validation', () => {
+	// Build a minimal raw `name` table buffer with header + records + storage.
+	// records: array of { platformID, encodingID, languageID, nameID, str }
+	function buildNameTable(format, records, langTags = []) {
+		const enc = (s) => {
+			const out = new Uint8Array(s.length * 2);
+			for (let i = 0; i < s.length; i++) {
+				const c = s.charCodeAt(i);
+				out[2 * i] = (c >> 8) & 0xff;
+				out[2 * i + 1] = c & 0xff;
+			}
+			return out;
+		};
+		const recordBytes = records.map((r) => enc(r.str));
+		const langTagBytes = langTags.map((t) => enc(t));
+		const headerSize = 6;
+		const recordSize = 12 * records.length;
+		const langHeaderSize = format === 1 ? 2 + 4 * langTags.length : 0;
+		const storageOffset = headerSize + recordSize + langHeaderSize;
+		const storageSize =
+			recordBytes.reduce((s, b) => s + b.length, 0) +
+			langTagBytes.reduce((s, b) => s + b.length, 0);
+		const total = storageOffset + storageSize;
+		const buf = new ArrayBuffer(total);
+		const view = new DataView(buf);
+		view.setUint16(0, format);
+		view.setUint16(2, records.length);
+		view.setUint16(4, storageOffset);
+
+		let strOff = 0;
+		for (let i = 0; i < records.length; i++) {
+			const r = records[i];
+			const o = headerSize + i * 12;
+			view.setUint16(o, r.platformID);
+			view.setUint16(o + 2, r.encodingID);
+			view.setUint16(o + 4, r.languageID);
+			view.setUint16(o + 6, r.nameID);
+			view.setUint16(o + 8, recordBytes[i].length);
+			view.setUint16(o + 10, strOff);
+			new Uint8Array(buf, storageOffset + strOff, recordBytes[i].length).set(
+				recordBytes[i],
+			);
+			strOff += recordBytes[i].length;
+		}
+
+		if (format === 1) {
+			const langOff = headerSize + recordSize;
+			view.setUint16(langOff, langTags.length);
+			for (let i = 0; i < langTags.length; i++) {
+				const o = langOff + 2 + i * 4;
+				view.setUint16(o, langTagBytes[i].length);
+				view.setUint16(o + 2, strOff);
+				new Uint8Array(buf, storageOffset + strOff, langTagBytes[i].length).set(
+					langTagBytes[i],
+				);
+				strOff += langTagBytes[i].length;
+			}
+		}
+
+		return buf;
+	}
+
+	function makeEntries(rawNameBuf) {
+		// Wrap the raw name table in a fake SFNT so validateNameDeep can
+		// resolve `entries` against `sfnt`.  Simplest: prepend a 12-byte
+		// header padding; entry.offset = 12, entry.length = rawNameBuf.byteLength.
+		const sfnt = new ArrayBuffer(12 + rawNameBuf.byteLength);
+		new Uint8Array(sfnt, 12).set(new Uint8Array(rawNameBuf));
+		const entries = [
+			{ tag: 'name', offset: 12, length: rawNameBuf.byteLength },
+		];
+		return { sfnt, entries };
+	}
+
+	it('flags NAME_FORMAT_INVALID for format > 1', () => {
+		const issues = [];
+		const name = { version: 2, names: [] };
+		diagInternal.validateNameDeep(name, [], new ArrayBuffer(0), issues);
+		expect(issues.some((i) => i.code === 'NAME_FORMAT_INVALID')).toBe(true);
+	});
+
+	it('accepts format 0 and 1', () => {
+		for (const fmt of [0, 1]) {
+			const issues = [];
+			const name = { version: fmt, names: [] };
+			diagInternal.validateNameDeep(name, [], new ArrayBuffer(0), issues);
+			expect(issues.some((i) => i.code === 'NAME_FORMAT_INVALID')).toBe(false);
+		}
+	});
+
+	it('flags NAME_STRING_OFFSET_INVALID when stringOffset is < records end', () => {
+		const raw = buildNameTable(0, [
+			{ platformID: 3, encodingID: 1, languageID: 0x409, nameID: 1, str: 'A' },
+		]);
+		// Corrupt: set stringOffset to 4 (inside header).
+		new DataView(raw).setUint16(4, 4);
+		const { sfnt, entries } = makeEntries(raw);
+		const issues = [];
+		diagInternal.validateNameDeep(
+			{ version: 0, names: [] },
+			entries,
+			sfnt,
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'NAME_STRING_OFFSET_INVALID')).toBe(
+			true,
+		);
+	});
+
+	it('flags NAME_RECORD_OUT_OF_BOUNDS when a record string overruns the table', () => {
+		const raw = buildNameTable(0, [
+			{ platformID: 3, encodingID: 1, languageID: 0x409, nameID: 1, str: 'AB' },
+		]);
+		// Header is at offset 0 of `raw`.  First record is at byte 6.
+		// Set its length to 9999 (way past the table end).
+		new DataView(raw).setUint16(6 + 8, 9999);
+		const { sfnt, entries } = makeEntries(raw);
+		const issues = [];
+		diagInternal.validateNameDeep(
+			{ version: 0, names: [] },
+			entries,
+			sfnt,
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'NAME_RECORD_OUT_OF_BOUNDS')).toBe(
+			true,
+		);
+	});
+
+	it('flags NAME_LANG_TAG_TOO_LONG when a tag exceeds 200 bytes', () => {
+		const longTag = 'x'.repeat(120); // 120 chars × 2 bytes UTF-16BE = 240 bytes
+		const issues = [];
+		const name = {
+			version: 1,
+			names: [],
+			langTagRecords: [{ tag: longTag }],
+		};
+		diagInternal.validateNameDeep(name, [], new ArrayBuffer(0), issues);
+		expect(issues.some((i) => i.code === 'NAME_LANG_TAG_TOO_LONG')).toBe(true);
+	});
+
+	it('accepts language-tag at the 200-byte limit', () => {
+		const okTag = 'x'.repeat(100); // 100 × 2 = 200 bytes
+		const issues = [];
+		const name = {
+			version: 1,
+			names: [],
+			langTagRecords: [{ tag: okTag }],
+		};
+		diagInternal.validateNameDeep(name, [], new ArrayBuffer(0), issues);
+		expect(issues.some((i) => i.code === 'NAME_LANG_TAG_TOO_LONG')).toBe(false);
+	});
+
+	it('flags NAME_POSTSCRIPT_NAME_INVALID_CHARS for forbidden chars', () => {
+		const issues = [];
+		const name = {
+			version: 0,
+			names: [
+				{
+					platformID: 3,
+					encodingID: 1,
+					languageID: 0x409,
+					nameID: 6,
+					value: 'My Bad/PS Name',
+				},
+			],
+		};
+		diagInternal.validateNameDeep(name, [], new ArrayBuffer(0), issues);
+		expect(
+			issues.some((i) => i.code === 'NAME_POSTSCRIPT_NAME_INVALID_CHARS'),
+		).toBe(true);
+	});
+
+	it('accepts a clean PostScript name', () => {
+		const issues = [];
+		const name = {
+			version: 0,
+			names: [
+				{
+					platformID: 3,
+					encodingID: 1,
+					languageID: 0x409,
+					nameID: 6,
+					value: 'MyFont-Regular',
+				},
+			],
+		};
+		diagInternal.validateNameDeep(name, [], new ArrayBuffer(0), issues);
+		expect(
+			issues.some((i) => i.code === 'NAME_POSTSCRIPT_NAME_INVALID_CHARS'),
+		).toBe(false);
+	});
+});

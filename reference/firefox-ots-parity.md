@@ -349,11 +349,14 @@ the JSON before re-export. Codes shipped:
 
 ### Tier 5 — name table
 
-- `NAME_FORMAT_INVALID` (>1).
-- `NAME_STRING_OFFSET_INVALID`.
+✅ Shipped in v2.4.3.
+
+- `NAME_FORMAT_INVALID` (format/version >1).
+- `NAME_STRING_OFFSET_INVALID` (storage offset before records or beyond table).
 - `NAME_LANG_TAG_TOO_LONG` (>200 bytes).
 - `NAME_RECORD_OUT_OF_BOUNDS` (string overruns table).
-- `NAME_POSTSCRIPT_NAME_INVALID_CHARS` (sanitize like OTS).
+- `NAME_STRING_TOO_LONG` (warning, >32 KiB).
+- `NAME_POSTSCRIPT_NAME_INVALID_CHARS` (warning, sanitize like OTS).
 
 ### Tier 6 — WOFF wrapper integrity
 

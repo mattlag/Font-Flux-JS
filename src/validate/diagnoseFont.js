@@ -1006,9 +1006,131 @@ function validateOS2Sanitization(os2, head, issues) {
 	}
 }
 
+// =========================================================================
+//  name table deep validation (Tier 5 — Firefox/OTS parity)
+// =========================================================================
+
 /**
- * Phase 7: Cross-table consistency checks.
+ * Maximum byte length OTS allows for a single name record string or
+ * language-tag.  Firefox/OTS uses 32 KiB; the spec doesn't impose a hard
+ * limit but anything beyond a few KB is suspicious.
  */
+const NAME_STRING_MAX_BYTES = 32 * 1024;
+
+/**
+ * Maximum byte length OTS allows for a language-tag string (200 bytes per
+ * the OpenType spec recommendation).
+ */
+const NAME_LANG_TAG_MAX_BYTES = 200;
+
+/**
+ * Characters disallowed in a PostScript name (nameID 6) per the spec:
+ * `[`, `]`, `(`, `)`, `{`, `}`, `<`, `>`, `/`, `%`, plus anything outside
+ * printable 7-bit ASCII (0x21–0x7E).
+ */
+const POSTSCRIPT_NAME_INVALID_CHARS =
+	/[\x00-\x20\x7F-\uFFFF\[\]\(\)\{\}\<\>\/\%]/;
+
+function validateNameDeep(name, entries, sfnt, issues) {
+	// 1. Format must be 0 or 1.  Parser exposes it as `version`.
+	if (typeof name.version === 'number' && name.version > 1) {
+		addIssue(
+			issues,
+			'error',
+			'NAME_FORMAT_INVALID',
+			`name table format is ${name.version}; must be 0 or 1.`,
+		);
+	}
+
+	// 2. Walk raw bytes to verify stringOffset and per-record bounds.
+	const entry = entries.find((e) => e.tag === 'name');
+	if (
+		entry &&
+		entry.length >= 6 &&
+		entry.offset + entry.length <= sfnt.byteLength
+	) {
+		const raw = new DataView(sfnt, entry.offset, entry.length);
+		const count = raw.getUint16(2);
+		const storageOffset = raw.getUint16(4);
+
+		// Header is 6 bytes; each name record is 12 bytes.
+		const recordsEnd = 6 + count * 12;
+		if (storageOffset < recordsEnd || storageOffset > entry.length) {
+			addIssue(
+				issues,
+				'error',
+				'NAME_STRING_OFFSET_INVALID',
+				`name.stringOffset (${storageOffset}) is outside the table (records end at ${recordsEnd}, table length ${entry.length}).`,
+			);
+		}
+
+		// Per-record bounds.  We stop after the first violation per record
+		// type (length vs. offset) to avoid noisy reports.
+		let outOfBoundsReported = false;
+		const recCount = Math.min(count, Math.floor((entry.length - 6) / 12));
+		for (let i = 0; i < recCount; i++) {
+			const recOff = 6 + i * 12;
+			const length = raw.getUint16(recOff + 8);
+			const stringOffset = raw.getUint16(recOff + 10);
+			const start = storageOffset + stringOffset;
+			const end = start + length;
+			if (end > entry.length) {
+				if (!outOfBoundsReported) {
+					addIssue(
+						issues,
+						'error',
+						'NAME_RECORD_OUT_OF_BOUNDS',
+						`name record ${i} string overruns the table (offset ${start} + length ${length} = ${end}, table length ${entry.length}).`,
+					);
+					outOfBoundsReported = true;
+				}
+			}
+			if (length > NAME_STRING_MAX_BYTES) {
+				addIssue(
+					issues,
+					'warning',
+					'NAME_STRING_TOO_LONG',
+					`name record ${i} (nameID=${raw.getUint16(recOff + 6)}) is ${length} bytes; > ${NAME_STRING_MAX_BYTES} is suspicious.`,
+				);
+			}
+		}
+	}
+
+	// 3. Language-tag records (format 1 only): each tag must be ≤ 200 bytes.
+	if (Array.isArray(name.langTagRecords)) {
+		for (let i = 0; i < name.langTagRecords.length; i++) {
+			const tag = name.langTagRecords[i].tag ?? '';
+			// Each char in a UTF-16BE string is 2 bytes on the wire.
+			const byteLen = tag.length * 2;
+			if (byteLen > NAME_LANG_TAG_MAX_BYTES) {
+				addIssue(
+					issues,
+					'error',
+					'NAME_LANG_TAG_TOO_LONG',
+					`name.langTagRecord ${i} is ${byteLen} bytes; spec limit is ${NAME_LANG_TAG_MAX_BYTES}.`,
+				);
+			}
+		}
+	}
+
+	// 4. PostScript name (nameID 6) must use only printable 7-bit ASCII
+	// excluding `[`, `]`, `(`, `)`, `{`, `}`, `<`, `>`, `/`, `%`.
+	const records = name.nameRecords ?? name.names ?? name.records ?? [];
+	for (const rec of records) {
+		if (rec.nameID !== 6) continue;
+		const value = rec.value ?? rec.string ?? '';
+		if (typeof value !== 'string') continue;
+		if (POSTSCRIPT_NAME_INVALID_CHARS.test(value)) {
+			addIssue(
+				issues,
+				'warning',
+				'NAME_POSTSCRIPT_NAME_INVALID_CHARS',
+				`PostScript name "${value}" contains invalid characters; only printable 7-bit ASCII excluding [](){}<>/% is allowed.`,
+			);
+			break; // one report per font is enough
+		}
+	}
+}
 function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 	const tags = new Set(entries.map((e) => e.tag));
 
@@ -1272,6 +1394,7 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 
 	// name table: should have family & style names
 	if (parsedTables.name) {
+		validateNameDeep(parsedTables.name, entries, sfnt, issues);
 		const records =
 			parsedTables.name.nameRecords ??
 			parsedTables.name.names ??
@@ -1592,4 +1715,5 @@ export function diagnoseFont(buffer) {
 export const _internal = {
 	validateCmapDeep,
 	validateOS2Sanitization,
+	validateNameDeep,
 };
