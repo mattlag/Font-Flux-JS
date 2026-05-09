@@ -1427,6 +1427,796 @@ function validateLayoutLookups(layoutTable, tableName, issues) {
 	}
 }
 
+// -------------------------------------------------------------------------
+//  fvar instance / axis name-id and flags validation (Tier 7 deeper pass)
+// -------------------------------------------------------------------------
+
+const FVAR_AXIS_RESERVED_FLAGS_MASK = 0xfffe; // bit 0 = HIDDEN_AXIS; rest reserved
+const FVAR_INSTANCE_RESERVED_FLAGS_MASK = 0xfffe; // bit 0 only (reserved per spec)
+
+function validateFvarNamesAndFlags(fvar, nameTable, issues) {
+	const axes = fvar.axes ?? [];
+	const instances = fvar.instances ?? [];
+	const validNameIds = new Set();
+	if (nameTable && Array.isArray(nameTable.names)) {
+		for (const rec of nameTable.names) {
+			if (rec && typeof rec.nameID === 'number') validNameIds.add(rec.nameID);
+		}
+	}
+
+	for (let i = 0; i < axes.length; i++) {
+		const a = axes[i];
+		if (
+			typeof a.flags === 'number' &&
+			(a.flags & FVAR_AXIS_RESERVED_FLAGS_MASK) !== 0
+		) {
+			addIssue(
+				issues,
+				'warning',
+				'FVAR_AXIS_FLAGS_RESERVED',
+				`fvar axis '${a.axisTag}' has reserved bits set in flags (0x${a.flags.toString(16).padStart(4, '0')}); only bit 0 (HIDDEN_AXIS) is defined.`,
+			);
+		}
+		if (typeof a.axisNameID === 'number' && a.axisNameID < 256) {
+			addIssue(
+				issues,
+				'warning',
+				'FVAR_AXIS_NAMEID_RESERVED',
+				`fvar axis '${a.axisTag}' axisNameID is ${a.axisNameID}; axis name IDs should be ≥ 256.`,
+			);
+		} else if (
+			typeof a.axisNameID === 'number' &&
+			validNameIds.size > 0 &&
+			!validNameIds.has(a.axisNameID)
+		) {
+			addIssue(
+				issues,
+				'warning',
+				'FVAR_AXIS_NAMEID_MISSING',
+				`fvar axis '${a.axisTag}' axisNameID ${a.axisNameID} has no matching name record.`,
+			);
+		}
+	}
+
+	for (let i = 0; i < instances.length; i++) {
+		const inst = instances[i];
+		if (
+			typeof inst.flags === 'number' &&
+			(inst.flags & FVAR_INSTANCE_RESERVED_FLAGS_MASK) !== 0
+		) {
+			addIssue(
+				issues,
+				'warning',
+				'FVAR_INSTANCE_FLAGS_RESERVED',
+				`fvar instance ${i} has reserved bits set in flags (0x${inst.flags.toString(16).padStart(4, '0')}).`,
+			);
+		}
+		const ids = [
+			['subfamilyNameID', inst.subfamilyNameID],
+			['postScriptNameID', inst.postScriptNameID],
+		];
+		for (const [fieldName, id] of ids) {
+			if (id === undefined || id === 0xffff) continue; // 0xFFFF = no ps name
+			if (typeof id !== 'number') continue;
+			// 2 and 17 are valid pre-defined IDs for subfamily; 6 for postscript
+			if (
+				validNameIds.size > 0 &&
+				!validNameIds.has(id) &&
+				id !== 2 &&
+				id !== 17 &&
+				id !== 6
+			) {
+				addIssue(
+					issues,
+					'warning',
+					'FVAR_INSTANCE_NAMEID_MISSING',
+					`fvar instance ${i} ${fieldName} ${id} has no matching name record.`,
+				);
+			}
+		}
+	}
+}
+
+// -------------------------------------------------------------------------
+//  STAT (style attributes) validation
+// -------------------------------------------------------------------------
+
+function validateSTAT(stat, fvar, issues) {
+	if (typeof stat.majorVersion === 'number' && stat.majorVersion !== 1) {
+		addIssue(
+			issues,
+			'error',
+			'STAT_VERSION_INVALID',
+			`STAT majorVersion must be 1, got ${stat.majorVersion}.`,
+		);
+	}
+	if (typeof stat.designAxisSize === 'number' && stat.designAxisSize < 8) {
+		addIssue(
+			issues,
+			'error',
+			'STAT_DESIGN_AXIS_SIZE_INVALID',
+			`STAT designAxisSize must be ≥ 8, got ${stat.designAxisSize}.`,
+		);
+	}
+	const axes = stat.designAxes ?? [];
+	const fvarAxes = fvar?.axes ?? [];
+
+	const seenTags = new Set();
+	for (let i = 0; i < axes.length; i++) {
+		const a = axes[i];
+		if (typeof a.axisTag === 'string') {
+			if (seenTags.has(a.axisTag)) {
+				addIssue(
+					issues,
+					'warning',
+					'STAT_AXIS_DUPLICATE_TAG',
+					`STAT designAxes contains duplicate axisTag '${a.axisTag}'.`,
+				);
+			}
+			seenTags.add(a.axisTag);
+		}
+	}
+
+	// Cross-check with fvar: every fvar axis should have a STAT entry
+	if (fvarAxes.length > 0) {
+		for (const fa of fvarAxes) {
+			if (!seenTags.has(fa.axisTag)) {
+				addIssue(
+					issues,
+					'warning',
+					'STAT_MISSING_FVAR_AXIS',
+					`STAT designAxes is missing an entry for fvar axis '${fa.axisTag}'.`,
+				);
+			}
+		}
+	}
+
+	const axisValues = stat.axisValues ?? [];
+	for (let i = 0; i < axisValues.length; i++) {
+		const av = axisValues[i];
+		if (!av || typeof av !== 'object') continue;
+		if (av.format === 1 || av.format === 2 || av.format === 3) {
+			if (
+				typeof av.axisIndex === 'number' &&
+				(av.axisIndex < 0 || av.axisIndex >= axes.length)
+			) {
+				addIssue(
+					issues,
+					'error',
+					'STAT_AXIS_VALUE_AXIS_INDEX_OUT_OF_RANGE',
+					`STAT axisValue ${i} (format ${av.format}) references axisIndex ${av.axisIndex} but only ${axes.length} design axes are defined.`,
+				);
+			}
+		}
+		if (av.format === 2) {
+			if (
+				typeof av.rangeMinValue === 'number' &&
+				typeof av.rangeMaxValue === 'number' &&
+				typeof av.nominalValue === 'number' &&
+				!(
+					av.rangeMinValue <= av.nominalValue &&
+					av.nominalValue <= av.rangeMaxValue
+				)
+			) {
+				addIssue(
+					issues,
+					'error',
+					'STAT_AXIS_VALUE_RANGE_INVALID',
+					`STAT axisValue ${i} (format 2) violates rangeMin ≤ nominal ≤ rangeMax (min=${av.rangeMinValue}, nominal=${av.nominalValue}, max=${av.rangeMaxValue}).`,
+				);
+			}
+		}
+		if (av.format === 4 && Array.isArray(av.axisValues)) {
+			for (const sub of av.axisValues) {
+				if (
+					typeof sub.axisIndex === 'number' &&
+					(sub.axisIndex < 0 || sub.axisIndex >= axes.length)
+				) {
+					addIssue(
+						issues,
+						'error',
+						'STAT_AXIS_VALUE_AXIS_INDEX_OUT_OF_RANGE',
+						`STAT axisValue ${i} (format 4) sub-record references axisIndex ${sub.axisIndex} but only ${axes.length} design axes are defined.`,
+					);
+					break;
+				}
+			}
+		}
+	}
+}
+
+// -------------------------------------------------------------------------
+//  avar (axis variations) validation
+// -------------------------------------------------------------------------
+
+function validateAvar(avar, fvar, issues) {
+	const segmentMaps = avar.segmentMaps ?? [];
+	const fvarAxes = fvar?.axes ?? [];
+
+	if (fvarAxes.length > 0 && segmentMaps.length !== fvarAxes.length) {
+		addIssue(
+			issues,
+			'error',
+			'AVAR_SEGMENT_COUNT_MISMATCH',
+			`avar has ${segmentMaps.length} segment maps but fvar declares ${fvarAxes.length} axes.`,
+		);
+	}
+
+	for (let i = 0; i < segmentMaps.length; i++) {
+		const map = segmentMaps[i].axisValueMaps ?? [];
+		let prevFrom = -Infinity;
+		let hasNeg1 = false;
+		let hasZero = false;
+		let hasPos1 = false;
+		let outOfRangeReported = false;
+		let notIncreasingReported = false;
+		for (let j = 0; j < map.length; j++) {
+			const { fromCoordinate: f, toCoordinate: t } = map[j];
+			if (
+				!outOfRangeReported &&
+				(typeof f !== 'number' ||
+					typeof t !== 'number' ||
+					f < -1 ||
+					f > 1 ||
+					t < -1 ||
+					t > 1)
+			) {
+				addIssue(
+					issues,
+					'error',
+					'AVAR_COORD_OUT_OF_RANGE',
+					`avar axis ${i} segment map entry ${j} has out-of-range coordinate (from=${f}, to=${t}); both must be in [-1, 1].`,
+				);
+				outOfRangeReported = true;
+			}
+			if (!notIncreasingReported && typeof f === 'number' && f <= prevFrom) {
+				addIssue(
+					issues,
+					'error',
+					'AVAR_FROM_COORD_NOT_INCREASING',
+					`avar axis ${i} segment map fromCoordinate values must be strictly increasing (entry ${j} = ${f}, previous = ${prevFrom}).`,
+				);
+				notIncreasingReported = true;
+			}
+			if (typeof f === 'number') prevFrom = f;
+			if (f === -1 && t === -1) hasNeg1 = true;
+			if (f === 0 && t === 0) hasZero = true;
+			if (f === 1 && t === 1) hasPos1 = true;
+		}
+		// Per spec, segment maps must include the three normalised endpoints
+		// (-1,-1), (0,0), (1,1) when they have any entries at all. An empty
+		// segment map (positionMapCount = 0) is a valid identity mapping.
+		if (map.length > 0 && !(hasNeg1 && hasZero && hasPos1)) {
+			addIssue(
+				issues,
+				'error',
+				'AVAR_MISSING_REQUIRED_ENDPOINTS',
+				`avar axis ${i} segment map must include (-1,-1), (0,0), and (1,1) entries when non-empty.`,
+			);
+		}
+	}
+}
+
+// -------------------------------------------------------------------------
+//  ItemVariationStore validation (used by HVAR/VVAR/MVAR/GDEF)
+// -------------------------------------------------------------------------
+
+function validateItemVariationStore(ivs, fvarAxisCount, owner, issues) {
+	if (!ivs) return;
+	const regionList = ivs.variationRegionList;
+	if (!regionList) return;
+	if (
+		fvarAxisCount > 0 &&
+		typeof regionList.axisCount === 'number' &&
+		regionList.axisCount !== fvarAxisCount
+	) {
+		addIssue(
+			issues,
+			'error',
+			'IVS_AXIS_COUNT_MISMATCH',
+			`${owner} ItemVariationStore declares axisCount=${regionList.axisCount} but fvar has ${fvarAxisCount} axes.`,
+		);
+	}
+	const regions = regionList.regions ?? [];
+	let regionCoordReported = false;
+	for (let r = 0; r < regions.length; r++) {
+		const axes = regions[r].regionAxes ?? [];
+		for (let a = 0; a < axes.length; a++) {
+			const { startCoord: s, peakCoord: p, endCoord: e } = axes[a];
+			if (
+				!regionCoordReported &&
+				(typeof s !== 'number' ||
+					typeof p !== 'number' ||
+					typeof e !== 'number' ||
+					s < -1 ||
+					s > 1 ||
+					p < -1 ||
+					p > 1 ||
+					e < -1 ||
+					e > 1)
+			) {
+				addIssue(
+					issues,
+					'error',
+					'IVS_REGION_COORD_OUT_OF_RANGE',
+					`${owner} ItemVariationStore region ${r} axis ${a} has out-of-range coords (start=${s}, peak=${p}, end=${e}); all must be in [-1, 1].`,
+				);
+				regionCoordReported = true;
+			}
+			if (
+				!regionCoordReported &&
+				typeof s === 'number' &&
+				typeof p === 'number' &&
+				typeof e === 'number' &&
+				!(s <= p && p <= e)
+			) {
+				addIssue(
+					issues,
+					'error',
+					'IVS_REGION_PEAK_OUT_OF_ORDER',
+					`${owner} ItemVariationStore region ${r} axis ${a} violates start ≤ peak ≤ end (start=${s}, peak=${p}, end=${e}).`,
+				);
+				regionCoordReported = true;
+			}
+		}
+	}
+
+	const ivd = ivs.itemVariationData ?? [];
+	let regionIndexReported = false;
+	for (let i = 0; i < ivd.length; i++) {
+		const sub = ivd[i];
+		if (!sub) continue;
+		const regionIndexes = sub.regionIndexes ?? [];
+		for (let k = 0; k < regionIndexes.length; k++) {
+			if (regionIndexes[k] >= regions.length && !regionIndexReported) {
+				addIssue(
+					issues,
+					'error',
+					'IVS_REGION_INDEX_OUT_OF_RANGE',
+					`${owner} ItemVariationData ${i} regionIndex ${regionIndexes[k]} is ≥ regionCount (${regions.length}).`,
+				);
+				regionIndexReported = true;
+			}
+		}
+	}
+}
+
+// -------------------------------------------------------------------------
+//  MVAR-specific validation
+// -------------------------------------------------------------------------
+
+function validateMVAR(mvar, fvar, issues) {
+	if (typeof mvar.valueRecordSize === 'number' && mvar.valueRecordSize < 8) {
+		addIssue(
+			issues,
+			'error',
+			'MVAR_VALUE_RECORD_SIZE_INVALID',
+			`MVAR valueRecordSize must be ≥ 8, got ${mvar.valueRecordSize}.`,
+		);
+	}
+	const ivs = mvar.itemVariationStore;
+	const records = mvar.valueRecords ?? [];
+	const ivd = ivs?.itemVariationData ?? [];
+	let outerReported = false;
+	let innerReported = false;
+	for (let i = 0; i < records.length; i++) {
+		const r = records[i];
+		const outer = r.deltaSetOuterIndex;
+		const inner = r.deltaSetInnerIndex;
+		if (!outerReported && typeof outer === 'number' && outer >= ivd.length) {
+			addIssue(
+				issues,
+				'error',
+				'MVAR_DELTA_SET_OUTER_OUT_OF_RANGE',
+				`MVAR record '${r.valueTag}' deltaSetOuterIndex ${outer} is ≥ ItemVariationData count (${ivd.length}).`,
+			);
+			outerReported = true;
+		}
+		const sub = ivd[outer];
+		if (
+			!innerReported &&
+			sub &&
+			typeof inner === 'number' &&
+			inner >= (sub.itemCount ?? 0)
+		) {
+			addIssue(
+				issues,
+				'error',
+				'MVAR_DELTA_SET_INNER_OUT_OF_RANGE',
+				`MVAR record '${r.valueTag}' deltaSetInnerIndex ${inner} is ≥ itemCount (${sub.itemCount}).`,
+			);
+			innerReported = true;
+		}
+	}
+	validateItemVariationStore(ivs, fvar?.axes?.length ?? 0, 'MVAR', issues);
+}
+
+// -------------------------------------------------------------------------
+//  HVAR/VVAR validation
+// -------------------------------------------------------------------------
+
+function validateHVVAR(table, owner, fvar, issues) {
+	validateItemVariationStore(
+		table.itemVariationStore,
+		fvar?.axes?.length ?? 0,
+		owner,
+		issues,
+	);
+}
+
+// -------------------------------------------------------------------------
+//  GDEF validation
+// -------------------------------------------------------------------------
+
+function validateGDEFTable(gdef, numGlyphs, fvar, issues, ctx) {
+	ctx ||= makeStructuralCtx();
+	if (typeof gdef.majorVersion === 'number' && gdef.majorVersion !== 1) {
+		addIssue(
+			issues,
+			'error',
+			'GDEF_VERSION_INVALID',
+			`GDEF majorVersion must be 1, got ${gdef.majorVersion}.`,
+		);
+	}
+	if (gdef.glyphClassDef) {
+		validateClassDef(
+			gdef.glyphClassDef,
+			numGlyphs,
+			'GDEF.glyphClassDef',
+			issues,
+			{ maxClass: 4 }, // 1=base, 2=ligature, 3=mark, 4=component
+			ctx,
+		);
+	}
+	if (gdef.markAttachClassDef) {
+		validateClassDef(
+			gdef.markAttachClassDef,
+			numGlyphs,
+			'GDEF.markAttachClassDef',
+			issues,
+			{},
+			ctx,
+		);
+	}
+	if (gdef.attachList?.coverage) {
+		validateCoverage(
+			gdef.attachList.coverage,
+			numGlyphs,
+			'GDEF.attachList.coverage',
+			issues,
+			ctx,
+		);
+	}
+	if (gdef.ligCaretList?.coverage) {
+		validateCoverage(
+			gdef.ligCaretList.coverage,
+			numGlyphs,
+			'GDEF.ligCaretList.coverage',
+			issues,
+			ctx,
+		);
+	}
+	if (gdef.markGlyphSetsDef?.coverages) {
+		for (let i = 0; i < gdef.markGlyphSetsDef.coverages.length; i++) {
+			validateCoverage(
+				gdef.markGlyphSetsDef.coverages[i],
+				numGlyphs,
+				`GDEF.markGlyphSetsDef.coverages[${i}]`,
+				issues,
+				ctx,
+			);
+		}
+	}
+	if (gdef.itemVariationStore) {
+		validateItemVariationStore(
+			gdef.itemVariationStore,
+			fvar?.axes?.length ?? 0,
+			'GDEF',
+			issues,
+		);
+	}
+}
+
+// -------------------------------------------------------------------------
+//  Coverage / ClassDef structural validation (shared by GDEF + GSUB/GPOS)
+// -------------------------------------------------------------------------
+
+function makeStructuralCtx() {
+	return { coverages: new WeakSet(), classDefs: new WeakSet() };
+}
+
+function validateCoverage(cov, numGlyphs, label, issues, ctx) {
+	if (!cov) return;
+	if (ctx) {
+		if (ctx.coverages.has(cov)) return;
+		ctx.coverages.add(cov);
+	}
+	if (cov.format !== 1 && cov.format !== 2) {
+		addIssue(
+			issues,
+			'error',
+			'COVERAGE_FORMAT_INVALID',
+			`${label}: Coverage format must be 1 or 2, got ${cov.format}.`,
+		);
+		return;
+	}
+	if (cov.format === 1) {
+		const glyphs = cov.glyphs ?? [];
+		let prev = -1;
+		for (let i = 0; i < glyphs.length; i++) {
+			const g = glyphs[i];
+			if (numGlyphs > 0 && g >= numGlyphs) {
+				addIssue(
+					issues,
+					'error',
+					'COVERAGE_GLYPH_OUT_OF_RANGE',
+					`${label}: Coverage format 1 references glyphID ${g} but font has only ${numGlyphs} glyphs.`,
+				);
+				return;
+			}
+			if (g <= prev) {
+				addIssue(
+					issues,
+					'error',
+					'COVERAGE_GLYPHS_NOT_SORTED',
+					`${label}: Coverage format 1 glyph list is not strictly ascending at index ${i} (got ${g} after ${prev}).`,
+				);
+				return;
+			}
+			prev = g;
+		}
+	} else {
+		const ranges = cov.ranges ?? [];
+		let prevEnd = -1;
+		for (let i = 0; i < ranges.length; i++) {
+			const r = ranges[i];
+			if (
+				typeof r.startGlyphID !== 'number' ||
+				typeof r.endGlyphID !== 'number' ||
+				r.startGlyphID > r.endGlyphID
+			) {
+				addIssue(
+					issues,
+					'error',
+					'COVERAGE_RANGE_INVALID',
+					`${label}: Coverage format 2 range ${i} is invalid (start=${r.startGlyphID}, end=${r.endGlyphID}).`,
+				);
+				return;
+			}
+			if (numGlyphs > 0 && r.endGlyphID >= numGlyphs) {
+				addIssue(
+					issues,
+					'error',
+					'COVERAGE_GLYPH_OUT_OF_RANGE',
+					`${label}: Coverage format 2 range ${i} endGlyphID ${r.endGlyphID} is ≥ numGlyphs (${numGlyphs}).`,
+				);
+				return;
+			}
+			if (r.startGlyphID <= prevEnd) {
+				addIssue(
+					issues,
+					'error',
+					'COVERAGE_RANGES_NOT_SORTED',
+					`${label}: Coverage format 2 ranges overlap or are not sorted at index ${i} (start=${r.startGlyphID}, prev end=${prevEnd}).`,
+				);
+				return;
+			}
+			prevEnd = r.endGlyphID;
+		}
+	}
+}
+
+function validateClassDef(cd, numGlyphs, label, issues, opts = {}, ctx) {
+	if (!cd) return;
+	if (ctx) {
+		if (ctx.classDefs.has(cd)) return;
+		ctx.classDefs.add(cd);
+	}
+	if (cd.format !== 1 && cd.format !== 2) {
+		addIssue(
+			issues,
+			'error',
+			'CLASSDEF_FORMAT_INVALID',
+			`${label}: ClassDef format must be 1 or 2, got ${cd.format}.`,
+		);
+		return;
+	}
+	const maxClass = opts.maxClass;
+	if (cd.format === 1) {
+		const start = cd.startGlyphID ?? 0;
+		const values = cd.classValues ?? [];
+		if (numGlyphs > 0 && start + values.length > numGlyphs) {
+			addIssue(
+				issues,
+				'error',
+				'CLASSDEF_GLYPH_OUT_OF_RANGE',
+				`${label}: ClassDef format 1 covers glyphs [${start}, ${start + values.length - 1}] but font has only ${numGlyphs} glyphs.`,
+			);
+			return;
+		}
+		if (maxClass !== undefined) {
+			for (let i = 0; i < values.length; i++) {
+				if (values[i] > maxClass) {
+					addIssue(
+						issues,
+						'error',
+						'CLASSDEF_CLASS_OUT_OF_RANGE',
+						`${label}: ClassDef format 1 entry ${i} has class ${values[i]}, which exceeds the maximum ${maxClass} for this table.`,
+					);
+					return;
+				}
+			}
+		}
+	} else {
+		const ranges = cd.ranges ?? [];
+		let prevEnd = -1;
+		for (let i = 0; i < ranges.length; i++) {
+			const r = ranges[i];
+			if (r.startGlyphID > r.endGlyphID) {
+				addIssue(
+					issues,
+					'error',
+					'CLASSDEF_RANGE_INVALID',
+					`${label}: ClassDef format 2 range ${i} is invalid (start=${r.startGlyphID}, end=${r.endGlyphID}).`,
+				);
+				return;
+			}
+			if (numGlyphs > 0 && r.endGlyphID >= numGlyphs) {
+				addIssue(
+					issues,
+					'error',
+					'CLASSDEF_GLYPH_OUT_OF_RANGE',
+					`${label}: ClassDef format 2 range ${i} endGlyphID ${r.endGlyphID} is ≥ numGlyphs (${numGlyphs}).`,
+				);
+				return;
+			}
+			if (r.startGlyphID <= prevEnd) {
+				addIssue(
+					issues,
+					'error',
+					'CLASSDEF_RANGES_NOT_SORTED',
+					`${label}: ClassDef format 2 ranges overlap or are not sorted at index ${i} (start=${r.startGlyphID}, prev end=${prevEnd}).`,
+				);
+				return;
+			}
+			if (maxClass !== undefined && r.class > maxClass) {
+				addIssue(
+					issues,
+					'error',
+					'CLASSDEF_CLASS_OUT_OF_RANGE',
+					`${label}: ClassDef format 2 range ${i} has class ${r.class}, which exceeds the maximum ${maxClass} for this table.`,
+				);
+				return;
+			}
+			prevEnd = r.endGlyphID;
+		}
+	}
+}
+
+// -------------------------------------------------------------------------
+//  GSUB / GPOS subtable structural validation
+// -------------------------------------------------------------------------
+
+function validateLayoutSubtables(
+	layoutTable,
+	tableName,
+	numGlyphs,
+	issues,
+	ctx,
+) {
+	ctx ||= makeStructuralCtx();
+	const lookups = layoutTable?.lookupList?.lookups ?? [];
+	for (let li = 0; li < lookups.length; li++) {
+		const lk = lookups[li];
+		const subtables = lk.subtables ?? [];
+		for (let si = 0; si < subtables.length; si++) {
+			const st = subtables[si];
+			if (!st || typeof st !== 'object') continue;
+			const label = `${tableName} lookup ${li} (type ${lk.lookupType}) subtable ${si}`;
+
+			if (st.coverage) {
+				validateCoverage(
+					st.coverage,
+					numGlyphs,
+					`${label}.coverage`,
+					issues,
+					ctx,
+				);
+			}
+			if (Array.isArray(st.coverages)) {
+				for (let ci = 0; ci < st.coverages.length; ci++) {
+					validateCoverage(
+						st.coverages[ci],
+						numGlyphs,
+						`${label}.coverages[${ci}]`,
+						issues,
+						ctx,
+					);
+				}
+			}
+			if (st.classDef) {
+				validateClassDef(
+					st.classDef,
+					numGlyphs,
+					`${label}.classDef`,
+					issues,
+					{},
+					ctx,
+				);
+			}
+
+			// GSUB type 1 — single substitution: substitute glyph IDs in range
+			if (
+				tableName === 'GSUB' &&
+				lk.lookupType === 1 &&
+				Array.isArray(st.substituteGlyphIDs)
+			) {
+				for (const g of st.substituteGlyphIDs) {
+					if (numGlyphs > 0 && g >= numGlyphs) {
+						addIssue(
+							issues,
+							'error',
+							'GSUB_SUBSTITUTE_GLYPH_OUT_OF_RANGE',
+							`${label}: substituteGlyphID ${g} is ≥ numGlyphs (${numGlyphs}).`,
+						);
+						break;
+					}
+				}
+			}
+			// GSUB type 4 — ligature substitution
+			if (
+				tableName === 'GSUB' &&
+				lk.lookupType === 4 &&
+				Array.isArray(st.ligatureSets)
+			) {
+				let outOfRangeReported = false;
+				for (const set of st.ligatureSets) {
+					if (outOfRangeReported) break;
+					for (const lig of set ?? []) {
+						if (numGlyphs > 0 && lig.ligatureGlyph >= numGlyphs) {
+							addIssue(
+								issues,
+								'error',
+								'GSUB_LIGATURE_GLYPH_OUT_OF_RANGE',
+								`${label}: ligatureGlyph ${lig.ligatureGlyph} is ≥ numGlyphs (${numGlyphs}).`,
+							);
+							outOfRangeReported = true;
+							break;
+						}
+						for (const cg of lig.componentGlyphIDs ?? []) {
+							if (numGlyphs > 0 && cg >= numGlyphs) {
+								addIssue(
+									issues,
+									'error',
+									'GSUB_LIGATURE_COMPONENT_OUT_OF_RANGE',
+									`${label}: ligature componentGlyphID ${cg} is ≥ numGlyphs (${numGlyphs}).`,
+								);
+								outOfRangeReported = true;
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// -------------------------------------------------------------------------
+//  MATH table validation (light — version + raw presence)
+// -------------------------------------------------------------------------
+
+function validateMATH(math, issues) {
+	if (typeof math.version === 'number' && math.version !== 0x00010000) {
+		addIssue(
+			issues,
+			'error',
+			'MATH_VERSION_INVALID',
+			`MATH table version must be 0x00010000, got 0x${math.version.toString(16).padStart(8, '0')}.`,
+		);
+	}
+}
+
 function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 	const tags = new Set(entries.map((e) => e.tag));
 
@@ -1877,14 +2667,53 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 	}
 
 	// Tier 7: deep table validation for variable + layout tables.
-	if (parsedTables.fvar) {
-		validateFvarDeep(parsedTables.fvar, issues);
+	const numGlyphs = parsedTables.maxp?.numGlyphs ?? 0;
+	const fvar = parsedTables.fvar;
+	const structCtx = makeStructuralCtx();
+	if (fvar) {
+		validateFvarDeep(fvar, issues);
+		validateFvarNamesAndFlags(fvar, parsedTables.name, issues);
+	}
+	if (parsedTables.STAT) {
+		validateSTAT(parsedTables.STAT, fvar, issues);
+	}
+	if (parsedTables.avar) {
+		validateAvar(parsedTables.avar, fvar, issues);
+	}
+	if (parsedTables.HVAR) {
+		validateHVVAR(parsedTables.HVAR, 'HVAR', fvar, issues);
+	}
+	if (parsedTables.VVAR) {
+		validateHVVAR(parsedTables.VVAR, 'VVAR', fvar, issues);
+	}
+	if (parsedTables.MVAR) {
+		validateMVAR(parsedTables.MVAR, fvar, issues);
+	}
+	if (parsedTables.GDEF) {
+		validateGDEFTable(parsedTables.GDEF, numGlyphs, fvar, issues, structCtx);
 	}
 	if (parsedTables.GSUB) {
 		validateLayoutLookups(parsedTables.GSUB, 'GSUB', issues);
+		validateLayoutSubtables(
+			parsedTables.GSUB,
+			'GSUB',
+			numGlyphs,
+			issues,
+			structCtx,
+		);
 	}
 	if (parsedTables.GPOS) {
 		validateLayoutLookups(parsedTables.GPOS, 'GPOS', issues);
+		validateLayoutSubtables(
+			parsedTables.GPOS,
+			'GPOS',
+			numGlyphs,
+			issues,
+			structCtx,
+		);
+	}
+	if (parsedTables.MATH) {
+		validateMATH(parsedTables.MATH, issues);
 	}
 }
 
@@ -2036,5 +2865,16 @@ export const _internal = {
 	validateWoff1Wrapper,
 	validateWoff2Wrapper,
 	validateFvarDeep,
+	validateFvarNamesAndFlags,
 	validateLayoutLookups,
+	validateSTAT,
+	validateAvar,
+	validateItemVariationStore,
+	validateMVAR,
+	validateHVVAR,
+	validateGDEFTable,
+	validateCoverage,
+	validateClassDef,
+	validateLayoutSubtables,
+	validateMATH,
 };

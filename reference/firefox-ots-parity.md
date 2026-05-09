@@ -374,9 +374,21 @@ the JSON before re-export. Codes shipped:
 
 ### Tier 7 — deep table validation (largest scope)
 
-✅ First pass shipped in v2.4.5 — covers fvar, GSUB/GPOS lookup structure, and variation table cross-checks. Future passes can extend to CFF charstring opcode validation, GDEF mark-class consistency, and per-lookup subtable structure.
+✅ First pass shipped in v2.4.5 — covers fvar, GSUB/GPOS lookup structure, and variation table cross-checks.
 
-Shipped codes:
+✅ Second pass shipped in v2.4.6 — extends Tier 7 across:
+
+- **fvar names + flags**: `FVAR_AXIS_FLAGS_RESERVED`, `FVAR_AXIS_NAMEID_RESERVED`, `FVAR_AXIS_NAMEID_MISSING`, `FVAR_INSTANCE_FLAGS_RESERVED`, `FVAR_INSTANCE_NAMEID_MISSING`
+- **STAT**: `STAT_VERSION_INVALID`, `STAT_DESIGN_AXIS_SIZE_INVALID`, `STAT_AXIS_DUPLICATE_TAG`, `STAT_MISSING_FVAR_AXIS`, `STAT_AXIS_VALUE_AXIS_INDEX_OUT_OF_RANGE`, `STAT_AXIS_VALUE_RANGE_INVALID`
+- **avar**: `AVAR_SEGMENT_COUNT_MISMATCH`, `AVAR_COORD_OUT_OF_RANGE`, `AVAR_FROM_COORD_NOT_INCREASING`, `AVAR_MISSING_REQUIRED_ENDPOINTS`
+- **ItemVariationStore (HVAR/VVAR/MVAR/GDEF)**: `IVS_AXIS_COUNT_MISMATCH`, `IVS_REGION_COORD_OUT_OF_RANGE`, `IVS_REGION_PEAK_OUT_OF_ORDER`, `IVS_REGION_INDEX_OUT_OF_RANGE`
+- **MVAR**: `MVAR_VALUE_RECORD_SIZE_INVALID`, `MVAR_DELTA_SET_OUTER_OUT_OF_RANGE`, `MVAR_DELTA_SET_INNER_OUT_OF_RANGE`
+- **GDEF**: `GDEF_VERSION_INVALID` plus shared Coverage/ClassDef structural checks
+- **Coverage / ClassDef** (shared by GDEF + GSUB + GPOS): `COVERAGE_FORMAT_INVALID`, `COVERAGE_GLYPH_OUT_OF_RANGE`, `COVERAGE_GLYPHS_NOT_SORTED`, `COVERAGE_RANGE_INVALID`, `COVERAGE_RANGES_NOT_SORTED`, `CLASSDEF_FORMAT_INVALID`, `CLASSDEF_GLYPH_OUT_OF_RANGE`, `CLASSDEF_RANGE_INVALID`, `CLASSDEF_RANGES_NOT_SORTED`, `CLASSDEF_CLASS_OUT_OF_RANGE`
+- **GSUB substitution-payload bounds**: `GSUB_SUBSTITUTE_GLYPH_OUT_OF_RANGE`, `GSUB_LIGATURE_GLYPH_OUT_OF_RANGE`, `GSUB_LIGATURE_COMPONENT_OUT_OF_RANGE`
+- **MATH**: `MATH_VERSION_INVALID`
+
+First-pass shipped codes (v2.4.5):
 
 - `FVAR_AXIS_RANGE_INVALID` (default outside [min,max])
 - `FVAR_AXIS_DUPLICATE_TAG`
@@ -387,7 +399,7 @@ Shipped codes:
 - `LAYOUT_LOOKUP_FLAG_INVALID`
 - `HVAR_WITHOUT_FVAR`, `VVAR_WITHOUT_FVAR`, `MVAR_WITHOUT_FVAR`, `AVAR_WITHOUT_FVAR`
 
-Future work: variable-font tables, layout tables (GSUB/GPOS/GDEF), CFF charstring opcode validation. This is a substantial body of work — consider doing it incrementally, table by table, prioritized by which tables real-world fonts most often have problems with (GSUB > GPOS > GDEF > variable-font tables > MATH).
+Future work: deeper CFF/CFF2 charstring opcode validation (operator validity, stack underflow, subroutine recursion depth, hint counts), per-format cmap subtable internals beyond what Tier 2 covers, deeper `glyf` composite-cycle detection, and TrueType instruction safety. These remain incremental; the table-by-table parity targets called out in section 3 are now covered.
 
 ---
 
