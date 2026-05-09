@@ -411,6 +411,13 @@ First-pass shipped codes (v2.4.5):
 
 Future work: TrueType instruction safety in `prep`/`fpgm`/`glyf` instruction streams (opcode validity, stack accounting), and deeper cmap format 12/13 group sort/overlap analysis. The Firefox/OTS parity targets called out in section 3 are now fully covered.
 
+✅ Fourth pass shipped in v2.4.8 — closes the remaining future-work items:
+
+- TrueType instruction structural safety in `fpgm`, `prep`, and per-glyph `glyf` instruction streams: `TT_INSTR_TRUNCATED_PUSH`, `TT_INSTR_UNBALANCED_IF`, `TT_INSTR_UNBALANCED_EIF`, `TT_INSTR_NESTED_FDEF`, `TT_INSTR_STRAY_ENDF`, `TT_INSTR_UNCLOSED_FDEF` (covers `PUSHB[N]`, `PUSHW[N]`, `NPUSHB`, `NPUSHW` truncation; IF/EIF and FDEF/ENDF balance)
+- `cmap` format 12/13 group analysis: `CMAP_FORMAT12_END_BEFORE_START`, `CMAP_FORMAT12_GROUPS_NOT_SORTED`, `CMAP_FORMAT12_GROUPS_OVERLAP`
+- Demo viewer (`diagnose.js`) `ISSUE_META` registry now covers all 169 emitted diagnostic codes with concise recommendations and one-click `_dirty` re-export fixes for codes that re-export resolves automatically (head bbox, glyph bboxes, table directory order, post version for CFF, etc.)
+- Pre-existing `_checksum` round-trip test failures fixed: the exporter now preserves a caller-supplied `_checksum` for unmodified `_raw` tables instead of unconditionally recomputing
+
 ---
 
 ## 6. Implementation guidance for the next agent

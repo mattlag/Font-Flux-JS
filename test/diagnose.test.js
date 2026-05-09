@@ -1558,456 +1558,597 @@ describe('diagnoseFont — Tier 7 variation table cross-checks', () => {
 // ============================================================================
 
 describe('diagnoseFont — Tier 7 fvar names + flags', () => {
-it('flags FVAR_AXIS_FLAGS_RESERVED', () => {
-const issues = [];
-diagInternal.validateFvarNamesAndFlags(
-{
-axes: [
-{ axisTag: 'wght', minValue: 100, defaultValue: 400, maxValue: 900, axisNameID: 256, flags: 0x0002 },
-],
-instances: [],
-},
-null,
-issues,
-);
-expect(issues.some((i) => i.code === 'FVAR_AXIS_FLAGS_RESERVED')).toBe(true);
-});
+	it('flags FVAR_AXIS_FLAGS_RESERVED', () => {
+		const issues = [];
+		diagInternal.validateFvarNamesAndFlags(
+			{
+				axes: [
+					{
+						axisTag: 'wght',
+						minValue: 100,
+						defaultValue: 400,
+						maxValue: 900,
+						axisNameID: 256,
+						flags: 0x0002,
+					},
+				],
+				instances: [],
+			},
+			null,
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'FVAR_AXIS_FLAGS_RESERVED')).toBe(
+			true,
+		);
+	});
 
-it('flags FVAR_AXIS_NAMEID_RESERVED for IDs < 256', () => {
-const issues = [];
-diagInternal.validateFvarNamesAndFlags(
-{
-axes: [{ axisTag: 'wght', minValue: 100, defaultValue: 400, maxValue: 900, axisNameID: 100, flags: 0 }],
-instances: [],
-},
-null,
-issues,
-);
-expect(issues.some((i) => i.code === 'FVAR_AXIS_NAMEID_RESERVED')).toBe(true);
-});
+	it('flags FVAR_AXIS_NAMEID_RESERVED for IDs < 256', () => {
+		const issues = [];
+		diagInternal.validateFvarNamesAndFlags(
+			{
+				axes: [
+					{
+						axisTag: 'wght',
+						minValue: 100,
+						defaultValue: 400,
+						maxValue: 900,
+						axisNameID: 100,
+						flags: 0,
+					},
+				],
+				instances: [],
+			},
+			null,
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'FVAR_AXIS_NAMEID_RESERVED')).toBe(
+			true,
+		);
+	});
 
-it('flags FVAR_AXIS_NAMEID_MISSING when name table lacks the ID', () => {
-const issues = [];
-diagInternal.validateFvarNamesAndFlags(
-{
-axes: [{ axisTag: 'wght', minValue: 100, defaultValue: 400, maxValue: 900, axisNameID: 999, flags: 0 }],
-instances: [],
-},
-{ names: [{ nameID: 256 }] },
-issues,
-);
-expect(issues.some((i) => i.code === 'FVAR_AXIS_NAMEID_MISSING')).toBe(true);
-});
+	it('flags FVAR_AXIS_NAMEID_MISSING when name table lacks the ID', () => {
+		const issues = [];
+		diagInternal.validateFvarNamesAndFlags(
+			{
+				axes: [
+					{
+						axisTag: 'wght',
+						minValue: 100,
+						defaultValue: 400,
+						maxValue: 900,
+						axisNameID: 999,
+						flags: 0,
+					},
+				],
+				instances: [],
+			},
+			{ names: [{ nameID: 256 }] },
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'FVAR_AXIS_NAMEID_MISSING')).toBe(
+			true,
+		);
+	});
 
-it('flags FVAR_INSTANCE_FLAGS_RESERVED', () => {
-const issues = [];
-diagInternal.validateFvarNamesAndFlags(
-{
-axes: [],
-instances: [{ subfamilyNameID: 256, flags: 0x0010, coordinates: [] }],
-},
-null,
-issues,
-);
-expect(issues.some((i) => i.code === 'FVAR_INSTANCE_FLAGS_RESERVED')).toBe(true);
-});
+	it('flags FVAR_INSTANCE_FLAGS_RESERVED', () => {
+		const issues = [];
+		diagInternal.validateFvarNamesAndFlags(
+			{
+				axes: [],
+				instances: [{ subfamilyNameID: 256, flags: 0x0010, coordinates: [] }],
+			},
+			null,
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'FVAR_INSTANCE_FLAGS_RESERVED')).toBe(
+			true,
+		);
+	});
 });
 
 describe('diagnoseFont — Tier 7 STAT validation', () => {
-it('flags STAT_VERSION_INVALID', () => {
-const issues = [];
-diagInternal.validateSTAT({ majorVersion: 2, designAxisSize: 8, designAxes: [], axisValues: [] }, null, issues);
-expect(issues.some((i) => i.code === 'STAT_VERSION_INVALID')).toBe(true);
-});
+	it('flags STAT_VERSION_INVALID', () => {
+		const issues = [];
+		diagInternal.validateSTAT(
+			{ majorVersion: 2, designAxisSize: 8, designAxes: [], axisValues: [] },
+			null,
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'STAT_VERSION_INVALID')).toBe(true);
+	});
 
-it('flags STAT_DESIGN_AXIS_SIZE_INVALID when < 8', () => {
-const issues = [];
-diagInternal.validateSTAT({ majorVersion: 1, designAxisSize: 4, designAxes: [], axisValues: [] }, null, issues);
-expect(issues.some((i) => i.code === 'STAT_DESIGN_AXIS_SIZE_INVALID')).toBe(true);
-});
+	it('flags STAT_DESIGN_AXIS_SIZE_INVALID when < 8', () => {
+		const issues = [];
+		diagInternal.validateSTAT(
+			{ majorVersion: 1, designAxisSize: 4, designAxes: [], axisValues: [] },
+			null,
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'STAT_DESIGN_AXIS_SIZE_INVALID')).toBe(
+			true,
+		);
+	});
 
-it('flags STAT_AXIS_VALUE_AXIS_INDEX_OUT_OF_RANGE', () => {
-const issues = [];
-diagInternal.validateSTAT(
-{
-majorVersion: 1,
-designAxisSize: 8,
-designAxes: [{ axisTag: 'wght' }],
-axisValues: [{ format: 1, axisIndex: 5, flags: 0, valueNameID: 256, value: 400 }],
-},
-null,
-issues,
-);
-expect(issues.some((i) => i.code === 'STAT_AXIS_VALUE_AXIS_INDEX_OUT_OF_RANGE')).toBe(true);
-});
+	it('flags STAT_AXIS_VALUE_AXIS_INDEX_OUT_OF_RANGE', () => {
+		const issues = [];
+		diagInternal.validateSTAT(
+			{
+				majorVersion: 1,
+				designAxisSize: 8,
+				designAxes: [{ axisTag: 'wght' }],
+				axisValues: [
+					{ format: 1, axisIndex: 5, flags: 0, valueNameID: 256, value: 400 },
+				],
+			},
+			null,
+			issues,
+		);
+		expect(
+			issues.some((i) => i.code === 'STAT_AXIS_VALUE_AXIS_INDEX_OUT_OF_RANGE'),
+		).toBe(true);
+	});
 
-it('flags STAT_AXIS_VALUE_RANGE_INVALID for format 2 with nominal outside [min,max]', () => {
-const issues = [];
-diagInternal.validateSTAT(
-{
-majorVersion: 1,
-designAxisSize: 8,
-designAxes: [{ axisTag: 'wght' }],
-axisValues: [{ format: 2, axisIndex: 0, flags: 0, valueNameID: 256, nominalValue: 1000, rangeMinValue: 100, rangeMaxValue: 900 }],
-},
-null,
-issues,
-);
-expect(issues.some((i) => i.code === 'STAT_AXIS_VALUE_RANGE_INVALID')).toBe(true);
-});
+	it('flags STAT_AXIS_VALUE_RANGE_INVALID for format 2 with nominal outside [min,max]', () => {
+		const issues = [];
+		diagInternal.validateSTAT(
+			{
+				majorVersion: 1,
+				designAxisSize: 8,
+				designAxes: [{ axisTag: 'wght' }],
+				axisValues: [
+					{
+						format: 2,
+						axisIndex: 0,
+						flags: 0,
+						valueNameID: 256,
+						nominalValue: 1000,
+						rangeMinValue: 100,
+						rangeMaxValue: 900,
+					},
+				],
+			},
+			null,
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'STAT_AXIS_VALUE_RANGE_INVALID')).toBe(
+			true,
+		);
+	});
 
-it('flags STAT_MISSING_FVAR_AXIS', () => {
-const issues = [];
-diagInternal.validateSTAT(
-{ majorVersion: 1, designAxisSize: 8, designAxes: [{ axisTag: 'wght' }], axisValues: [] },
-{ axes: [{ axisTag: 'wght' }, { axisTag: 'ital' }] },
-issues,
-);
-expect(issues.some((i) => i.code === 'STAT_MISSING_FVAR_AXIS')).toBe(true);
-});
+	it('flags STAT_MISSING_FVAR_AXIS', () => {
+		const issues = [];
+		diagInternal.validateSTAT(
+			{
+				majorVersion: 1,
+				designAxisSize: 8,
+				designAxes: [{ axisTag: 'wght' }],
+				axisValues: [],
+			},
+			{ axes: [{ axisTag: 'wght' }, { axisTag: 'ital' }] },
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'STAT_MISSING_FVAR_AXIS')).toBe(true);
+	});
 });
 
 describe('diagnoseFont — Tier 7 avar validation', () => {
-it('flags AVAR_SEGMENT_COUNT_MISMATCH', () => {
-const issues = [];
-diagInternal.validateAvar(
-{ segmentMaps: [{ axisValueMaps: [] }] },
-{ axes: [{ axisTag: 'wght' }, { axisTag: 'ital' }] },
-issues,
-);
-expect(issues.some((i) => i.code === 'AVAR_SEGMENT_COUNT_MISMATCH')).toBe(true);
-});
+	it('flags AVAR_SEGMENT_COUNT_MISMATCH', () => {
+		const issues = [];
+		diagInternal.validateAvar(
+			{ segmentMaps: [{ axisValueMaps: [] }] },
+			{ axes: [{ axisTag: 'wght' }, { axisTag: 'ital' }] },
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'AVAR_SEGMENT_COUNT_MISMATCH')).toBe(
+			true,
+		);
+	});
 
-it('flags AVAR_COORD_OUT_OF_RANGE', () => {
-const issues = [];
-diagInternal.validateAvar(
-{
-segmentMaps: [
-{
-axisValueMaps: [
-{ fromCoordinate: -1, toCoordinate: -1 },
-{ fromCoordinate: 0, toCoordinate: 0 },
-{ fromCoordinate: 1.5, toCoordinate: 1 },
-],
-},
-],
-},
-null,
-issues,
-);
-expect(issues.some((i) => i.code === 'AVAR_COORD_OUT_OF_RANGE')).toBe(true);
-});
+	it('flags AVAR_COORD_OUT_OF_RANGE', () => {
+		const issues = [];
+		diagInternal.validateAvar(
+			{
+				segmentMaps: [
+					{
+						axisValueMaps: [
+							{ fromCoordinate: -1, toCoordinate: -1 },
+							{ fromCoordinate: 0, toCoordinate: 0 },
+							{ fromCoordinate: 1.5, toCoordinate: 1 },
+						],
+					},
+				],
+			},
+			null,
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'AVAR_COORD_OUT_OF_RANGE')).toBe(true);
+	});
 
-it('flags AVAR_FROM_COORD_NOT_INCREASING', () => {
-const issues = [];
-diagInternal.validateAvar(
-{
-segmentMaps: [
-{
-axisValueMaps: [
-{ fromCoordinate: -1, toCoordinate: -1 },
-{ fromCoordinate: 0.5, toCoordinate: 0.5 },
-{ fromCoordinate: 0.2, toCoordinate: 0.2 },
-{ fromCoordinate: 1, toCoordinate: 1 },
-],
-},
-],
-},
-null,
-issues,
-);
-expect(issues.some((i) => i.code === 'AVAR_FROM_COORD_NOT_INCREASING')).toBe(true);
-});
+	it('flags AVAR_FROM_COORD_NOT_INCREASING', () => {
+		const issues = [];
+		diagInternal.validateAvar(
+			{
+				segmentMaps: [
+					{
+						axisValueMaps: [
+							{ fromCoordinate: -1, toCoordinate: -1 },
+							{ fromCoordinate: 0.5, toCoordinate: 0.5 },
+							{ fromCoordinate: 0.2, toCoordinate: 0.2 },
+							{ fromCoordinate: 1, toCoordinate: 1 },
+						],
+					},
+				],
+			},
+			null,
+			issues,
+		);
+		expect(
+			issues.some((i) => i.code === 'AVAR_FROM_COORD_NOT_INCREASING'),
+		).toBe(true);
+	});
 
-it('flags AVAR_MISSING_REQUIRED_ENDPOINTS', () => {
-const issues = [];
-diagInternal.validateAvar(
-{
-segmentMaps: [
-{
-axisValueMaps: [
-{ fromCoordinate: -0.5, toCoordinate: -0.5 },
-{ fromCoordinate: 0, toCoordinate: 0 },
-{ fromCoordinate: 0.5, toCoordinate: 0.5 },
-],
-},
-],
-},
-null,
-issues,
-);
-expect(issues.some((i) => i.code === 'AVAR_MISSING_REQUIRED_ENDPOINTS')).toBe(true);
-});
+	it('flags AVAR_MISSING_REQUIRED_ENDPOINTS', () => {
+		const issues = [];
+		diagInternal.validateAvar(
+			{
+				segmentMaps: [
+					{
+						axisValueMaps: [
+							{ fromCoordinate: -0.5, toCoordinate: -0.5 },
+							{ fromCoordinate: 0, toCoordinate: 0 },
+							{ fromCoordinate: 0.5, toCoordinate: 0.5 },
+						],
+					},
+				],
+			},
+			null,
+			issues,
+		);
+		expect(
+			issues.some((i) => i.code === 'AVAR_MISSING_REQUIRED_ENDPOINTS'),
+		).toBe(true);
+	});
 
-it('passes a clean avar segment map', () => {
-const issues = [];
-diagInternal.validateAvar(
-{
-segmentMaps: [
-{
-axisValueMaps: [
-{ fromCoordinate: -1, toCoordinate: -1 },
-{ fromCoordinate: 0, toCoordinate: 0 },
-{ fromCoordinate: 1, toCoordinate: 1 },
-],
-},
-],
-},
-{ axes: [{ axisTag: 'wght' }] },
-issues,
-);
-expect(issues).toEqual([]);
-});
+	it('passes a clean avar segment map', () => {
+		const issues = [];
+		diagInternal.validateAvar(
+			{
+				segmentMaps: [
+					{
+						axisValueMaps: [
+							{ fromCoordinate: -1, toCoordinate: -1 },
+							{ fromCoordinate: 0, toCoordinate: 0 },
+							{ fromCoordinate: 1, toCoordinate: 1 },
+						],
+					},
+				],
+			},
+			{ axes: [{ axisTag: 'wght' }] },
+			issues,
+		);
+		expect(issues).toEqual([]);
+	});
 });
 
 describe('diagnoseFont — Tier 7 ItemVariationStore validation', () => {
-it('flags IVS_AXIS_COUNT_MISMATCH', () => {
-const issues = [];
-diagInternal.validateItemVariationStore(
-{ variationRegionList: { axisCount: 2, regions: [] }, itemVariationData: [] },
-3,
-'HVAR',
-issues,
-);
-expect(issues.some((i) => i.code === 'IVS_AXIS_COUNT_MISMATCH')).toBe(true);
-});
+	it('flags IVS_AXIS_COUNT_MISMATCH', () => {
+		const issues = [];
+		diagInternal.validateItemVariationStore(
+			{
+				variationRegionList: { axisCount: 2, regions: [] },
+				itemVariationData: [],
+			},
+			3,
+			'HVAR',
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'IVS_AXIS_COUNT_MISMATCH')).toBe(true);
+	});
 
-it('flags IVS_REGION_COORD_OUT_OF_RANGE', () => {
-const issues = [];
-diagInternal.validateItemVariationStore(
-{
-variationRegionList: {
-axisCount: 1,
-regions: [{ regionAxes: [{ startCoord: -2, peakCoord: 0, endCoord: 1 }] }],
-},
-itemVariationData: [],
-},
-1,
-'HVAR',
-issues,
-);
-expect(issues.some((i) => i.code === 'IVS_REGION_COORD_OUT_OF_RANGE')).toBe(true);
-});
+	it('flags IVS_REGION_COORD_OUT_OF_RANGE', () => {
+		const issues = [];
+		diagInternal.validateItemVariationStore(
+			{
+				variationRegionList: {
+					axisCount: 1,
+					regions: [
+						{ regionAxes: [{ startCoord: -2, peakCoord: 0, endCoord: 1 }] },
+					],
+				},
+				itemVariationData: [],
+			},
+			1,
+			'HVAR',
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'IVS_REGION_COORD_OUT_OF_RANGE')).toBe(
+			true,
+		);
+	});
 
-it('flags IVS_REGION_PEAK_OUT_OF_ORDER', () => {
-const issues = [];
-diagInternal.validateItemVariationStore(
-{
-variationRegionList: {
-axisCount: 1,
-regions: [{ regionAxes: [{ startCoord: 0, peakCoord: 1, endCoord: 0.5 }] }],
-},
-itemVariationData: [],
-},
-1,
-'HVAR',
-issues,
-);
-expect(issues.some((i) => i.code === 'IVS_REGION_PEAK_OUT_OF_ORDER')).toBe(true);
-});
+	it('flags IVS_REGION_PEAK_OUT_OF_ORDER', () => {
+		const issues = [];
+		diagInternal.validateItemVariationStore(
+			{
+				variationRegionList: {
+					axisCount: 1,
+					regions: [
+						{ regionAxes: [{ startCoord: 0, peakCoord: 1, endCoord: 0.5 }] },
+					],
+				},
+				itemVariationData: [],
+			},
+			1,
+			'HVAR',
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'IVS_REGION_PEAK_OUT_OF_ORDER')).toBe(
+			true,
+		);
+	});
 
-it('flags IVS_REGION_INDEX_OUT_OF_RANGE', () => {
-const issues = [];
-diagInternal.validateItemVariationStore(
-{
-variationRegionList: { axisCount: 1, regions: [{ regionAxes: [{ startCoord: 0, peakCoord: 1, endCoord: 1 }] }] },
-itemVariationData: [{ itemCount: 1, regionIndexes: [5], deltaSets: [[0]] }],
-},
-1,
-'HVAR',
-issues,
-);
-expect(issues.some((i) => i.code === 'IVS_REGION_INDEX_OUT_OF_RANGE')).toBe(true);
-});
+	it('flags IVS_REGION_INDEX_OUT_OF_RANGE', () => {
+		const issues = [];
+		diagInternal.validateItemVariationStore(
+			{
+				variationRegionList: {
+					axisCount: 1,
+					regions: [
+						{ regionAxes: [{ startCoord: 0, peakCoord: 1, endCoord: 1 }] },
+					],
+				},
+				itemVariationData: [
+					{ itemCount: 1, regionIndexes: [5], deltaSets: [[0]] },
+				],
+			},
+			1,
+			'HVAR',
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'IVS_REGION_INDEX_OUT_OF_RANGE')).toBe(
+			true,
+		);
+	});
 });
 
 describe('diagnoseFont — Tier 7 MVAR validation', () => {
-it('flags MVAR_VALUE_RECORD_SIZE_INVALID', () => {
-const issues = [];
-diagInternal.validateMVAR(
-{ valueRecordSize: 4, valueRecords: [] },
-null,
-issues,
-);
-expect(issues.some((i) => i.code === 'MVAR_VALUE_RECORD_SIZE_INVALID')).toBe(true);
-});
+	it('flags MVAR_VALUE_RECORD_SIZE_INVALID', () => {
+		const issues = [];
+		diagInternal.validateMVAR(
+			{ valueRecordSize: 4, valueRecords: [] },
+			null,
+			issues,
+		);
+		expect(
+			issues.some((i) => i.code === 'MVAR_VALUE_RECORD_SIZE_INVALID'),
+		).toBe(true);
+	});
 
-it('flags MVAR_DELTA_SET_OUTER_OUT_OF_RANGE', () => {
-const issues = [];
-diagInternal.validateMVAR(
-{
-valueRecordSize: 8,
-valueRecords: [{ valueTag: 'xhgt', deltaSetOuterIndex: 5, deltaSetInnerIndex: 0 }],
-itemVariationStore: { variationRegionList: { axisCount: 1, regions: [] }, itemVariationData: [] },
-},
-null,
-issues,
-);
-expect(issues.some((i) => i.code === 'MVAR_DELTA_SET_OUTER_OUT_OF_RANGE')).toBe(true);
-});
+	it('flags MVAR_DELTA_SET_OUTER_OUT_OF_RANGE', () => {
+		const issues = [];
+		diagInternal.validateMVAR(
+			{
+				valueRecordSize: 8,
+				valueRecords: [
+					{ valueTag: 'xhgt', deltaSetOuterIndex: 5, deltaSetInnerIndex: 0 },
+				],
+				itemVariationStore: {
+					variationRegionList: { axisCount: 1, regions: [] },
+					itemVariationData: [],
+				},
+			},
+			null,
+			issues,
+		);
+		expect(
+			issues.some((i) => i.code === 'MVAR_DELTA_SET_OUTER_OUT_OF_RANGE'),
+		).toBe(true);
+	});
 
-it('flags MVAR_DELTA_SET_INNER_OUT_OF_RANGE', () => {
-const issues = [];
-diagInternal.validateMVAR(
-{
-valueRecordSize: 8,
-valueRecords: [{ valueTag: 'xhgt', deltaSetOuterIndex: 0, deltaSetInnerIndex: 99 }],
-itemVariationStore: {
-variationRegionList: { axisCount: 1, regions: [] },
-itemVariationData: [{ itemCount: 3, regionIndexes: [], deltaSets: [] }],
-},
-},
-null,
-issues,
-);
-expect(issues.some((i) => i.code === 'MVAR_DELTA_SET_INNER_OUT_OF_RANGE')).toBe(true);
-});
+	it('flags MVAR_DELTA_SET_INNER_OUT_OF_RANGE', () => {
+		const issues = [];
+		diagInternal.validateMVAR(
+			{
+				valueRecordSize: 8,
+				valueRecords: [
+					{ valueTag: 'xhgt', deltaSetOuterIndex: 0, deltaSetInnerIndex: 99 },
+				],
+				itemVariationStore: {
+					variationRegionList: { axisCount: 1, regions: [] },
+					itemVariationData: [
+						{ itemCount: 3, regionIndexes: [], deltaSets: [] },
+					],
+				},
+			},
+			null,
+			issues,
+		);
+		expect(
+			issues.some((i) => i.code === 'MVAR_DELTA_SET_INNER_OUT_OF_RANGE'),
+		).toBe(true);
+	});
 });
 
 describe('diagnoseFont — Tier 7 GDEF + Coverage + ClassDef', () => {
-it('flags COVERAGE_FORMAT_INVALID', () => {
-const issues = [];
-diagInternal.validateCoverage({ format: 7 }, 100, 'test', issues);
-expect(issues.some((i) => i.code === 'COVERAGE_FORMAT_INVALID')).toBe(true);
-});
+	it('flags COVERAGE_FORMAT_INVALID', () => {
+		const issues = [];
+		diagInternal.validateCoverage({ format: 7 }, 100, 'test', issues);
+		expect(issues.some((i) => i.code === 'COVERAGE_FORMAT_INVALID')).toBe(true);
+	});
 
-it('flags COVERAGE_GLYPH_OUT_OF_RANGE in format 1', () => {
-const issues = [];
-diagInternal.validateCoverage({ format: 1, glyphs: [10, 999] }, 100, 'test', issues);
-expect(issues.some((i) => i.code === 'COVERAGE_GLYPH_OUT_OF_RANGE')).toBe(true);
-});
+	it('flags COVERAGE_GLYPH_OUT_OF_RANGE in format 1', () => {
+		const issues = [];
+		diagInternal.validateCoverage(
+			{ format: 1, glyphs: [10, 999] },
+			100,
+			'test',
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'COVERAGE_GLYPH_OUT_OF_RANGE')).toBe(
+			true,
+		);
+	});
 
-it('flags COVERAGE_GLYPHS_NOT_SORTED', () => {
-const issues = [];
-diagInternal.validateCoverage({ format: 1, glyphs: [10, 5, 20] }, 100, 'test', issues);
-expect(issues.some((i) => i.code === 'COVERAGE_GLYPHS_NOT_SORTED')).toBe(true);
-});
+	it('flags COVERAGE_GLYPHS_NOT_SORTED', () => {
+		const issues = [];
+		diagInternal.validateCoverage(
+			{ format: 1, glyphs: [10, 5, 20] },
+			100,
+			'test',
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'COVERAGE_GLYPHS_NOT_SORTED')).toBe(
+			true,
+		);
+	});
 
-it('flags COVERAGE_RANGES_NOT_SORTED in format 2', () => {
-const issues = [];
-diagInternal.validateCoverage(
-{ format: 2, ranges: [{ startGlyphID: 0, endGlyphID: 5 }, { startGlyphID: 3, endGlyphID: 8 }] },
-100,
-'test',
-issues,
-);
-expect(issues.some((i) => i.code === 'COVERAGE_RANGES_NOT_SORTED')).toBe(true);
-});
+	it('flags COVERAGE_RANGES_NOT_SORTED in format 2', () => {
+		const issues = [];
+		diagInternal.validateCoverage(
+			{
+				format: 2,
+				ranges: [
+					{ startGlyphID: 0, endGlyphID: 5 },
+					{ startGlyphID: 3, endGlyphID: 8 },
+				],
+			},
+			100,
+			'test',
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'COVERAGE_RANGES_NOT_SORTED')).toBe(
+			true,
+		);
+	});
 
-it('flags CLASSDEF_FORMAT_INVALID', () => {
-const issues = [];
-diagInternal.validateClassDef({ format: 99 }, 100, 'test', issues);
-expect(issues.some((i) => i.code === 'CLASSDEF_FORMAT_INVALID')).toBe(true);
-});
+	it('flags CLASSDEF_FORMAT_INVALID', () => {
+		const issues = [];
+		diagInternal.validateClassDef({ format: 99 }, 100, 'test', issues);
+		expect(issues.some((i) => i.code === 'CLASSDEF_FORMAT_INVALID')).toBe(true);
+	});
 
-it('flags CLASSDEF_CLASS_OUT_OF_RANGE for GDEF.glyphClassDef (max 4)', () => {
-const issues = [];
-diagInternal.validateClassDef(
-{ format: 1, startGlyphID: 0, classValues: [1, 2, 7] },
-100,
-'GDEF.glyphClassDef',
-issues,
-{ maxClass: 4 },
-);
-expect(issues.some((i) => i.code === 'CLASSDEF_CLASS_OUT_OF_RANGE')).toBe(true);
-});
+	it('flags CLASSDEF_CLASS_OUT_OF_RANGE for GDEF.glyphClassDef (max 4)', () => {
+		const issues = [];
+		diagInternal.validateClassDef(
+			{ format: 1, startGlyphID: 0, classValues: [1, 2, 7] },
+			100,
+			'GDEF.glyphClassDef',
+			issues,
+			{ maxClass: 4 },
+		);
+		expect(issues.some((i) => i.code === 'CLASSDEF_CLASS_OUT_OF_RANGE')).toBe(
+			true,
+		);
+	});
 
-it('flags GDEF_VERSION_INVALID', () => {
-const issues = [];
-diagInternal.validateGDEFTable({ majorVersion: 2 }, 100, null, issues);
-expect(issues.some((i) => i.code === 'GDEF_VERSION_INVALID')).toBe(true);
-});
+	it('flags GDEF_VERSION_INVALID', () => {
+		const issues = [];
+		diagInternal.validateGDEFTable({ majorVersion: 2 }, 100, null, issues);
+		expect(issues.some((i) => i.code === 'GDEF_VERSION_INVALID')).toBe(true);
+	});
 });
 
 describe('diagnoseFont — Tier 7 GSUB/GPOS subtable structure', () => {
-it('flags GSUB_SUBSTITUTE_GLYPH_OUT_OF_RANGE', () => {
-const issues = [];
-diagInternal.validateLayoutSubtables(
-{
-lookupList: {
-lookups: [
-{
-lookupType: 1,
-lookupFlag: 0,
-subtables: [
-{
-coverage: { format: 1, glyphs: [10] },
-substituteGlyphIDs: [9999],
-},
-],
-},
-],
-},
-},
-'GSUB',
-100,
-issues,
-);
-expect(issues.some((i) => i.code === 'GSUB_SUBSTITUTE_GLYPH_OUT_OF_RANGE')).toBe(true);
-});
+	it('flags GSUB_SUBSTITUTE_GLYPH_OUT_OF_RANGE', () => {
+		const issues = [];
+		diagInternal.validateLayoutSubtables(
+			{
+				lookupList: {
+					lookups: [
+						{
+							lookupType: 1,
+							lookupFlag: 0,
+							subtables: [
+								{
+									coverage: { format: 1, glyphs: [10] },
+									substituteGlyphIDs: [9999],
+								},
+							],
+						},
+					],
+				},
+			},
+			'GSUB',
+			100,
+			issues,
+		);
+		expect(
+			issues.some((i) => i.code === 'GSUB_SUBSTITUTE_GLYPH_OUT_OF_RANGE'),
+		).toBe(true);
+	});
 
-it('flags GSUB_LIGATURE_GLYPH_OUT_OF_RANGE', () => {
-const issues = [];
-diagInternal.validateLayoutSubtables(
-{
-lookupList: {
-lookups: [
-{
-lookupType: 4,
-lookupFlag: 0,
-subtables: [
-{
-coverage: { format: 1, glyphs: [10] },
-ligatureSets: [
-[{ ligatureGlyph: 9999, componentCount: 2, componentGlyphIDs: [11] }],
-],
-},
-],
-},
-],
-},
-},
-'GSUB',
-100,
-issues,
-);
-expect(issues.some((i) => i.code === 'GSUB_LIGATURE_GLYPH_OUT_OF_RANGE')).toBe(true);
-});
+	it('flags GSUB_LIGATURE_GLYPH_OUT_OF_RANGE', () => {
+		const issues = [];
+		diagInternal.validateLayoutSubtables(
+			{
+				lookupList: {
+					lookups: [
+						{
+							lookupType: 4,
+							lookupFlag: 0,
+							subtables: [
+								{
+									coverage: { format: 1, glyphs: [10] },
+									ligatureSets: [
+										[
+											{
+												ligatureGlyph: 9999,
+												componentCount: 2,
+												componentGlyphIDs: [11],
+											},
+										],
+									],
+								},
+							],
+						},
+					],
+				},
+			},
+			'GSUB',
+			100,
+			issues,
+		);
+		expect(
+			issues.some((i) => i.code === 'GSUB_LIGATURE_GLYPH_OUT_OF_RANGE'),
+		).toBe(true);
+	});
 
-it('flags COVERAGE_GLYPH_OUT_OF_RANGE on GPOS subtable coverage', () => {
-const issues = [];
-diagInternal.validateLayoutSubtables(
-{
-lookupList: {
-lookups: [
-{
-lookupType: 1,
-lookupFlag: 0,
-subtables: [{ coverage: { format: 1, glyphs: [200] } }],
-},
-],
-},
-},
-'GPOS',
-100,
-issues,
-);
-expect(issues.some((i) => i.code === 'COVERAGE_GLYPH_OUT_OF_RANGE')).toBe(true);
-});
+	it('flags COVERAGE_GLYPH_OUT_OF_RANGE on GPOS subtable coverage', () => {
+		const issues = [];
+		diagInternal.validateLayoutSubtables(
+			{
+				lookupList: {
+					lookups: [
+						{
+							lookupType: 1,
+							lookupFlag: 0,
+							subtables: [{ coverage: { format: 1, glyphs: [200] } }],
+						},
+					],
+				},
+			},
+			'GPOS',
+			100,
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'COVERAGE_GLYPH_OUT_OF_RANGE')).toBe(
+			true,
+		);
+	});
 });
 
 describe('diagnoseFont — Tier 7 MATH validation', () => {
-it('flags MATH_VERSION_INVALID', () => {
-const issues = [];
-diagInternal.validateMATH({ version: 0x00020000 }, issues);
-expect(issues.some((i) => i.code === 'MATH_VERSION_INVALID')).toBe(true);
-});
+	it('flags MATH_VERSION_INVALID', () => {
+		const issues = [];
+		diagInternal.validateMATH({ version: 0x00020000 }, issues);
+		expect(issues.some((i) => i.code === 'MATH_VERSION_INVALID')).toBe(true);
+	});
 
-it('passes when version is 0x00010000', () => {
-const issues = [];
-diagInternal.validateMATH({ version: 0x00010000 }, issues);
-expect(issues).toEqual([]);
-});
+	it('passes when version is 0x00010000', () => {
+		const issues = [];
+		diagInternal.validateMATH({ version: 0x00010000 }, issues);
+		expect(issues).toEqual([]);
+	});
 });
 
 // ============================================================================
@@ -2015,13 +2156,19 @@ expect(issues).toEqual([]);
 // ============================================================================
 
 describe('Tier 7 CFF charstring opcode validation', () => {
-	function makeCff(charStringsBytes, { localSubrs = [], globalSubrs = [] } = {}) {
+	function makeCff(
+		charStringsBytes,
+		{ localSubrs = [], globalSubrs = [] } = {},
+	) {
 		return {
 			fonts: [{ charStrings: charStringsBytes, localSubrs }],
 			globalSubrs,
 		};
 	}
-	function makeCff2(charStringsBytes, { localSubrs = [], globalSubrs = [] } = {}) {
+	function makeCff2(
+		charStringsBytes,
+		{ localSubrs = [], globalSubrs = [] } = {},
+	) {
 		return {
 			charStrings: charStringsBytes,
 			fontDicts: [{ localSubrs }],
@@ -2080,7 +2227,9 @@ describe('Tier 7 CFF charstring opcode validation', () => {
 			issues,
 			false,
 		);
-		expect(issues.some((i) => i.code === 'CFF_SUBR_INDEX_OUT_OF_RANGE')).toBe(true);
+		expect(issues.some((i) => i.code === 'CFF_SUBR_INDEX_OUT_OF_RANGE')).toBe(
+			true,
+		);
 	});
 
 	it('flags CFF_INVALID_OPERATOR for unknown two-byte op', () => {
@@ -2116,7 +2265,12 @@ describe('Tier 7 CFF charstring opcode validation', () => {
 		for (let i = 0; i < 50; i++) bytes.push(139);
 		bytes.push(5); // rlineto
 		const issues = [];
-		diagInternal.validateCffCharStrings(makeCff2([bytes]), 'CFF2', issues, true);
+		diagInternal.validateCffCharStrings(
+			makeCff2([bytes]),
+			'CFF2',
+			issues,
+			true,
+		);
 		expect(issues.filter((i) => i.code === 'CFF_STACK_OVERFLOW')).toEqual([]);
 	});
 
@@ -2165,7 +2319,9 @@ describe('Tier 7 glyf composite / header validation', () => {
 		const glyf = { glyphs: [{ components: [{ glyphIndex: 99 }] }] };
 		const issues = [];
 		diagInternal.validateGlyfComposites(glyf, 1, issues);
-		expect(issues.some((i) => i.code === 'GLYF_COMPOSITE_GLYPH_OUT_OF_RANGE')).toBe(true);
+		expect(
+			issues.some((i) => i.code === 'GLYF_COMPOSITE_GLYPH_OUT_OF_RANGE'),
+		).toBe(true);
 	});
 
 	it('flags GLYF_COMPOSITE_DEPTH_EXCEEDED for deep chains', () => {
@@ -2177,7 +2333,9 @@ describe('Tier 7 glyf composite / header validation', () => {
 		glyphs.push({}); // leaf simple glyph
 		const issues = [];
 		diagInternal.validateGlyfComposites({ glyphs }, glyphs.length, issues);
-		expect(issues.some((i) => i.code === 'GLYF_COMPOSITE_DEPTH_EXCEEDED')).toBe(true);
+		expect(issues.some((i) => i.code === 'GLYF_COMPOSITE_DEPTH_EXCEEDED')).toBe(
+			true,
+		);
 	});
 
 	it('passes a clean composite chain', () => {
@@ -2219,7 +2377,9 @@ describe('Tier 7 glyf composite / header validation', () => {
 			null,
 			issues,
 		);
-		expect(issues.some((i) => i.code === 'GLYF_NUM_CONTOURS_INVALID')).toBe(true);
+		expect(issues.some((i) => i.code === 'GLYF_NUM_CONTOURS_INVALID')).toBe(
+			true,
+		);
 	});
 });
 
@@ -2239,7 +2399,9 @@ describe('Tier 7 cmap format-14 validation', () => {
 		};
 		const issues = [];
 		diagInternal.validateCmapFormat14(cmap, issues);
-		expect(issues.some((i) => i.code === 'CMAP_FORMAT14_VS_OUT_OF_RANGE')).toBe(true);
+		expect(issues.some((i) => i.code === 'CMAP_FORMAT14_VS_OUT_OF_RANGE')).toBe(
+			true,
+		);
 	});
 
 	it('flags CMAP_FORMAT14_VS_OUT_OF_ORDER', () => {
@@ -2256,7 +2418,9 @@ describe('Tier 7 cmap format-14 validation', () => {
 		};
 		const issues = [];
 		diagInternal.validateCmapFormat14(cmap, issues);
-		expect(issues.some((i) => i.code === 'CMAP_FORMAT14_VS_OUT_OF_ORDER')).toBe(true);
+		expect(issues.some((i) => i.code === 'CMAP_FORMAT14_VS_OUT_OF_ORDER')).toBe(
+			true,
+		);
 	});
 
 	it('passes valid format-14 selectors in FE00–FE0F', () => {
@@ -2278,3 +2442,174 @@ describe('Tier 7 cmap format-14 validation', () => {
 	});
 });
 
+// ============================================================================
+//  Tier 7 third-pass: cmap format 12/13 group sort & overlap
+// ============================================================================
+
+describe('Tier 7 cmap format 12/13 group validation', () => {
+	it('flags CMAP_FORMAT12_END_BEFORE_START', () => {
+		const cmap = {
+			subTables: [
+				{
+					format: 12,
+					groups: [
+						{ startCharCode: 0x100, endCharCode: 0x50, startGlyphID: 1 },
+					],
+				},
+			],
+		};
+		const issues = [];
+		diagInternal.validateCmapFormat12And13(cmap, issues);
+		expect(
+			issues.some((i) => i.code === 'CMAP_FORMAT12_END_BEFORE_START'),
+		).toBe(true);
+	});
+
+	it('flags CMAP_FORMAT12_GROUPS_NOT_SORTED', () => {
+		const cmap = {
+			subTables: [
+				{
+					format: 12,
+					groups: [
+						{ startCharCode: 0x100, endCharCode: 0x1ff },
+						{ startCharCode: 0x50, endCharCode: 0x60 },
+					],
+				},
+			],
+		};
+		const issues = [];
+		diagInternal.validateCmapFormat12And13(cmap, issues);
+		expect(
+			issues.some((i) => i.code === 'CMAP_FORMAT12_GROUPS_NOT_SORTED'),
+		).toBe(true);
+	});
+
+	it('flags CMAP_FORMAT12_GROUPS_OVERLAP', () => {
+		const cmap = {
+			subTables: [
+				{
+					format: 12,
+					groups: [
+						{ startCharCode: 0x100, endCharCode: 0x200 },
+						{ startCharCode: 0x150, endCharCode: 0x250 },
+					],
+				},
+			],
+		};
+		const issues = [];
+		diagInternal.validateCmapFormat12And13(cmap, issues);
+		expect(issues.some((i) => i.code === 'CMAP_FORMAT12_GROUPS_OVERLAP')).toBe(
+			true,
+		);
+	});
+
+	it('passes a clean format 12 subtable', () => {
+		const cmap = {
+			subTables: [
+				{
+					format: 12,
+					groups: [
+						{ startCharCode: 0x100, endCharCode: 0x1ff },
+						{ startCharCode: 0x200, endCharCode: 0x2ff },
+					],
+				},
+			],
+		};
+		const issues = [];
+		diagInternal.validateCmapFormat12And13(cmap, issues);
+		expect(issues).toEqual([]);
+	});
+});
+
+// ============================================================================
+//  Tier 7 third-pass: TrueType instruction stream safety
+// ============================================================================
+
+describe('Tier 7 TrueType instruction validation', () => {
+	it('flags TT_INSTR_TRUNCATED_PUSH for PUSHB[0] missing operand', () => {
+		// 0xB0 = PUSHB[0] expects 1 operand byte
+		const issues = [];
+		diagInternal.validateTrueTypeInstructions([0xb0], 'fpgm', issues);
+		expect(issues.some((i) => i.code === 'TT_INSTR_TRUNCATED_PUSH')).toBe(true);
+	});
+
+	it('flags TT_INSTR_TRUNCATED_PUSH for NPUSHB declaring more than available', () => {
+		// 0x40 NPUSHB, count=10, only 2 bytes follow
+		const issues = [];
+		diagInternal.validateTrueTypeInstructions([0x40, 10, 1, 2], 'fpgm', issues);
+		expect(issues.some((i) => i.code === 'TT_INSTR_TRUNCATED_PUSH')).toBe(true);
+	});
+
+	it('flags TT_INSTR_TRUNCATED_PUSH for NPUSHW with no count byte', () => {
+		const issues = [];
+		diagInternal.validateTrueTypeInstructions([0x41], 'prep', issues);
+		expect(issues.some((i) => i.code === 'TT_INSTR_TRUNCATED_PUSH')).toBe(true);
+	});
+
+	it('flags TT_INSTR_UNBALANCED_IF for IF without EIF', () => {
+		// 0xB0 push 1 operand, 0x58 IF with no EIF
+		const issues = [];
+		diagInternal.validateTrueTypeInstructions(
+			[0xb0, 0x01, 0x58],
+			'fpgm',
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'TT_INSTR_UNBALANCED_IF')).toBe(true);
+	});
+
+	it('flags TT_INSTR_UNBALANCED_EIF for stray EIF', () => {
+		const issues = [];
+		diagInternal.validateTrueTypeInstructions([0x59], 'prep', issues);
+		expect(issues.some((i) => i.code === 'TT_INSTR_UNBALANCED_EIF')).toBe(true);
+	});
+
+	it('flags TT_INSTR_NESTED_FDEF', () => {
+		// 0x2C FDEF, 0x2C FDEF, 0x2D ENDF
+		const issues = [];
+		diagInternal.validateTrueTypeInstructions(
+			[0x2c, 0x2c, 0x2d, 0x2d],
+			'fpgm',
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'TT_INSTR_NESTED_FDEF')).toBe(true);
+	});
+
+	it('flags TT_INSTR_STRAY_ENDF', () => {
+		const issues = [];
+		diagInternal.validateTrueTypeInstructions([0x2d], 'fpgm', issues);
+		expect(issues.some((i) => i.code === 'TT_INSTR_STRAY_ENDF')).toBe(true);
+	});
+
+	it('flags TT_INSTR_UNCLOSED_FDEF', () => {
+		// 0x2C FDEF without matching ENDF
+		const issues = [];
+		diagInternal.validateTrueTypeInstructions(
+			[0x2c, 0xb0, 0x01],
+			'fpgm',
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'TT_INSTR_UNCLOSED_FDEF')).toBe(true);
+	});
+
+	it('passes balanced IF/EIF + FDEF/ENDF + PUSHs', () => {
+		// FDEF, PUSHB[0] 1, IF, PUSHB[0] 2, EIF, ENDF
+		const issues = [];
+		diagInternal.validateTrueTypeInstructions(
+			[0x2c, 0xb0, 0x01, 0x58, 0xb0, 0x02, 0x59, 0x2d],
+			'fpgm',
+			issues,
+		);
+		expect(issues).toEqual([]);
+	});
+
+	it('handles PUSHW correctly (2 bytes per word)', () => {
+		// 0xB8 = PUSHW[0] expects 2 bytes
+		const issues = [];
+		diagInternal.validateTrueTypeInstructions([0xb8, 0x01], 'fpgm', issues);
+		expect(issues.some((i) => i.code === 'TT_INSTR_TRUNCATED_PUSH')).toBe(true);
+
+		const ok = [];
+		diagInternal.validateTrueTypeInstructions([0xb8, 0x01, 0x02], 'fpgm', ok);
+		expect(ok).toEqual([]);
+	});
+});

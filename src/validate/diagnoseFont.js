@@ -2229,23 +2229,45 @@ function validateMATH(math, issues) {
 // Spec: Adobe Tech Note #5177 (Type 2 Charstring Format).
 
 const CFF_TYPE2_OPS = new Set([
-	1, 3, 4, 5, 6, 7, 8, 10, 11, 14, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
-	29, 30, 31,
+	1, 3, 4, 5, 6, 7, 8, 10, 11, 14, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29,
+	30, 31,
 	// 12 is the escape byte; valid two-byte ops are checked separately.
 ]);
 
 // CFF2 adds vsindex (15) and blend (16); removes endchar (14).
 const CFF2_TYPE2_OPS = new Set([
-	1, 3, 4, 5, 6, 7, 8, 10, 11, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26,
-	27, 29, 30, 31,
+	1, 3, 4, 5, 6, 7, 8, 10, 11, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+	29, 30, 31,
 ]);
 
 const CFF_TYPE2_OPS_TWOBYTE = new Set([
-	34, 35, 36, 37, // hflex, flex, hflex1, flex1
+	34,
+	35,
+	36,
+	37, // hflex, flex, hflex1, flex1
 	// Plus arithmetic/storage ops 0,3,4,5,9,10,11,12,14,15,18,20,21,22,23,24,
 	// 26,27,28,29,30 — but the interpreter doesn't decode those, so we don't
 	// require them. We only flag operators that are not in either set.
-	0, 3, 4, 5, 9, 10, 11, 12, 14, 15, 18, 20, 21, 22, 23, 24, 26, 27, 28, 29,
+	0,
+	3,
+	4,
+	5,
+	9,
+	10,
+	11,
+	12,
+	14,
+	15,
+	18,
+	20,
+	21,
+	22,
+	23,
+	24,
+	26,
+	27,
+	28,
+	29,
 	30,
 ]);
 
@@ -2260,7 +2282,12 @@ const CFF2_MAX_STACK = 513; // CFF2 spec stack depth
 
 function validateCffCharStrings(cffTable, owner, issues, isCff2 = false) {
 	const fontList = isCff2
-		? [{ charStrings: cffTable.charStrings || [], localSubrs: cffTable.fontDicts?.[0]?.localSubrs || [] }]
+		? [
+				{
+					charStrings: cffTable.charStrings || [],
+					localSubrs: cffTable.fontDicts?.[0]?.localSubrs || [],
+				},
+			]
 		: cffTable.fonts || [];
 	const globalSubrs = cffTable.globalSubrs || [];
 	const globalBias = calcCffSubrBias(globalSubrs.length);
@@ -2554,11 +2581,17 @@ function decodeCffNumber(bytes, offset) {
 	if (b0 >= 32 && b0 <= 246) return { value: b0 - 139, bytesConsumed: 1 };
 	if (b0 >= 247 && b0 <= 250) {
 		if (offset + 1 >= bytes.length) return null;
-		return { value: (b0 - 247) * 256 + bytes[offset + 1] + 108, bytesConsumed: 2 };
+		return {
+			value: (b0 - 247) * 256 + bytes[offset + 1] + 108,
+			bytesConsumed: 2,
+		};
 	}
 	if (b0 >= 251 && b0 <= 254) {
 		if (offset + 1 >= bytes.length) return null;
-		return { value: -(b0 - 251) * 256 - bytes[offset + 1] - 108, bytesConsumed: 2 };
+		return {
+			value: -(b0 - 251) * 256 - bytes[offset + 1] - 108,
+			bytesConsumed: 2,
+		};
 	}
 	if (b0 === 28) {
 		if (offset + 2 >= bytes.length) return null;
@@ -2771,6 +2804,301 @@ function validateCmapFormat14(cmap, issues) {
 				);
 			}
 			prevVs = vs;
+		}
+	}
+}
+
+// -------------------------------------------------------------------------
+//  cmap format 12/13 sequential map group sort + overlap analysis.
+// -------------------------------------------------------------------------
+//
+// Per OpenType spec, format 12 (segmented coverage) and format 13 (many-to-one
+// range mappings) groups must be sorted by `startCharCode` and the character
+// ranges (start..end inclusive) must not overlap. Firefox/OTS reject fonts
+// that violate either constraint.
+
+function validateCmapFormat12And13(cmap, issues) {
+	const subs = cmap?.subTables ?? cmap?.subtables ?? [];
+	let sortReported = false;
+	let overlapReported = false;
+	let endLessReported = false;
+	for (const sub of subs) {
+		if (sub?.format !== 12 && sub?.format !== 13) continue;
+		const groups =
+			sub.groups ?? sub.sequentialMapGroups ?? sub.constantMapGroups ?? [];
+		for (let i = 0; i < groups.length; i++) {
+			const g = groups[i];
+			const start = g.startCharCode ?? g.startcharCode ?? g.start;
+			const end = g.endCharCode ?? g.endcharCode ?? g.end;
+			if (typeof start !== 'number' || typeof end !== 'number') continue;
+			if (end < start && !endLessReported) {
+				endLessReported = true;
+				addIssue(
+					issues,
+					'error',
+					'CMAP_FORMAT12_END_BEFORE_START',
+					`cmap format ${sub.format} group ${i} has endCharCode (U+${end.toString(16).toUpperCase()}) < startCharCode (U+${start.toString(16).toUpperCase()}).`,
+				);
+			}
+			if (i > 0) {
+				const prev = groups[i - 1];
+				const pStart = prev.startCharCode ?? prev.startcharCode ?? prev.start;
+				const pEnd = prev.endCharCode ?? prev.endcharCode ?? prev.end;
+				if (typeof pStart === 'number' && start <= pStart && !sortReported) {
+					sortReported = true;
+					addIssue(
+						issues,
+						'error',
+						'CMAP_FORMAT12_GROUPS_NOT_SORTED',
+						`cmap format ${sub.format} groups must be sorted by startCharCode; group ${i} (U+${start.toString(16).toUpperCase()}) follows group ${i - 1} (U+${pStart.toString(16).toUpperCase()}).`,
+					);
+				}
+				if (typeof pEnd === 'number' && start <= pEnd && !overlapReported) {
+					overlapReported = true;
+					addIssue(
+						issues,
+						'error',
+						'CMAP_FORMAT12_GROUPS_OVERLAP',
+						`cmap format ${sub.format} group ${i} (U+${start.toString(16).toUpperCase()}–U+${end.toString(16).toUpperCase()}) overlaps with group ${i - 1} (ends at U+${pEnd.toString(16).toUpperCase()}).`,
+					);
+				}
+			}
+		}
+	}
+}
+
+// -------------------------------------------------------------------------
+//  TrueType instruction stream safety (`prep`, `fpgm`, glyf instructions).
+// -------------------------------------------------------------------------
+//
+// Walks the bytecode counting variable-length push operands, IF/EIF balance,
+// and FDEF/ENDF balance. Catches the structural corruption Firefox/OTS
+// reports as "Bad instructions" / "instruction stream truncated".
+//
+// Spec: Apple TrueType Reference Manual, Chapter 5 — Instruction Set.
+
+function validateTrueTypeInstructions(bytes, owner, issues) {
+	if (!bytes || bytes.length === 0) return;
+	let i = 0;
+	let ifDepth = 0;
+	let inFdef = false;
+	let truncReported = false;
+	let unbalancedIfReported = false;
+	let nestedFdefReported = false;
+	let strayEndfReported = false;
+	while (i < bytes.length) {
+		const op = bytes[i];
+
+		// PUSHB[N] (0xB0–0xB7): N+1 bytes follow
+		if (op >= 0xb0 && op <= 0xb7) {
+			const n = (op & 0x07) + 1;
+			i++;
+			if (i + n > bytes.length) {
+				if (!truncReported) {
+					truncReported = true;
+					addIssue(
+						issues,
+						'error',
+						'TT_INSTR_TRUNCATED_PUSH',
+						`${owner}: PUSHB[${n - 1}] at byte ${i - 1} would read ${n} operands past end of stream (length ${bytes.length}).`,
+					);
+				}
+				return;
+			}
+			i += n;
+			continue;
+		}
+
+		// PUSHW[N] (0xB8–0xBF): (N+1)*2 bytes follow
+		if (op >= 0xb8 && op <= 0xbf) {
+			const n = ((op & 0x07) + 1) * 2;
+			i++;
+			if (i + n > bytes.length) {
+				if (!truncReported) {
+					truncReported = true;
+					addIssue(
+						issues,
+						'error',
+						'TT_INSTR_TRUNCATED_PUSH',
+						`${owner}: PUSHW[${op & 7}] at byte ${i - 1} would read ${n} operand bytes past end of stream (length ${bytes.length}).`,
+					);
+				}
+				return;
+			}
+			i += n;
+			continue;
+		}
+
+		// NPUSHB (0x40): next byte = N, then N bytes
+		if (op === 0x40) {
+			i++;
+			if (i >= bytes.length) {
+				if (!truncReported) {
+					truncReported = true;
+					addIssue(
+						issues,
+						'error',
+						'TT_INSTR_TRUNCATED_PUSH',
+						`${owner}: NPUSHB at end of stream with no count byte.`,
+					);
+				}
+				return;
+			}
+			const n = bytes[i];
+			i++;
+			if (i + n > bytes.length) {
+				if (!truncReported) {
+					truncReported = true;
+					addIssue(
+						issues,
+						'error',
+						'TT_INSTR_TRUNCATED_PUSH',
+						`${owner}: NPUSHB at byte ${i - 2} declares ${n} operands but only ${bytes.length - i} remain.`,
+					);
+				}
+				return;
+			}
+			i += n;
+			continue;
+		}
+
+		// NPUSHW (0x41): next byte = N, then N*2 bytes
+		if (op === 0x41) {
+			i++;
+			if (i >= bytes.length) {
+				if (!truncReported) {
+					truncReported = true;
+					addIssue(
+						issues,
+						'error',
+						'TT_INSTR_TRUNCATED_PUSH',
+						`${owner}: NPUSHW at end of stream with no count byte.`,
+					);
+				}
+				return;
+			}
+			const n = bytes[i] * 2;
+			i++;
+			if (i + n > bytes.length) {
+				if (!truncReported) {
+					truncReported = true;
+					addIssue(
+						issues,
+						'error',
+						'TT_INSTR_TRUNCATED_PUSH',
+						`${owner}: NPUSHW at byte ${i - 2} declares ${n / 2} word operands but only ${bytes.length - i} bytes remain.`,
+					);
+				}
+				return;
+			}
+			i += n;
+			continue;
+		}
+
+		// IF (0x58)
+		if (op === 0x58) {
+			ifDepth++;
+			i++;
+			continue;
+		}
+		// EIF (0x59)
+		if (op === 0x59) {
+			if (ifDepth === 0) {
+				if (!unbalancedIfReported) {
+					unbalancedIfReported = true;
+					addIssue(
+						issues,
+						'error',
+						'TT_INSTR_UNBALANCED_EIF',
+						`${owner}: EIF at byte ${i} with no matching IF.`,
+					);
+				}
+			} else {
+				ifDepth--;
+			}
+			i++;
+			continue;
+		}
+
+		// FDEF (0x2C) — function definition (cannot nest)
+		if (op === 0x2c) {
+			if (inFdef && !nestedFdefReported) {
+				nestedFdefReported = true;
+				addIssue(
+					issues,
+					'error',
+					'TT_INSTR_NESTED_FDEF',
+					`${owner}: FDEF at byte ${i} nested inside another FDEF.`,
+				);
+			}
+			inFdef = true;
+			i++;
+			continue;
+		}
+		// ENDF (0x2D)
+		if (op === 0x2d) {
+			if (!inFdef && !strayEndfReported) {
+				strayEndfReported = true;
+				addIssue(
+					issues,
+					'error',
+					'TT_INSTR_STRAY_ENDF',
+					`${owner}: ENDF at byte ${i} with no matching FDEF.`,
+				);
+			}
+			inFdef = false;
+			i++;
+			continue;
+		}
+
+		// All other opcodes are single-byte; we don't validate semantics here.
+		i++;
+	}
+
+	if (ifDepth !== 0) {
+		addIssue(
+			issues,
+			'error',
+			'TT_INSTR_UNBALANCED_IF',
+			`${owner}: ${ifDepth} unclosed IF block(s) at end of stream.`,
+		);
+	}
+	if (inFdef) {
+		addIssue(
+			issues,
+			'error',
+			'TT_INSTR_UNCLOSED_FDEF',
+			`${owner}: FDEF was never closed by ENDF before end of stream.`,
+		);
+	}
+}
+
+function validateTrueTypeProgramTables(parsedTables, issues) {
+	if (parsedTables.fpgm?.instructions) {
+		validateTrueTypeInstructions(
+			parsedTables.fpgm.instructions,
+			'fpgm',
+			issues,
+		);
+	}
+	if (parsedTables.prep?.instructions) {
+		validateTrueTypeInstructions(
+			parsedTables.prep.instructions,
+			'prep',
+			issues,
+		);
+	}
+	const glyphs = parsedTables.glyf?.glyphs;
+	if (Array.isArray(glyphs)) {
+		// To avoid noise, only walk each glyph until the first issue is found.
+		// validateTrueTypeInstructions already de-duplicates per call, but we
+		// also stop after the first glyph that reports anything.
+		let firstIssueCount = issues.length;
+		for (let gid = 0; gid < glyphs.length; gid++) {
+			const instr = glyphs[gid]?.instructions;
+			if (!instr || instr.length === 0) continue;
+			validateTrueTypeInstructions(instr, `glyf glyph ${gid}`, issues);
+			if (issues.length > firstIssueCount) break;
 		}
 	}
 }
@@ -3291,7 +3619,11 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 	// Tier 7 second-pass: cmap format-14 variation selector validation.
 	if (parsedTables.cmap) {
 		validateCmapFormat14(parsedTables.cmap, issues);
+		validateCmapFormat12And13(parsedTables.cmap, issues);
 	}
+
+	// Tier 7 third-pass: TrueType instruction stream safety.
+	validateTrueTypeProgramTables(parsedTables, issues);
 }
 
 // =========================================================================
@@ -3458,4 +3790,7 @@ export const _internal = {
 	validateGlyfComposites,
 	validateGlyfHeaders,
 	validateCmapFormat14,
+	validateCmapFormat12And13,
+	validateTrueTypeInstructions,
+	validateTrueTypeProgramTables,
 };
