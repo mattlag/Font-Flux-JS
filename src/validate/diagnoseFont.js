@@ -2217,6 +2217,564 @@ function validateMATH(math, issues) {
 	}
 }
 
+// -------------------------------------------------------------------------
+//  CFF / CFF2 charstring opcode validation (Type 2 CharStrings)
+// -------------------------------------------------------------------------
+//
+// Catches the same classes of charstring corruption that Firefox/OTS
+// reports as "Failed validating CharStrings INDEX": invalid operators,
+// stack underflow, runaway subroutine recursion, and (for CFF1) operators
+// that are illegal in CFF2 or vice-versa.
+//
+// Spec: Adobe Tech Note #5177 (Type 2 Charstring Format).
+
+const CFF_TYPE2_OPS = new Set([
+	1, 3, 4, 5, 6, 7, 8, 10, 11, 14, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+	29, 30, 31,
+	// 12 is the escape byte; valid two-byte ops are checked separately.
+]);
+
+// CFF2 adds vsindex (15) and blend (16); removes endchar (14).
+const CFF2_TYPE2_OPS = new Set([
+	1, 3, 4, 5, 6, 7, 8, 10, 11, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+	27, 29, 30, 31,
+]);
+
+const CFF_TYPE2_OPS_TWOBYTE = new Set([
+	34, 35, 36, 37, // hflex, flex, hflex1, flex1
+	// Plus arithmetic/storage ops 0,3,4,5,9,10,11,12,14,15,18,20,21,22,23,24,
+	// 26,27,28,29,30 — but the interpreter doesn't decode those, so we don't
+	// require them. We only flag operators that are not in either set.
+	0, 3, 4, 5, 9, 10, 11, 12, 14, 15, 18, 20, 21, 22, 23, 24, 26, 27, 28, 29,
+	30,
+]);
+
+// Operators that exist in CFF1 but were removed in CFF2: endchar (14) and
+// the legacy hsbw/seac path. The CFF2 op set above already excludes them, so
+// they will be reported as CFF_INVALID_OPERATOR in CFF2 contexts — no
+// separate code is needed.
+
+const CFF_MAX_SUBR_DEPTH = 10; // Type 2 spec limit
+const CFF_MAX_STACK = 48; // Type 2 / CFF1 spec stack depth
+const CFF2_MAX_STACK = 513; // CFF2 spec stack depth
+
+function validateCffCharStrings(cffTable, owner, issues, isCff2 = false) {
+	const fontList = isCff2
+		? [{ charStrings: cffTable.charStrings || [], localSubrs: cffTable.fontDicts?.[0]?.localSubrs || [] }]
+		: cffTable.fonts || [];
+	const globalSubrs = cffTable.globalSubrs || [];
+	const globalBias = calcCffSubrBias(globalSubrs.length);
+
+	// We report only the first occurrence per code per call to avoid noise on
+	// systemically broken fonts.
+	const reported = new Set();
+	function report(code, severity, message) {
+		if (reported.has(code)) return;
+		reported.add(code);
+		addIssue(issues, severity, code, message);
+	}
+
+	for (let f = 0; f < fontList.length; f++) {
+		const font = fontList[f];
+		const charStrings = font.charStrings || [];
+		const localSubrs = font.localSubrs || [];
+		const localBias = calcCffSubrBias(localSubrs.length);
+
+		for (let gid = 0; gid < charStrings.length; gid++) {
+			const cs = charStrings[gid];
+			if (!cs || cs.length === 0) continue; // Caught by CFF_EMPTY_CHARSTRING
+
+			const ctx = {
+				stack: [],
+				maxStackSeen: 0,
+				stemCount: 0,
+				depth: 0,
+				returned: false,
+				saw: { endchar: false, anyDraw: false },
+			};
+
+			validateCharStringBytecode(
+				cs,
+				ctx,
+				localSubrs,
+				localBias,
+				globalSubrs,
+				globalBias,
+				owner,
+				f,
+				gid,
+				report,
+				isCff2,
+			);
+
+			if (ctx.maxStackSeen > (isCff2 ? CFF2_MAX_STACK : CFF_MAX_STACK)) {
+				report(
+					'CFF_STACK_OVERFLOW',
+					'error',
+					`${owner}: charstring for glyph ${gid} pushed ${ctx.maxStackSeen} operands, exceeding the ${isCff2 ? 'CFF2' : 'Type 2'} limit of ${isCff2 ? CFF2_MAX_STACK : CFF_MAX_STACK}.`,
+				);
+			}
+		}
+	}
+}
+
+function calcCffSubrBias(subrCount) {
+	if (subrCount < 1240) return 107;
+	if (subrCount < 33900) return 1131;
+	return 32768;
+}
+
+function validateCharStringBytecode(
+	bytes,
+	ctx,
+	localSubrs,
+	localBias,
+	globalSubrs,
+	globalBias,
+	owner,
+	fontIndex,
+	gid,
+	report,
+	isCff2,
+) {
+	if (ctx.depth > CFF_MAX_SUBR_DEPTH) {
+		report(
+			'CFF_SUBR_DEPTH_EXCEEDED',
+			'error',
+			`${owner}: charstring for glyph ${gid} exceeded subroutine recursion depth ${CFF_MAX_SUBR_DEPTH}.`,
+		);
+		return;
+	}
+
+	let i = 0;
+	while (i < bytes.length) {
+		const b0 = bytes[i];
+
+		// Numeric operand?
+		if (b0 === 28 || b0 >= 32) {
+			const num = decodeCffNumber(bytes, i);
+			if (num === null) {
+				report(
+					'CFF_INVALID_NUMBER',
+					'error',
+					`${owner}: charstring for glyph ${gid} contains a malformed numeric operand at byte ${i}.`,
+				);
+				return;
+			}
+			if (i + num.bytesConsumed > bytes.length) {
+				report(
+					'CFF_TRUNCATED_OPERAND',
+					'error',
+					`${owner}: charstring for glyph ${gid} truncated mid-operand at byte ${i}.`,
+				);
+				return;
+			}
+			ctx.stack.push(num.value);
+			if (ctx.stack.length > ctx.maxStackSeen) {
+				ctx.maxStackSeen = ctx.stack.length;
+			}
+			i += num.bytesConsumed;
+			continue;
+		}
+
+		// Two-byte operator escape
+		if (b0 === 12) {
+			if (i + 1 >= bytes.length) {
+				report(
+					'CFF_TRUNCATED_OPERATOR',
+					'error',
+					`${owner}: charstring for glyph ${gid} ends mid-escaped operator at byte ${i}.`,
+				);
+				return;
+			}
+			const b1 = bytes[i + 1];
+			if (!CFF_TYPE2_OPS_TWOBYTE.has(b1)) {
+				report(
+					'CFF_INVALID_OPERATOR',
+					'error',
+					`${owner}: charstring for glyph ${gid} uses unrecognised two-byte operator 12 ${b1} at byte ${i}.`,
+				);
+				return;
+			}
+			// Flex operators each consume a fixed number of operands; check
+			// stack underflow only for those four.
+			const flexArgs = { 34: 7, 35: 13, 36: 9, 37: 11 }[b1];
+			if (flexArgs !== undefined && ctx.stack.length < flexArgs) {
+				report(
+					'CFF_STACK_UNDERFLOW',
+					'error',
+					`${owner}: charstring for glyph ${gid} two-byte op ${b1} requires ${flexArgs} operands but stack has ${ctx.stack.length}.`,
+				);
+				return;
+			}
+			ctx.stack.length = 0;
+			ctx.saw.anyDraw = true;
+			i += 2;
+			continue;
+		}
+
+		// One-byte operators
+		const opSet = isCff2 ? CFF2_TYPE2_OPS : CFF_TYPE2_OPS;
+		if (!opSet.has(b0)) {
+			report(
+				'CFF_INVALID_OPERATOR',
+				'error',
+				`${owner}: charstring for glyph ${gid} uses unknown operator 0x${b0.toString(16).padStart(2, '0')} at byte ${i}.`,
+			);
+			return;
+		}
+
+		// CFF2 vsindex (15): pops 1 operand (variation store index), no draw.
+		if (isCff2 && b0 === 15) {
+			if (ctx.stack.length < 1) {
+				report(
+					'CFF_STACK_UNDERFLOW',
+					'error',
+					`${owner}: charstring for glyph ${gid} vsindex with empty stack at byte ${i}.`,
+				);
+				return;
+			}
+			ctx.stack.pop();
+			i++;
+			continue;
+		}
+
+		// CFF2 blend (16): pops top operand n, then n*(k+1) blend operands,
+		// leaves n on stack. We can't know k without reading ItemVariationStore;
+		// just treat as stack-modifying with no underflow check beyond "≥ 1".
+		if (isCff2 && b0 === 16) {
+			if (ctx.stack.length < 1) {
+				report(
+					'CFF_STACK_UNDERFLOW',
+					'error',
+					`${owner}: charstring for glyph ${gid} blend with empty stack at byte ${i}.`,
+				);
+				return;
+			}
+			const n = ctx.stack.pop();
+			// We don't know k; conservatively keep n operands and discard the rest.
+			if (typeof n === 'number' && n >= 0 && n <= ctx.stack.length) {
+				ctx.stack.length = n;
+			} else {
+				ctx.stack.length = 0;
+			}
+			i++;
+			continue;
+		}
+
+		// Stem operators — count stems for hintmask byte calculation
+		if (b0 === 1 || b0 === 3 || b0 === 18 || b0 === 23) {
+			ctx.stemCount += ctx.stack.length >> 1;
+			ctx.stack.length = 0;
+			i++;
+			continue;
+		}
+
+		// hintmask / cntrmask have N follow-on bytes (one per 8 stems).
+		if (b0 === 19 || b0 === 20) {
+			ctx.stemCount += ctx.stack.length >> 1;
+			ctx.stack.length = 0;
+			i++;
+			const maskBytes = Math.ceil(ctx.stemCount / 8);
+			if (i + maskBytes > bytes.length) {
+				report(
+					'CFF_TRUNCATED_OPERATOR',
+					'error',
+					`${owner}: charstring for glyph ${gid} truncated mid-mask at byte ${i}.`,
+				);
+				return;
+			}
+			i += maskBytes;
+			continue;
+		}
+
+		// Subroutine calls
+		if (b0 === 10 || b0 === 29) {
+			if (ctx.stack.length < 1) {
+				report(
+					'CFF_STACK_UNDERFLOW',
+					'error',
+					`${owner}: charstring for glyph ${gid} ${b0 === 10 ? 'callsubr' : 'callgsubr'} with empty stack at byte ${i}.`,
+				);
+				return;
+			}
+			const sIdx = ctx.stack.pop();
+			const subrIdx = sIdx + (b0 === 10 ? localBias : globalBias);
+			const subrTable = b0 === 10 ? localSubrs : globalSubrs;
+			if (subrIdx < 0 || subrIdx >= subrTable.length) {
+				report(
+					'CFF_SUBR_INDEX_OUT_OF_RANGE',
+					'error',
+					`${owner}: charstring for glyph ${gid} ${b0 === 10 ? 'callsubr' : 'callgsubr'} index ${sIdx} (biased ${subrIdx}) out of range [0, ${subrTable.length}).`,
+				);
+				return;
+			}
+			ctx.depth++;
+			validateCharStringBytecode(
+				subrTable[subrIdx],
+				ctx,
+				localSubrs,
+				localBias,
+				globalSubrs,
+				globalBias,
+				owner,
+				fontIndex,
+				gid,
+				report,
+				isCff2,
+			);
+			ctx.depth--;
+			i++;
+			continue;
+		}
+
+		if (b0 === 11) {
+			// return
+			ctx.returned = true;
+			return;
+		}
+
+		if (b0 === 14) {
+			// endchar
+			ctx.saw.endchar = true;
+			ctx.stack.length = 0;
+			i++;
+			continue;
+		}
+
+		// Drawing/move operators — clear stack
+		ctx.stack.length = 0;
+		ctx.saw.anyDraw = true;
+		i++;
+	}
+}
+
+function decodeCffNumber(bytes, offset) {
+	const b0 = bytes[offset];
+	if (b0 >= 32 && b0 <= 246) return { value: b0 - 139, bytesConsumed: 1 };
+	if (b0 >= 247 && b0 <= 250) {
+		if (offset + 1 >= bytes.length) return null;
+		return { value: (b0 - 247) * 256 + bytes[offset + 1] + 108, bytesConsumed: 2 };
+	}
+	if (b0 >= 251 && b0 <= 254) {
+		if (offset + 1 >= bytes.length) return null;
+		return { value: -(b0 - 251) * 256 - bytes[offset + 1] - 108, bytesConsumed: 2 };
+	}
+	if (b0 === 28) {
+		if (offset + 2 >= bytes.length) return null;
+		const val = (bytes[offset + 1] << 8) | bytes[offset + 2];
+		return { value: val > 0x7fff ? val - 0x10000 : val, bytesConsumed: 3 };
+	}
+	if (b0 === 255) {
+		if (offset + 4 >= bytes.length) return null;
+		const val =
+			((bytes[offset + 1] << 24) |
+				(bytes[offset + 2] << 16) |
+				(bytes[offset + 3] << 8) |
+				bytes[offset + 4]) >>>
+			0;
+		const signed = val > 0x7fffffff ? val - 0x100000000 : val;
+		return { value: signed / 65536, bytesConsumed: 5 };
+	}
+	return null;
+}
+
+// -------------------------------------------------------------------------
+//  glyf composite-cycle / depth detection
+// -------------------------------------------------------------------------
+
+const GLYF_MAX_COMPOSITE_DEPTH = 16;
+
+function validateGlyfComposites(glyf, numGlyphs, issues) {
+	const glyphs = glyf?.glyphs;
+	if (!Array.isArray(glyphs)) return;
+
+	let cycleReported = false;
+	let depthReported = false;
+	let outOfRangeReported = false;
+
+	function walk(gid, stack) {
+		if (cycleReported || depthReported) return;
+		const g = glyphs[gid];
+		if (!g || !Array.isArray(g.components)) return;
+		if (stack.length >= GLYF_MAX_COMPOSITE_DEPTH) {
+			depthReported = true;
+			addIssue(
+				issues,
+				'error',
+				'GLYF_COMPOSITE_DEPTH_EXCEEDED',
+				`glyf composite glyph chain starting at glyph ${stack[0]} exceeds maximum nesting depth ${GLYF_MAX_COMPOSITE_DEPTH}.`,
+			);
+			return;
+		}
+		for (const comp of g.components) {
+			const childGid = comp.glyphIndex ?? comp.glyphID;
+			if (typeof childGid !== 'number') continue;
+			if (numGlyphs > 0 && (childGid < 0 || childGid >= numGlyphs)) {
+				if (!outOfRangeReported) {
+					outOfRangeReported = true;
+					addIssue(
+						issues,
+						'error',
+						'GLYF_COMPOSITE_GLYPH_OUT_OF_RANGE',
+						`glyf composite glyph ${gid} references component glyph ${childGid}, which is out of range [0, ${numGlyphs}).`,
+					);
+				}
+				continue;
+			}
+			if (stack.includes(childGid)) {
+				cycleReported = true;
+				addIssue(
+					issues,
+					'error',
+					'GLYF_COMPOSITE_CYCLE',
+					`glyf composite glyph chain forms a cycle: ${[...stack, childGid].join(' → ')}.`,
+				);
+				return;
+			}
+			stack.push(childGid);
+			walk(childGid, stack);
+			stack.pop();
+			if (cycleReported || depthReported) return;
+		}
+	}
+
+	for (let gid = 0; gid < glyphs.length; gid++) {
+		const g = glyphs[gid];
+		if (g && Array.isArray(g.components)) {
+			walk(gid, [gid]);
+			if (cycleReported || depthReported) break;
+		}
+	}
+}
+
+// -------------------------------------------------------------------------
+//  glyf header bounds (numContours sanity, bbox sanity)
+// -------------------------------------------------------------------------
+
+function validateGlyfHeaders(glyf, head, issues) {
+	const glyphs = glyf?.glyphs;
+	if (!Array.isArray(glyphs)) return;
+	const headXMin = head?.xMin;
+	const headXMax = head?.xMax;
+	const headYMin = head?.yMin;
+	const headYMax = head?.yMax;
+	let bboxReported = false;
+	let outsideHeadReported = false;
+	let contoursReported = false;
+	for (let gid = 0; gid < glyphs.length; gid++) {
+		const g = glyphs[gid];
+		if (!g) continue;
+		// Empty glyphs are valid (e.g. .notdef, space)
+		if (
+			!bboxReported &&
+			typeof g.xMin === 'number' &&
+			typeof g.xMax === 'number' &&
+			g.xMin > g.xMax
+		) {
+			bboxReported = true;
+			addIssue(
+				issues,
+				'warning',
+				'GLYF_BBOX_INVERTED',
+				`glyf glyph ${gid} has xMin (${g.xMin}) > xMax (${g.xMax}).`,
+			);
+		}
+		if (
+			!bboxReported &&
+			typeof g.yMin === 'number' &&
+			typeof g.yMax === 'number' &&
+			g.yMin > g.yMax
+		) {
+			bboxReported = true;
+			addIssue(
+				issues,
+				'warning',
+				'GLYF_BBOX_INVERTED',
+				`glyf glyph ${gid} has yMin (${g.yMin}) > yMax (${g.yMax}).`,
+			);
+		}
+		if (
+			!outsideHeadReported &&
+			typeof headXMin === 'number' &&
+			typeof headXMax === 'number' &&
+			typeof g.xMin === 'number' &&
+			typeof g.xMax === 'number' &&
+			(g.xMin < headXMin || g.xMax > headXMax)
+		) {
+			outsideHeadReported = true;
+			addIssue(
+				issues,
+				'warning',
+				'GLYF_BBOX_OUTSIDE_HEAD',
+				`glyf glyph ${gid} bounding box [${g.xMin},${g.xMax}] x [${g.yMin},${g.yMax}] extends outside the head.bbox [${headXMin},${headXMax}] x [${headYMin},${headYMax}].`,
+			);
+		}
+		if (
+			!contoursReported &&
+			typeof g.numberOfContours === 'number' &&
+			g.numberOfContours < -1
+		) {
+			contoursReported = true;
+			addIssue(
+				issues,
+				'error',
+				'GLYF_NUM_CONTOURS_INVALID',
+				`glyf glyph ${gid} numberOfContours = ${g.numberOfContours}; only ≥ -1 is valid (-1 indicates a composite).`,
+			);
+		}
+	}
+}
+
+// -------------------------------------------------------------------------
+//  cmap deeper subtable internals (format 12/13/14 specifics on top of
+//  what Tier 2's validateCmapDeep already covers).
+// -------------------------------------------------------------------------
+
+const CMAP_FORMAT14_VALID_VS_RANGES = [
+	[0x180b, 0x180d], // Mongolian Free Variation Selectors
+	[0xfe00, 0xfe0f], // Variation Selectors
+	[0xe0100, 0xe01ef], // Variation Selectors Supplement
+];
+
+function validateCmapFormat14(cmap, issues) {
+	const subs = cmap?.subTables ?? cmap?.subtables ?? [];
+	let outOfRangeReported = false;
+	let outOfOrderReported = false;
+	for (const sub of subs) {
+		if (sub?.format !== 14) continue;
+		const records = sub.varSelectorRecords ?? sub.variationSelectors ?? [];
+		let prevVs = -1;
+		for (let i = 0; i < records.length; i++) {
+			const r = records[i];
+			const vs = r.varSelector ?? r.variationSelector;
+			if (typeof vs !== 'number') continue;
+			const inRange = CMAP_FORMAT14_VALID_VS_RANGES.some(
+				([lo, hi]) => vs >= lo && vs <= hi,
+			);
+			if (!inRange && !outOfRangeReported) {
+				outOfRangeReported = true;
+				addIssue(
+					issues,
+					'error',
+					'CMAP_FORMAT14_VS_OUT_OF_RANGE',
+					`cmap format 14 record ${i} variation selector U+${vs.toString(16).toUpperCase().padStart(4, '0')} is not in any defined VS range (Mongolian FVS, FE00–FE0F, or E0100–E01EF).`,
+				);
+			}
+			if (vs <= prevVs && !outOfOrderReported) {
+				outOfOrderReported = true;
+				addIssue(
+					issues,
+					'error',
+					'CMAP_FORMAT14_VS_OUT_OF_ORDER',
+					`cmap format 14 variation selectors must be strictly ascending; record ${i} U+${vs.toString(16).toUpperCase()} follows U+${prevVs.toString(16).toUpperCase()}.`,
+				);
+			}
+			prevVs = vs;
+		}
+	}
+}
+
 function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 	const tags = new Set(entries.map((e) => e.tag));
 
@@ -2715,6 +3273,25 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 	if (parsedTables.MATH) {
 		validateMATH(parsedTables.MATH, issues);
 	}
+
+	// Tier 7 second-pass: deep CFF charstring opcode validation.
+	if (parsedTables['CFF ']) {
+		validateCffCharStrings(parsedTables['CFF '], 'CFF', issues, false);
+	}
+	if (parsedTables.CFF2) {
+		validateCffCharStrings(parsedTables.CFF2, 'CFF2', issues, true);
+	}
+
+	// Tier 7 second-pass: glyf composite cycle / depth + header bounds.
+	if (parsedTables.glyf) {
+		validateGlyfComposites(parsedTables.glyf, numGlyphs, issues);
+		validateGlyfHeaders(parsedTables.glyf, parsedTables.head, issues);
+	}
+
+	// Tier 7 second-pass: cmap format-14 variation selector validation.
+	if (parsedTables.cmap) {
+		validateCmapFormat14(parsedTables.cmap, issues);
+	}
 }
 
 // =========================================================================
@@ -2877,4 +3454,8 @@ export const _internal = {
 	validateClassDef,
 	validateLayoutSubtables,
 	validateMATH,
+	validateCffCharStrings,
+	validateGlyfComposites,
+	validateGlyfHeaders,
+	validateCmapFormat14,
 };

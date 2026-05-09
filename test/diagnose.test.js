@@ -2009,3 +2009,272 @@ diagInternal.validateMATH({ version: 0x00010000 }, issues);
 expect(issues).toEqual([]);
 });
 });
+
+// ============================================================================
+//  Tier 7 second-pass: CFF / CFF2 charstring opcode validation
+// ============================================================================
+
+describe('Tier 7 CFF charstring opcode validation', () => {
+	function makeCff(charStringsBytes, { localSubrs = [], globalSubrs = [] } = {}) {
+		return {
+			fonts: [{ charStrings: charStringsBytes, localSubrs }],
+			globalSubrs,
+		};
+	}
+	function makeCff2(charStringsBytes, { localSubrs = [], globalSubrs = [] } = {}) {
+		return {
+			charStrings: charStringsBytes,
+			fontDicts: [{ localSubrs }],
+			globalSubrs,
+		};
+	}
+
+	it('flags CFF_INVALID_OPERATOR for unknown one-byte op (CFF1)', () => {
+		// 139 (push 0), 0x10 (op 16 = unused in CFF1), 14 (endchar)
+		const issues = [];
+		diagInternal.validateCffCharStrings(
+			makeCff([[139, 16, 14]]),
+			'CFF',
+			issues,
+			false,
+		);
+		expect(issues.some((i) => i.code === 'CFF_INVALID_OPERATOR')).toBe(true);
+	});
+
+	it('does NOT flag op 16 (blend) in CFF2', () => {
+		// push 1 (operand for blend) then op 16 (blend), then push & op 5 (rlineto)
+		const issues = [];
+		diagInternal.validateCffCharStrings(
+			makeCff2([[140, 16, 139, 139, 5]]),
+			'CFF2',
+			issues,
+			true,
+		);
+		expect(issues.filter((i) => i.code === 'CFF_INVALID_OPERATOR')).toEqual([]);
+	});
+
+	it('flags endchar (14) as invalid in CFF2', () => {
+		const issues = [];
+		diagInternal.validateCffCharStrings(makeCff2([[14]]), 'CFF2', issues, true);
+		expect(issues.some((i) => i.code === 'CFF_INVALID_OPERATOR')).toBe(true);
+	});
+
+	it('flags CFF_STACK_UNDERFLOW for callsubr with empty stack', () => {
+		const issues = [];
+		// 10 = callsubr (needs 1 operand)
+		diagInternal.validateCffCharStrings(
+			makeCff([[10, 14]]),
+			'CFF',
+			issues,
+			false,
+		);
+		expect(issues.some((i) => i.code === 'CFF_STACK_UNDERFLOW')).toBe(true);
+	});
+
+	it('flags CFF_SUBR_INDEX_OUT_OF_RANGE', () => {
+		const issues = [];
+		// push 100, callsubr — but localSubrs is empty → biased index 207 out of range.
+		diagInternal.validateCffCharStrings(
+			makeCff([[139 + 100, 10, 14]]),
+			'CFF',
+			issues,
+			false,
+		);
+		expect(issues.some((i) => i.code === 'CFF_SUBR_INDEX_OUT_OF_RANGE')).toBe(true);
+	});
+
+	it('flags CFF_INVALID_OPERATOR for unknown two-byte op', () => {
+		// 12 99 — 99 is not a defined two-byte op
+		const issues = [];
+		diagInternal.validateCffCharStrings(
+			makeCff([[12, 99, 14]]),
+			'CFF',
+			issues,
+			false,
+		);
+		expect(issues.some((i) => i.code === 'CFF_INVALID_OPERATOR')).toBe(true);
+	});
+
+	it('flags CFF_TRUNCATED_OPERATOR for hanging escape byte', () => {
+		const issues = [];
+		diagInternal.validateCffCharStrings(makeCff([[12]]), 'CFF', issues, false);
+		expect(issues.some((i) => i.code === 'CFF_TRUNCATED_OPERATOR')).toBe(true);
+	});
+
+	it('flags CFF_STACK_OVERFLOW when stack exceeds 48 (CFF1)', () => {
+		// Push 50 numbers then endchar
+		const bytes = [];
+		for (let i = 0; i < 50; i++) bytes.push(139);
+		bytes.push(14);
+		const issues = [];
+		diagInternal.validateCffCharStrings(makeCff([bytes]), 'CFF', issues, false);
+		expect(issues.some((i) => i.code === 'CFF_STACK_OVERFLOW')).toBe(true);
+	});
+
+	it('does NOT flag stack of 50 in CFF2 (limit is 513)', () => {
+		const bytes = [];
+		for (let i = 0; i < 50; i++) bytes.push(139);
+		bytes.push(5); // rlineto
+		const issues = [];
+		diagInternal.validateCffCharStrings(makeCff2([bytes]), 'CFF2', issues, true);
+		expect(issues.filter((i) => i.code === 'CFF_STACK_OVERFLOW')).toEqual([]);
+	});
+
+	it('passes a clean CFF1 charstring with rmoveto + rlineto + endchar', () => {
+		// 139=0, 139=0, 21=rmoveto, 139, 139, 5=rlineto, 14=endchar
+		const issues = [];
+		diagInternal.validateCffCharStrings(
+			makeCff([[139, 139, 21, 139, 139, 5, 14]]),
+			'CFF',
+			issues,
+			false,
+		);
+		expect(issues).toEqual([]);
+	});
+});
+
+// ============================================================================
+//  Tier 7 second-pass: glyf composites + headers
+// ============================================================================
+
+describe('Tier 7 glyf composite / header validation', () => {
+	it('flags GLYF_COMPOSITE_CYCLE for a self-referencing composite', () => {
+		const glyf = {
+			glyphs: [
+				{ components: [{ glyphIndex: 0 }] }, // glyph 0 references itself
+			],
+		};
+		const issues = [];
+		diagInternal.validateGlyfComposites(glyf, 1, issues);
+		expect(issues.some((i) => i.code === 'GLYF_COMPOSITE_CYCLE')).toBe(true);
+	});
+
+	it('flags GLYF_COMPOSITE_CYCLE for a 2-glyph cycle', () => {
+		const glyf = {
+			glyphs: [
+				{ components: [{ glyphIndex: 1 }] },
+				{ components: [{ glyphIndex: 0 }] },
+			],
+		};
+		const issues = [];
+		diagInternal.validateGlyfComposites(glyf, 2, issues);
+		expect(issues.some((i) => i.code === 'GLYF_COMPOSITE_CYCLE')).toBe(true);
+	});
+
+	it('flags GLYF_COMPOSITE_GLYPH_OUT_OF_RANGE', () => {
+		const glyf = { glyphs: [{ components: [{ glyphIndex: 99 }] }] };
+		const issues = [];
+		diagInternal.validateGlyfComposites(glyf, 1, issues);
+		expect(issues.some((i) => i.code === 'GLYF_COMPOSITE_GLYPH_OUT_OF_RANGE')).toBe(true);
+	});
+
+	it('flags GLYF_COMPOSITE_DEPTH_EXCEEDED for deep chains', () => {
+		// 20-glyph chain: each composite references the next
+		const glyphs = [];
+		for (let i = 0; i < 20; i++) {
+			glyphs.push({ components: [{ glyphIndex: i + 1 }] });
+		}
+		glyphs.push({}); // leaf simple glyph
+		const issues = [];
+		diagInternal.validateGlyfComposites({ glyphs }, glyphs.length, issues);
+		expect(issues.some((i) => i.code === 'GLYF_COMPOSITE_DEPTH_EXCEEDED')).toBe(true);
+	});
+
+	it('passes a clean composite chain', () => {
+		const glyf = {
+			glyphs: [
+				{ components: [{ glyphIndex: 1 }] },
+				{}, // simple glyph
+			],
+		};
+		const issues = [];
+		diagInternal.validateGlyfComposites(glyf, 2, issues);
+		expect(issues).toEqual([]);
+	});
+
+	it('flags GLYF_BBOX_INVERTED for xMin > xMax', () => {
+		const issues = [];
+		diagInternal.validateGlyfHeaders(
+			{ glyphs: [{ xMin: 100, xMax: 50, yMin: 0, yMax: 10 }] },
+			{ xMin: -100, xMax: 200, yMin: -100, yMax: 200 },
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'GLYF_BBOX_INVERTED')).toBe(true);
+	});
+
+	it('flags GLYF_BBOX_OUTSIDE_HEAD when glyph extends past head bbox', () => {
+		const issues = [];
+		diagInternal.validateGlyfHeaders(
+			{ glyphs: [{ xMin: 0, xMax: 999, yMin: 0, yMax: 10 }] },
+			{ xMin: 0, xMax: 100, yMin: 0, yMax: 100 },
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'GLYF_BBOX_OUTSIDE_HEAD')).toBe(true);
+	});
+
+	it('flags GLYF_NUM_CONTOURS_INVALID for value < -1', () => {
+		const issues = [];
+		diagInternal.validateGlyfHeaders(
+			{ glyphs: [{ numberOfContours: -5 }] },
+			null,
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'GLYF_NUM_CONTOURS_INVALID')).toBe(true);
+	});
+});
+
+// ============================================================================
+//  Tier 7 second-pass: cmap format-14 variation selectors
+// ============================================================================
+
+describe('Tier 7 cmap format-14 validation', () => {
+	it('flags CMAP_FORMAT14_VS_OUT_OF_RANGE', () => {
+		const cmap = {
+			subTables: [
+				{
+					format: 14,
+					varSelectorRecords: [{ varSelector: 0x1000 }], // not a valid VS
+				},
+			],
+		};
+		const issues = [];
+		diagInternal.validateCmapFormat14(cmap, issues);
+		expect(issues.some((i) => i.code === 'CMAP_FORMAT14_VS_OUT_OF_RANGE')).toBe(true);
+	});
+
+	it('flags CMAP_FORMAT14_VS_OUT_OF_ORDER', () => {
+		const cmap = {
+			subTables: [
+				{
+					format: 14,
+					varSelectorRecords: [
+						{ varSelector: 0xfe05 },
+						{ varSelector: 0xfe00 }, // descending
+					],
+				},
+			],
+		};
+		const issues = [];
+		diagInternal.validateCmapFormat14(cmap, issues);
+		expect(issues.some((i) => i.code === 'CMAP_FORMAT14_VS_OUT_OF_ORDER')).toBe(true);
+	});
+
+	it('passes valid format-14 selectors in FE00–FE0F', () => {
+		const cmap = {
+			subTables: [
+				{
+					format: 14,
+					varSelectorRecords: [
+						{ varSelector: 0xfe00 },
+						{ varSelector: 0xfe01 },
+						{ varSelector: 0xe0100 },
+					],
+				},
+			],
+		};
+		const issues = [];
+		diagInternal.validateCmapFormat14(cmap, issues);
+		expect(issues).toEqual([]);
+	});
+});
+

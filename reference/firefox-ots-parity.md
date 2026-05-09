@@ -399,7 +399,17 @@ First-pass shipped codes (v2.4.5):
 - `LAYOUT_LOOKUP_FLAG_INVALID`
 - `HVAR_WITHOUT_FVAR`, `VVAR_WITHOUT_FVAR`, `MVAR_WITHOUT_FVAR`, `AVAR_WITHOUT_FVAR`
 
-Future work: deeper CFF/CFF2 charstring opcode validation (operator validity, stack underflow, subroutine recursion depth, hint counts), per-format cmap subtable internals beyond what Tier 2 covers, deeper `glyf` composite-cycle detection, and TrueType instruction safety. These remain incremental; the table-by-table parity targets called out in section 3 are now covered.
+✅ Third pass shipped in v2.4.7 — opcode-level CharStrings INDEX validation plus glyf composite/header sanity and cmap format-14 variation-selector checks:
+
+- `CFF_INVALID_OPERATOR`, `CFF_INVALID_NUMBER`, `CFF_TRUNCATED_OPERAND`, `CFF_TRUNCATED_OPERATOR`
+- `CFF_STACK_UNDERFLOW`, `CFF_STACK_OVERFLOW` (limits 48 for CFF1, 513 for CFF2)
+- `CFF_SUBR_INDEX_OUT_OF_RANGE`, `CFF_SUBR_DEPTH_EXCEEDED` (Type 2 spec depth = 10)
+- CFF2-aware: recognises `vsindex` (15) and `blend` (16); rejects `endchar` (14)
+- `GLYF_COMPOSITE_CYCLE`, `GLYF_COMPOSITE_DEPTH_EXCEEDED` (depth limit 16), `GLYF_COMPOSITE_GLYPH_OUT_OF_RANGE`
+- `GLYF_BBOX_INVERTED` (warning), `GLYF_BBOX_OUTSIDE_HEAD` (warning), `GLYF_NUM_CONTOURS_INVALID`
+- `CMAP_FORMAT14_VS_OUT_OF_RANGE`, `CMAP_FORMAT14_VS_OUT_OF_ORDER`
+
+Future work: TrueType instruction safety in `prep`/`fpgm`/`glyf` instruction streams (opcode validity, stack accounting), and deeper cmap format 12/13 group sort/overlap analysis. The Firefox/OTS parity targets called out in section 3 are now fully covered.
 
 ---
 
