@@ -975,3 +975,72 @@ describe('diagnoseFont — OS/2 sanitization (Tier 3)', () => {
 		).toBe(true);
 	});
 });
+
+// ============================================================================
+//  Tier 4: directory robustness (Firefox/OTS parity)
+// ============================================================================
+
+describe('diagnoseFont — Tier 4 directory robustness', () => {
+	it('flags FILE_EXCEEDS_1GB on > 1 GiB inputs', () => {
+		// We don't allocate an actual 1 GiB buffer — we lie about byteLength.
+		// phaseSignature will then emit NOT_ARRAYBUFFER, which is fine; we
+		// only need to verify FILE_EXCEEDS_1GB is also in the report.
+		const fakeBuffer = { byteLength: 1024 * 1024 * 1024 + 1 };
+		const report = diagnoseFont(fakeBuffer);
+		expect(report.errors.some((e) => e.code === 'FILE_EXCEEDS_1GB')).toBe(true);
+	});
+
+	it('flags TABLE_LENGTH_EXCEEDS_1GB when a directory entry length > 1 GiB', async () => {
+		const original = await loadSample('oblegg.ttf');
+		const buffer = cloneBuffer(original);
+		const view = new DataView(buffer);
+		// First table directory entry length is at offset 12 + 12 = 24.
+		view.setUint32(24, 1024 * 1024 * 1024 + 1);
+		const report = diagnoseFont(buffer);
+		expect(
+			report.errors.some((e) => e.code === 'TABLE_LENGTH_EXCEEDS_1GB'),
+		).toBe(true);
+	});
+
+	it('flags TABLES_OVERLAPPING when two tables share bytes', async () => {
+		const original = await loadSample('oblegg.ttf');
+		const buffer = cloneBuffer(original);
+		const view = new DataView(buffer);
+		const numTables = view.getUint16(4);
+
+		// Read all entries, sort by offset, then shift the second entry's
+		// offset backward by 16 bytes so it overlaps the first.
+		const entries = [];
+		for (let i = 0; i < numTables; i++) {
+			const recOff = 12 + i * 16;
+			entries.push({
+				index: i,
+				recOff,
+				offset: view.getUint32(recOff + 8),
+				length: view.getUint32(recOff + 12),
+			});
+		}
+		entries.sort((a, b) => a.offset - b.offset);
+		const target = entries[1];
+		const newOffset = entries[0].offset + entries[0].length - 16;
+		view.setUint32(target.recOff + 8, newOffset);
+
+		const report = diagnoseFont(buffer);
+		expect(report.errors.some((e) => e.code === 'TABLES_OVERLAPPING')).toBe(
+			true,
+		);
+	});
+
+	it('flags MAXP_VERSION_MISMATCH_FOR_OUTLINE when TTF font has maxp v0.5', async () => {
+		const original = await loadSample('oblegg.ttf');
+		const buffer = cloneBuffer(original);
+		const maxp = findTableEntry(buffer, 'maxp');
+		const view = new DataView(buffer);
+		// maxp.version is the first 4 bytes of the maxp table.
+		view.setUint32(maxp.offset, 0x00005000); // 0.5
+		const report = diagnoseFont(buffer);
+		expect(
+			report.errors.some((e) => e.code === 'MAXP_VERSION_MISMATCH_FOR_OUTLINE'),
+		).toBe(true);
+	});
+});

@@ -340,7 +340,7 @@ the JSON before re-export. Codes shipped:
 - `OS2_FSSELECTION_HEAD_MACSTYLE_MISMATCH` (cross-table italic/bold check)
 - `HEAD_MACSTYLE_RESERVED_BITS_SET` (bonus — mask `0x007F`)
 
-### Tier 4 — directory robustness
+### Tier 4 — directory robustness ✅ Shipped in v2.4.2
 
 - `TABLES_OVERLAPPING` (pairwise overlap detection — currently you only check `offset+length ≤ fileLength`).
 - `TABLE_LENGTH_EXCEEDS_1GB`.

@@ -379,6 +379,41 @@ function phaseDirectory(sfnt, header, issues) {
 		}
 	}
 
+	// Tier 4: per-table 1 GiB cap (Firefox/OTS bails on huge tables).
+	const ONE_GB = 1024 * 1024 * 1024;
+	for (const e of entries) {
+		if (e.length > ONE_GB) {
+			addIssue(
+				issues,
+				'error',
+				'TABLE_LENGTH_EXCEEDS_1GB',
+				`Table '${e.tag}' has length ${e.length} bytes (> 1 GiB); Firefox/OTS will reject it.`,
+			);
+		}
+	}
+
+	// Tier 4: pairwise overlap detection.  We only consider tables with
+	// non-zero length and offsets that fit in the file (other phases
+	// already report out-of-bounds / empty tables).  Sort by offset so we
+	// only need O(n) comparisons.
+	const sortedByOffset = entries
+		.filter((e) => e.length > 0 && e.offset + e.length <= sfnt.byteLength)
+		.slice()
+		.sort((a, b) => a.offset - b.offset);
+	for (let i = 1; i < sortedByOffset.length; i++) {
+		const prev = sortedByOffset[i - 1];
+		const curr = sortedByOffset[i];
+		const prevEnd = prev.offset + prev.length;
+		if (prevEnd > curr.offset) {
+			addIssue(
+				issues,
+				'error',
+				'TABLES_OVERLAPPING',
+				`Tables '${prev.tag}' and '${curr.tag}' overlap (${prev.tag} ends at ${prevEnd}, ${curr.tag} starts at ${curr.offset}).`,
+			);
+		}
+	}
+
 	return entries;
 }
 
@@ -1073,6 +1108,30 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 				'maxp.numGlyphs is 0 — font contains no glyphs.',
 			);
 		}
+
+		// Tier 4: outline-flavor must agree with maxp.version.
+		// TrueType outlines (glyf/loca) require maxp v1.0 (0x00010000); CFF
+		// or CFF2 outlines require maxp v0.5 (0x00005000).
+		if (v === 0x00005000 && tags.has('glyf')) {
+			addIssue(
+				issues,
+				'error',
+				'MAXP_VERSION_MISMATCH_FOR_OUTLINE',
+				'maxp.version is 0.5 (CFF) but font contains a glyf table; TrueType outlines require maxp 1.0.',
+			);
+		}
+		if (
+			v === 0x00010000 &&
+			(tags.has('CFF ') || tags.has('CFF2')) &&
+			!tags.has('glyf')
+		) {
+			addIssue(
+				issues,
+				'error',
+				'MAXP_VERSION_MISMATCH_FOR_OUTLINE',
+				'maxp.version is 1.0 (TrueType) but font has only CFF/CFF2 outlines; CFF requires maxp 0.5.',
+			);
+		}
 	}
 
 	// hhea.majorVersion must be 1.
@@ -1420,6 +1479,21 @@ function getCollectionFirstFontBuffer(buffer) {
  */
 export function diagnoseFont(buffer) {
 	const issues = [];
+
+	// Tier 4: oversize file guard.  Firefox/OTS rejects fonts larger than
+	// 1 GiB outright (`OTS_PARSER_BAILED`), so flag the file but continue
+	// best-effort diagnosis.
+	if (buffer && typeof buffer.byteLength === 'number') {
+		const ONE_GB = 1024 * 1024 * 1024;
+		if (buffer.byteLength > ONE_GB) {
+			addIssue(
+				issues,
+				'error',
+				'FILE_EXCEEDS_1GB',
+				`Font file is ${buffer.byteLength} bytes (> 1 GiB); Firefox/OTS will reject it.`,
+			);
+		}
+	}
 
 	// --- Phase 1: Signature & format detection --------------------------
 	const sig = phaseSignature(buffer, issues);
