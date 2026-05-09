@@ -109,6 +109,7 @@ function phaseSignature(buffer, issues) {
 	// WOFF1
 	if (sig === 'wOFF') {
 		addIssue(issues, 'info', 'FORMAT_WOFF1', 'File is WOFF1-wrapped.');
+		validateWoff1Wrapper(buffer, issues);
 		try {
 			const { sfnt } = unwrapWOFF1(buffer);
 			addIssue(
@@ -132,6 +133,7 @@ function phaseSignature(buffer, issues) {
 	// WOFF2
 	if (sig === 'wOF2') {
 		addIssue(issues, 'info', 'FORMAT_WOFF2', 'File is WOFF2-wrapped.');
+		validateWoff2Wrapper(buffer, issues);
 		try {
 			const { sfnt } = unwrapWOFF2(buffer);
 			addIssue(
@@ -1131,6 +1133,190 @@ function validateNameDeep(name, entries, sfnt, issues) {
 		}
 	}
 }
+
+// =========================================================================
+//  WOFF1/WOFF2 wrapper integrity (Tier 6 — Firefox/OTS parity)
+// =========================================================================
+
+const WOFF1_HEADER_SIZE = 44;
+const WOFF1_DIR_ENTRY_SIZE = 20;
+const WOFF2_HEADER_SIZE = 48;
+
+function validateWoff1Wrapper(buffer, issues) {
+	if (buffer.byteLength < WOFF1_HEADER_SIZE) return;
+	const view = new DataView(buffer);
+	const length = view.getUint32(8);
+	const numTables = view.getUint16(12);
+	const reserved = view.getUint16(14);
+	const totalSfntSize = view.getUint32(16);
+	const metaOffset = view.getUint32(24);
+	const metaLength = view.getUint32(28);
+	const privOffset = view.getUint32(36);
+	const privLength = view.getUint32(40);
+
+	// Reserved field must be 0.
+	if (reserved !== 0) {
+		addIssue(
+			issues,
+			'error',
+			'WOFF1_RESERVED_FIELD_NONZERO',
+			`WOFF1 header reserved field is 0x${reserved.toString(16)}; must be 0.`,
+		);
+	}
+
+	// Total file size declared in header must match the actual buffer.
+	if (length !== buffer.byteLength) {
+		addIssue(
+			issues,
+			'error',
+			'WOFF1_FILE_SIZE_MISMATCH',
+			`WOFF1 header.length (${length}) does not match file size (${buffer.byteLength}).`,
+		);
+	}
+
+	// Compute expected uncompressed SFNT size from the directory and compare
+	// against header.totalSfntSize.  SFNT size = 12 (offset table)
+	// + 16 * numTables (table directory) + sum of origLength padded to 4.
+	const dirEnd = WOFF1_HEADER_SIZE + numTables * WOFF1_DIR_ENTRY_SIZE;
+	if (dirEnd <= buffer.byteLength) {
+		let sfntSize = 12 + 16 * numTables;
+		for (let i = 0; i < numTables; i++) {
+			const origLength = view.getUint32(
+				WOFF1_HEADER_SIZE + i * WOFF1_DIR_ENTRY_SIZE + 12,
+			);
+			sfntSize += (origLength + 3) & ~3;
+		}
+		if (sfntSize !== totalSfntSize) {
+			addIssue(
+				issues,
+				'error',
+				'WOFF1_SFNT_SIZE_MISMATCH',
+				`WOFF1 header.totalSfntSize (${totalSfntSize}) does not match computed size from directory (${sfntSize}).`,
+			);
+		}
+	}
+
+	// Metadata block: offset+length must be in-bounds and consistent.
+	if ((metaOffset === 0) !== (metaLength === 0)) {
+		addIssue(
+			issues,
+			'error',
+			'WOFF1_METADATA_BLOCK_INVALID',
+			`WOFF1 metadata block has inconsistent offset/length (offset=${metaOffset}, length=${metaLength}); both must be zero or both non-zero.`,
+		);
+	} else if (metaLength > 0) {
+		if (metaOffset < dirEnd || metaOffset + metaLength > buffer.byteLength) {
+			addIssue(
+				issues,
+				'error',
+				'WOFF1_METADATA_BLOCK_INVALID',
+				`WOFF1 metadata block (offset ${metaOffset}, length ${metaLength}) is out of bounds (file size ${buffer.byteLength}, directory ends at ${dirEnd}).`,
+			);
+		}
+	}
+
+	// Private block: same rules.
+	if ((privOffset === 0) !== (privLength === 0)) {
+		addIssue(
+			issues,
+			'error',
+			'WOFF1_PRIVATE_BLOCK_INVALID',
+			`WOFF1 private block has inconsistent offset/length (offset=${privOffset}, length=${privLength}); both must be zero or both non-zero.`,
+		);
+	} else if (privLength > 0) {
+		if (privOffset < dirEnd || privOffset + privLength > buffer.byteLength) {
+			addIssue(
+				issues,
+				'error',
+				'WOFF1_PRIVATE_BLOCK_INVALID',
+				`WOFF1 private block (offset ${privOffset}, length ${privLength}) is out of bounds (file size ${buffer.byteLength}, directory ends at ${dirEnd}).`,
+			);
+		}
+	}
+
+	// Detect trailing junk: the last byte consumed should equal length.
+	// Last block is the latest of: end of last table, end of meta, end of priv.
+	let lastEnd = dirEnd;
+	if (dirEnd <= buffer.byteLength) {
+		for (let i = 0; i < numTables; i++) {
+			const off = view.getUint32(
+				WOFF1_HEADER_SIZE + i * WOFF1_DIR_ENTRY_SIZE + 4,
+			);
+			const compLen = view.getUint32(
+				WOFF1_HEADER_SIZE + i * WOFF1_DIR_ENTRY_SIZE + 8,
+			);
+			const padded = (off + compLen + 3) & ~3;
+			if (padded > lastEnd) lastEnd = padded;
+		}
+	}
+	if (metaLength > 0) {
+		const padded = (metaOffset + metaLength + 3) & ~3;
+		if (padded > lastEnd) lastEnd = padded;
+	}
+	if (privLength > 0) {
+		// Spec says private data is the last block and is NOT padded.
+		const end = privOffset + privLength;
+		if (end > lastEnd) lastEnd = end;
+	}
+	if (lastEnd > 0 && lastEnd < buffer.byteLength) {
+		const trailing = buffer.byteLength - lastEnd;
+		// Allow up to 3 bytes of zero-padding trailing garbage; anything more
+		// is suspicious.
+		if (trailing > 3) {
+			addIssue(
+				issues,
+				'warning',
+				'WOFF1_TRAILING_JUNK',
+				`WOFF1 file has ${trailing} bytes of trailing data after the last block (ends at ${lastEnd}, file size ${buffer.byteLength}).`,
+			);
+		}
+	}
+}
+
+function validateWoff2Wrapper(buffer, issues) {
+	if (buffer.byteLength < WOFF2_HEADER_SIZE) return;
+	const view = new DataView(buffer);
+	const length = view.getUint32(8);
+	const reserved = view.getUint16(14);
+	const totalSfntSize = view.getUint32(16);
+	const totalCompressedSize = view.getUint32(20);
+
+	if (reserved !== 0) {
+		addIssue(
+			issues,
+			'error',
+			'WOFF2_RESERVED_FIELD_NONZERO',
+			`WOFF2 header reserved field is 0x${reserved.toString(16)}; must be 0.`,
+		);
+	}
+	if (length !== buffer.byteLength) {
+		addIssue(
+			issues,
+			'error',
+			'WOFF2_FILE_SIZE_MISMATCH',
+			`WOFF2 header.length (${length}) does not match file size (${buffer.byteLength}).`,
+		);
+	}
+	// totalSfntSize must be plausible — at minimum > 12 (SFNT header).
+	if (totalSfntSize < 12) {
+		addIssue(
+			issues,
+			'error',
+			'WOFF2_DECOMPRESSED_SIZE_INVALID',
+			`WOFF2 header.totalSfntSize (${totalSfntSize}) is too small to be a valid SFNT.`,
+		);
+	}
+	// totalCompressedSize must fit in the file.
+	if (totalCompressedSize > buffer.byteLength) {
+		addIssue(
+			issues,
+			'error',
+			'WOFF2_DECOMPRESSED_SIZE_INVALID',
+			`WOFF2 header.totalCompressedSize (${totalCompressedSize}) exceeds file size (${buffer.byteLength}).`,
+		);
+	}
+}
+
 function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 	const tags = new Set(entries.map((e) => e.tag));
 
@@ -1716,4 +1902,6 @@ export const _internal = {
 	validateCmapDeep,
 	validateOS2Sanitization,
 	validateNameDeep,
+	validateWoff1Wrapper,
+	validateWoff2Wrapper,
 };

@@ -1242,3 +1242,140 @@ describe('diagnoseFont — Tier 5 name deep validation', () => {
 		).toBe(false);
 	});
 });
+
+// ============================================================================
+//  Tier 6: WOFF wrapper integrity
+// ============================================================================
+
+describe('diagnoseFont — Tier 6 WOFF wrapper integrity', () => {
+	it('clean WOFF1 sample produces no Tier 6 errors', async () => {
+		const buf = await loadSample('oblegg.woff');
+		const issues = [];
+		diagInternal.validateWoff1Wrapper(buf, issues);
+		expect(issues).toEqual([]);
+	});
+
+	it('flags WOFF1_FILE_SIZE_MISMATCH when header.length is wrong', async () => {
+		const buf = await loadSample('oblegg.woff');
+		const clone = buf.slice(0);
+		new DataView(clone).setUint32(8, 999999);
+		const issues = [];
+		diagInternal.validateWoff1Wrapper(clone, issues);
+		expect(issues.some((i) => i.code === 'WOFF1_FILE_SIZE_MISMATCH')).toBe(
+			true,
+		);
+	});
+
+	it('flags WOFF1_RESERVED_FIELD_NONZERO', async () => {
+		const buf = await loadSample('oblegg.woff');
+		const clone = buf.slice(0);
+		new DataView(clone).setUint16(14, 0x1234);
+		const issues = [];
+		diagInternal.validateWoff1Wrapper(clone, issues);
+		expect(issues.some((i) => i.code === 'WOFF1_RESERVED_FIELD_NONZERO')).toBe(
+			true,
+		);
+	});
+
+	it('flags WOFF1_SFNT_SIZE_MISMATCH', async () => {
+		const buf = await loadSample('oblegg.woff');
+		const clone = buf.slice(0);
+		// Bump totalSfntSize by 1000 so it no longer matches the directory.
+		const view = new DataView(clone);
+		view.setUint32(16, view.getUint32(16) + 1000);
+		const issues = [];
+		diagInternal.validateWoff1Wrapper(clone, issues);
+		expect(issues.some((i) => i.code === 'WOFF1_SFNT_SIZE_MISMATCH')).toBe(
+			true,
+		);
+	});
+
+	it('flags WOFF1_METADATA_BLOCK_INVALID for inconsistent offset/length', async () => {
+		const buf = await loadSample('oblegg.woff');
+		const clone = buf.slice(0);
+		// Set metaOffset non-zero but leave metaLength = 0.
+		new DataView(clone).setUint32(24, 100);
+		new DataView(clone).setUint32(28, 0);
+		const issues = [];
+		diagInternal.validateWoff1Wrapper(clone, issues);
+		expect(issues.some((i) => i.code === 'WOFF1_METADATA_BLOCK_INVALID')).toBe(
+			true,
+		);
+	});
+
+	it('flags WOFF1_METADATA_BLOCK_INVALID for out-of-bounds block', async () => {
+		const buf = await loadSample('oblegg.woff');
+		const clone = buf.slice(0);
+		new DataView(clone).setUint32(24, buf.byteLength - 5);
+		new DataView(clone).setUint32(28, 999999);
+		const issues = [];
+		diagInternal.validateWoff1Wrapper(clone, issues);
+		expect(issues.some((i) => i.code === 'WOFF1_METADATA_BLOCK_INVALID')).toBe(
+			true,
+		);
+	});
+
+	it('flags WOFF1_PRIVATE_BLOCK_INVALID for inconsistent offset/length', async () => {
+		const buf = await loadSample('oblegg.woff');
+		const clone = buf.slice(0);
+		new DataView(clone).setUint32(36, 100);
+		new DataView(clone).setUint32(40, 0);
+		const issues = [];
+		diagInternal.validateWoff1Wrapper(clone, issues);
+		expect(issues.some((i) => i.code === 'WOFF1_PRIVATE_BLOCK_INVALID')).toBe(
+			true,
+		);
+	});
+
+	it('flags WOFF1_TRAILING_JUNK when extra bytes follow the last block', async () => {
+		const buf = await loadSample('oblegg.woff');
+		// Append 100 bytes of junk and bump header.length to match so the
+		// FILE_SIZE_MISMATCH check passes.
+		const padded = new ArrayBuffer(buf.byteLength + 100);
+		new Uint8Array(padded).set(new Uint8Array(buf));
+		new DataView(padded).setUint32(8, padded.byteLength);
+		const issues = [];
+		diagInternal.validateWoff1Wrapper(padded, issues);
+		expect(issues.some((i) => i.code === 'WOFF1_TRAILING_JUNK')).toBe(true);
+	});
+
+	it('clean WOFF2 sample passes wrapper integrity', async () => {
+		const buf = await loadSample('oblegg.woff2');
+		const issues = [];
+		diagInternal.validateWoff2Wrapper(buf, issues);
+		expect(issues).toEqual([]);
+	});
+
+	it('flags WOFF2_FILE_SIZE_MISMATCH', async () => {
+		const buf = await loadSample('oblegg.woff2');
+		const clone = buf.slice(0);
+		new DataView(clone).setUint32(8, 1);
+		const issues = [];
+		diagInternal.validateWoff2Wrapper(clone, issues);
+		expect(issues.some((i) => i.code === 'WOFF2_FILE_SIZE_MISMATCH')).toBe(
+			true,
+		);
+	});
+
+	it('flags WOFF2_RESERVED_FIELD_NONZERO', async () => {
+		const buf = await loadSample('oblegg.woff2');
+		const clone = buf.slice(0);
+		new DataView(clone).setUint16(14, 0xbeef);
+		const issues = [];
+		diagInternal.validateWoff2Wrapper(clone, issues);
+		expect(issues.some((i) => i.code === 'WOFF2_RESERVED_FIELD_NONZERO')).toBe(
+			true,
+		);
+	});
+
+	it('flags WOFF2_DECOMPRESSED_SIZE_INVALID for tiny totalSfntSize', async () => {
+		const buf = await loadSample('oblegg.woff2');
+		const clone = buf.slice(0);
+		new DataView(clone).setUint32(16, 5);
+		const issues = [];
+		diagInternal.validateWoff2Wrapper(clone, issues);
+		expect(
+			issues.some((i) => i.code === 'WOFF2_DECOMPRESSED_SIZE_INVALID'),
+		).toBe(true);
+	});
+});

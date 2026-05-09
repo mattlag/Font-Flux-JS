@@ -360,14 +360,16 @@ the JSON before re-export. Codes shipped:
 
 ### Tier 6 — WOFF wrapper integrity
 
-Reuse `src/woff/` parsing infrastructure but add validation. Codes:
+✅ Shipped in v2.4.4.
 
 - `WOFF1_FILE_SIZE_MISMATCH`
 - `WOFF1_RESERVED_FIELD_NONZERO`
 - `WOFF1_METADATA_BLOCK_INVALID`
 - `WOFF1_PRIVATE_BLOCK_INVALID`
 - `WOFF1_SFNT_SIZE_MISMATCH`
-- `WOFF1_TRAILING_JUNK`
+- `WOFF1_TRAILING_JUNK` (warning)
+- `WOFF2_FILE_SIZE_MISMATCH`
+- `WOFF2_RESERVED_FIELD_NONZERO`
 - `WOFF2_DECOMPRESSED_SIZE_INVALID`
 
 ### Tier 7 — deep table validation (largest scope)
