@@ -1379,3 +1379,175 @@ describe('diagnoseFont — Tier 6 WOFF wrapper integrity', () => {
 		).toBe(true);
 	});
 });
+
+// ============================================================================
+//  Tier 7: deep table validation (fvar / GSUB / GPOS)
+// ============================================================================
+
+describe('diagnoseFont — Tier 7 fvar deep validation', () => {
+	it('flags FVAR_AXIS_RANGE_INVALID when default outside [min,max]', () => {
+		const issues = [];
+		diagInternal.validateFvarDeep(
+			{
+				axes: [
+					{ axisTag: 'wght', minValue: 100, defaultValue: 50, maxValue: 900 },
+				],
+				instances: [],
+			},
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'FVAR_AXIS_RANGE_INVALID')).toBe(true);
+	});
+
+	it('flags FVAR_AXIS_DUPLICATE_TAG', () => {
+		const issues = [];
+		diagInternal.validateFvarDeep(
+			{
+				axes: [
+					{ axisTag: 'wght', minValue: 100, defaultValue: 400, maxValue: 900 },
+					{ axisTag: 'wght', minValue: 0, defaultValue: 0, maxValue: 1 },
+				],
+				instances: [],
+			},
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'FVAR_AXIS_DUPLICATE_TAG')).toBe(true);
+	});
+
+	it('flags FVAR_INSTANCE_OUT_OF_RANGE', () => {
+		const issues = [];
+		diagInternal.validateFvarDeep(
+			{
+				axes: [
+					{ axisTag: 'wght', minValue: 100, defaultValue: 400, maxValue: 900 },
+				],
+				instances: [{ coordinates: [9999] }],
+			},
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'FVAR_INSTANCE_OUT_OF_RANGE')).toBe(
+			true,
+		);
+	});
+
+	it('accepts a clean fvar', () => {
+		const issues = [];
+		diagInternal.validateFvarDeep(
+			{
+				axes: [
+					{ axisTag: 'wght', minValue: 100, defaultValue: 400, maxValue: 900 },
+					{ axisTag: 'wdth', minValue: 50, defaultValue: 100, maxValue: 200 },
+				],
+				instances: [{ coordinates: [400, 100] }, { coordinates: [700, 100] }],
+			},
+			issues,
+		);
+		expect(issues).toEqual([]);
+	});
+});
+
+describe('diagnoseFont — Tier 7 layout lookup validation', () => {
+	it('flags GSUB_LOOKUP_TYPE_INVALID for type 0 or > 8', () => {
+		const issues = [];
+		diagInternal.validateLayoutLookups(
+			{ lookupList: { lookups: [{ lookupType: 99, lookupFlag: 0 }] } },
+			'GSUB',
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'GSUB_LOOKUP_TYPE_INVALID')).toBe(
+			true,
+		);
+	});
+
+	it('flags GPOS_LOOKUP_TYPE_INVALID for type > 9', () => {
+		const issues = [];
+		diagInternal.validateLayoutLookups(
+			{ lookupList: { lookups: [{ lookupType: 12, lookupFlag: 0 }] } },
+			'GPOS',
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'GPOS_LOOKUP_TYPE_INVALID')).toBe(
+			true,
+		);
+	});
+
+	it('flags LAYOUT_LOOKUP_FLAG_RESERVED for reserved bits', () => {
+		const issues = [];
+		diagInternal.validateLayoutLookups(
+			// 0x0040 is in the reserved mask 0x00E0.
+			{ lookupList: { lookups: [{ lookupType: 1, lookupFlag: 0x0040 }] } },
+			'GSUB',
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'LAYOUT_LOOKUP_FLAG_RESERVED')).toBe(
+			true,
+		);
+	});
+
+	it('flags LAYOUT_LOOKUP_FLAG_INVALID for bits above 0x00FF', () => {
+		const issues = [];
+		diagInternal.validateLayoutLookups(
+			{ lookupList: { lookups: [{ lookupType: 1, lookupFlag: 0x0100 }] } },
+			'GPOS',
+			issues,
+		);
+		expect(issues.some((i) => i.code === 'LAYOUT_LOOKUP_FLAG_INVALID')).toBe(
+			true,
+		);
+	});
+
+	it('accepts valid lookups (GSUB type 1..8, GPOS type 1..9)', () => {
+		for (const type of [1, 2, 3, 4, 5, 6, 7, 8]) {
+			const issues = [];
+			diagInternal.validateLayoutLookups(
+				{ lookupList: { lookups: [{ lookupType: type, lookupFlag: 0x0001 }] } },
+				'GSUB',
+				issues,
+			);
+			expect(issues).toEqual([]);
+		}
+		for (const type of [1, 2, 3, 4, 5, 6, 7, 8, 9]) {
+			const issues = [];
+			diagInternal.validateLayoutLookups(
+				{ lookupList: { lookups: [{ lookupType: type, lookupFlag: 0x0008 }] } },
+				'GPOS',
+				issues,
+			);
+			expect(issues).toEqual([]);
+		}
+	});
+});
+
+describe('diagnoseFont — Tier 7 variation table cross-checks', () => {
+	it('flags HVAR_WITHOUT_FVAR when HVAR exists but fvar does not', async () => {
+		// Rename oblegg.ttf's gasp entry (or any non-required table) to HVAR
+		// so the cross-table check fires.
+		const buf = await loadSample('oblegg.ttf');
+		const clone = buf.slice(0);
+		const view = new DataView(clone);
+		const numTables = view.getUint16(4);
+		let renamed = false;
+		for (let i = 0; i < numTables; i++) {
+			const off = 12 + i * 16;
+			const tag = String.fromCharCode(
+				view.getUint8(off),
+				view.getUint8(off + 1),
+				view.getUint8(off + 2),
+				view.getUint8(off + 3),
+			);
+			if (tag === 'gasp' || tag === 'DSIG' || tag === 'meta') {
+				view.setUint8(off, 0x48); // H
+				view.setUint8(off + 1, 0x56); // V
+				view.setUint8(off + 2, 0x41); // A
+				view.setUint8(off + 3, 0x52); // R
+				renamed = true;
+				break;
+			}
+		}
+		expect(renamed).toBe(true);
+		const report = diagnoseFont(clone);
+		expect(report.errors.some((e) => e.code === 'HVAR_WITHOUT_FVAR')).toBe(
+			true,
+		);
+	});
+});

@@ -1317,6 +1317,116 @@ function validateWoff2Wrapper(buffer, issues) {
 	}
 }
 
+// =========================================================================
+//  fvar / GSUB / GPOS deep validation (Tier 7 — Firefox/OTS parity)
+// =========================================================================
+
+const LAYOUT_LOOKUP_FLAG_VALID_MASK = 0x00ff;
+const LAYOUT_LOOKUP_FLAG_RESERVED_MASK = 0x00e0;
+
+function validateFvarDeep(fvar, issues) {
+	const axes = fvar.axes ?? [];
+	const seenTags = new Set();
+	for (let i = 0; i < axes.length; i++) {
+		const a = axes[i];
+		if (!(a.minValue <= a.defaultValue && a.defaultValue <= a.maxValue)) {
+			addIssue(
+				issues,
+				'error',
+				'FVAR_AXIS_RANGE_INVALID',
+				`fvar axis '${a.axisTag}' violates min ≤ default ≤ max (min=${a.minValue}, default=${a.defaultValue}, max=${a.maxValue}).`,
+			);
+		}
+		if (seenTags.has(a.axisTag)) {
+			addIssue(
+				issues,
+				'error',
+				'FVAR_AXIS_DUPLICATE_TAG',
+				`fvar has multiple axes with tag '${a.axisTag}'.`,
+			);
+		} else {
+			seenTags.add(a.axisTag);
+		}
+	}
+
+	const instances = fvar.instances ?? [];
+	for (let i = 0; i < instances.length; i++) {
+		const inst = instances[i];
+		const coords = inst.coordinates ?? inst.coords ?? [];
+		// Coordinates align with axes index-wise.
+		for (let j = 0; j < Math.min(coords.length, axes.length); j++) {
+			const v = coords[j];
+			const a = axes[j];
+			if (typeof v !== 'number' || v < a.minValue || v > a.maxValue) {
+				addIssue(
+					issues,
+					'error',
+					'FVAR_INSTANCE_OUT_OF_RANGE',
+					`fvar instance ${i} coordinate for axis '${a.axisTag}' is ${v}, outside axis range [${a.minValue}, ${a.maxValue}].`,
+				);
+				break; // one report per instance is enough
+			}
+		}
+	}
+}
+
+function validateLayoutLookups(layoutTable, tableName, issues) {
+	const lookups = layoutTable?.lookupList?.lookups ?? [];
+	const minType = 1;
+	const maxType = tableName === 'GSUB' ? 8 : 9;
+	let invalidTypeReported = false;
+	let invalidFlagReported = false;
+	for (let i = 0; i < lookups.length; i++) {
+		const lk = lookups[i];
+		if (
+			typeof lk.lookupType !== 'number' ||
+			lk.lookupType < minType ||
+			lk.lookupType > maxType
+		) {
+			if (!invalidTypeReported) {
+				addIssue(
+					issues,
+					'error',
+					`${tableName}_LOOKUP_TYPE_INVALID`,
+					`${tableName} lookup ${i} has invalid lookupType ${lk.lookupType}; must be in [${minType}, ${maxType}].`,
+				);
+				invalidTypeReported = true;
+			}
+		}
+		if (
+			typeof lk.lookupFlag === 'number' &&
+			(lk.lookupFlag & LAYOUT_LOOKUP_FLAG_RESERVED_MASK) !== 0 &&
+			!invalidFlagReported
+		) {
+			addIssue(
+				issues,
+				'warning',
+				'LAYOUT_LOOKUP_FLAG_RESERVED',
+				`${tableName} lookup ${i} has reserved bits set in lookupFlag (0x${lk.lookupFlag
+					.toString(16)
+					.padStart(
+						4,
+						'0',
+					)}); reserved mask is 0x${LAYOUT_LOOKUP_FLAG_RESERVED_MASK.toString(16).padStart(4, '0')}.`,
+			);
+			invalidFlagReported = true;
+		}
+		// Bits above 0x00FF should never be set in a lookupFlag uint16.
+		if (
+			typeof lk.lookupFlag === 'number' &&
+			(lk.lookupFlag & ~LAYOUT_LOOKUP_FLAG_VALID_MASK & 0xffff) !== 0
+		) {
+			addIssue(
+				issues,
+				'error',
+				'LAYOUT_LOOKUP_FLAG_INVALID',
+				`${tableName} lookup ${i} has bits set outside the valid lookupFlag mask 0x00FF (got 0x${lk.lookupFlag.toString(16).padStart(4, '0')}).`,
+			);
+			break;
+		}
+	}
+}
+
 function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 	const tags = new Set(entries.map((e) => e.tag));
 
@@ -1755,6 +1865,27 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 			'gvar table present without fvar — glyph variations require a variation axis table.',
 		);
 	}
+	for (const dep of ['HVAR', 'VVAR', 'MVAR', 'avar']) {
+		if (tags.has(dep) && !tags.has('fvar')) {
+			addIssue(
+				issues,
+				'error',
+				`${dep.toUpperCase()}_WITHOUT_FVAR`,
+				`${dep} table present without fvar — variation tables require a variation axis table.`,
+			);
+		}
+	}
+
+	// Tier 7: deep table validation for variable + layout tables.
+	if (parsedTables.fvar) {
+		validateFvarDeep(parsedTables.fvar, issues);
+	}
+	if (parsedTables.GSUB) {
+		validateLayoutLookups(parsedTables.GSUB, 'GSUB', issues);
+	}
+	if (parsedTables.GPOS) {
+		validateLayoutLookups(parsedTables.GPOS, 'GPOS', issues);
+	}
 }
 
 // =========================================================================
@@ -1904,4 +2035,6 @@ export const _internal = {
 	validateNameDeep,
 	validateWoff1Wrapper,
 	validateWoff2Wrapper,
+	validateFvarDeep,
+	validateLayoutLookups,
 };

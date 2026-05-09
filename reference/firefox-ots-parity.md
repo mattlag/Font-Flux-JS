@@ -374,7 +374,20 @@ the JSON before re-export. Codes shipped:
 
 ### Tier 7 — deep table validation (largest scope)
 
-Variable-font tables, layout tables (GSUB/GPOS/GDEF), CFF charstring opcode validation. This is a substantial body of work — consider doing it incrementally, table by table, prioritized by which tables real-world fonts most often have problems with (GSUB > GPOS > GDEF > variable-font tables > MATH).
+✅ First pass shipped in v2.4.5 — covers fvar, GSUB/GPOS lookup structure, and variation table cross-checks. Future passes can extend to CFF charstring opcode validation, GDEF mark-class consistency, and per-lookup subtable structure.
+
+Shipped codes:
+
+- `FVAR_AXIS_RANGE_INVALID` (default outside [min,max])
+- `FVAR_AXIS_DUPLICATE_TAG`
+- `FVAR_INSTANCE_OUT_OF_RANGE`
+- `GSUB_LOOKUP_TYPE_INVALID`
+- `GPOS_LOOKUP_TYPE_INVALID`
+- `LAYOUT_LOOKUP_FLAG_RESERVED` (warning)
+- `LAYOUT_LOOKUP_FLAG_INVALID`
+- `HVAR_WITHOUT_FVAR`, `VVAR_WITHOUT_FVAR`, `MVAR_WITHOUT_FVAR`, `AVAR_WITHOUT_FVAR`
+
+Future work: variable-font tables, layout tables (GSUB/GPOS/GDEF), CFF charstring opcode validation. This is a substantial body of work — consider doing it incrementally, table by table, prioritized by which tables real-world fonts most often have problems with (GSUB > GPOS > GDEF > variable-font tables > MATH).
 
 ---
 
