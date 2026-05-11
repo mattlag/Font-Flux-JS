@@ -4,12 +4,50 @@
  *
  * This is the reverse of simplify.js — it takes the human-friendly format
  * and produces the table-by-table structure that export.js can encode to binary.
+ *
+ * ---------------------------------------------------------------------------
+ * Symmetry with simplify.js
+ * ---------------------------------------------------------------------------
+ * The `DECOMPOSED_TABLES` Set in simplify.js lists every table whose data is
+ * hoisted into a top-level simplified field instead of being passed through
+ * verbatim in `simplified.tables`. This file owns the reverse mapping: each
+ * decomposed table has a corresponding `buildXxxTable` builder below.
+ *
+ *   Simplified field       →  Output table tag   →  Builder in this file
+ *   ---------------------------------------------------------------------
+ *   font                   →  head               →  buildHeadTable
+ *   font                   →  hhea               →  buildHheaTable
+ *   glyphs (+ font)        →  maxp               →  buildMaxpTable
+ *   font (+ metrics)       →  OS/2               →  buildOS2Table
+ *   font                   →  name               →  buildNameTable
+ *   font + glyphs          →  post               →  buildPostTable
+ *   glyphs                 →  cmap               →  buildCmapTable
+ *   glyphs                 →  hmtx               →  buildHmtxTable
+ *   glyphs (advanceHeight) →  vhea / vmtx        →  buildVheaTable / buildVmtxTable
+ *   glyphs                 →  glyf (+ loca)      →  buildGlyfTable (loca finalized in export.js)
+ *   glyphs (charString)    →  CFF                →  buildCFFShell
+ *   kerning                →  GPOS / kern        →  buildGPOSFromKerning / buildKernTable*
+ *   substitutions          →  GSUB               →  buildGSUBFromSubstitutions
+ *   axes / instances       →  fvar               →  buildFvarTable
+ *   axisMapping            →  avar               →  buildAvarTable
+ *   axisStyles             →  STAT               →  buildSTATFromAxisStyles / buildSTATTable
+ *   metricVariations       →  MVAR               →  buildMVARTable
+ *   palettes               →  CPAL               →  buildCPALFromPalettes
+ *   colorGlyphs            →  COLR               →  buildCOLRFromColorGlyphs
+ *   gasp                   →  gasp               →  inline (main entry)
+ *   cvt                    →  cvt                →  inline (main entry)
+ *   fpgm                   →  fpgm               →  inline (main entry)
+ *   prep                   →  prep               →  inline (main entry)
+ *   features.GDEF          →  GDEF               →  passthrough (main entry)
+ *
+ * Anything else in `simplified.tables` is copied through verbatim by
+ * export.js. Keep this list in sync with `DECOMPOSED_TABLES` in simplify.js.
  */
 
 import {
-    buildNameToGlyphIdMap,
-    hexToBGRA,
-    resolvePaintGlyphNames,
+	buildNameToGlyphIdMap,
+	hexToBGRA,
+	resolvePaintGlyphNames,
 } from './color.js';
 import { resolveGlyphId } from './glyph.js';
 import { compileCharString } from './otf/charstring_compiler.js';

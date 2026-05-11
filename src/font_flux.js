@@ -26,8 +26,7 @@ import {
 } from './otf/charstring_interpreter.js';
 import { createSubstitution, getSubstitutions } from './substitution.js';
 import { contoursToSVGPath, svgPathToContours } from './svg_path.js';
-import { diagnoseFont } from './validate/diagnoseFont.js';
-import { validateJSON } from './validate/index.js';
+import { diagnoseFont, validateJSON } from './validate/index.js';
 import { initBrotli } from './woff/woff2.js';
 
 // ============================================================================
