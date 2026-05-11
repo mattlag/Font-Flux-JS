@@ -394,3 +394,13 @@ font.addGlyph({
 
 const buffer = font.export();
 ```
+
+## Related table references
+
+- [`fvar`](./tables/fvar.md) — axis definitions and named instances.
+- [`avar`](./tables/avar.md) — non-linear axis coordinate mapping.
+- [`STAT`](./tables/STAT.md) — style attribute records and axis naming.
+- [`MVAR`](./tables/MVAR.md) — global metric variation deltas.
+- [`HVAR`](./tables/HVAR.md) / [`VVAR`](./tables/VVAR.md) — advance-width / -height variation.
+- [`gvar`](./tables/gvar.md) — TrueType per-glyph variation deltas.
+- [`CFF2`](./tables/CFF2.md) — CFF outlines with variation support.

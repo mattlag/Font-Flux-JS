@@ -488,3 +488,8 @@ if (!report.valid) {
 ```
 
 See the [Validation guide](./validation.md) for details on what's checked.
+
+## Related table references
+
+- [`GSUB`](./tables/GSUB.md) — substitution lookups (ligatures, alternates, contextual rules, ...).
+- [`GDEF`](./tables/GDEF.md) — glyph classes and attachment metadata used alongside GSUB.

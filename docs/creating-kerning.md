@@ -280,3 +280,8 @@ if (!report.valid) {
 ```
 
 See the [Validation guide](./validation.md) for details on what's checked.
+
+## Related table references
+
+- [`GPOS`](./tables/GPOS.md) — default kerning output (PairPos Format 1).
+- [`kern`](./tables/kern.md) — legacy Apple/OpenType kerning subtables (Format 0 / 2 / Apple 0–3).

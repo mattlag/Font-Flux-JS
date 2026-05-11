@@ -38,6 +38,7 @@ export default defineConfig({
 					{ text: 'Overview', link: '/' },
 					{ text: 'Default Technology', link: '/default-technology' },
 					{ text: 'Creating Fonts', link: '/creating-fonts' },
+					{ text: 'Authoring JSON From Scratch', link: '/authoring-json' },
 					{ text: 'Validation', link: '/validation' },
 					{ text: 'Diagnostics', link: '/diagnostics' },
 				],

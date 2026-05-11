@@ -194,3 +194,10 @@ Run `.validate()` before export. The validator checks:
 - Color glyph layer references point to existing glyphs
 - Palette indices are within range of the palette size
 - All palettes have the same number of entries
+
+## Related table references
+
+- [`COLR`](./tables/COLR.md) — color glyph layer stacks (v0) and paint trees (v1).
+- [`CPAL`](./tables/CPAL.md) — palette color records.
+- [`SVG`](./tables/SVG.md) — alternative SVG-based color glyphs (read-only).
+- [`CBDT`](./tables/CBDT.md) / [`CBLC`](./tables/CBLC.md) — embedded color bitmap glyphs.

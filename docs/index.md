@@ -14,6 +14,7 @@ Learn the basics of Font Flux JS and how to create fonts from scratch.
 
 - [Default Technology](./default-technology.md) — What format decisions Font Flux makes for you, and why.
 - [Creating Fonts](./creating-fonts.md) — Create a new font, set metadata, add glyphs, and export.
+- [Authoring JSON From Scratch](./authoring-json.md) — Hand-write a complete font JSON document, no class API required.
 - [Validation](./validation.md) — Check for structural issues in JSON before exporting.
 - [Diagnostics](./diagnostics.md) — Inspect a binary font file for spec violations and corruption.
 
@@ -38,11 +39,19 @@ Low-level format details and table-by-table documentation.
 
 ## API
 
-Everything goes through the `FontFlux` class. The library exports two things:
+Everything common goes through the `FontFlux` class. The library's main entry point exports:
 
 ```js
-import { FontFlux, initWoff2 } from 'font-flux-js';
+import {
+	FontFlux, // primary class — open / create / export
+	initWoff2, // async WOFF2 initializer (call once before WOFF2 use)
+	diagnoseFont, // standalone binary-font diagnostic (Scenario 1 input)
+	fontFromJSON, // low-level JSON → simplified-data parser
+	fontToJSON, // low-level simplified-data → JSON serializer
+} from 'font-flux-js';
 ```
+
+For most workflows you only need `FontFlux`; the standalone utilities are exposed for tooling and tests.
 
 ### Static factories
 

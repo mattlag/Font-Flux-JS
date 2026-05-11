@@ -446,3 +446,11 @@ if (report.valid) {
 ```
 
 See the [Validation guide](./validation.md) for details on what's checked and auto-fixed.
+
+## Related table references
+
+- [`glyf`](./tables/glyf.md) / [`loca`](./tables/loca.md) — TrueType outlines.
+- [`CFF`](./tables/CFF.md) / [`CFF2`](./tables/CFF2.md) — PostScript / variable CFF outlines.
+- [`hmtx`](./tables/hmtx.md) / [`vmtx`](./tables/vmtx.md) — advance metrics.
+- [`cmap`](./tables/cmap.md) — Unicode → glyph mapping.
+- [`post`](./tables/post.md) — PostScript glyph naming.
