@@ -19,10 +19,10 @@ export default defineConfig({
 	},
 	resolve: {
 		alias: {
-			'font-flux-js/export': resolve(__dirname, '../src/export.js'),
-			'font-flux-js/import': resolve(__dirname, '../src/import.js'),
-			'font-flux-js/json': resolve(__dirname, '../src/json.js'),
-			'font-flux-js/validate': resolve(__dirname, '../src/validate/index.js'),
+			// The demo consumes the library exactly as an external npm consumer
+			// would \u2014 only the public `font-flux-js` entry point, no subpaths.
+			// This alias points the bare specifier at the source so the demo
+			// always reflects the working tree without needing a `npm run build`.
 			'font-flux-js': resolve(__dirname, '../src/main.js'),
 		},
 	},

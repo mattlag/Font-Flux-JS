@@ -352,6 +352,19 @@ export class FontFlux {
 	//  DIRECT DATA ACCESS (live references — zero friction reads)
 	// ========================================================================
 
+	/**
+	 * The full simplified font data object — the same shape returned by
+	 * `FontFlux.fromJSON()`. This is a live reference (mutations persist),
+	 * intended as an escape hatch for power users who need to read or
+	 * transform the whole document without going field-by-field.
+	 *
+	 * The instance getters below (`.info`, `.glyphs`, `.tables`, ...) read
+	 * into this same object.
+	 */
+	get data() {
+		return this._data;
+	}
+
 	/** Font metadata object. */
 	get info() {
 		return this._data.font;

@@ -1,8 +1,4 @@
-import { diagnoseFont, initWoff2 } from 'font-flux-js';
-import { exportFont } from 'font-flux-js/export';
-import { importFont } from 'font-flux-js/import';
-import { fontFromJSON, fontToJSON } from 'font-flux-js/json';
-import { validateJSON } from 'font-flux-js/validate';
+import { diagnoseFont, FontFlux, initWoff2 } from 'font-flux-js';
 import { createLoadingScreen } from './components/loading.js';
 import { createSaveDialog } from './components/save-dialog.js';
 import { createTabBar } from './components/tab-bar.js';
@@ -16,6 +12,41 @@ import { createTableTab } from './tabs/table-detail.js';
 const app = document.getElementById('app');
 
 let fontFaceURL = null;
+
+/**
+ * Bridge between FontFlux class instances and the demo's tab UI.
+ *
+ * The tabs were originally written against the raw simplified-data shape
+ * returned by the (now-internal) `importFont()` helper. Rather than rewrite
+ * every tab to read instance getters one by one, we attach the per-document
+ * demo state (`_fileName`, `_originalBuffer`, `_dirty`, `_collection*`,
+ * `_loadError`, ...) directly to `font.data` — the live simplified object
+ * exposed by the public `FontFlux` API. Tabs receive that simplified object
+ * unchanged.
+ *
+ * @param {import('font-flux-js').FontFlux[]} instances
+ * @param {string} fileName
+ * @param {ArrayBuffer|null} originalBuffer Binary source, or null for JSON.
+ * @returns {object} fontData for tab consumption
+ */
+function prepareFromInstances(instances, fileName, originalBuffer) {
+	const dataObjects = instances.map((inst) => inst.data);
+	const isCollection = dataObjects.length > 1;
+
+	for (let i = 0; i < dataObjects.length; i++) {
+		const d = dataObjects[i];
+		d._fileName = fileName;
+		if (originalBuffer) d._originalBuffer = originalBuffer;
+		d._dirty = false;
+		if (isCollection) {
+			d._collection = { numFonts: dataObjects.length };
+			d._collectionFonts = dataObjects;
+			d._collectionIndex = i;
+			d._collectionInstances = instances;
+		}
+	}
+	return dataObjects[0];
+}
 
 function showLoadingScreen() {
 	// Revoke previous blob URL
@@ -32,13 +63,15 @@ function showLoadingScreen() {
 		try {
 			// JSON file: buffer is actually a string of JSON text.
 			if (typeof buffer === 'string') {
-				const fontData = fontFromJSON(buffer);
+				// FontFlux.openAll() handles both single fonts and collections,
+				// in either JSON or binary form. Always returns an array.
+				const instances = FontFlux.openAll(buffer);
 
 				// Try to produce a binary blob for live @font-face preview.
 				// If export fails, the preview tab will simply not have a
 				// custom font available — the rest of the app still works.
 				try {
-					const exported = exportFont(fontData, { format: 'sfnt' });
+					const exported = instances[0].export({ format: 'sfnt' });
 					injectFontFace(exported, fileName.replace(/\.json$/i, '.otf'));
 				} catch (exportErr) {
 					console.warn(
@@ -47,50 +80,16 @@ function showLoadingScreen() {
 					);
 				}
 
-				if (fontData.collection) {
-					for (let i = 0; i < fontData.fonts.length; i++) {
-						const f = fontData.fonts[i];
-						f._collection = fontData.collection;
-						f._collectionFonts = fontData.fonts;
-						f._collectionIndex = i;
-						f._fileName = fileName;
-						f._dirty = false;
-					}
-					showApp(fontData.fonts[0]);
-				} else {
-					fontData._fileName = fileName;
-					fontData._dirty = false;
-					showApp(fontData);
-				}
+				showApp(prepareFromInstances(instances, fileName, null));
 				return;
 			}
 
-			const fontData = importFont(buffer);
+			const instances = FontFlux.openAll(buffer);
 
 			// Inject @font-face from original binary for live preview
 			injectFontFace(buffer, fileName);
 
-			// Handle collections: tag every font with shared metadata
-			let displayData;
-			if (fontData.collection) {
-				for (let i = 0; i < fontData.fonts.length; i++) {
-					const f = fontData.fonts[i];
-					f._collection = fontData.collection;
-					f._collectionFonts = fontData.fonts;
-					f._collectionIndex = i;
-					f._fileName = fileName;
-					f._originalBuffer = buffer;
-					f._dirty = false;
-				}
-				displayData = fontData.fonts[0];
-			} else {
-				displayData = fontData;
-				displayData._fileName = fileName;
-				displayData._originalBuffer = buffer;
-				displayData._dirty = false;
-			}
-
-			showApp(displayData);
+			showApp(prepareFromInstances(instances, fileName, buffer));
 		} catch (err) {
 			console.error('Import error:', err);
 			if (typeof buffer === 'string') {
@@ -304,7 +303,10 @@ function showApp(fontData, options = {}) {
 				fontData.font?.fullName ||
 				fontData._fileName?.replace(/\.[^.]+$/, '') ||
 				'font';
-			const json = fontToJSON(fontData);
+			// Wrap the live simplified object back into a FontFlux instance
+			// so we go through the public toJSON() serializer.
+			const snapshot = new FontFlux(fontData);
+			const json = snapshot.toJSON();
 			const blob = new Blob([json], { type: 'application/json' });
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
@@ -318,7 +320,7 @@ function showApp(fontData, options = {}) {
 		exportBtn.className = 'header-btn header-btn-primary';
 		exportBtn.textContent = 'Export Font';
 		exportBtn.addEventListener('click', () => {
-			createSaveDialog(app, fontData, { exportFont, validateJSON });
+			createSaveDialog(app, fontData);
 		});
 
 		headerRight.append(jsonBtn, exportBtn);

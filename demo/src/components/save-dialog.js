@@ -4,13 +4,17 @@
  * and triggers a browser download.
  */
 
+import { FontFlux } from 'font-flux-js';
+
 /**
  * @param {HTMLElement} root - Append overlay to this element
  * @param {object} fontData - The font data object
- * @param {object} apis - { exportFont, validateJSON }
  */
-export function createSaveDialog(root, fontData, apis) {
-	const { exportFont, validateJSON } = apis;
+export function createSaveDialog(root, fontData) {
+	// Wrap the live simplified data object in a fresh FontFlux instance so
+	// validation and export go through the public class API (the same one
+	// an external npm consumer would use).
+	const font = new FontFlux(fontData);
 
 	// Determine default format from source
 	const hasCFF = !!(fontData.tables?.['CFF '] || fontData.tables?.CFF2);
@@ -176,7 +180,7 @@ export function createSaveDialog(root, fontData, apis) {
 	function runValidation() {
 		valResults.style.display = '';
 		try {
-			const report = validateJSON(fontData);
+			const report = font.validate();
 			if (report.valid && report.warnings.length === 0) {
 				valResults.className = 'validation-results valid';
 				valResults.textContent = 'Validation passed — no errors or warnings.';
@@ -205,7 +209,7 @@ export function createSaveDialog(root, fontData, apis) {
 	function doExport() {
 		const fmt = formats[selectedIdx];
 		try {
-			const buffer = exportFont(fontData, { format: fmt.format });
+			const buffer = font.export({ format: fmt.format });
 			const blob = new Blob([buffer], {
 				type: 'application/octet-stream',
 			});
