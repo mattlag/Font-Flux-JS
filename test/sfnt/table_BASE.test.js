@@ -239,9 +239,9 @@ describe('BASE table', () => {
 		expect(parsed.minorVersion).toBe(1);
 		expect(parsed.horizAxis.baseTagList).toEqual(['romn']);
 		expect(parsed.itemVariationStore.format).toBe(1);
-		expect(parsed.itemVariationStore.itemVariationData[0].deltaSets[0]).toEqual(
-			[25],
-		);
+		expect(parsed.itemVariationStore.itemVariationData[0].deltaSets[0]).toEqual([
+			25,
+		]);
 	});
 
 	it('should round-trip both horiz and vert axes', () => {

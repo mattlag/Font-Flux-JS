@@ -1,6 +1,7 @@
 {
 	"name": "font-flux-js",
-	"version": "2.4.12",
+	"version": "2.4.13",
+
 	"description": "Convert fonts to JSON, make edits, then convert them back!",
 	"main": "dist/font-flux-js.js",
 	"type": "module",
@@ -24,7 +25,9 @@
 		"site:build": "npm run demo:build && npm run docs:build",
 		"docs:dev": "vitepress dev docs",
 		"docs:build": "vitepress build docs",
-		"docs:preview": "vitepress preview docs"
+		"docs:preview": "vitepress preview docs",
+		"lint": "biome check",
+		"format": "biome check --write"
 	},
 	"repository": {
 		"type": "git",
@@ -51,6 +54,7 @@
 	},
 	"homepage": "https://www.glyphrstudio.com/fontfluxjs/",
 	"devDependencies": {
+		"@biomejs/biome": "2.4.15",
 		"vite": "^7.3.1",
 		"vitepress": "1.6.4",
 		"vitest": "^4.0.18"

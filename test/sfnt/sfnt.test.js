@@ -95,19 +95,14 @@ describe('sfnt table directory', () => {
 
 		for (const [tag, data] of Object.entries(font.tables)) {
 			// Every table must have a checksum
-			expect(typeof data._checksum, `${tag} should have _checksum`).toBe(
-				'number',
-			);
+			expect(typeof data._checksum, `${tag} should have _checksum`).toBe('number');
 
 			// Unparsed tables have _raw; parsed tables have structured data instead
 			if (data._raw !== undefined) {
-				expect(data._raw, `${tag} _raw should be an Array`).toBeInstanceOf(
-					Array,
+				expect(data._raw, `${tag} _raw should be an Array`).toBeInstanceOf(Array);
+				expect(data._raw.length, `${tag} _raw should not be empty`).toBeGreaterThan(
+					0,
 				);
-				expect(
-					data._raw.length,
-					`${tag} _raw should not be empty`,
-				).toBeGreaterThan(0);
 			}
 		}
 	});

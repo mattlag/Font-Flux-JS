@@ -86,10 +86,7 @@ describe('COLR table', () => {
 
 	it('should round-trip COLR from BungeeTint-Regular.ttf', () => {
 		const buf = fs.readFileSync(path.join(SAMPLES, 'BungeeTint-Regular.ttf'));
-		const ab = buf.buffer.slice(
-			buf.byteOffset,
-			buf.byteOffset + buf.byteLength,
-		);
+		const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
 		const font = importFontTables(ab);
 
 		const exported = exportFont(font);
@@ -302,10 +299,7 @@ describe('COLR v1 table', () => {
 		const buf = fs.readFileSync(
 			path.join(SAMPLES, 'noto-cff2_colr_1-online-test.otf'),
 		);
-		const ab = buf.buffer.slice(
-			buf.byteOffset,
-			buf.byteOffset + buf.byteLength,
-		);
+		const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
 		const font = importFontTables(ab);
 		const exported = exportFont(font);
 		const reimported = importFontTables(exported);

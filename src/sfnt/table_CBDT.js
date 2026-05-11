@@ -79,11 +79,7 @@ export function writeCBDTComputeOffsets(cbdt, cblc) {
 		for (let subIdx = 0; subIdx < subtables.length; subIdx++) {
 			const sub = subtables[subIdx];
 			const glyphs = sizeData[subIdx] ?? [];
-			const { bytes, info } = serializeSubtableGlyphs(
-				glyphs,
-				sub,
-				currentOffset,
-			);
+			const { bytes, info } = serializeSubtableGlyphs(glyphs, sub, currentOffset);
 			subOffsets.push(info);
 			chunks.push(bytes);
 			currentOffset += bytes.length;
@@ -123,13 +119,7 @@ function parseSubtableGlyphs(rawBytes, reader, sub) {
 					glyphs.push(null);
 				} else {
 					glyphs.push(
-						parseGlyphBitmapRecord(
-							rawBytes,
-							reader,
-							start,
-							imageFormat,
-							dataSize,
-						),
+						parseGlyphBitmapRecord(rawBytes, reader, start, imageFormat, dataSize),
 					);
 				}
 			}
@@ -141,13 +131,7 @@ function parseSubtableGlyphs(rawBytes, reader, sub) {
 			for (let i = 0; i < numGlyphs; i++) {
 				const start = imageDataOffset + i * imageSize;
 				glyphs.push(
-					parseGlyphBitmapRecord(
-						rawBytes,
-						reader,
-						start,
-						imageFormat,
-						imageSize,
-					),
+					parseGlyphBitmapRecord(rawBytes, reader, start, imageFormat, imageSize),
 				);
 			}
 			break;
@@ -162,13 +146,7 @@ function parseSubtableGlyphs(rawBytes, reader, sub) {
 					glyphs.push(null);
 				} else {
 					glyphs.push(
-						parseGlyphBitmapRecord(
-							rawBytes,
-							reader,
-							start,
-							imageFormat,
-							dataSize,
-						),
+						parseGlyphBitmapRecord(rawBytes, reader, start, imageFormat, dataSize),
 					);
 				}
 			}
@@ -180,13 +158,7 @@ function parseSubtableGlyphs(rawBytes, reader, sub) {
 			for (let i = 0; i < numGlyphs; i++) {
 				const start = imageDataOffset + i * imageSize;
 				glyphs.push(
-					parseGlyphBitmapRecord(
-						rawBytes,
-						reader,
-						start,
-						imageFormat,
-						imageSize,
-					),
+					parseGlyphBitmapRecord(rawBytes, reader, start, imageFormat, imageSize),
 				);
 			}
 			break;
@@ -394,9 +366,7 @@ function serializeGlyphBitmapRecord(glyph, imageFormat) {
 		}
 		case 9: {
 			const components = glyph.components ?? [];
-			const w = new DataWriter(
-				BIG_GLYPH_METRICS_SIZE + 2 + components.length * 4,
-			);
+			const w = new DataWriter(BIG_GLYPH_METRICS_SIZE + 2 + components.length * 4);
 			writeBigGlyphMetrics(w, glyph.bigMetrics ?? {});
 			w.uint16(components.length);
 			for (const c of components) {

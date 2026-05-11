@@ -216,9 +216,7 @@ function resolveRef(ref, classes) {
  */
 function resolveRefArray(arr, classes) {
 	if (!Array.isArray(arr)) {
-		throw new Error(
-			'createSubstitution: expected an array of glyph references',
-		);
+		throw new Error('createSubstitution: expected an array of glyph references');
 	}
 	const result = [];
 	for (const ref of arr) {

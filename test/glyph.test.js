@@ -21,15 +21,11 @@ describe('createGlyph: validation', () => {
 	});
 
 	it('should throw if name is missing', () => {
-		expect(() => createGlyph({ advanceWidth: 500 })).toThrow(
-			'name is required',
-		);
+		expect(() => createGlyph({ advanceWidth: 500 })).toThrow('name is required');
 	});
 
 	it('should throw if advanceWidth is missing', () => {
-		expect(() => createGlyph({ name: 'A' })).toThrow(
-			'advanceWidth is required',
-		);
+		expect(() => createGlyph({ name: 'A' })).toThrow('advanceWidth is required');
 	});
 
 	it('should create a minimal glyph (space — no outline)', () => {

@@ -206,7 +206,10 @@ describe('OTS compliance — diagnoseFont validator', () => {
 		for (let i = 0; i < numTables; i++) {
 			const recOff = 12 + i * 16;
 			const tag = String.fromCharCode(
-				u8[recOff], u8[recOff + 1], u8[recOff + 2], u8[recOff + 3],
+				u8[recOff],
+				u8[recOff + 1],
+				u8[recOff + 2],
+				u8[recOff + 3],
 			);
 			if (tag === 'post') {
 				postOffset = dv.getUint32(recOff + 8);

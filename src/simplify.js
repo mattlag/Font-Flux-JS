@@ -379,9 +379,7 @@ function getGlyphNames(tables, numGlyphs) {
 				if (typeof sid === 'string') return sid;
 				if (typeof sid === 'number' && sid >= 391) {
 					const custom = strings[sid - 391];
-					return typeof custom === 'string' && custom !== ''
-						? custom
-						: String(sid);
+					return typeof custom === 'string' && custom !== '' ? custom : String(sid);
 				}
 				return String(sid);
 			});
@@ -497,11 +495,7 @@ function buildSimplifiedGlyphs(tables) {
 				// Interpret bytecode into cubic Bézier contours
 				const globalSubrs = cffTable.globalSubrs || [];
 				const localSubrs = font.localSubrs || [];
-				const result = interpretCharString(
-					charStrings[i],
-					globalSubrs,
-					localSubrs,
-				);
+				const result = interpretCharString(charStrings[i], globalSubrs, localSubrs);
 				if (result.contours.length > 0) {
 					glyph.contours = result.contours;
 				}
@@ -588,8 +582,7 @@ function extractPairPosFormat1(st, glyphs, pairs) {
 		for (const pvr of st.pairSets[i]) {
 			const value = pvr.value1?.xAdvance;
 			if (value === undefined || value === 0) continue;
-			const rightName =
-				glyphs[pvr.secondGlyph]?.name || `glyph${pvr.secondGlyph}`;
+			const rightName = glyphs[pvr.secondGlyph]?.name || `glyph${pvr.secondGlyph}`;
 			pairs.push({ left: leftName, right: rightName, value });
 		}
 	}
@@ -738,9 +731,7 @@ function extractKernFormat2Pairs(subtable, glyphs, pairs) {
 		const rawOffset = leftClassTable.offsets[i] || 0;
 		// Left class = (offset - kerningArrayOffset) / rowWidth
 		const classIdx =
-			rowWidth > 0
-				? Math.floor((rawOffset - kerningArrayOffset) / rowWidth)
-				: 0;
+			rowWidth > 0 ? Math.floor((rawOffset - kerningArrayOffset) / rowWidth) : 0;
 		if (classIdx >= 0 && classIdx < values.length) {
 			leftGlyphToClass.set(g, classIdx);
 		}
@@ -1023,6 +1014,7 @@ const MVAR_TAG_NAMES = {
 const MVAR_NAME_TAGS = Object.fromEntries(
 	Object.entries(MVAR_TAG_NAMES).map(([tag, name]) => [name, tag]),
 );
+
 // Export for expand.js
 export { MVAR_NAME_TAGS };
 
@@ -1508,9 +1500,7 @@ function extractAlternateSubst(st, glyphs, base, rules) {
 			type: 'alternate',
 			...base,
 			from: glyphName(glyphs, covGlyphs[i]),
-			alternates: (st.alternateSets[i] || []).map((gid) =>
-				glyphName(glyphs, gid),
-			),
+			alternates: (st.alternateSets[i] || []).map((gid) => glyphName(glyphs, gid)),
 		});
 	}
 }

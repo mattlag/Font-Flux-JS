@@ -64,9 +64,7 @@ describe('validateJSON', () => {
 
 		const report = validateJSON(fontJson);
 		expect(report.valid).toBe(true);
-		expect(report.infos.some((i) => i.code === 'HEADER_SYNTHESIZED')).toBe(
-			true,
-		);
+		expect(report.infos.some((i) => i.code === 'HEADER_SYNTHESIZED')).toBe(true);
 		// Header was actually created on the object
 		expect(fontJson.header).toBeDefined();
 		expect(fontJson.header.sfVersion).toBe(0x00010000);
@@ -112,9 +110,9 @@ describe('validateJSON', () => {
 
 		const report = validateJSON(fontJson);
 		expect(report.valid).toBe(true);
-		expect(
-			report.infos.some((i) => i.code === 'HEADER_SFVERSION_INFERRED'),
-		).toBe(true);
+		expect(report.infos.some((i) => i.code === 'HEADER_SFVERSION_INFERRED')).toBe(
+			true,
+		);
 		expect(fontJson.header.sfVersion).toBe(0x00010000);
 	});
 
@@ -158,9 +156,9 @@ describe('validateJSON', () => {
 
 		const report = validateJSON(fontJson);
 		expect(report.valid).toBe(false);
-		expect(
-			report.errors.some((e) => e.code === 'TABLE_WRITER_UNSUPPORTED'),
-		).toBe(true);
+		expect(report.errors.some((e) => e.code === 'TABLE_WRITER_UNSUPPORTED')).toBe(
+			true,
+		);
 	});
 
 	it('reports unrecognized raw tables as info', () => {
@@ -215,9 +213,9 @@ describe('validateJSON', () => {
 		});
 
 		expect(report.valid).toBe(false);
-		expect(
-			report.errors.some((e) => e.path.includes('$.fonts[0].tables')),
-		).toBe(true);
+		expect(report.errors.some((e) => e.path.includes('$.fonts[0].tables'))).toBe(
+			true,
+		);
 	});
 
 	it('auto-corrects collection.numFonts mismatch', () => {

@@ -14,9 +14,7 @@ describe('ItemVariationStore', () => {
 			format: 1,
 			variationRegionList: {
 				axisCount: 1,
-				regions: [
-					{ regionAxes: [{ startCoord: 0, peakCoord: 1, endCoord: 1 }] },
-				],
+				regions: [{ regionAxes: [{ startCoord: 0, peakCoord: 1, endCoord: 1 }] }],
 			},
 			itemVariationData: [
 				{
@@ -109,9 +107,7 @@ describe('ItemVariationStore', () => {
 			format: 1,
 			variationRegionList: {
 				axisCount: 1,
-				regions: [
-					{ regionAxes: [{ startCoord: 0, peakCoord: 1, endCoord: 1 }] },
-				],
+				regions: [{ regionAxes: [{ startCoord: 0, peakCoord: 1, endCoord: 1 }] }],
 			},
 			itemVariationData: [
 				null,

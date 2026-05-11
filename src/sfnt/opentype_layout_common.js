@@ -573,8 +573,7 @@ function parseLookup(reader, offset, parseSubtable, extensionLookupType) {
 		lookupFlag,
 		subtables: finalSubtables,
 	};
-	if (markFilteringSet !== undefined)
-		lookup.markFilteringSet = markFilteringSet;
+	if (markFilteringSet !== undefined) lookup.markFilteringSet = markFilteringSet;
 	return lookup;
 }
 
@@ -640,7 +639,7 @@ export function writeLookupList(
 		return w.toArray();
 	};
 
-	let lookupBlocks = lookupData.map(buildLookupBlock);
+	const lookupBlocks = lookupData.map(buildLookupBlock);
 
 	// -- Step 3: check for Offset16 overflow --------------------------
 
@@ -1067,9 +1066,7 @@ export function parseChainedSequenceContext(reader, subtableOffset) {
 			subtableOffset + lookaheadClassDefOffset,
 		);
 		const chainedClassSeqRuleSets = chainedClassSeqRuleSetOffsets.map((off) =>
-			off === 0
-				? null
-				: parseChainedClassSeqRuleSet(reader, subtableOffset + off),
+			off === 0 ? null : parseChainedClassSeqRuleSet(reader, subtableOffset + off),
 		);
 		return {
 			format,
@@ -1082,17 +1079,11 @@ export function parseChainedSequenceContext(reader, subtableOffset) {
 	}
 	if (format === 3) {
 		const backtrackGlyphCount = reader.uint16();
-		const backtrackCoverageOffsets = reader.array(
-			'uint16',
-			backtrackGlyphCount,
-		);
+		const backtrackCoverageOffsets = reader.array('uint16', backtrackGlyphCount);
 		const inputGlyphCount = reader.uint16();
 		const inputCoverageOffsets = reader.array('uint16', inputGlyphCount);
 		const lookaheadGlyphCount = reader.uint16();
-		const lookaheadCoverageOffsets = reader.array(
-			'uint16',
-			lookaheadGlyphCount,
-		);
+		const lookaheadCoverageOffsets = reader.array('uint16', lookaheadGlyphCount);
 		const seqLookupCount = reader.uint16();
 		const seqLookupRecords = parseSeqLookupRecords(reader, seqLookupCount);
 
@@ -1535,9 +1526,7 @@ function writeCondition(cond) {
 }
 
 function writeFeatureTableSubstitution(fts) {
-	const featureBytes = fts.substitutions.map((sub) =>
-		writeFeature(sub.feature),
-	);
+	const featureBytes = fts.substitutions.map((sub) => writeFeature(sub.feature));
 
 	// Header: majorVersion(2) + minorVersion(2) + substitutionCount(2) + records(6 each: index(2)+offset(4))
 	const headerSize = 6 + fts.substitutions.length * 6;

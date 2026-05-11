@@ -211,8 +211,7 @@ function showApp(fontData, options = {}) {
 			const f = fontData._collectionFonts[i];
 			const opt = document.createElement('option');
 			opt.value = String(i);
-			opt.textContent =
-				f.font?.fullName || f.font?.familyName || `Font ${i + 1}`;
+			opt.textContent = f.font?.fullName || f.font?.familyName || `Font ${i + 1}`;
 			if (i === (fontData._collectionIndex ?? 0)) opt.selected = true;
 			chooser.appendChild(opt);
 		}

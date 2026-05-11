@@ -1,0 +1,82 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"includes": [
+			"src/**/*.js",
+			"demo/src/**/*.js",
+			"demo/vite.config.js",
+			"test/**/*.js",
+			"vite.config.js",
+			"docs/.vitepress/config.mjs",
+			"!**/node_modules",
+			"!**/dist",
+			"!docs/.vitepress/cache",
+			"!docs/.vitepress/dist",
+			"!test/sample fonts",
+			"!test/visual"
+		]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"indentWidth": 1,
+		"lineWidth": 80,
+		"lineEnding": "lf"
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single",
+			"jsxQuoteStyle": "double",
+			"trailingCommas": "all",
+			"semicolons": "always",
+			"arrowParentheses": "always",
+			"bracketSpacing": true
+		}
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"style": {
+				"noParameterAssign": "off",
+				"useTemplate": "off",
+				"useNumberNamespace": "off",
+				"useExponentiationOperator": "off",
+				"useNodejsImportProtocol": "off"
+			},
+			"suspicious": {
+				"noAssignInExpressions": "off",
+				"noExplicitAny": "off",
+				"noConfusingVoidType": "off",
+				"noControlCharactersInRegex": "off",
+				"noDoubleEquals": "off",
+				"noBitwiseOperators": "off",
+				"noShadowRestrictedNames": "off",
+				"noGlobalIsNan": "off",
+				"noApproximativeNumericConstant": "off",
+				"useIterableCallbackReturn": "off"
+			},
+			"complexity": {
+				"noForEach": "off",
+				"useOptionalChain": "off",
+				"useLiteralKeys": "off"
+			},
+			"correctness": {
+				"noUnusedVariables": "off",
+				"noInnerDeclarations": "off",
+				"noUnusedImports": "warn",
+				"useParseIntRadix": "off",
+				"noUnusedFunctionParameters": "off"
+			},
+			"performance": {
+				"noDelete": "off",
+				"noAccumulatingSpread": "off"
+			}
+		}
+	}
+}

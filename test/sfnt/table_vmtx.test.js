@@ -81,9 +81,7 @@ describe('vmtx table', () => {
 	it('should handle vmtx where all glyphs have full vMetric records', () => {
 		const font = loadFont('BungeeTint-Regular.ttf');
 		// numOfLongVerMetrics == numGlyphs Ã¢â€ â€™ no extra topSideBearings
-		expect(font.tables.vhea.numOfLongVerMetrics).toBe(
-			font.tables.maxp.numGlyphs,
-		);
+		expect(font.tables.vhea.numOfLongVerMetrics).toBe(font.tables.maxp.numGlyphs);
 		expect(font.tables.vmtx.topSideBearings).toHaveLength(0);
 	});
 });

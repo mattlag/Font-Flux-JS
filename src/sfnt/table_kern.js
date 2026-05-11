@@ -165,11 +165,7 @@ function parseKernFormat2(bodyRaw) {
 	const kerningArrayOffset = reader.uint16();
 
 	const leftClassTable = parseKernClassTable(reader, bodyRaw, leftOffsetTable);
-	const rightClassTable = parseKernClassTable(
-		reader,
-		bodyRaw,
-		rightOffsetTable,
-	);
+	const rightClassTable = parseKernClassTable(reader, bodyRaw, rightOffsetTable);
 
 	// Determine dimensions from class tables and rowWidth
 	// rowWidth = nRightClasses * 2 (each kerning value is an int16)
@@ -179,8 +175,7 @@ function parseKernFormat2(bodyRaw) {
 	// (maxOffset - kerningArrayOffset) / rowWidth + 1.
 	const nLeftClasses =
 		rowWidth > 0 && leftClassTable.maxOffset >= kerningArrayOffset
-			? Math.floor((leftClassTable.maxOffset - kerningArrayOffset) / rowWidth) +
-				1
+			? Math.floor((leftClassTable.maxOffset - kerningArrayOffset) / rowWidth) + 1
 			: 1;
 
 	// Read the kerning values array
@@ -505,8 +500,7 @@ function writeOpenTypeKern(kern) {
 	);
 	const nTables = subtables.length;
 	const totalSize =
-		OT_HEADER_SIZE +
-		subtableBytes.reduce((sum, bytes) => sum + bytes.length, 0);
+		OT_HEADER_SIZE + subtableBytes.reduce((sum, bytes) => sum + bytes.length, 0);
 	const w = new DataWriter(totalSize);
 
 	w.uint16(version);

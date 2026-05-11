@@ -345,9 +345,7 @@ function formatContours(contours) {
 						lines.push(`  L ${pt.x} ${pt.y}`);
 						break;
 					case 'C':
-						lines.push(
-							`  C ${pt.x1} ${pt.y1}  ${pt.x2} ${pt.y2}  ${pt.x} ${pt.y}`,
-						);
+						lines.push(`  C ${pt.x1} ${pt.y1}  ${pt.x2} ${pt.y2}  ${pt.x} ${pt.y}`);
 						break;
 				}
 			} else {

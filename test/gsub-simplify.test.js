@@ -36,13 +36,9 @@ describe('GSUB simplification on import', () => {
 			expect(sub.type).toBeDefined();
 			expect(sub.feature).toBeDefined();
 			expect(sub.script).toBeDefined();
-			expect([
-				'single',
-				'multiple',
-				'alternate',
-				'ligature',
-				'reverse',
-			]).toContain(sub.type);
+			expect(['single', 'multiple', 'alternate', 'ligature', 'reverse']).toContain(
+				sub.type,
+			);
 		}
 	});
 

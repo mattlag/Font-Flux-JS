@@ -69,9 +69,9 @@ describe('HVAR table', () => {
 		expect(parsed.lsbMapping.entries).toEqual(original.lsbMapping.entries);
 		expect(parsed.rsbMapping.entries).toEqual(original.rsbMapping.entries);
 		expect(parsed.itemVariationStore.format).toBe(1);
-		expect(parsed.itemVariationStore.itemVariationData[0].deltaSets[0]).toEqual(
-			[100],
-		);
+		expect(parsed.itemVariationStore.itemVariationData[0].deltaSets[0]).toEqual([
+			100,
+		]);
 	});
 
 	it('should support null optional mappings', () => {

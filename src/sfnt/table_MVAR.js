@@ -95,8 +95,7 @@ export function writeMVAR(mvar) {
 		compareTags(a.valueTag, b.valueTag),
 	);
 
-	const declaredValueRecordSize =
-		mvar.valueRecordSize ?? VALUE_RECORD_BASE_SIZE;
+	const declaredValueRecordSize = mvar.valueRecordSize ?? VALUE_RECORD_BASE_SIZE;
 	const requiredValueRecordSize = valueRecords.reduce((max, record) => {
 		const extra = record._extra?.length ?? 0;
 		return Math.max(max, VALUE_RECORD_BASE_SIZE + extra);

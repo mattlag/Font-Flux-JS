@@ -50,9 +50,7 @@ describe('SVG table', () => {
 		expect(svg.documents.length).toBe(161);
 		expect(svg.entries.length).toBe(161);
 		expect(svg.documents[0].compressed).toBe(false);
-		expect(svg.documents[0].text).toContain(
-			'xmlns="http://www.w3.org/2000/svg"',
-		);
+		expect(svg.documents[0].text).toContain('xmlns="http://www.w3.org/2000/svg"');
 	});
 
 	// == Parsing: gzip-compressed SVG ====================================
@@ -89,10 +87,7 @@ describe('SVG table', () => {
 
 	it('should round-trip SVG from Reinebow-SVGinOT.ttf', () => {
 		const buf = fs.readFileSync(path.join(SAMPLES, 'Reinebow-SVGinOT.ttf'));
-		const ab = buf.buffer.slice(
-			buf.byteOffset,
-			buf.byteOffset + buf.byteLength,
-		);
+		const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
 		const font = importFontTables(ab);
 
 		const exported = exportFont(font);
@@ -115,10 +110,7 @@ describe('SVG table', () => {
 
 	it('should round-trip SVG from Multicoloure-SVGinOT.ttf', () => {
 		const buf = fs.readFileSync(path.join(SAMPLES, 'Multicoloure-SVGinOT.ttf'));
-		const ab = buf.buffer.slice(
-			buf.byteOffset,
-			buf.byteOffset + buf.byteLength,
-		);
+		const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
 		const font = importFontTables(ab);
 
 		const exported = exportFont(font);
@@ -134,10 +126,7 @@ describe('SVG table', () => {
 
 	it('should round-trip gzip SVG from EmojiOneColor.otf', () => {
 		const buf = fs.readFileSync(path.join(SAMPLES, 'EmojiOneColor.otf'));
-		const ab = buf.buffer.slice(
-			buf.byteOffset,
-			buf.byteOffset + buf.byteLength,
-		);
+		const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
 		const font = importFontTables(ab);
 
 		const exported = exportFont(font);
@@ -162,11 +151,13 @@ describe('SVG table', () => {
 			documents: [
 				{
 					compressed: false,
-					text: '<svg xmlns="http://www.w3.org/2000/svg" id="glyph1"><rect width="100" height="100"/></svg>',
+					text:
+						'<svg xmlns="http://www.w3.org/2000/svg" id="glyph1"><rect width="100" height="100"/></svg>',
 				},
 				{
 					compressed: false,
-					text: '<svg xmlns="http://www.w3.org/2000/svg" id="glyph5"><circle r="50"/></svg>',
+					text:
+						'<svg xmlns="http://www.w3.org/2000/svg" id="glyph5"><circle r="50"/></svg>',
 				},
 			],
 			entries: [

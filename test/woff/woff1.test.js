@@ -59,8 +59,7 @@ describe('WOFF1 unwrap', () => {
 
 describe('WOFF1 wrap', () => {
 	it('should wrap an SFNT into valid WOFF', async () => {
-		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf')))
-			.buffer;
+		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf'))).buffer;
 		const woffBuffer = wrapWOFF1(ttfBuffer);
 
 		expect(woffBuffer).toBeInstanceOf(ArrayBuffer);
@@ -73,8 +72,7 @@ describe('WOFF1 wrap', () => {
 	});
 
 	it('should produce a WOFF that unwraps back to the original SFNT tables', async () => {
-		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf')))
-			.buffer;
+		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf'))).buffer;
 
 		const woffBuffer = wrapWOFF1(ttfBuffer);
 		const { sfnt } = unwrapWOFF1(woffBuffer);
@@ -106,8 +104,7 @@ describe('WOFF1 importFont integration', () => {
 
 describe('WOFF1 exportFont integration', () => {
 	it('should export as WOFF when format option is set', async () => {
-		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf')))
-			.buffer;
+		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf'))).buffer;
 		const imported = importFont(ttfBuffer);
 
 		const woffBuffer = exportFont(imported, { format: 'woff' });
@@ -118,8 +115,7 @@ describe('WOFF1 exportFont integration', () => {
 	});
 
 	it('should default to SFNT when no format option is set', async () => {
-		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf')))
-			.buffer;
+		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf'))).buffer;
 		const imported = importFont(ttfBuffer);
 
 		const sfntBuffer = exportFont(imported);
@@ -153,8 +149,7 @@ describe('WOFF1 round-trip', () => {
 	});
 
 	it('TTF → import → export WOFF → stabilize', async () => {
-		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf')))
-			.buffer;
+		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf'))).buffer;
 
 		const originalImport = importFont(ttfBuffer);
 		const woff1 = exportFont(originalImport, { format: 'woff' });
@@ -168,8 +163,7 @@ describe('WOFF1 round-trip', () => {
 	});
 
 	it('OTF → import → export WOFF → stabilize', async () => {
-		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf')))
-			.buffer;
+		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
 
 		const originalImport = importFont(otfBuffer);
 		const woff1 = exportFont(originalImport, { format: 'woff' });

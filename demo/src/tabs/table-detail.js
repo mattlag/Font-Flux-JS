@@ -69,12 +69,7 @@ function buildNode(value, key, startOpen = false) {
 	if (ArrayBuffer.isView(value) || value instanceof ArrayBuffer) {
 		const arr = value instanceof ArrayBuffer ? new Uint8Array(value) : value;
 		if (arr.length <= 32) {
-			return makeLeaf(
-				key,
-				`[${arr.join(', ')}]`,
-				'bytes',
-				`${arr.length} bytes`,
-			);
+			return makeLeaf(key, `[${arr.join(', ')}]`, 'bytes', `${arr.length} bytes`);
 		}
 		return makeCollapsible(key, `${arr.length} bytes`, false, () => {
 			const pre = document.createElement('pre');

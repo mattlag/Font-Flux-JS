@@ -297,8 +297,7 @@ function serializeIndexSubTable(sub, info) {
 		}
 		case 5: {
 			const glyphIds = sub.glyphIdArray ?? [];
-			let size =
-				headerSize + 4 + BIG_GLYPH_METRICS_SIZE + 4 + glyphIds.length * 2;
+			let size = headerSize + 4 + BIG_GLYPH_METRICS_SIZE + 4 + glyphIds.length * 2;
 			if (glyphIds.length % 2 !== 0) size += 2; // pad to 4-byte alignment
 			const w = new DataWriter(size);
 			w.uint16(indexFormat);

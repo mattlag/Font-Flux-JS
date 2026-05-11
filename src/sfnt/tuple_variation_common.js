@@ -403,8 +403,7 @@ export function writeGlyphVariationData(tupleVariations, axisCount) {
 				headerBytes.push((val >> 8) & 0xff, val & 0xff);
 			}
 			for (let a = 0; a < axisCount; a++) {
-				const val =
-					Math.round((tv.intermediateEndTuple[a] ?? 0) * 16384) & 0xffff;
+				const val = Math.round((tv.intermediateEndTuple[a] ?? 0) * 16384) & 0xffff;
 				headerBytes.push((val >> 8) & 0xff, val & 0xff);
 			}
 		}
@@ -615,8 +614,7 @@ export function writeCvarTable(cvar, axisCount) {
 				headersFlat.push((val >> 8) & 0xff, val & 0xff);
 			}
 			for (let a = 0; a < axisCount; a++) {
-				const val =
-					Math.round((tv.intermediateEndTuple[a] ?? 0) * 16384) & 0xffff;
+				const val = Math.round((tv.intermediateEndTuple[a] ?? 0) * 16384) & 0xffff;
 				headersFlat.push((val >> 8) & 0xff, val & 0xff);
 			}
 		}

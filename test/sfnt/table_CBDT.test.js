@@ -150,10 +150,7 @@ describe('CBDT table', () => {
 			],
 		};
 
-		const { bytes: cbdtBytes, offsetInfo } = writeCBDTComputeOffsets(
-			cbdt,
-			cblc,
-		);
+		const { bytes: cbdtBytes, offsetInfo } = writeCBDTComputeOffsets(cbdt, cblc);
 		const cblcBytes = writeCBLC(cblc, offsetInfo);
 
 		// Re-parse

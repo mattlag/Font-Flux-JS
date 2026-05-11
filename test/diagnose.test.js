@@ -52,9 +52,7 @@ describe('diagnoseFont — valid fonts', () => {
 	it('should report a valid TTC collection', async () => {
 		const buffer = await loadSample('cambria-test.ttc');
 		const report = diagnoseFont(buffer);
-		expect(report.issues.some((i) => i.code === 'FORMAT_COLLECTION')).toBe(
-			true,
-		);
+		expect(report.issues.some((i) => i.code === 'FORMAT_COLLECTION')).toBe(true);
 	});
 });
 
@@ -300,12 +298,8 @@ describe('diagnoseFont — round-trip fix for invalid-example.otf', () => {
 		);
 
 		// Name table should have family and style names
-		expect(report2.warnings.some((w) => w.code === 'NO_FAMILY_NAME')).toBe(
-			false,
-		);
-		expect(report2.warnings.some((w) => w.code === 'NO_STYLE_NAME')).toBe(
-			false,
-		);
+		expect(report2.warnings.some((w) => w.code === 'NO_FAMILY_NAME')).toBe(false);
+		expect(report2.warnings.some((w) => w.code === 'NO_STYLE_NAME')).toBe(false);
 
 		// Header fields should be correct
 		expect(report2.warnings.some((w) => w.code === 'BAD_SEARCH_RANGE')).toBe(
@@ -381,9 +375,7 @@ describe('diagnoseFont — Tier 1 head checks', () => {
 		view.setInt16(head.offset + 36, 1000);
 		view.setInt16(head.offset + 40, -1000);
 		const report = diagnoseFont(buffer);
-		expect(report.errors.some((e) => e.code === 'HEAD_BBOX_INVERTED')).toBe(
-			true,
-		);
+		expect(report.errors.some((e) => e.code === 'HEAD_BBOX_INVERTED')).toBe(true);
 	});
 
 	it('flags inverted bbox (yMin > yMax) as HEAD_BBOX_INVERTED', async () => {
@@ -394,9 +386,7 @@ describe('diagnoseFont — Tier 1 head checks', () => {
 		view.setInt16(head.offset + 38, 500);
 		view.setInt16(head.offset + 42, -500);
 		const report = diagnoseFont(buffer);
-		expect(report.errors.some((e) => e.code === 'HEAD_BBOX_INVERTED')).toBe(
-			true,
-		);
+		expect(report.errors.some((e) => e.code === 'HEAD_BBOX_INVERTED')).toBe(true);
 	});
 
 	it('flags invalid indexToLocFormat as HEAD_INDEX_TO_LOC_FORMAT_INVALID', async () => {
@@ -463,9 +453,9 @@ describe('diagnoseFont — Tier 1 hhea / post / OS-2 checks', () => {
 		// Use 0x00040000 (4.0) — not in the spec list
 		new DataView(buffer).setUint32(post.offset, 0x00040000);
 		const report = diagnoseFont(buffer);
-		expect(
-			report.errors.some((e) => e.code === 'POST_VERSION_UNSUPPORTED'),
-		).toBe(true);
+		expect(report.errors.some((e) => e.code === 'POST_VERSION_UNSUPPORTED')).toBe(
+			true,
+		);
 	});
 
 	it('flags an unknown OS/2 version as OS2_VERSION_INVALID', async () => {
@@ -496,9 +486,7 @@ describe('diagnoseFont — Tier 1 TTC checks', () => {
 		// numFonts at offset 8 (uint32)
 		new DataView(buffer).setUint32(8, 0x10001);
 		const report = diagnoseFont(buffer);
-		expect(report.errors.some((e) => e.code === 'TTC_TOO_MANY_FONTS')).toBe(
-			true,
-		);
+		expect(report.errors.some((e) => e.code === 'TTC_TOO_MANY_FONTS')).toBe(true);
 	});
 });
 
@@ -588,9 +576,9 @@ describe('diagnoseFont — Tier 2 cmap format 4', () => {
 		// and short-circuits other checks; 1 is enough.)
 		new DataView(buffer).setUint16(maxp.offset + 4, 1);
 		const report = diagnoseFont(buffer);
-		expect(
-			report.errors.some((e) => e.code === 'CMAP_GLYPH_OUT_OF_RANGE'),
-		).toBe(true);
+		expect(report.errors.some((e) => e.code === 'CMAP_GLYPH_OUT_OF_RANGE')).toBe(
+			true,
+		);
 	});
 });
 
@@ -604,16 +592,14 @@ describe('diagnoseFont — Tier 2 cmap format 12 / 13 (synthetic)', () => {
 				{
 					format: 12,
 					language: 0,
-					groups: [
-						{ startCharCode: 0x100, endCharCode: 0x80, startGlyphID: 1 },
-					],
+					groups: [{ startCharCode: 0x100, endCharCode: 0x80, startGlyphID: 1 }],
 				},
 			],
 		};
 		diagInternal.validateCmapDeep(cmap, { numGlyphs: 1000 }, issues);
-		expect(
-			issues.some((i) => i.code === 'CMAP_FORMAT12_END_BEFORE_START'),
-		).toBe(true);
+		expect(issues.some((i) => i.code === 'CMAP_FORMAT12_END_BEFORE_START')).toBe(
+			true,
+		);
 	});
 
 	it('flags overlapping groups as CMAP_FORMAT12_GROUPS_OUT_OF_ORDER', () => {
@@ -647,9 +633,7 @@ describe('diagnoseFont — Tier 2 cmap format 12 / 13 (synthetic)', () => {
 				{
 					format: 12,
 					language: 0,
-					groups: [
-						{ startCharCode: 0x20, endCharCode: 0x40, startGlyphID: 90 },
-					],
+					groups: [{ startCharCode: 0x20, endCharCode: 0x40, startGlyphID: 90 }],
 				},
 			],
 		};
@@ -888,9 +872,7 @@ describe('diagnoseFont — OS/2 sanitization (Tier 3)', () => {
 		const os2 = { ...baseOS2(), sTypoLineGap: -50 };
 		const issues = [];
 		diagInternal.validateOS2Sanitization(os2, baseHead(), issues);
-		expect(issues.some((i) => i.code === 'OS2_TYPO_LINEGAP_NEGATIVE')).toBe(
-			true,
-		);
+		expect(issues.some((i) => i.code === 'OS2_TYPO_LINEGAP_NEGATIVE')).toBe(true);
 	});
 
 	it('flags negative sxHeight', () => {
@@ -970,9 +952,9 @@ describe('diagnoseFont — OS/2 sanitization (Tier 3)', () => {
 		const head = { macStyle: 0x0100 };
 		const issues = [];
 		diagInternal.validateOS2Sanitization(os2, head, issues);
-		expect(
-			issues.some((i) => i.code === 'HEAD_MACSTYLE_RESERVED_BITS_SET'),
-		).toBe(true);
+		expect(issues.some((i) => i.code === 'HEAD_MACSTYLE_RESERVED_BITS_SET')).toBe(
+			true,
+		);
 	});
 });
 
@@ -997,9 +979,9 @@ describe('diagnoseFont — Tier 4 directory robustness', () => {
 		// First table directory entry length is at offset 12 + 12 = 24.
 		view.setUint32(24, 1024 * 1024 * 1024 + 1);
 		const report = diagnoseFont(buffer);
-		expect(
-			report.errors.some((e) => e.code === 'TABLE_LENGTH_EXCEEDS_1GB'),
-		).toBe(true);
+		expect(report.errors.some((e) => e.code === 'TABLE_LENGTH_EXCEEDS_1GB')).toBe(
+			true,
+		);
 	});
 
 	it('flags TABLES_OVERLAPPING when two tables share bytes', async () => {
@@ -1026,9 +1008,7 @@ describe('diagnoseFont — Tier 4 directory robustness', () => {
 		view.setUint32(target.recOff + 8, newOffset);
 
 		const report = diagnoseFont(buffer);
-		expect(report.errors.some((e) => e.code === 'TABLES_OVERLAPPING')).toBe(
-			true,
-		);
+		expect(report.errors.some((e) => e.code === 'TABLES_OVERLAPPING')).toBe(true);
 	});
 
 	it('flags MAXP_VERSION_MISMATCH_FOR_OUTLINE when TTF font has maxp v0.5', async () => {
@@ -1117,9 +1097,7 @@ describe('diagnoseFont — Tier 5 name deep validation', () => {
 		// header padding; entry.offset = 12, entry.length = rawNameBuf.byteLength.
 		const sfnt = new ArrayBuffer(12 + rawNameBuf.byteLength);
 		new Uint8Array(sfnt, 12).set(new Uint8Array(rawNameBuf));
-		const entries = [
-			{ tag: 'name', offset: 12, length: rawNameBuf.byteLength },
-		];
+		const entries = [{ tag: 'name', offset: 12, length: rawNameBuf.byteLength }];
 		return { sfnt, entries };
 	}
 
@@ -1173,9 +1151,7 @@ describe('diagnoseFont — Tier 5 name deep validation', () => {
 			sfnt,
 			issues,
 		);
-		expect(issues.some((i) => i.code === 'NAME_RECORD_OUT_OF_BOUNDS')).toBe(
-			true,
-		);
+		expect(issues.some((i) => i.code === 'NAME_RECORD_OUT_OF_BOUNDS')).toBe(true);
 	});
 
 	it('flags NAME_LANG_TAG_TOO_LONG when a tag exceeds 200 bytes', () => {
@@ -1261,9 +1237,7 @@ describe('diagnoseFont — Tier 6 WOFF wrapper integrity', () => {
 		new DataView(clone).setUint32(8, 999999);
 		const issues = [];
 		diagInternal.validateWoff1Wrapper(clone, issues);
-		expect(issues.some((i) => i.code === 'WOFF1_FILE_SIZE_MISMATCH')).toBe(
-			true,
-		);
+		expect(issues.some((i) => i.code === 'WOFF1_FILE_SIZE_MISMATCH')).toBe(true);
 	});
 
 	it('flags WOFF1_RESERVED_FIELD_NONZERO', async () => {
@@ -1285,9 +1259,7 @@ describe('diagnoseFont — Tier 6 WOFF wrapper integrity', () => {
 		view.setUint32(16, view.getUint32(16) + 1000);
 		const issues = [];
 		diagInternal.validateWoff1Wrapper(clone, issues);
-		expect(issues.some((i) => i.code === 'WOFF1_SFNT_SIZE_MISMATCH')).toBe(
-			true,
-		);
+		expect(issues.some((i) => i.code === 'WOFF1_SFNT_SIZE_MISMATCH')).toBe(true);
 	});
 
 	it('flags WOFF1_METADATA_BLOCK_INVALID for inconsistent offset/length', async () => {
@@ -1352,9 +1324,7 @@ describe('diagnoseFont — Tier 6 WOFF wrapper integrity', () => {
 		new DataView(clone).setUint32(8, 1);
 		const issues = [];
 		diagInternal.validateWoff2Wrapper(clone, issues);
-		expect(issues.some((i) => i.code === 'WOFF2_FILE_SIZE_MISMATCH')).toBe(
-			true,
-		);
+		expect(issues.some((i) => i.code === 'WOFF2_FILE_SIZE_MISMATCH')).toBe(true);
 	});
 
 	it('flags WOFF2_RESERVED_FIELD_NONZERO', async () => {
@@ -1374,9 +1344,9 @@ describe('diagnoseFont — Tier 6 WOFF wrapper integrity', () => {
 		new DataView(clone).setUint32(16, 5);
 		const issues = [];
 		diagInternal.validateWoff2Wrapper(clone, issues);
-		expect(
-			issues.some((i) => i.code === 'WOFF2_DECOMPRESSED_SIZE_INVALID'),
-		).toBe(true);
+		expect(issues.some((i) => i.code === 'WOFF2_DECOMPRESSED_SIZE_INVALID')).toBe(
+			true,
+		);
 	});
 });
 
@@ -1389,9 +1359,7 @@ describe('diagnoseFont — Tier 7 fvar deep validation', () => {
 		const issues = [];
 		diagInternal.validateFvarDeep(
 			{
-				axes: [
-					{ axisTag: 'wght', minValue: 100, defaultValue: 50, maxValue: 900 },
-				],
+				axes: [{ axisTag: 'wght', minValue: 100, defaultValue: 50, maxValue: 900 }],
 				instances: [],
 			},
 			issues,
@@ -1454,9 +1422,7 @@ describe('diagnoseFont — Tier 7 layout lookup validation', () => {
 			'GSUB',
 			issues,
 		);
-		expect(issues.some((i) => i.code === 'GSUB_LOOKUP_TYPE_INVALID')).toBe(
-			true,
-		);
+		expect(issues.some((i) => i.code === 'GSUB_LOOKUP_TYPE_INVALID')).toBe(true);
 	});
 
 	it('flags GPOS_LOOKUP_TYPE_INVALID for type > 9', () => {
@@ -1466,9 +1432,7 @@ describe('diagnoseFont — Tier 7 layout lookup validation', () => {
 			'GPOS',
 			issues,
 		);
-		expect(issues.some((i) => i.code === 'GPOS_LOOKUP_TYPE_INVALID')).toBe(
-			true,
-		);
+		expect(issues.some((i) => i.code === 'GPOS_LOOKUP_TYPE_INVALID')).toBe(true);
 	});
 
 	it('flags LAYOUT_LOOKUP_FLAG_RESERVED for reserved bits', () => {
@@ -1546,9 +1510,7 @@ describe('diagnoseFont — Tier 7 variation table cross-checks', () => {
 		}
 		expect(renamed).toBe(true);
 		const report = diagnoseFont(clone);
-		expect(report.errors.some((e) => e.code === 'HVAR_WITHOUT_FVAR')).toBe(
-			true,
-		);
+		expect(report.errors.some((e) => e.code === 'HVAR_WITHOUT_FVAR')).toBe(true);
 	});
 });
 
@@ -1577,9 +1539,7 @@ describe('diagnoseFont — Tier 7 fvar names + flags', () => {
 			null,
 			issues,
 		);
-		expect(issues.some((i) => i.code === 'FVAR_AXIS_FLAGS_RESERVED')).toBe(
-			true,
-		);
+		expect(issues.some((i) => i.code === 'FVAR_AXIS_FLAGS_RESERVED')).toBe(true);
 	});
 
 	it('flags FVAR_AXIS_NAMEID_RESERVED for IDs < 256', () => {
@@ -1601,9 +1561,7 @@ describe('diagnoseFont — Tier 7 fvar names + flags', () => {
 			null,
 			issues,
 		);
-		expect(issues.some((i) => i.code === 'FVAR_AXIS_NAMEID_RESERVED')).toBe(
-			true,
-		);
+		expect(issues.some((i) => i.code === 'FVAR_AXIS_NAMEID_RESERVED')).toBe(true);
 	});
 
 	it('flags FVAR_AXIS_NAMEID_MISSING when name table lacks the ID', () => {
@@ -1625,9 +1583,7 @@ describe('diagnoseFont — Tier 7 fvar names + flags', () => {
 			{ names: [{ nameID: 256 }] },
 			issues,
 		);
-		expect(issues.some((i) => i.code === 'FVAR_AXIS_NAMEID_MISSING')).toBe(
-			true,
-		);
+		expect(issues.some((i) => i.code === 'FVAR_AXIS_NAMEID_MISSING')).toBe(true);
 	});
 
 	it('flags FVAR_INSTANCE_FLAGS_RESERVED', () => {
@@ -1782,9 +1738,9 @@ describe('diagnoseFont — Tier 7 avar validation', () => {
 			null,
 			issues,
 		);
-		expect(
-			issues.some((i) => i.code === 'AVAR_FROM_COORD_NOT_INCREASING'),
-		).toBe(true);
+		expect(issues.some((i) => i.code === 'AVAR_FROM_COORD_NOT_INCREASING')).toBe(
+			true,
+		);
 	});
 
 	it('flags AVAR_MISSING_REQUIRED_ENDPOINTS', () => {
@@ -1804,9 +1760,9 @@ describe('diagnoseFont — Tier 7 avar validation', () => {
 			null,
 			issues,
 		);
-		expect(
-			issues.some((i) => i.code === 'AVAR_MISSING_REQUIRED_ENDPOINTS'),
-		).toBe(true);
+		expect(issues.some((i) => i.code === 'AVAR_MISSING_REQUIRED_ENDPOINTS')).toBe(
+			true,
+		);
 	});
 
 	it('passes a clean avar segment map', () => {
@@ -1851,9 +1807,7 @@ describe('diagnoseFont — Tier 7 ItemVariationStore validation', () => {
 			{
 				variationRegionList: {
 					axisCount: 1,
-					regions: [
-						{ regionAxes: [{ startCoord: -2, peakCoord: 0, endCoord: 1 }] },
-					],
+					regions: [{ regionAxes: [{ startCoord: -2, peakCoord: 0, endCoord: 1 }] }],
 				},
 				itemVariationData: [],
 			},
@@ -1893,13 +1847,9 @@ describe('diagnoseFont — Tier 7 ItemVariationStore validation', () => {
 			{
 				variationRegionList: {
 					axisCount: 1,
-					regions: [
-						{ regionAxes: [{ startCoord: 0, peakCoord: 1, endCoord: 1 }] },
-					],
+					regions: [{ regionAxes: [{ startCoord: 0, peakCoord: 1, endCoord: 1 }] }],
 				},
-				itemVariationData: [
-					{ itemCount: 1, regionIndexes: [5], deltaSets: [[0]] },
-				],
+				itemVariationData: [{ itemCount: 1, regionIndexes: [5], deltaSets: [[0]] }],
 			},
 			1,
 			'HVAR',
@@ -1919,9 +1869,9 @@ describe('diagnoseFont — Tier 7 MVAR validation', () => {
 			null,
 			issues,
 		);
-		expect(
-			issues.some((i) => i.code === 'MVAR_VALUE_RECORD_SIZE_INVALID'),
-		).toBe(true);
+		expect(issues.some((i) => i.code === 'MVAR_VALUE_RECORD_SIZE_INVALID')).toBe(
+			true,
+		);
 	});
 
 	it('flags MVAR_DELTA_SET_OUTER_OUT_OF_RANGE', () => {
@@ -1955,9 +1905,7 @@ describe('diagnoseFont — Tier 7 MVAR validation', () => {
 				],
 				itemVariationStore: {
 					variationRegionList: { axisCount: 1, regions: [] },
-					itemVariationData: [
-						{ itemCount: 3, regionIndexes: [], deltaSets: [] },
-					],
+					itemVariationData: [{ itemCount: 3, regionIndexes: [], deltaSets: [] }],
 				},
 			},
 			null,
@@ -2265,12 +2213,7 @@ describe('Tier 7 CFF charstring opcode validation', () => {
 		for (let i = 0; i < 50; i++) bytes.push(139);
 		bytes.push(5); // rlineto
 		const issues = [];
-		diagInternal.validateCffCharStrings(
-			makeCff2([bytes]),
-			'CFF2',
-			issues,
-			true,
-		);
+		diagInternal.validateCffCharStrings(makeCff2([bytes]), 'CFF2', issues, true);
 		expect(issues.filter((i) => i.code === 'CFF_STACK_OVERFLOW')).toEqual([]);
 	});
 
@@ -2377,9 +2320,7 @@ describe('Tier 7 glyf composite / header validation', () => {
 			null,
 			issues,
 		);
-		expect(issues.some((i) => i.code === 'GLYF_NUM_CONTOURS_INVALID')).toBe(
-			true,
-		);
+		expect(issues.some((i) => i.code === 'GLYF_NUM_CONTOURS_INVALID')).toBe(true);
 	});
 });
 
@@ -2452,17 +2393,15 @@ describe('Tier 7 cmap format 12/13 group validation', () => {
 			subTables: [
 				{
 					format: 12,
-					groups: [
-						{ startCharCode: 0x100, endCharCode: 0x50, startGlyphID: 1 },
-					],
+					groups: [{ startCharCode: 0x100, endCharCode: 0x50, startGlyphID: 1 }],
 				},
 			],
 		};
 		const issues = [];
 		diagInternal.validateCmapFormat12And13(cmap, issues);
-		expect(
-			issues.some((i) => i.code === 'CMAP_FORMAT12_END_BEFORE_START'),
-		).toBe(true);
+		expect(issues.some((i) => i.code === 'CMAP_FORMAT12_END_BEFORE_START')).toBe(
+			true,
+		);
 	});
 
 	it('flags CMAP_FORMAT12_GROUPS_NOT_SORTED', () => {
@@ -2479,9 +2418,9 @@ describe('Tier 7 cmap format 12/13 group validation', () => {
 		};
 		const issues = [];
 		diagInternal.validateCmapFormat12And13(cmap, issues);
-		expect(
-			issues.some((i) => i.code === 'CMAP_FORMAT12_GROUPS_NOT_SORTED'),
-		).toBe(true);
+		expect(issues.some((i) => i.code === 'CMAP_FORMAT12_GROUPS_NOT_SORTED')).toBe(
+			true,
+		);
 	});
 
 	it('flags CMAP_FORMAT12_GROUPS_OVERLAP', () => {
@@ -2549,11 +2488,7 @@ describe('Tier 7 TrueType instruction validation', () => {
 	it('flags TT_INSTR_UNBALANCED_IF for IF without EIF', () => {
 		// 0xB0 push 1 operand, 0x58 IF with no EIF
 		const issues = [];
-		diagInternal.validateTrueTypeInstructions(
-			[0xb0, 0x01, 0x58],
-			'fpgm',
-			issues,
-		);
+		diagInternal.validateTrueTypeInstructions([0xb0, 0x01, 0x58], 'fpgm', issues);
 		expect(issues.some((i) => i.code === 'TT_INSTR_UNBALANCED_IF')).toBe(true);
 	});
 
@@ -2583,11 +2518,7 @@ describe('Tier 7 TrueType instruction validation', () => {
 	it('flags TT_INSTR_UNCLOSED_FDEF', () => {
 		// 0x2C FDEF without matching ENDF
 		const issues = [];
-		diagInternal.validateTrueTypeInstructions(
-			[0x2c, 0xb0, 0x01],
-			'fpgm',
-			issues,
-		);
+		diagInternal.validateTrueTypeInstructions([0x2c, 0xb0, 0x01], 'fpgm', issues);
 		expect(issues.some((i) => i.code === 'TT_INSTR_UNCLOSED_FDEF')).toBe(true);
 	});
 

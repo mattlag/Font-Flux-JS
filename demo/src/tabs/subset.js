@@ -205,10 +205,7 @@ function render(container, fontData, appContext) {
 			if (coveredCodes.has(cp)) glyphs.push(cp);
 		}
 
-		const totalPages = Math.max(
-			1,
-			Math.ceil(glyphs.length / PREVIEW_PAGE_SIZE),
-		);
+		const totalPages = Math.max(1, Math.ceil(glyphs.length / PREVIEW_PAGE_SIZE));
 		if (currentPage >= totalPages) currentPage = totalPages - 1;
 		if (currentPage < 0) currentPage = 0;
 

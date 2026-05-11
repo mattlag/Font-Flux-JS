@@ -80,10 +80,7 @@ export function parseGDEF(rawBytes) {
 
 	// Mark glyph sets (v1.2+)
 	if (markGlyphSetsDefOffset !== 0) {
-		result.markGlyphSetsDef = parseMarkGlyphSets(
-			reader,
-			markGlyphSetsDefOffset,
-		);
+		result.markGlyphSetsDef = parseMarkGlyphSets(reader, markGlyphSetsDefOffset);
 	}
 
 	// Item variation store (v1.3+)
@@ -151,9 +148,7 @@ function parseLigGlyph(reader, offset) {
 			const coordinate = reader.int16();
 			const deviceOffset = reader.uint16();
 			const device =
-				deviceOffset !== 0
-					? parseDevice(reader, cvOffset + deviceOffset)
-					: null;
+				deviceOffset !== 0 ? parseDevice(reader, cvOffset + deviceOffset) : null;
 			return { format, coordinate, device };
 		}
 		throw new Error(`Unknown CaretValue format: ${format}`);

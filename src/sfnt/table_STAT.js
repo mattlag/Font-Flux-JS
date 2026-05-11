@@ -222,10 +222,7 @@ export function writeSTAT(stat) {
 		0,
 	);
 	const totalSize =
-		headerSize +
-		designAxesSize +
-		axisValueOffsetsArraySize +
-		axisValueTablesSize;
+		headerSize + designAxesSize + axisValueOffsetsArraySize + axisValueTablesSize;
 
 	const w = new DataWriter(totalSize);
 
@@ -319,8 +316,6 @@ function buildAxisValueBlob(axisValue) {
 		}
 
 		default:
-			throw new Error(
-				`Unsupported STAT axis value format: ${axisValue.format}`,
-			);
+			throw new Error(`Unsupported STAT axis value format: ${axisValue.format}`);
 	}
 }

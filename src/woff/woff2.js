@@ -25,7 +25,9 @@ export async function initBrotli() {
 	if (_brotliDecompress) return;
 	try {
 		// Node.js built-in brotli (available since Node.js 10.16)
-		const { brotliCompressSync, brotliDecompressSync } = await import('node:zlib');
+		const { brotliCompressSync, brotliDecompressSync } = await import(
+			'node:zlib'
+		);
 		_brotliCompress = (data) => new Uint8Array(brotliCompressSync(data));
 		_brotliDecompress = (data) => new Uint8Array(brotliDecompressSync(data));
 	} catch {
@@ -57,14 +59,69 @@ const SFNT_TABLE_RECORD_SIZE = 16;
  * Flag value 63 means "arbitrary tag follows" the flag byte.
  */
 const KNOWN_TAGS = [
-	'cmap', 'head', 'hhea', 'hmtx', 'maxp', 'name', 'OS/2', 'post', // 0-7
-	'cvt ', 'fpgm', 'glyf', 'loca', 'prep', 'CFF ', 'VORG', 'EBDT', // 8-15
-	'EBLC', 'gasp', 'hdmx', 'kern', 'LTSH', 'PCLT', 'VDMX', 'vhea', // 16-23
-	'vmtx', 'BASE', 'GDEF', 'GPOS', 'GSUB', 'EBSC', 'JSTF', 'MATH', // 24-31
-	'CBDT', 'CBLC', 'COLR', 'CPAL', 'SVG ', 'sbix', 'acnt', 'avar', // 32-39
-	'bdat', 'bloc', 'bsln', 'cvar', 'fdsc', 'feat', 'fmtx', 'fvar', // 40-47
-	'gvar', 'hsty', 'just', 'lcar', 'mort', 'morx', 'opbd', 'prop', // 48-55
-	'trak', 'Zapf', 'Silf', 'Glat', 'Gloc', 'Feat', 'Sill',        // 56-62
+	'cmap',
+	'head',
+	'hhea',
+	'hmtx',
+	'maxp',
+	'name',
+	'OS/2',
+	'post', // 0-7
+	'cvt ',
+	'fpgm',
+	'glyf',
+	'loca',
+	'prep',
+	'CFF ',
+	'VORG',
+	'EBDT', // 8-15
+	'EBLC',
+	'gasp',
+	'hdmx',
+	'kern',
+	'LTSH',
+	'PCLT',
+	'VDMX',
+	'vhea', // 16-23
+	'vmtx',
+	'BASE',
+	'GDEF',
+	'GPOS',
+	'GSUB',
+	'EBSC',
+	'JSTF',
+	'MATH', // 24-31
+	'CBDT',
+	'CBLC',
+	'COLR',
+	'CPAL',
+	'SVG ',
+	'sbix',
+	'acnt',
+	'avar', // 32-39
+	'bdat',
+	'bloc',
+	'bsln',
+	'cvar',
+	'fdsc',
+	'feat',
+	'fmtx',
+	'fvar', // 40-47
+	'gvar',
+	'hsty',
+	'just',
+	'lcar',
+	'mort',
+	'morx',
+	'opbd',
+	'prop', // 48-55
+	'trak',
+	'Zapf',
+	'Silf',
+	'Glat',
+	'Gloc',
+	'Feat',
+	'Sill', // 56-62
 ];
 
 /** Reverse lookup: tag string → known tag index (0–62). */
@@ -165,28 +222,46 @@ function buildTripletTable() {
 	// Flags 0–9: 1 data byte, x=0, y=8-bit
 	for (let i = 0; i < 10; i++) {
 		t.push({
-			xBits: 0, yBits: 8,
-			deltaX: 0, deltaY: (i >> 1) * 256,
-			xSign: 0, ySign: (i & 1) ? 1 : -1,
+			xBits: 0,
+			yBits: 8,
+			deltaX: 0,
+			deltaY: (i >> 1) * 256,
+			xSign: 0,
+			ySign: i & 1 ? 1 : -1,
 		});
 	}
 
 	// Flags 10–19: 1 data byte, x=8-bit, y=0
 	for (let i = 0; i < 10; i++) {
 		t.push({
-			xBits: 8, yBits: 0,
-			deltaX: (i >> 1) * 256, deltaY: 0,
-			xSign: (i & 1) ? 1 : -1, ySign: 0,
+			xBits: 8,
+			yBits: 0,
+			deltaX: (i >> 1) * 256,
+			deltaY: 0,
+			xSign: i & 1 ? 1 : -1,
+			ySign: 0,
 		});
 	}
 
 	// Flags 20–83: 1 data byte (4-bit nibbles), x=4, y=4
 	const deltas4 = [1, 17, 33, 49];
-	const signs = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
+	const signs = [
+		[-1, -1],
+		[1, -1],
+		[-1, 1],
+		[1, 1],
+	];
 	for (const dx of deltas4) {
 		for (const dy of deltas4) {
 			for (const [xs, ys] of signs) {
-				t.push({ xBits: 4, yBits: 4, deltaX: dx, deltaY: dy, xSign: xs, ySign: ys });
+				t.push({
+					xBits: 4,
+					yBits: 4,
+					deltaX: dx,
+					deltaY: dy,
+					xSign: xs,
+					ySign: ys,
+				});
 			}
 		}
 	}
@@ -196,7 +271,14 @@ function buildTripletTable() {
 	for (const dx of deltas8) {
 		for (const dy of deltas8) {
 			for (const [xs, ys] of signs) {
-				t.push({ xBits: 8, yBits: 8, deltaX: dx, deltaY: dy, xSign: xs, ySign: ys });
+				t.push({
+					xBits: 8,
+					yBits: 8,
+					deltaX: dx,
+					deltaY: dy,
+					xSign: xs,
+					ySign: ys,
+				});
 			}
 		}
 	}
@@ -270,8 +352,15 @@ function decodeTriplet(flagByte, glyphStream, pos) {
  * @returns {number[]} byte array of the glyph record
  */
 function buildSimpleGlyphRecord(
-	numberOfContours, endPtsOfContours, points, instructions,
-	xMin, yMin, xMax, yMax, overlapSimple,
+	numberOfContours,
+	endPtsOfContours,
+	points,
+	instructions,
+	xMin,
+	yMin,
+	xMax,
+	yMax,
+	overlapSimple,
 ) {
 	const out = [];
 
@@ -368,7 +457,14 @@ function buildSimpleGlyphRecord(
 /**
  * Build a TrueType composite glyph record from raw composite data + bbox.
  */
-function buildCompositeGlyphRecord(compositeData, instructions, xMin, yMin, xMax, yMax) {
+function buildCompositeGlyphRecord(
+	compositeData,
+	instructions,
+	xMin,
+	yMin,
+	xMax,
+	yMax,
+) {
 	const out = [];
 	pushInt16(out, -1); // numberOfContours = -1 (composite)
 	pushInt16(out, xMin);
@@ -403,20 +499,31 @@ function reverseGlyfTransform(transformedData, origLocaLength) {
 	let pos = 0;
 
 	// ── Header ──────────────────────────────────────────────────────────
-	const reserved = (d[pos] << 8) | d[pos + 1]; pos += 2;
+	const reserved = (d[pos] << 8) | d[pos + 1];
+	pos += 2;
 	if (reserved !== 0) throw new Error('WOFF2 glyf transform: reserved != 0');
 
-	const optionFlags = (d[pos] << 8) | d[pos + 1]; pos += 2;
-	const numGlyphs = (d[pos] << 8) | d[pos + 1]; pos += 2;
-	const indexFormat = (d[pos] << 8) | d[pos + 1]; pos += 2;
+	const optionFlags = (d[pos] << 8) | d[pos + 1];
+	pos += 2;
+	const numGlyphs = (d[pos] << 8) | d[pos + 1];
+	pos += 2;
+	const indexFormat = (d[pos] << 8) | d[pos + 1];
+	pos += 2;
 
-	const nContourStreamSize = readU32(d, pos); pos += 4;
-	const nPointsStreamSize = readU32(d, pos); pos += 4;
-	const flagStreamSize = readU32(d, pos); pos += 4;
-	const glyphStreamSize = readU32(d, pos); pos += 4;
-	const compositeStreamSize = readU32(d, pos); pos += 4;
-	const bboxStreamSize = readU32(d, pos); pos += 4;
-	const instructionStreamSize = readU32(d, pos); pos += 4;
+	const nContourStreamSize = readU32(d, pos);
+	pos += 4;
+	const nPointsStreamSize = readU32(d, pos);
+	pos += 4;
+	const flagStreamSize = readU32(d, pos);
+	pos += 4;
+	const glyphStreamSize = readU32(d, pos);
+	pos += 4;
+	const compositeStreamSize = readU32(d, pos);
+	pos += 4;
+	const bboxStreamSize = readU32(d, pos);
+	pos += 4;
+	const instructionStreamSize = readU32(d, pos);
+	pos += 4;
 
 	// ── Locate substreams ───────────────────────────────────────────────
 	const nContourStart = pos;
@@ -493,15 +600,20 @@ function reverseGlyfTransform(transformedData, origLocaLength) {
 			const points = [];
 			for (let p = 0; p < totalPoints; p++) {
 				const flagByte = d[flagPos++];
-				const { dx, dy, onCurve, bytesConsumed } =
-					decodeTriplet(flagByte, d, glyphPos);
+				const { dx, dy, onCurve, bytesConsumed } = decodeTriplet(
+					flagByte,
+					d,
+					glyphPos,
+				);
 				glyphPos += bytesConsumed;
 				points.push({ dx, dy, onCurve });
 			}
 
 			// Read instructions
-			const { value: instrLen, bytesRead: instrLenBytes } =
-				read255UInt16(d, glyphPos);
+			const { value: instrLen, bytesRead: instrLenBytes } = read255UInt16(
+				d,
+				glyphPos,
+			);
 			glyphPos += instrLenBytes;
 			const instructions = d.subarray(instructionPos, instructionPos + instrLen);
 			instructionPos += instrLen;
@@ -509,14 +621,22 @@ function reverseGlyfTransform(transformedData, origLocaLength) {
 			// Compute or read bounding box
 			let xMin, yMin, xMax, yMax;
 			if (hasBbox(g)) {
-				xMin = readI16(d, bboxValuesPos); bboxValuesPos += 2;
-				yMin = readI16(d, bboxValuesPos); bboxValuesPos += 2;
-				xMax = readI16(d, bboxValuesPos); bboxValuesPos += 2;
-				yMax = readI16(d, bboxValuesPos); bboxValuesPos += 2;
+				xMin = readI16(d, bboxValuesPos);
+				bboxValuesPos += 2;
+				yMin = readI16(d, bboxValuesPos);
+				bboxValuesPos += 2;
+				xMax = readI16(d, bboxValuesPos);
+				bboxValuesPos += 2;
+				yMax = readI16(d, bboxValuesPos);
+				bboxValuesPos += 2;
 			} else {
 				// Compute from point coordinates
-				let absX = 0, absY = 0;
-				xMin = 0x7fff; yMin = 0x7fff; xMax = -0x8000; yMax = -0x8000;
+				let absX = 0,
+					absY = 0;
+				xMin = 0x7fff;
+				yMin = 0x7fff;
+				xMax = -0x8000;
+				yMax = -0x8000;
 				for (const pt of points) {
 					absX += pt.dx;
 					absY += pt.dy;
@@ -528,15 +648,22 @@ function reverseGlyfTransform(transformedData, origLocaLength) {
 			}
 
 			const record = buildSimpleGlyphRecord(
-				nContours, endPts, points, instructions,
-				xMin, yMin, xMax, yMax, hasOverlapSimple(g),
+				nContours,
+				endPts,
+				points,
+				instructions,
+				xMin,
+				yMin,
+				xMax,
+				yMax,
+				hasOverlapSimple(g),
 			);
 			glyphRecords.push(record);
 
 			// Pad to 4-byte alignment if this affects the next offset
 			// (Actually, for loca offset tracking we use unpadded glyph lengths,
 			//  but the glyf table itself should be 2-byte aligned per glyph)
-			const paddedLen = record.length + ((record.length % 2) ? 1 : 0);
+			const paddedLen = record.length + (record.length % 2 ? 1 : 0);
 			currentOffset += paddedLen;
 			locaOffsets.push(currentOffset);
 		} else {
@@ -586,25 +713,36 @@ function reverseGlyfTransform(transformedData, origLocaLength) {
 			// Read instructions if any component had WE_HAVE_INSTRUCTIONS
 			let instructions = new Uint8Array(0);
 			if (hasInstructions) {
-				const { value: instrLen, bytesRead: instrLenBytes } =
-					read255UInt16(d, glyphPos);
+				const { value: instrLen, bytesRead: instrLenBytes } = read255UInt16(
+					d,
+					glyphPos,
+				);
 				glyphPos += instrLenBytes;
 				instructions = d.subarray(instructionPos, instructionPos + instrLen);
 				instructionPos += instrLen;
 			}
 
 			// Composite glyphs MUST have explicit bounding box
-			const xMin = readI16(d, bboxValuesPos); bboxValuesPos += 2;
-			const yMin = readI16(d, bboxValuesPos); bboxValuesPos += 2;
-			const xMax = readI16(d, bboxValuesPos); bboxValuesPos += 2;
-			const yMax = readI16(d, bboxValuesPos); bboxValuesPos += 2;
+			const xMin = readI16(d, bboxValuesPos);
+			bboxValuesPos += 2;
+			const yMin = readI16(d, bboxValuesPos);
+			bboxValuesPos += 2;
+			const xMax = readI16(d, bboxValuesPos);
+			bboxValuesPos += 2;
+			const yMax = readI16(d, bboxValuesPos);
+			bboxValuesPos += 2;
 
 			const record = buildCompositeGlyphRecord(
-				compositeData, instructions, xMin, yMin, xMax, yMax,
+				compositeData,
+				instructions,
+				xMin,
+				yMin,
+				xMax,
+				yMax,
 			);
 			glyphRecords.push(record);
 
-			const paddedLen = record.length + ((record.length % 2) ? 1 : 0);
+			const paddedLen = record.length + (record.length % 2 ? 1 : 0);
 			currentOffset += paddedLen;
 			locaOffsets.push(currentOffset);
 		}
@@ -638,7 +776,13 @@ function reverseGlyfTransform(transformedData, origLocaLength) {
  * @param {number[]} locaOffsets - The reconstructed loca offsets
  * @returns {Uint8Array} Standard hmtx table bytes
  */
-function reverseHmtxTransform(transformedData, numOfHMetrics, numGlyphs, glyfData, locaOffsets) {
+function reverseHmtxTransform(
+	transformedData,
+	numOfHMetrics,
+	numGlyphs,
+	glyfData,
+	locaOffsets,
+) {
 	const d = transformedData;
 	let pos = 0;
 
@@ -677,7 +821,9 @@ function reverseHmtxTransform(transformedData, numOfHMetrics, numGlyphs, glyfDat
 		}
 	} else {
 		for (let i = 0; i < tailCount; i++) {
-			leftSideBearings.push(getGlyphXMin(glyfData, locaOffsets, numOfHMetrics + i));
+			leftSideBearings.push(
+				getGlyphXMin(glyfData, locaOffsets, numOfHMetrics + i),
+			);
 		}
 	}
 
@@ -786,19 +932,27 @@ export function unwrapWOFF2(buffer) {
 		let tag;
 		if (tagIndex === 63) {
 			// Arbitrary tag follows
-			tag = String.fromCharCode(bytes[dirPos], bytes[dirPos + 1], bytes[dirPos + 2], bytes[dirPos + 3]);
+			tag = String.fromCharCode(
+				bytes[dirPos],
+				bytes[dirPos + 1],
+				bytes[dirPos + 2],
+				bytes[dirPos + 3],
+			);
 			dirPos += 4;
 		} else {
 			tag = KNOWN_TAGS[tagIndex];
 		}
 
-		const { value: origLength, bytesRead: olBytes } = readUIntBase128(bytes, dirPos);
+		const { value: origLength, bytesRead: olBytes } = readUIntBase128(
+			bytes,
+			dirPos,
+		);
 		dirPos += olBytes;
 
 		// transformLength is present only for non-null transforms
 		let transformLength = origLength;
-		const isGlyfOrLoca = (tag === 'glyf' || tag === 'loca');
-		const isHmtx = (tag === 'hmtx');
+		const isGlyfOrLoca = tag === 'glyf' || tag === 'loca';
+		const isHmtx = tag === 'hmtx';
 		const hasTransformLength =
 			(isGlyfOrLoca && transformVersion === 0) ||
 			(isHmtx && transformVersion === 1) ||
@@ -831,15 +985,20 @@ export function unwrapWOFF2(buffer) {
 	// ── Parse collection directory (if flavor is ttcf) ──────────────────
 	let collectionDirectory = null;
 	if (flavor === 0x74746366) {
-		const ttcVersion = readU32(bytes, dirPos); dirPos += 4;
+		const ttcVersion = readU32(bytes, dirPos);
+		dirPos += 4;
 		const { value: numFonts, bytesRead: nfBytes } = read255UInt16(bytes, dirPos);
 		dirPos += nfBytes;
 
 		const fonts = [];
 		for (let f = 0; f < numFonts; f++) {
-			const { value: fontNumTables, bytesRead: ntBytes } = read255UInt16(bytes, dirPos);
+			const { value: fontNumTables, bytesRead: ntBytes } = read255UInt16(
+				bytes,
+				dirPos,
+			);
 			dirPos += ntBytes;
-			const fontFlavor = readU32(bytes, dirPos); dirPos += 4;
+			const fontFlavor = readU32(bytes, dirPos);
+			dirPos += 4;
 
 			const indices = [];
 			for (let t = 0; t < fontNumTables; t++) {
@@ -847,14 +1006,21 @@ export function unwrapWOFF2(buffer) {
 				dirPos += iBytes;
 				indices.push(idx);
 			}
-			fonts.push({ numTables: fontNumTables, flavor: fontFlavor, tableIndices: indices });
+			fonts.push({
+				numTables: fontNumTables,
+				flavor: fontFlavor,
+				tableIndices: indices,
+			});
 		}
 		collectionDirectory = { version: ttcVersion, numFonts, fonts };
 	}
 
 	// ── Brotli-decompress the compressed font data ──────────────────────
 	const compressedStart = dirPos;
-	const compressedData = bytes.subarray(compressedStart, compressedStart + totalCompressedSize);
+	const compressedData = bytes.subarray(
+		compressedStart,
+		compressedStart + totalCompressedSize,
+	);
 	const decompressed = _brotliDecompress(compressedData);
 
 	// ── Split decompressed data into individual tables ──────────────────
@@ -880,9 +1046,10 @@ export function unwrapWOFF2(buffer) {
 		const origLocaLength = locaEntry ? locaEntry.entry.origLength : 0;
 		glyfLocaResult = reverseGlyfTransform(glyfEntry.data, origLocaLength);
 		reconstructed.set('glyf', glyfLocaResult.glyfBytes);
-		reconstructed.set('loca', buildLocaTable(
-			glyfLocaResult.locaOffsets, glyfLocaResult.indexFormat,
-		));
+		reconstructed.set(
+			'loca',
+			buildLocaTable(glyfLocaResult.locaOffsets, glyfLocaResult.indexFormat),
+		);
 	}
 
 	// Second pass: handle hmtx transform
@@ -903,10 +1070,16 @@ export function unwrapWOFF2(buffer) {
 			numGlyphs = (maxpData.data[4] << 8) | maxpData.data[5];
 		}
 
-		reconstructed.set('hmtx', reverseHmtxTransform(
-			hmtxEntry.data, numOfHMetrics, numGlyphs,
-			glyfLocaResult.glyfBytes, glyfLocaResult.locaOffsets,
-		));
+		reconstructed.set(
+			'hmtx',
+			reverseHmtxTransform(
+				hmtxEntry.data,
+				numOfHMetrics,
+				numGlyphs,
+				glyfLocaResult.glyfBytes,
+				glyfLocaResult.locaOffsets,
+			),
+		);
 	}
 
 	// Collect all final table data (reconstructed or original)
@@ -950,13 +1123,15 @@ export function unwrapWOFF2(buffer) {
  */
 function reassembleSFNT(flavor, tables) {
 	const numTables = tables.length;
-	const { searchRange, entrySelector, rangeShift } = computeBinarySearchParams(numTables);
+	const { searchRange, entrySelector, rangeShift } =
+		computeBinarySearchParams(numTables);
 
 	const dirEnd = SFNT_HEADER_SIZE + numTables * SFNT_TABLE_RECORD_SIZE;
 	let dataOffset = dirEnd + ((4 - (dirEnd % 4)) % 4);
 
 	// Sort tables alphabetically by tag for the SFNT directory
-	const sorted = tables.map((t, i) => ({ ...t, index: i }))
+	const sorted = tables
+		.map((t, i) => ({ ...t, index: i }))
 		.sort((a, b) => (a.tag < b.tag ? -1 : a.tag > b.tag ? 1 : 0));
 
 	// Calculate total size
@@ -994,7 +1169,10 @@ function reassembleSFNT(flavor, tables) {
 		sfntView.setUint32(recPos + 12, t.length);
 
 		// Copy table data
-		sfnt.set(t.data instanceof Uint8Array ? t.data : new Uint8Array(t.data), dataOffset);
+		sfnt.set(
+			t.data instanceof Uint8Array ? t.data : new Uint8Array(t.data),
+			dataOffset,
+		);
 		dataOffset += t.length + ((4 - (t.length % 4)) % 4);
 	}
 
@@ -1013,7 +1191,7 @@ function reassembleCollection(collDir, finalTables, tableEntries) {
 	const fontSFNTs = [];
 
 	for (const font of collDir.fonts) {
-		const fontTables = font.tableIndices.map(idx => finalTables[idx]);
+		const fontTables = font.tableIndices.map((idx) => finalTables[idx]);
 		const sfntBytes = reassembleSFNT(font.flavor, fontTables);
 		fontSFNTs.push(sfntBytes);
 	}
@@ -1083,8 +1261,10 @@ export function wrapWOFF2(sfntBuffer, metadata = null, privateData = null) {
 	for (let i = 0; i < numTables; i++) {
 		const pos = SFNT_HEADER_SIZE + i * SFNT_TABLE_RECORD_SIZE;
 		const tag = String.fromCharCode(
-			sfntView.getUint8(pos), sfntView.getUint8(pos + 1),
-			sfntView.getUint8(pos + 2), sfntView.getUint8(pos + 3),
+			sfntView.getUint8(pos),
+			sfntView.getUint8(pos + 1),
+			sfntView.getUint8(pos + 2),
+			sfntView.getUint8(pos + 3),
 		);
 		sfntTables.push({
 			tag,
@@ -1095,23 +1275,25 @@ export function wrapWOFF2(sfntBuffer, metadata = null, privateData = null) {
 	}
 
 	// Remove DSIG table per spec requirement
-	const filteredTables = sfntTables.filter(t => t.tag !== 'DSIG');
+	const filteredTables = sfntTables.filter((t) => t.tag !== 'DSIG');
 
 	// ── Build table directory entries and concatenate table data ─────────
 	const dirParts = [];
 	const tableDataParts = [];
-	let totalOrigSfntSize = SFNT_HEADER_SIZE + filteredTables.length * SFNT_TABLE_RECORD_SIZE;
+	let totalOrigSfntSize =
+		SFNT_HEADER_SIZE + filteredTables.length * SFNT_TABLE_RECORD_SIZE;
 
 	for (const entry of filteredTables) {
 		const raw = sfntBytes.subarray(entry.offset, entry.offset + entry.length);
 
 		// Determine flags
 		const knownIdx = TAG_TO_INDEX.get(entry.tag);
-		const isGlyfOrLoca = (entry.tag === 'glyf' || entry.tag === 'loca');
+		const isGlyfOrLoca = entry.tag === 'glyf' || entry.tag === 'loca';
 
 		// Use null transform for glyf/loca (version 3), null for others (version 0)
 		const transformVersion = isGlyfOrLoca ? 3 : 0;
-		const flagByte = (knownIdx !== undefined ? knownIdx : 63) | (transformVersion << 6);
+		const flagByte =
+			(knownIdx !== undefined ? knownIdx : 63) | (transformVersion << 6);
 
 		const dirEntry = [flagByte];
 		// If unknown tag, write 4-byte tag
@@ -1152,7 +1334,7 @@ export function wrapWOFF2(sfntBuffer, metadata = null, privateData = null) {
 	}
 
 	// ── Compute layout ──────────────────────────────────────────────────
-	let dirBytes = [];
+	const dirBytes = [];
 	for (const part of dirParts) dirBytes.push(...part);
 
 	const headerAndDirSize = WOFF2_HEADER_SIZE + dirBytes.length;
@@ -1211,12 +1393,17 @@ export function wrapWOFF2(sfntBuffer, metadata = null, privateData = null) {
 	}
 
 	// Compressed font data
-	woffBytes.set(compressed instanceof Uint8Array ? compressed : new Uint8Array(compressed), compressedOffset);
+	woffBytes.set(
+		compressed instanceof Uint8Array ? compressed : new Uint8Array(compressed),
+		compressedOffset,
+	);
 
 	// Metadata
 	if (metaCompressed) {
 		woffBytes.set(
-			metaCompressed instanceof Uint8Array ? metaCompressed : new Uint8Array(metaCompressed),
+			metaCompressed instanceof Uint8Array
+				? metaCompressed
+				: new Uint8Array(metaCompressed),
 			metaOff,
 		);
 	}
@@ -1232,8 +1419,13 @@ export function wrapWOFF2(sfntBuffer, metadata = null, privateData = null) {
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function readU32(data, pos) {
-	return ((data[pos] << 24) | (data[pos + 1] << 16) |
-		(data[pos + 2] << 8) | data[pos + 3]) >>> 0;
+	return (
+		((data[pos] << 24) |
+			(data[pos + 1] << 16) |
+			(data[pos + 2] << 8) |
+			data[pos + 3]) >>>
+		0
+	);
 }
 
 function readI16(data, pos) {
@@ -1270,12 +1462,13 @@ function computeChecksum(data) {
 	const len = data.length;
 	const padded = len + ((4 - (len % 4)) % 4);
 	for (let i = 0; i < padded; i += 4) {
-		sum = (sum + (
-			((data[i] || 0) << 24) |
-			((data[i + 1] || 0) << 16) |
-			((data[i + 2] || 0) << 8) |
-			(data[i + 3] || 0)
-		)) >>> 0;
+		sum =
+			(sum +
+				(((data[i] || 0) << 24) |
+					((data[i + 1] || 0) << 16) |
+					((data[i + 2] || 0) << 8) |
+					(data[i + 3] || 0))) >>>
+			0;
 	}
 	return sum;
 }
@@ -1293,11 +1486,14 @@ function recalcHeadChecksum(sfntBytes, sortedTables) {
 			for (let i = 0; i < numTables; i++) {
 				const recPos = SFNT_HEADER_SIZE + i * SFNT_TABLE_RECORD_SIZE;
 				const tag = String.fromCharCode(
-					sfntBytes[recPos], sfntBytes[recPos + 1],
-					sfntBytes[recPos + 2], sfntBytes[recPos + 3],
+					sfntBytes[recPos],
+					sfntBytes[recPos + 1],
+					sfntBytes[recPos + 2],
+					sfntBytes[recPos + 3],
 				);
 				if (tag === 'head') {
-					headOffset = (sfntBytes[recPos + 8] << 24) |
+					headOffset =
+						(sfntBytes[recPos + 8] << 24) |
 						(sfntBytes[recPos + 9] << 16) |
 						(sfntBytes[recPos + 10] << 8) |
 						sfntBytes[recPos + 11];

@@ -691,10 +691,7 @@ describe('Vertical metrics round-trip', () => {
 
 describe('Static utilities', () => {
 	it('svgToContours() converts SVG path', () => {
-		const contours = FontFlux.svgToContours(
-			'M0 0 L100 0 L100 100 Z',
-			'truetype',
-		);
+		const contours = FontFlux.svgToContours('M0 0 L100 0 L100 100 Z', 'truetype');
 		expect(contours.length).toBeGreaterThan(0);
 	});
 

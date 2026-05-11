@@ -14,9 +14,9 @@ import { parseBdat } from './sfnt/table_bdat.js';
 import { parseBloc } from './sfnt/table_bloc.js';
 import { parseCBDT } from './sfnt/table_CBDT.js';
 import { parseCBLC } from './sfnt/table_CBLC.js';
-import { parseCmap } from './sfnt/table_cmap.js';
 import { parseCOLR } from './sfnt/table_COLR.js';
 import { parseCPAL } from './sfnt/table_CPAL.js';
+import { parseCmap } from './sfnt/table_cmap.js';
 import { parseDSIG } from './sfnt/table_DSIG.js';
 import { parseEBDT } from './sfnt/table_EBDT.js';
 import { parseEBLC } from './sfnt/table_EBLC.js';
@@ -25,31 +25,31 @@ import { parseFvar } from './sfnt/table_fvar.js';
 import { parseGDEF } from './sfnt/table_GDEF.js';
 import { parseGPOS } from './sfnt/table_GPOS.js';
 import { parseGSUB } from './sfnt/table_GSUB.js';
+import { parseHVAR } from './sfnt/table_HVAR.js';
 import { parseHdmx } from './sfnt/table_hdmx.js';
 import { parseHead } from './sfnt/table_head.js';
 import { parseHhea } from './sfnt/table_hhea.js';
 import { parseHmtx } from './sfnt/table_hmtx.js';
-import { parseHVAR } from './sfnt/table_HVAR.js';
 import { parseJSTF } from './sfnt/table_JSTF.js';
 import { parseKern } from './sfnt/table_kern.js';
-import { parseLtag } from './sfnt/table_ltag.js';
 import { parseLTSH } from './sfnt/table_LTSH.js';
+import { parseLtag } from './sfnt/table_ltag.js';
 import { parseMATH } from './sfnt/table_MATH.js';
-import { parseMaxp } from './sfnt/table_maxp.js';
 import { parseMERG } from './sfnt/table_MERG.js';
-import { parseMeta } from './sfnt/table_meta.js';
 import { parseMVAR } from './sfnt/table_MVAR.js';
+import { parseMaxp } from './sfnt/table_maxp.js';
+import { parseMeta } from './sfnt/table_meta.js';
 import { parseName } from './sfnt/table_name.js';
 import { parseOS2 } from './sfnt/table_OS-2.js';
 import { parsePCLT } from './sfnt/table_PCLT.js';
 import { parsePost } from './sfnt/table_post.js';
-import { parseSbix } from './sfnt/table_sbix.js';
 import { parseSTAT } from './sfnt/table_STAT.js';
 import { parseSVG } from './sfnt/table_SVG.js';
+import { parseSbix } from './sfnt/table_sbix.js';
 import { parseVDMX } from './sfnt/table_VDMX.js';
+import { parseVVAR } from './sfnt/table_VVAR.js';
 import { parseVhea } from './sfnt/table_vhea.js';
 import { parseVmtx } from './sfnt/table_vmtx.js';
-import { parseVVAR } from './sfnt/table_VVAR.js';
 import { buildSimplified } from './simplify.js';
 import { parseCvar } from './ttf/table_cvar.js';
 import { parseCvt } from './ttf/table_cvt.js';
@@ -191,12 +191,7 @@ export function importFont(buffer) {
 
 	const bytes = new Uint8Array(buffer);
 	if (bytes.length >= 4) {
-		const signature = String.fromCharCode(
-			bytes[0],
-			bytes[1],
-			bytes[2],
-			bytes[3],
-		);
+		const signature = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
 		if (signature === 'wOFF') {
 			const { sfnt, metadata, privateData } = unwrapWOFF1(buffer);
 			const result = importFont(sfnt);
@@ -616,11 +611,7 @@ function importCFF(buffer) {
 			const globalSubrs = cffTable.globalSubrs || [];
 			const localSubrs = font.localSubrs || [];
 			try {
-				const result = interpretCharString(
-					charStrings[i],
-					globalSubrs,
-					localSubrs,
-				);
+				const result = interpretCharString(charStrings[i], globalSubrs, localSubrs);
 				if (result.width !== undefined) {
 					width = result.width + nominalWidth;
 				}

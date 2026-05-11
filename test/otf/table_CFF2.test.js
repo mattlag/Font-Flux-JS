@@ -148,8 +148,6 @@ describe('CFF2 synthetic round-trip', () => {
 		const written = writeCFF2(cff2);
 		const parsed = parseCFF2(written);
 
-		expect(parsed.fontDicts[0].localSubrs).toEqual(
-			cff2.fontDicts[0].localSubrs,
-		);
+		expect(parsed.fontDicts[0].localSubrs).toEqual(cff2.fontDicts[0].localSubrs);
 	});
 });

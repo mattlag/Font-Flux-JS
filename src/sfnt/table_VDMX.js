@@ -63,9 +63,7 @@ export function writeVDMX(vdmx) {
 	const numRatios = ratios.length;
 
 	let currentOffset =
-		HEADER_SIZE +
-		numRatios * RATIO_RECORD_SIZE +
-		numRatios * OFFSET_RECORD_SIZE;
+		HEADER_SIZE + numRatios * RATIO_RECORD_SIZE + numRatios * OFFSET_RECORD_SIZE;
 	const groupOffsets = groupBytes.map((bytes) => {
 		const offset = currentOffset;
 		currentOffset += bytes.length;

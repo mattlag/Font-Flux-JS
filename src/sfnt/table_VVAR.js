@@ -53,11 +53,7 @@ export function parseVVAR(rawBytes) {
 			? parseItemVariationStore(
 					rawBytes.slice(
 						itemVariationStoreOffset,
-						findSubtableEnd(
-							rawBytes.length,
-							itemVariationStoreOffset,
-							allOffsets,
-						),
+						findSubtableEnd(rawBytes.length, itemVariationStoreOffset, allOffsets),
 					),
 				)
 			: null,

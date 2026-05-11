@@ -245,6 +245,5 @@ export function resolvePaintGlyphNames(paint, nameToId) {
 	// Recurse into child paint nodes
 	if (paint.paint) resolvePaintGlyphNames(paint.paint, nameToId);
 	if (paint.sourcePaint) resolvePaintGlyphNames(paint.sourcePaint, nameToId);
-	if (paint.backdropPaint)
-		resolvePaintGlyphNames(paint.backdropPaint, nameToId);
+	if (paint.backdropPaint) resolvePaintGlyphNames(paint.backdropPaint, nameToId);
 }

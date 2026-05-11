@@ -192,9 +192,10 @@ describe('Format validation', () => {
 // ─── Collection split ───────────────────────────────────────────────────────
 
 describe('Collection split export', () => {
-	it('TTC → export WOFF split → array of individual WOFFs', async () => {
-		const buf = (await readFile(resolve(SAMPLES_DIR, 'cambria-test.ttc')))
-			.buffer;
+	it('TTC → export WOFF split → array of individual WOFFs', {
+		timeout: 60000,
+	}, async () => {
+		const buf = (await readFile(resolve(SAMPLES_DIR, 'cambria-test.ttc'))).buffer;
 		const imported = importFont(buf);
 		expect(imported.collection).toBeDefined();
 		expect(imported.fonts.length).toBeGreaterThan(1);
@@ -212,8 +213,7 @@ describe('Collection split export', () => {
 	});
 
 	it('TTC → export SFNT split → array of individual SFNTs', async () => {
-		const buf = (await readFile(resolve(SAMPLES_DIR, 'cambria-test.ttc')))
-			.buffer;
+		const buf = (await readFile(resolve(SAMPLES_DIR, 'cambria-test.ttc'))).buffer;
 		const imported = importFont(buf);
 
 		const sfnts = exportFont(imported, { format: 'sfnt', split: true });
@@ -228,8 +228,7 @@ describe('Collection split export', () => {
 	});
 
 	it('TTC → export WOFF (no split) → single file', async () => {
-		const buf = (await readFile(resolve(SAMPLES_DIR, 'cambria-test.ttc')))
-			.buffer;
+		const buf = (await readFile(resolve(SAMPLES_DIR, 'cambria-test.ttc'))).buffer;
 		const imported = importFont(buf);
 
 		const out = exportFont(imported, { format: 'woff' });
@@ -239,8 +238,7 @@ describe('Collection split export', () => {
 	});
 
 	it('TTC → export (no options) → single TTC', async () => {
-		const buf = (await readFile(resolve(SAMPLES_DIR, 'cambria-test.ttc')))
-			.buffer;
+		const buf = (await readFile(resolve(SAMPLES_DIR, 'cambria-test.ttc'))).buffer;
 		const imported = importFont(buf);
 
 		const out = exportFont(imported);

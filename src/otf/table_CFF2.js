@@ -329,16 +329,11 @@ export function writeCFF2(tableData) {
 
 		let localSubrBytes = null;
 		if (fd.localSubrs && fd.localSubrs.length > 0) {
-			localSubrBytes = writeINDEXv2(
-				fd.localSubrs.map((s) => new Uint8Array(s)),
-			);
+			localSubrBytes = writeINDEXv2(fd.localSubrs.map((s) => new Uint8Array(s)));
 		}
 
 		if (localSubrBytes) {
-			const privWithout = encodeDICTForced(
-				privEntries,
-				PRIVATE_DICT_OFFSET_OPS,
-			);
+			const privWithout = encodeDICTForced(privEntries, PRIVATE_DICT_OFFSET_OPS);
 			const subsOffset = privWithout.length + 6; // 5-byte int32 + 1-byte operator
 			privEntries.push({
 				operator: 19, // Subrs
@@ -351,8 +346,7 @@ export function writeCFF2(tableData) {
 		return {
 			privBytes,
 			localSubrBytes,
-			totalSize:
-				privBytes.length + (localSubrBytes ? localSubrBytes.length : 0),
+			totalSize: privBytes.length + (localSubrBytes ? localSubrBytes.length : 0),
 		};
 	});
 
@@ -421,8 +415,7 @@ export function writeCFF2(tableData) {
 	];
 
 	if (fdSelectBytes) {
-		for (let i = 0; i < fdSelectBytes.length; i++)
-			result.push(fdSelectBytes[i]);
+		for (let i = 0; i < fdSelectBytes.length; i++) result.push(fdSelectBytes[i]);
 	}
 
 	if (variationStoreBytes) {

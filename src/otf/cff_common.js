@@ -594,29 +594,29 @@ export const CFF1_TOP_DICT_OPS = {
 	17: 'CharStrings',
 	18: 'Private',
 	// Two-byte operators (12, x)
-	0x0c00: 'Copyright',
-	0x0c01: 'isFixedPitch',
-	0x0c02: 'ItalicAngle',
-	0x0c03: 'UnderlinePosition',
-	0x0c04: 'UnderlineThickness',
-	0x0c05: 'PaintType',
-	0x0c06: 'CharstringType',
-	0x0c07: 'FontMatrix',
-	0x0c08: 'StrokeWidth',
-	0x0c14: 'SyntheticBase',
-	0x0c15: 'PostScript',
-	0x0c16: 'BaseFontName',
-	0x0c17: 'BaseFontBlend',
+	3072: 'Copyright',
+	3073: 'isFixedPitch',
+	3074: 'ItalicAngle',
+	3075: 'UnderlinePosition',
+	3076: 'UnderlineThickness',
+	3077: 'PaintType',
+	3078: 'CharstringType',
+	3079: 'FontMatrix',
+	3080: 'StrokeWidth',
+	3092: 'SyntheticBase',
+	3093: 'PostScript',
+	3094: 'BaseFontName',
+	3095: 'BaseFontBlend',
 	// CIDFont operators
-	0x0c1e: 'ROS',
-	0x0c1f: 'CIDFontVersion',
-	0x0c20: 'CIDFontRevision',
-	0x0c21: 'CIDFontType',
-	0x0c22: 'CIDCount',
-	0x0c23: 'UIDBase',
-	0x0c24: 'FDArray',
-	0x0c25: 'FDSelect',
-	0x0c26: 'FontName',
+	3102: 'ROS',
+	3103: 'CIDFontVersion',
+	3104: 'CIDFontRevision',
+	3105: 'CIDFontType',
+	3106: 'CIDCount',
+	3107: 'UIDBase',
+	3108: 'FDArray',
+	3109: 'FDSelect',
+	3110: 'FontName',
 };
 
 /**
@@ -639,15 +639,15 @@ export const CFF1_PRIVATE_DICT_OPS = {
 	19: 'Subrs',
 	20: 'defaultWidthX',
 	21: 'nominalWidthX',
-	0x0c09: 'BlueScale',
-	0x0c0a: 'BlueShift',
-	0x0c0b: 'BlueFuzz',
-	0x0c0c: 'StemSnapH',
-	0x0c0d: 'StemSnapV',
-	0x0c0e: 'ForceBold',
-	0x0c11: 'LanguageGroup',
-	0x0c12: 'ExpansionFactor',
-	0x0c13: 'initialRandomSeed',
+	3081: 'BlueScale',
+	3082: 'BlueShift',
+	3083: 'BlueFuzz',
+	3084: 'StemSnapH',
+	3085: 'StemSnapV',
+	3086: 'ForceBold',
+	3089: 'LanguageGroup',
+	3090: 'ExpansionFactor',
+	3091: 'initialRandomSeed',
 };
 
 /**
@@ -663,9 +663,9 @@ export const CFF1_PRIVATE_DICT_OPS_BY_NAME = Object.fromEntries(
 export const CFF2_TOP_DICT_OPS = {
 	17: 'CharStrings',
 	24: 'VariationStore',
-	0x0c07: 'FontMatrix',
-	0x0c24: 'FDArray',
-	0x0c25: 'FDSelect',
+	3079: 'FontMatrix',
+	3108: 'FDArray',
+	3109: 'FDSelect',
 };
 
 /** Reverse lookup for CFF2 Top DICT. */
@@ -693,13 +693,13 @@ export const CFF2_PRIVATE_DICT_OPS = {
 	19: 'Subrs',
 	22: 'vsindex',
 	23: 'blend',
-	0x0c09: 'BlueScale',
-	0x0c0a: 'BlueShift',
-	0x0c0b: 'BlueFuzz',
-	0x0c0c: 'StemSnapH',
-	0x0c0d: 'StemSnapV',
-	0x0c11: 'LanguageGroup',
-	0x0c12: 'ExpansionFactor',
+	3081: 'BlueScale',
+	3082: 'BlueShift',
+	3083: 'BlueFuzz',
+	3084: 'StemSnapH',
+	3085: 'StemSnapV',
+	3089: 'LanguageGroup',
+	3090: 'ExpansionFactor',
 };
 
 /**
@@ -860,8 +860,7 @@ export function parseCharset(bytes, offset, numGlyphs) {
 	if (format === 0) {
 		for (let g = 1; g < numGlyphs; g++) {
 			const sid =
-				(bytes[offset + 1 + (g - 1) * 2] << 8) |
-				bytes[offset + 2 + (g - 1) * 2];
+				(bytes[offset + 1 + (g - 1) * 2] << 8) | bytes[offset + 2 + (g - 1) * 2];
 			sids.push(sid);
 		}
 	} else if (format === 1) {

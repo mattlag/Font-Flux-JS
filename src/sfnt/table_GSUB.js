@@ -259,11 +259,7 @@ export function writeGSUB(gsub) {
 
 	const scriptListBytes = writeScriptList(gsub.scriptList);
 	const featureListBytes = writeFeatureList(gsub.featureList);
-	const lookupListBytes = writeLookupList(
-		gsub.lookupList,
-		writeGSUBSubtable,
-		7,
-	);
+	const lookupListBytes = writeLookupList(gsub.lookupList, writeGSUBSubtable, 7);
 	const featureVarBytes = gsub.featureVariations
 		? writeFeatureVariations(gsub.featureVariations)
 		: null;

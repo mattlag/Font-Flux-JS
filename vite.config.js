@@ -1,3 +1,7 @@
+// Root Vite config: builds the publishable library (`npm run build` → dist/)
+// and configures Vitest (`npm test`). The demo app has its own config at
+// demo/vite.config.js, invoked explicitly via `--config demo/vite.config.js`
+// in the demo:dev / demo:build scripts, so the two configs never interfere.
 import { resolve } from 'path';
 import { defineConfig } from 'vite';
 

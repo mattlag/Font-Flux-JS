@@ -66,21 +66,21 @@ For most workflows you only need `FontFlux`; the standalone utilities are expose
 
 ### Instance properties (live references)
 
-| Property            | Description                                                                      |
-| ------------------- | -------------------------------------------------------------------------------- |
-| `.info`             | Font metadata object (`familyName`, `styleName`, `unitsPerEm`, `ascender`, etc.) |
-| `.glyphs`           | Array of glyph objects (`name`, `unicode`, `advanceWidth`, `contours`, ...)      |
-| `.kerning`          | Array of kerning pairs `{ left, right, value }`                                  |
-| `.substitutions`    | Array of GSUB substitution rules (ligatures, small caps, alternates, etc.)       |
-| `.axes`             | Variable font axes (from fvar)                                                   |
-| `.instances`        | Named instances (from fvar)                                                      |
-| `.axisMapping`      | Axis coordinate remapping (from avar)                                            |
-| `.axisStyles`       | Axis style labels and relationships (from STAT)                                  |
-| `.metricVariations` | Global metric deltas across the design space (from MVAR)                         |
-| `.features`         | OpenType layout features (GPOS, GSUB, GDEF)                                      |
-| `.tables`           | All parsed tables (for advanced/lossless access)                                 |
-| `.glyphCount`       | Number of glyphs                                                                 |
-| `.format`           | Font format string: `'truetype'`, `'cff'`, or `'cff2'`                           |
+| Property            | Description                                                                                    |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| `.info`             | Font metadata object (`familyName`, `styleName`, `unitsPerEm`, `ascender`, etc.)               |
+| `.glyphs`           | Array of glyph objects (`name`, `unicode`, `advanceWidth`, `contours`, ...)                    |
+| `.kerning`          | Array of kerning pairs `{ left, right, value }`                                                |
+| `.substitutions`    | Array of GSUB substitution rules (ligatures, small caps, alternates, etc.)                     |
+| `.axes`             | Variable font axes (from fvar)                                                                 |
+| `.instances`        | Named instances (from fvar)                                                                    |
+| `.axisMapping`      | Axis coordinate remapping (from avar)                                                          |
+| `.axisStyles`       | Axis style labels and relationships (from STAT)                                                |
+| `.metricVariations` | Global metric deltas across the design space (from MVAR)                                       |
+| `.features`         | OpenType layout features (GPOS, GSUB, GDEF)                                                    |
+| `.tables`           | All parsed tables (for advanced/lossless access)                                               |
+| `.glyphCount`       | Number of glyphs                                                                               |
+| `.format`           | Font format string: `'truetype'`, `'cff'`, or `'cff2'`                                         |
 | `.data`             | The full simplified font data object (live reference). Escape hatch for bulk reads/transforms. |
 
 ### Glyph methods

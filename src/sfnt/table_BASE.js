@@ -48,9 +48,7 @@ export function parseBASE(rawBytes) {
 	return {
 		majorVersion,
 		minorVersion,
-		horizAxis: horizAxisOffset
-			? parseAxisTable(rawBytes, horizAxisOffset)
-			: null,
+		horizAxis: horizAxisOffset ? parseAxisTable(rawBytes, horizAxisOffset) : null,
 		vertAxis: vertAxisOffset ? parseAxisTable(rawBytes, vertAxisOffset) : null,
 		itemVariationStore: itemVarStoreOffset
 			? parseItemVariationStore(

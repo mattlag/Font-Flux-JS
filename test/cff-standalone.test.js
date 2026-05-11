@@ -39,8 +39,7 @@ function extractCFFTable(buffer) {
 
 describe('CFF', () => {
 	it('imports CFF bytes and produces valid font data', async () => {
-		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf')))
-			.buffer;
+		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
 		const cffBuffer = extractCFFTable(otfBuffer);
 
 		const result = importFont(cffBuffer);
@@ -53,8 +52,7 @@ describe('CFF', () => {
 	});
 
 	it('glyph count matches the original OTF import', async () => {
-		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf')))
-			.buffer;
+		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
 		const cffBuffer = extractCFFTable(otfBuffer);
 
 		const otfImport = importFont(otfBuffer);
@@ -64,8 +62,7 @@ describe('CFF', () => {
 	});
 
 	it('glyph contours match the original OTF import', async () => {
-		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf')))
-			.buffer;
+		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
 		const cffBuffer = extractCFFTable(otfBuffer);
 
 		const otfImport = importFont(otfBuffer);
@@ -73,15 +70,12 @@ describe('CFF', () => {
 
 		// Check the first few non-.notdef glyphs have matching contours
 		for (let i = 1; i < Math.min(10, cffImport.glyphs.length); i++) {
-			expect(cffImport.glyphs[i].contours).toEqual(
-				otfImport.glyphs[i].contours,
-			);
+			expect(cffImport.glyphs[i].contours).toEqual(otfImport.glyphs[i].contours);
 		}
 	});
 
 	it('exports CFF back to binary', async () => {
-		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf')))
-			.buffer;
+		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
 		const cffBuffer = extractCFFTable(otfBuffer);
 
 		const imported = importFont(cffBuffer);
@@ -97,8 +91,7 @@ describe('CFF', () => {
 	});
 
 	it('CFF round-trip preserves glyph contours', async () => {
-		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf')))
-			.buffer;
+		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
 		const cffBuffer = extractCFFTable(otfBuffer);
 
 		const imported = importFont(cffBuffer);
@@ -106,15 +99,12 @@ describe('CFF', () => {
 		const reimported = importFont(exported);
 
 		for (let i = 0; i < imported.glyphs.length; i++) {
-			expect(reimported.glyphs[i].contours).toEqual(
-				imported.glyphs[i].contours,
-			);
+			expect(reimported.glyphs[i].contours).toEqual(imported.glyphs[i].contours);
 		}
 	});
 
 	it('defaults to CFF format when exporting a CFF import', async () => {
-		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf')))
-			.buffer;
+		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
 		const cffBuffer = extractCFFTable(otfBuffer);
 
 		const imported = importFont(cffBuffer);

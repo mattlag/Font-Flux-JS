@@ -425,9 +425,7 @@ function buildFontSections(font) {
 	// Local Subrs go immediately after Private DICT
 	let localSubrBytes = null;
 	if (font.localSubrs && font.localSubrs.length > 0) {
-		localSubrBytes = writeINDEXv1(
-			font.localSubrs.map((s) => new Uint8Array(s)),
-		);
+		localSubrBytes = writeINDEXv1(font.localSubrs.map((s) => new Uint8Array(s)));
 	}
 
 	// If there are local subrs, add Subrs entry to Private DICT

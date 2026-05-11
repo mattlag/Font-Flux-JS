@@ -151,14 +151,7 @@ describe('post table synthetic', () => {
 			maxMemType42: 0,
 			minMemType1: 0,
 			maxMemType1: 0,
-			glyphNames: [
-				'.notdef',
-				'space',
-				'A',
-				'B',
-				'myCustomGlyph',
-				'anotherGlyph',
-			],
+			glyphNames: ['.notdef', 'space', 'A', 'B', 'myCustomGlyph', 'anotherGlyph'],
 		};
 
 		const bytes = writePost(table);

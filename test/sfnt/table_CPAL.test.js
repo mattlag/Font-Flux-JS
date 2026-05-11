@@ -77,10 +77,7 @@ describe('CPAL table', () => {
 
 	it('should round-trip CPAL from BungeeTint-Regular.ttf', () => {
 		const buf = fs.readFileSync(path.join(SAMPLES, 'BungeeTint-Regular.ttf'));
-		const ab = buf.buffer.slice(
-			buf.byteOffset,
-			buf.byteOffset + buf.byteLength,
-		);
+		const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
 		const font = importFontTables(ab);
 
 		const exported = exportFont(font);

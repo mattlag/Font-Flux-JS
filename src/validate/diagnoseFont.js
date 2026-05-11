@@ -1,10 +1,9 @@
+// Re-use the import pipeline's table parser registry and parse order
+import { tableParseOrder, tableParsers } from '../import.js';
 import { DataReader } from '../reader.js';
 import { unwrapWOFF1 } from '../woff/woff1.js';
 import { unwrapWOFF2 } from '../woff/woff2.js';
 import { ALL_SUPPORTED_TABLES, REQUIRED_CORE_TABLES } from './tables.js';
-
-// Re-use the import pipeline's table parser registry and parse order
-import { tableParseOrder, tableParsers } from '../import.js';
 
 // =========================================================================
 //  Known SFNT signatures
@@ -85,12 +84,7 @@ function computeChecksum(bytes, offset, length) {
  */
 function phaseSignature(buffer, issues) {
 	if (!(buffer instanceof ArrayBuffer)) {
-		addIssue(
-			issues,
-			'error',
-			'NOT_ARRAYBUFFER',
-			'Input is not an ArrayBuffer.',
-		);
+		addIssue(issues, 'error', 'NOT_ARRAYBUFFER', 'Input is not an ArrayBuffer.');
 		return null;
 	}
 	if (buffer.byteLength < 12) {
@@ -1030,8 +1024,7 @@ const NAME_LANG_TAG_MAX_BYTES = 200;
  * `[`, `]`, `(`, `)`, `{`, `}`, `<`, `>`, `/`, `%`, plus anything outside
  * printable 7-bit ASCII (0x21–0x7E).
  */
-const POSTSCRIPT_NAME_INVALID_CHARS =
-	/[\x00-\x20\x7F-\uFFFF\[\]\(\)\{\}\<\>\/\%]/;
+const POSTSCRIPT_NAME_INVALID_CHARS = /[\x00-\x20\x7F-\uFFFF[\](){}<>/%]/;
 
 function validateNameDeep(name, entries, sfnt, issues) {
 	// 1. Format must be 0 or 1.  Parser exposes it as `version`.
@@ -1239,9 +1232,7 @@ function validateWoff1Wrapper(buffer, issues) {
 	let lastEnd = dirEnd;
 	if (dirEnd <= buffer.byteLength) {
 		for (let i = 0; i < numTables; i++) {
-			const off = view.getUint32(
-				WOFF1_HEADER_SIZE + i * WOFF1_DIR_ENTRY_SIZE + 4,
-			);
+			const off = view.getUint32(WOFF1_HEADER_SIZE + i * WOFF1_DIR_ENTRY_SIZE + 4);
 			const compLen = view.getUint32(
 				WOFF1_HEADER_SIZE + i * WOFF1_DIR_ENTRY_SIZE + 8,
 			);
@@ -1594,8 +1585,7 @@ function validateSTAT(stat, fvar, issues) {
 				typeof av.rangeMaxValue === 'number' &&
 				typeof av.nominalValue === 'number' &&
 				!(
-					av.rangeMinValue <= av.nominalValue &&
-					av.nominalValue <= av.rangeMaxValue
+					av.rangeMinValue <= av.nominalValue && av.nominalValue <= av.rangeMaxValue
 				)
 			) {
 				addIssue(
@@ -2115,13 +2105,7 @@ function validateLayoutSubtables(
 			const label = `${tableName} lookup ${li} (type ${lk.lookupType}) subtable ${si}`;
 
 			if (st.coverage) {
-				validateCoverage(
-					st.coverage,
-					numGlyphs,
-					`${label}.coverage`,
-					issues,
-					ctx,
-				);
+				validateCoverage(st.coverage, numGlyphs, `${label}.coverage`, issues, ctx);
 			}
 			if (Array.isArray(st.coverages)) {
 				for (let ci = 0; ci < st.coverages.length; ci++) {
@@ -2230,7 +2214,8 @@ function validateMATH(math, issues) {
 
 const CFF_TYPE2_OPS = new Set([
 	1, 3, 4, 5, 6, 7, 8, 10, 11, 14, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29,
-	30, 31,
+	30,
+	31,
 	// 12 is the escape byte; valid two-byte ops are checked separately.
 ]);
 
@@ -3075,25 +3060,17 @@ function validateTrueTypeInstructions(bytes, owner, issues) {
 
 function validateTrueTypeProgramTables(parsedTables, issues) {
 	if (parsedTables.fpgm?.instructions) {
-		validateTrueTypeInstructions(
-			parsedTables.fpgm.instructions,
-			'fpgm',
-			issues,
-		);
+		validateTrueTypeInstructions(parsedTables.fpgm.instructions, 'fpgm', issues);
 	}
 	if (parsedTables.prep?.instructions) {
-		validateTrueTypeInstructions(
-			parsedTables.prep.instructions,
-			'prep',
-			issues,
-		);
+		validateTrueTypeInstructions(parsedTables.prep.instructions, 'prep', issues);
 	}
 	const glyphs = parsedTables.glyf?.glyphs;
 	if (Array.isArray(glyphs)) {
 		// To avoid noise, only walk each glyph until the first issue is found.
 		// validateTrueTypeInstructions already de-duplicates per call, but we
 		// also stop after the first glyph that reports anything.
-		let firstIssueCount = issues.length;
+		const firstIssueCount = issues.length;
 		for (let gid = 0; gid < glyphs.length; gid++) {
 			const instr = glyphs[gid]?.instructions;
 			if (!instr || instr.length === 0) continue;
@@ -3276,10 +3253,7 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 	}
 
 	// OS/2 version must be 0..5 (Firefox/OTS rejects unknown versions).
-	if (
-		parsedTables['OS/2'] &&
-		typeof parsedTables['OS/2'].version === 'number'
-	) {
+	if (parsedTables['OS/2'] && typeof parsedTables['OS/2'].version === 'number') {
 		const v = parsedTables['OS/2'].version;
 		if (v < 0 || v > 5) {
 			addIssue(
@@ -3426,9 +3400,7 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 			const langA = (subs[a.subtableIndex] || {}).language || 0;
 			const langB = (subs[b.subtableIndex] || {}).language || 0;
 			const cmp =
-				a.platformID - b.platformID ||
-				a.encodingID - b.encodingID ||
-				langA - langB;
+				a.platformID - b.platformID || a.encodingID - b.encodingID || langA - langB;
 			if (cmp >= 0) {
 				addIssue(
 					issues,
@@ -3519,8 +3491,7 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 	// vmtx + vhea consistency
 	if (parsedTables.vhea && parsedTables.vmtx) {
 		const expected =
-			parsedTables.vhea.numOfLongVerMetrics ??
-			parsedTables.vhea.numberOfVMetrics;
+			parsedTables.vhea.numOfLongVerMetrics ?? parsedTables.vhea.numberOfVMetrics;
 		const actual = parsedTables.vmtx.metrics?.length ?? 0;
 		if (expected !== undefined && actual !== expected) {
 			addIssue(

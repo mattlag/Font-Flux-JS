@@ -209,7 +209,7 @@ function buildType1Private() {
 	// Simplify: just concatenate all text parts and insert binary at the right spots
 
 	// Actually, let's build the whole thing as bytes directly
-	let textSoFar = textParts.slice(0, 8).join(''); // up to and including "RD "
+	const textSoFar = textParts.slice(0, 8).join(''); // up to and including "RD "
 	const part1 = new TextEncoder().encode(textSoFar);
 
 	const textAfterNotdef = textParts.slice(8, 10).join(''); // " ND\n" + "/A N RD "
@@ -410,9 +410,7 @@ describe('PFA import', () => {
 			expect(pfaResult.glyphs[i].advanceWidth).toBe(
 				pfbResult.glyphs[i].advanceWidth,
 			);
-			expect(pfaResult.glyphs[i].contours).toEqual(
-				pfbResult.glyphs[i].contours,
-			);
+			expect(pfaResult.glyphs[i].contours).toEqual(pfbResult.glyphs[i].contours);
 		}
 	});
 });

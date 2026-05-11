@@ -69,14 +69,12 @@ describe('maxp table round-trip', () => {
 	});
 
 	it('should write 6 bytes for v0.5 and 32 bytes for v1.0', async () => {
-		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf')))
-			.buffer;
+		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
 		const otfFont = importFontTables(otfBuffer);
 		const { _checksum: _c1, ...otfMaxp } = otfFont.tables['maxp'];
 		expect(writeMaxp(otfMaxp).length).toBe(6);
 
-		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf')))
-			.buffer;
+		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf'))).buffer;
 		const ttfFont = importFontTables(ttfBuffer);
 		const { _checksum: _c2, ...ttfMaxp } = ttfFont.tables['maxp'];
 		expect(writeMaxp(ttfMaxp).length).toBe(32);
