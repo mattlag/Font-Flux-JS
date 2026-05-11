@@ -5,10 +5,10 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { importFont } from '../../src/import.js';
-import { contoursToSVGPath, svgPathToContours } from '../../src/svg_path.js';
+import { importFont } from '../src/import.js';
+import { contoursToSVGPath, svgPathToContours } from '../src/svg_path.js';
 
-const SAMPLES_DIR = resolve(import.meta.dirname, '..', 'sample fonts');
+const SAMPLES_DIR = resolve(import.meta.dirname, 'sample fonts');
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  contoursToSVGPath

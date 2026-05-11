@@ -1,6 +1,8 @@
 # Firefox / OTS Validator Parity — Working Document
 
-**Status:** research complete, implementation not started
+_Last reviewed: May 11, 2026 (codebase audit). The implementation work described here was largely completed across FFJS v2.4.0–v2.4.8 — see `/memories/repo/firefox-parity-versioning.md` for the ship log. This document is retained as a historical research note._
+
+**Status:** historical (research → implementation cycle complete; tier-by-tier rollout shipped in 2.4.x).
 **Goal:** bring `src/validate/diagnoseFont.js` to feature parity with Firefox's font sanitizer (OTS) so that "FFJS validator passes" ≈ "Firefox will load this font without complaint."
 **Baseline at time of research:** FFJS v2.3.4 (post-CFF-version fix), ~50 diagnostic codes.
 

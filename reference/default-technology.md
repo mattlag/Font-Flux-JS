@@ -1,6 +1,9 @@
 # Default Technology Decisions for From-Scratch Font Export
 
-_Last Updated: April 15, 2026_
+_Last reviewed: May 11, 2026 (codebase audit — content still accurate)_
+
+> The public-facing version of this content lives at [`docs/default-technology.md`](../docs/default-technology.md).
+> Keep them in sync when defaults change.
 
 When a user creates a font from scratch via `FontFlux.create()` and exports it, the library makes technology decisions at every point where multiple competing implementations exist. This document records each decision, the alternatives, and the rationale.
 

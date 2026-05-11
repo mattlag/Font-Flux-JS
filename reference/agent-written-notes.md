@@ -1,9 +1,12 @@
 # Agent Working Notes — Font Flux JS
 
-_Last Updated: April 14, 2026_
+_Last reviewed: May 11, 2026 (codebase audit)_
 
 > These notes are written BY agents FOR future agents. Optimized for fast onboarding.
 > Read `agent-context.md` first for project overview. This file covers technical internals.
+>
+> **Note** — Source-of-truth for current architecture is `/memories/repo/` and the live source.
+> Statements about specific exports, version numbers, or test counts may have drifted.
 
 ## Quick Start
 

@@ -1,6 +1,11 @@
 # Font-Flux-JS Table Completeness Audit
 
-_Last Updated: April 14, 2026_
+_Last reviewed: May 11, 2026 (codebase audit)_
+
+> **Note** — Counts below reflect the April 2026 snapshot; the qualitative gaps
+> (CIDFont writing, MATH/JSTF/MERG subtables, glyf instructions, DSIG signature
+> bytes) are still accurate. This page should eventually graduate to a public
+> "Known limitations" page under `docs/`.
 
 **51 table types** have registered parsers and writers. **~40 are fully structured JSON**; **~11 have partial raw byte storage**. No tables are completely missing. Every table that has a parser also has a writer.
 

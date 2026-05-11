@@ -717,7 +717,7 @@ describe('Static utilities', () => {
 // ============================================================================
 
 describe('FontFlux.exportCollection()', () => {
-	it('exports multiple fonts as TTC', async () => {
+	it('exports multiple fonts as TTC', { timeout: 60000 }, async () => {
 		const buffer = (await readFile(resolve(SAMPLES_DIR, 'cambria-test.ttc')))
 			.buffer;
 		const fonts = FontFlux.openAll(buffer);

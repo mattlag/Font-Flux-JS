@@ -1,6 +1,10 @@
 # Font Flux JS
 
-_Last Updated: April 14, 2026_
+_Last reviewed: May 11, 2026 (codebase audit)_
+
+> **Note** — This folder holds long-form working notes written by agents for future agents.
+> For the canonical, always-current overview, see [`docs/index.md`](../docs/index.md) and the
+> repo memory in `/memories/repo/`. Some details below may lag the source of truth.
 
 This project is a JavaScript library that converts binary font files (OTF, TTF, WOFF, WOFF2) to and from JSON. Distributed as a single ES module file for use in front-end HTML5 font editor programs. Part of the Glyphr Studio family.
 

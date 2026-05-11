@@ -10,11 +10,11 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { exportFont } from '../../src/export.js';
-import { FontFlux } from '../../src/font_flux.js';
-import { importFont } from '../../src/import.js';
+import { exportFont } from '../src/export.js';
+import { FontFlux } from '../src/font_flux.js';
+import { importFont } from '../src/import.js';
 
-const SAMPLES_DIR = resolve(import.meta.dirname, '..', 'sample fonts');
+const SAMPLES_DIR = resolve(import.meta.dirname, 'sample fonts');
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  Simplification: import decomposes GSUB into substitutions
