@@ -365,12 +365,26 @@ export function interpretCharString(
 					while (j < stack.length) {
 						if (j + 3 < stack.length) {
 							const extra = stack.length - j === 5 ? stack[j + 4] : 0;
-							curveTo(0, stack[j], stack[j + 1], stack[j + 2], stack[j + 3], extra);
+							curveTo(
+								0,
+								stack[j],
+								stack[j + 1],
+								stack[j + 2],
+								stack[j + 3],
+								extra,
+							);
 							j += extra !== 0 ? 5 : 4;
 						} else break;
 						if (j + 3 < stack.length) {
 							const extra = stack.length - j === 5 ? stack[j + 4] : 0;
-							curveTo(stack[j], 0, stack[j + 1], stack[j + 2], extra, stack[j + 3]);
+							curveTo(
+								stack[j],
+								0,
+								stack[j + 1],
+								stack[j + 2],
+								extra,
+								stack[j + 3],
+							);
 							j += extra !== 0 ? 5 : 4;
 						} else break;
 					}
@@ -384,12 +398,26 @@ export function interpretCharString(
 					while (j < stack.length) {
 						if (j + 3 < stack.length) {
 							const extra = stack.length - j === 5 ? stack[j + 4] : 0;
-							curveTo(stack[j], 0, stack[j + 1], stack[j + 2], extra, stack[j + 3]);
+							curveTo(
+								stack[j],
+								0,
+								stack[j + 1],
+								stack[j + 2],
+								extra,
+								stack[j + 3],
+							);
 							j += extra !== 0 ? 5 : 4;
 						} else break;
 						if (j + 3 < stack.length) {
 							const extra = stack.length - j === 5 ? stack[j + 4] : 0;
-							curveTo(0, stack[j], stack[j + 1], stack[j + 2], stack[j + 3], extra);
+							curveTo(
+								0,
+								stack[j],
+								stack[j + 1],
+								stack[j + 2],
+								stack[j + 3],
+								extra,
+							);
 							j += extra !== 0 ? 5 : 4;
 						} else break;
 					}
@@ -538,27 +566,28 @@ export function interpretCharString(
 				stack.length = 0;
 				i++;
 			} else if (b0 === 10) {
-				// callsubr
+				// callsubr — propagate stemCount changes back up
 				i++;
 				const subrIndex = stack.pop() + localBias;
 				if (localSubrs[subrIndex]) {
-					executeReal(localSubrs[subrIndex], stemCount);
+					stemCount = executeReal(localSubrs[subrIndex], stemCount);
 				}
 			} else if (b0 === 29) {
-				// callgsubr
+				// callgsubr — propagate stemCount changes back up
 				i++;
 				const subrIndex = stack.pop() + globalBias;
 				if (globalSubrs[subrIndex]) {
-					executeReal(globalSubrs[subrIndex], stemCount);
+					stemCount = executeReal(globalSubrs[subrIndex], stemCount);
 				}
 			} else if (b0 === 11) {
 				// return
-				return;
+				return stemCount;
 			} else {
 				i++;
 				execOneByteOp(b0);
 			}
 		}
+		return stemCount;
 	}
 
 	// Run the interpreter

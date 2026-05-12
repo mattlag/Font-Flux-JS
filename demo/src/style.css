@@ -1265,8 +1265,7 @@ pre.data-string-long.data-expanded {
 }
 
 .glyph-thumb {
-	width: 56px;
-	height: 56px;
+	display: block;
 	background: transparent;
 	border-radius: 4px;
 }

@@ -1,6 +1,8 @@
 /**
  * Preview tab — live text preview and glyph outline grid.
  */
+import { drawGlyphTile } from '../components/glyph-tile.js';
+
 export const previewTab = {
 	id: 'preview',
 	label: 'Preview',
@@ -76,8 +78,6 @@ function buildPreviewSection(fontData) {
 
 function buildGlyphSample(fontData, wrap) {
 	const glyphs = fontData.glyphs || [];
-	const upm = fontData.font?.unitsPerEm || 1000;
-	const ascender = fontData.font?.ascender || upm * 0.8;
 	const PAGE_SIZE = 100;
 
 	// Collect up to 1000 glyphs that have contours
@@ -129,10 +129,7 @@ function buildGlyphSample(fontData, wrap) {
 
 			const canvas = document.createElement('canvas');
 			canvas.className = 'glyph-thumb';
-			canvas.width = 128;
-			canvas.height = 128;
-
-			drawGlyph(canvas, glyph, upm, ascender);
+			drawGlyphTile(canvas, { glyph, fontData, size: 56 });
 
 			const label = document.createElement('div');
 			label.className = 'glyph-label';
@@ -144,7 +141,7 @@ function buildGlyphSample(fontData, wrap) {
 			label.title = [name, uni].filter(Boolean).join(' · ');
 
 			cell.addEventListener('click', () => {
-				showGlyphDetail(detailPanel, glyph, upm, ascender);
+				showGlyphDetail(detailPanel, glyph, fontData);
 				detailPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 			});
 
@@ -192,7 +189,7 @@ function buildGlyphSample(fontData, wrap) {
 
 // ─── Glyph Detail Panel ─────────────────────────────────────────────────────
 
-function showGlyphDetail(panel, glyph, upm, ascender) {
+function showGlyphDetail(panel, glyph, fontData) {
 	panel.hidden = false;
 	panel.innerHTML = '';
 
@@ -214,9 +211,7 @@ function showGlyphDetail(panel, glyph, upm, ascender) {
 	const canvasWrap = document.createElement('div');
 	canvasWrap.className = 'glyph-detail-canvas-wrap';
 	const canvas = document.createElement('canvas');
-	canvas.width = 256;
-	canvas.height = 256;
-	drawGlyph(canvas, glyph, upm, ascender);
+	drawGlyphTile(canvas, { glyph, fontData, size: 256 });
 	canvasWrap.appendChild(canvas);
 	layout.appendChild(canvasWrap);
 
@@ -371,79 +366,6 @@ function esc(str) {
 	const d = document.createElement('div');
 	d.textContent = str;
 	return d.innerHTML;
-}
-
-/**
- * Draw a single glyph's contours onto a canvas.
- * Handles both TrueType contours (points with onCurve) and
- * CFF contours (path commands: M/L/C).
- */
-function drawGlyph(canvas, glyph, upm, ascender) {
-	const ctx = canvas.getContext('2d');
-	const size = canvas.width;
-	const padding = 8;
-	const drawSize = size - padding * 2;
-	const scale = drawSize / upm;
-
-	ctx.clearRect(0, 0, size, size);
-
-	ctx.save();
-	ctx.translate(padding, padding + ascender * scale);
-	ctx.scale(scale, -scale);
-
-	ctx.beginPath();
-	for (const contour of glyph.contours) {
-		if (contour.length === 0) continue;
-
-		// Detect format: CFF commands have a `type` property
-		if (contour[0].type) {
-			// CFF path commands
-			for (const cmd of contour) {
-				switch (cmd.type) {
-					case 'M':
-						ctx.moveTo(cmd.x, cmd.y);
-						break;
-					case 'L':
-						ctx.lineTo(cmd.x, cmd.y);
-						break;
-					case 'C':
-						ctx.bezierCurveTo(cmd.x1, cmd.y1, cmd.x2, cmd.y2, cmd.x, cmd.y);
-						break;
-				}
-			}
-			ctx.closePath();
-		} else {
-			// TrueType points with onCurve
-			let i = 0;
-			const first = contour[0];
-			ctx.moveTo(first.x, first.y);
-			i = 1;
-
-			while (i < contour.length) {
-				const pt = contour[i];
-				if (pt.onCurve) {
-					ctx.lineTo(pt.x, pt.y);
-					i++;
-				} else {
-					const next = contour[(i + 1) % contour.length];
-					if (next.onCurve) {
-						ctx.quadraticCurveTo(pt.x, pt.y, next.x, next.y);
-						i += 2;
-					} else {
-						const midX = (pt.x + next.x) / 2;
-						const midY = (pt.y + next.y) / 2;
-						ctx.quadraticCurveTo(pt.x, pt.y, midX, midY);
-						i++;
-					}
-				}
-			}
-			ctx.closePath();
-		}
-	}
-
-	ctx.fillStyle = '#1a1a1a';
-	ctx.fill('evenodd');
-	ctx.restore();
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
