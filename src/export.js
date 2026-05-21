@@ -348,6 +348,34 @@ function cffGlyphsUnmodified(originalCFF, simplifiedGlyphs) {
 	return true;
 }
 
+/**
+ * Ensure the preserved CFF table's Top DICT carries a FontMatrix that matches
+ * the font's unitsPerEm.  The CFF default FontMatrix is [0.001 0 0 0.001 0 0]
+ * (1000-unit em); when unitsPerEm differs, an explicit FontMatrix of
+ * [1/upm 0 0 1/upm 0 0] is required, otherwise rasterizers will render
+ * outlines at the wrong scale relative to hmtx advances and the em-square.
+ * (See: Oblegg-Regular at upm=2048 — letters rendered ~2x too large.)
+ */
+function ensureCFFFontMatrix(cffTable, font) {
+	const upm = font?.unitsPerEm || 1000;
+	if (upm === 1000) return; // default is already correct
+	const f0 = cffTable?.fonts?.[0];
+	if (!f0) return;
+	f0.topDict = f0.topDict || {};
+	const expected = 1 / upm;
+	const cur = f0.topDict.FontMatrix;
+	const matches =
+		Array.isArray(cur) &&
+		cur.length === 6 &&
+		Math.abs(cur[0] - expected) < 1e-9 &&
+		cur[1] === 0 &&
+		cur[2] === 0 &&
+		Math.abs(cur[3] - expected) < 1e-9;
+	if (!matches) {
+		f0.topDict.FontMatrix = [expected, 0, 0, expected, 0, 0];
+	}
+}
+
 function resolveExportSource(fontData) {
 	// Legacy shape: { header, tables } — already the raw format
 	if (fontData.header && fontData.tables) {
@@ -373,6 +401,7 @@ function resolveExportSource(fontData) {
 		if (fontData.tables['CFF '] && rebuilt.tables['CFF ']) {
 			if (cffGlyphsUnmodified(fontData.tables['CFF '], fontData.glyphs)) {
 				rebuilt.tables['CFF '] = fontData.tables['CFF '];
+				ensureCFFFontMatrix(rebuilt.tables['CFF '], fontData.font);
 			}
 		}
 		if (fontData.tables.CFF2 && rebuilt.tables.CFF2) {

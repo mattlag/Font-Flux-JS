@@ -1,6 +1,6 @@
 {
 	"name": "font-flux-js",
-	"version": "2.4.17",
+	"version": "2.4.20",
 	"description": "Convert fonts to JSON, make edits, then convert them back!",
 	"main": "dist/font-flux-js.js",
 	"type": "module",
@@ -25,8 +25,8 @@
 		"docs:dev": "vitepress dev docs",
 		"docs:build": "vitepress build docs",
 		"docs:preview": "vitepress preview docs",
-		"lint": "biome check",
-		"format": "biome check --write"
+		"lint": "biome lint",
+		"format": "biome lint --write"
 	},
 	"repository": {
 		"type": "git",

@@ -835,6 +835,10 @@ body {
 	font-family: var(--font-mono);
 }
 
+.l1-panel-tables > .tab-bar {
+	justify-content: center;
+}
+
 .tab-btn:hover {
 	color: var(--text);
 }

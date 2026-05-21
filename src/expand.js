@@ -542,14 +542,18 @@ function buildMaxpTable(glyphs, isCFF) {
 				points += contour.length;
 			}
 			if (points > maxPoints) maxPoints = points;
-			if (glyph.contours.length > maxContours) maxContours = glyph.contours.length;
+			if (glyph.contours.length > maxContours)
+				maxContours = glyph.contours.length;
 		}
 		if (glyph.components) {
 			if (glyph.components.length > maxComponentElements)
 				maxComponentElements = glyph.components.length;
 			if (1 > maxComponentDepth) maxComponentDepth = 1;
 		}
-		if (glyph.instructions && glyph.instructions.length > maxSizeOfInstructions) {
+		if (
+			glyph.instructions &&
+			glyph.instructions.length > maxSizeOfInstructions
+		) {
 			maxSizeOfInstructions = glyph.instructions.length;
 		}
 	}
@@ -647,7 +651,9 @@ function buildNameTable(font) {
 		1: font.familyName || '',
 		2: font.styleName || '',
 		3: font.uniqueID || buildUniqueID(font),
-		4: font.fullName || `${font.familyName || ''} ${font.styleName || ''}`.trim(),
+		4:
+			font.fullName ||
+			`${font.familyName || ''} ${font.styleName || ''}`.trim(),
 		5: font.version || 'Version 1.000',
 		6: font.postScriptName || buildPostScriptName(font),
 		7: font.trademark || '',
@@ -1043,6 +1049,24 @@ function buildCFFShell(font, glyphs) {
 	// Charset glyph names also need SIDs
 	const charsetSIDs = charset.map((name) => addString(name));
 
+	const unitsPerEm = font.unitsPerEm || 1000;
+	const topDict = {
+		FullName: addString(fullName),
+		FamilyName: addString(familyName),
+		Weight: addString(weight),
+		FontBBox: [0, font.descender || 0, unitsPerEm, font.ascender || 0],
+	};
+	// The CFF spec's default FontMatrix is [0.001 0 0 0.001 0 0], i.e. outline
+	// units are interpreted as 1/1000 em. When the OTF's unitsPerEm is anything
+	// other than 1000, we must emit an explicit FontMatrix of [1/upm ... 1/upm]
+	// — otherwise rasterizers render the glyph outlines at the wrong scale
+	// relative to hmtx advances and the em-square, producing oversized,
+	// overlapping text. (See issue: Oblegg-Regular at upm=2048.)
+	if (unitsPerEm !== 1000) {
+		const s = 1 / unitsPerEm;
+		topDict.FontMatrix = [s, 0, 0, s, 0, 0];
+	}
+
 	return {
 		majorVersion: 1,
 		minorVersion: 0,
@@ -1051,17 +1075,7 @@ function buildCFFShell(font, glyphs) {
 		globalSubrs: [],
 		fonts: [
 			{
-				topDict: {
-					FullName: addString(fullName),
-					FamilyName: addString(familyName),
-					Weight: addString(weight),
-					FontBBox: [
-						0,
-						font.descender || 0,
-						font.unitsPerEm || 1000,
-						font.ascender || 0,
-					],
-				},
+				topDict,
 				charset: charsetSIDs,
 				encoding: [],
 				charStrings,
@@ -1195,7 +1209,9 @@ function buildKernTableOTFormat2(kerning, glyphs) {
 
 	// Find glyph ranges for class tables
 	const leftGlyphs = Array.from(leftGlyphToClass.keys()).sort((a, b) => a - b);
-	const rightGlyphs = Array.from(rightGlyphToClass.keys()).sort((a, b) => a - b);
+	const rightGlyphs = Array.from(rightGlyphToClass.keys()).sort(
+		(a, b) => a - b,
+	);
 
 	const leftFirstGlyph = leftGlyphs.length > 0 ? leftGlyphs[0] : 0;
 	const leftNGlyphs =
@@ -1322,7 +1338,11 @@ function buildKernTableAppleFormat3(kerning, glyphs) {
 	}
 
 	// Check Format 3 limits (uint8 for all arrays)
-	if (leftClassCount > 255 || rightClassCount > 255 || uniqueValues.size > 255) {
+	if (
+		leftClassCount > 255 ||
+		rightClassCount > 255 ||
+		uniqueValues.size > 255
+	) {
 		return buildKernTableAppleFormat0(kerning, glyphs);
 	}
 
@@ -2142,7 +2162,9 @@ function buildGSUBFromSubstitutions(substitutions, rawLookups, glyphs) {
 			featureTag,
 			feature: {
 				featureParamsOffset: 0,
-				lookupListIndices: Array.from(entry.lookupIndices).sort((a, b) => a - b),
+				lookupListIndices: Array.from(entry.lookupIndices).sort(
+					(a, b) => a - b,
+				),
 			},
 		});
 	}
@@ -2265,7 +2287,9 @@ function buildGSUBFromRawLookups(rawLookups) {
 			featureTag,
 			feature: {
 				featureParamsOffset: 0,
-				lookupListIndices: Array.from(entry.lookupIndices).sort((a, b) => a - b),
+				lookupListIndices: Array.from(entry.lookupIndices).sort(
+					(a, b) => a - b,
+				),
 			},
 		});
 	}

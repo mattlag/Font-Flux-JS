@@ -137,8 +137,7 @@ function makeContext(tag, fontData) {
 		if (tag === 'loca' && last === 'offsets') {
 			// loca has numGlyphs+1 entries; the trailing sentinel has no glyph.
 			const numGlyphs = glyphs?.length;
-			return (i) =>
-				numGlyphs != null && i >= numGlyphs ? null : i;
+			return (i) => (numGlyphs != null && i >= numGlyphs ? null : i);
 		}
 		if (tag === 'LTSH' && last === 'yPels') return (i) => i;
 		if (
@@ -166,7 +165,14 @@ function makeContext(tag, fontData) {
  * @param path           Key path from the root of the current table.
  * @param glyphBadgeText Optional pre-computed glyph badge for this row.
  */
-function buildNode(value, key, startOpen = false, ctx, path = [], glyphBadgeText = null) {
+function buildNode(
+	value,
+	key,
+	startOpen = false,
+	ctx,
+	path = [],
+	glyphBadgeText = null,
+) {
 	// Handle null/undefined
 	if (value === null || value === undefined) {
 		return makeLeaf(key, 'null', 'null', null, glyphBadgeText);
@@ -322,15 +328,11 @@ function buildNode(value, key, startOpen = false, ctx, path = [], glyphBadgeText
 				const list = document.createElement('div');
 				list.className = 'data-children';
 				for (const k of keys) {
-					list.appendChild(
-						buildNode(value[k], k, false, ctx, [...path, k]),
-					);
+					list.appendChild(buildNode(value[k], k, false, ctx, [...path, k]));
 				}
 				if (internalKeys.length > 0) {
 					for (const k of internalKeys) {
-						list.appendChild(
-							buildNode(value[k], k, false, ctx, [...path, k]),
-						);
+						list.appendChild(buildNode(value[k], k, false, ctx, [...path, k]));
 					}
 				}
 				return list;
