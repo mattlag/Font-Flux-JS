@@ -211,8 +211,23 @@ function showGlyphDetail(panel, glyph, fontData) {
 	const canvasWrap = document.createElement('div');
 	canvasWrap.className = 'glyph-detail-canvas-wrap';
 	const canvas = document.createElement('canvas');
-	drawGlyphTile(canvas, { glyph, fontData, size: 256 });
+	let showBounds = false;
+	drawGlyphTile(canvas, { glyph, fontData, size: 256, showBounds });
 	canvasWrap.appendChild(canvas);
+
+	const boundsToggle = document.createElement('label');
+	boundsToggle.className = 'glyph-detail-bounds-toggle';
+	const boundsCheckbox = document.createElement('input');
+	boundsCheckbox.type = 'checkbox';
+	boundsCheckbox.checked = showBounds;
+	boundsCheckbox.addEventListener('change', () => {
+		showBounds = boundsCheckbox.checked;
+		drawGlyphTile(canvas, { glyph, fontData, size: 256, showBounds });
+	});
+	const boundsLabel = document.createTextNode(' Show glyph bounds');
+	boundsToggle.append(boundsCheckbox, boundsLabel);
+	canvasWrap.appendChild(boundsToggle);
+
 	layout.appendChild(canvasWrap);
 
 	// --- Right: data ---
@@ -340,7 +355,9 @@ function formatContours(contours) {
 						lines.push(`  L ${pt.x} ${pt.y}`);
 						break;
 					case 'C':
-						lines.push(`  C ${pt.x1} ${pt.y1}  ${pt.x2} ${pt.y2}  ${pt.x} ${pt.y}`);
+						lines.push(
+							`  C ${pt.x1} ${pt.y1}  ${pt.x2} ${pt.y2}  ${pt.x} ${pt.y}`,
+						);
 						break;
 				}
 			} else {

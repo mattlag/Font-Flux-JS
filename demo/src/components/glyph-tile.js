@@ -29,6 +29,7 @@
  * @param {number} [options.height] - Optional CSS pixel height.
  * @param {number} [options.padding=0.08] - Inner padding as a fraction of the smaller dimension.
  * @param {string} [options.fillColor] - Glyph fill color (defaults to CSS --text or #1a1a1a).
+ * @param {boolean} [options.showBounds=false] - Overlay baseline, x=0, and advanceWidth guide lines.
  * @returns {HTMLCanvasElement}
  */
 export function createGlyphTile(options) {
@@ -54,6 +55,7 @@ export function drawGlyphTile(canvas, options) {
 		height = size,
 		padding = 0.08,
 		fillColor,
+		showBounds = false,
 	} = options;
 
 	const dpr = window.devicePixelRatio || 1;
@@ -168,6 +170,40 @@ export function drawGlyphTile(canvas, options) {
 	ctx.fillStyle = fillColor || resolveFillColor();
 	ctx.fill('evenodd');
 	ctx.restore();
+
+	if (showBounds) {
+		const baselineY = offsetY;
+		const xZero = offsetX;
+		const advance = glyph.advanceWidth ?? 0;
+		const xAdvance = offsetX + advance * scale;
+
+		ctx.save();
+		ctx.lineWidth = 1;
+
+		// Baseline (y=0) — horizontal
+		ctx.strokeStyle = 'rgba(220, 50, 50, 0.85)';
+		ctx.beginPath();
+		ctx.moveTo(0, baselineY + 0.5);
+		ctx.lineTo(width, baselineY + 0.5);
+		ctx.stroke();
+
+		// x=0 left boundary — vertical
+		ctx.strokeStyle = 'rgba(50, 120, 220, 0.85)';
+		ctx.beginPath();
+		ctx.moveTo(Math.round(xZero) + 0.5, 0);
+		ctx.lineTo(Math.round(xZero) + 0.5, height);
+		ctx.stroke();
+
+		// Advance width right boundary — vertical (dashed)
+		ctx.strokeStyle = 'rgba(50, 120, 220, 0.85)';
+		ctx.setLineDash([4, 3]);
+		ctx.beginPath();
+		ctx.moveTo(Math.round(xAdvance) + 0.5, 0);
+		ctx.lineTo(Math.round(xAdvance) + 0.5, height);
+		ctx.stroke();
+
+		ctx.restore();
+	}
 }
 
 function resolveFillColor() {

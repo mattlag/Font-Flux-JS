@@ -1324,12 +1324,28 @@ pre.data-string-long.data-expanded {
 	border-radius: var(--radius);
 	padding: 12px;
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
+	gap: 10px;
 }
 
 .glyph-detail-canvas-wrap canvas {
 	display: block;
+}
+
+.glyph-detail-bounds-toggle {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 0.78rem;
+	color: var(--text-secondary);
+	cursor: pointer;
+	user-select: none;
+}
+
+.glyph-detail-bounds-toggle input {
+	cursor: pointer;
 }
 
 /* ─── Header Right: Download + Export ──────────────────────────────────── */
