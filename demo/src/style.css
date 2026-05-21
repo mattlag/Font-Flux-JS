@@ -1175,6 +1175,12 @@ body {
 	flex-shrink: 0;
 }
 
+.data-badge.data-badge-glyph {
+	color: var(--accent, #3a78dc);
+	background: color-mix(in srgb, var(--accent, #3a78dc) 12%, transparent);
+	font-family: var(--font-mono);
+}
+
 .data-children {
 	display: none;
 	padding-left: 20px;
