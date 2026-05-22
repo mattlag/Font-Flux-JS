@@ -51,6 +51,7 @@ import {
 } from './color.js';
 import { resolveGlyphId } from './glyph.js';
 import { compileCharString } from './otf/charstring_compiler.js';
+import { interpretCharString } from './otf/charstring_interpreter.js';
 import { isoToLongdatetime, MVAR_NAME_TAGS } from './simplify.js';
 
 // ===========================================================================
@@ -1014,6 +1015,104 @@ function buildGlyfTable(glyphs) {
 }
 
 /**
+ * Encode an integer using Type 2 CharString number encoding.
+ * Mirrors the encoder in charstring_compiler.js for the integer cases that
+ * advance widths use (hmtx values are unsigned 16-bit, well within range).
+ */
+function encodeCFFInteger(value) {
+	const v = Math.round(value);
+	if (v >= -107 && v <= 107) return [v + 139];
+	if (v >= 108 && v <= 1131) {
+		const x = v - 108;
+		return [((x >> 8) & 0xff) + 247, x & 0xff];
+	}
+	if (v >= -1131 && v <= -108) {
+		const x = -v - 108;
+		return [((x >> 8) & 0xff) + 251, x & 0xff];
+	}
+	const u = v < 0 ? v + 0x10000 : v;
+	return [28, (u >> 8) & 0xff, u & 0xff];
+}
+
+/**
+ * Ensure a Type 2 charstring carries a leading width operand. If the existing
+ * charstring already encodes a width (per CFF Type 2 spec: an extra operand on
+ * the stack before the first moveto/endchar), it is returned unchanged.
+ * Otherwise, when a `width` is supplied, the encoded width is prepended.
+ *
+ * Required for renderers that source glyph advances from the CFF charstring
+ * (Chrome/Blink for OpenType-CFF); without it, glyphs render with advance = 0
+ * and stack at x = 0.
+ */
+export function ensureCharStringWidth(charString, width, options = {}) {
+	if (!Number.isFinite(width)) return charString;
+	const {
+		globalSubrs = [],
+		localSubrs = [],
+		nominalWidthX = 0,
+		defaultWidthX = 0,
+	} = options;
+	// Bail on degenerate charstrings (no endchar or no drawing): the writer
+	// normalizes empty charstrings to `[endchar]`, so adding a width prefix
+	// only on charstrings that have drawing operators keeps double round-trip
+	// stable. See test/sample fonts/invalid-example.otf.
+	if (!hasEndChar(charString)) return charString;
+	let interpreted = null;
+	try {
+		interpreted = interpretCharString(charString, globalSubrs, localSubrs);
+	} catch {
+		return charString;
+	}
+	if (interpreted.width !== null && interpreted.width !== undefined) {
+		return charString;
+	}
+	if (!interpreted.contours || interpreted.contours.length === 0) {
+		return charString;
+	}
+	if (width === defaultWidthX) return charString;
+	const prefix = encodeCFFInteger(width - nominalWidthX);
+	const out = new Array(prefix.length + charString.length);
+	for (let i = 0; i < prefix.length; i++) out[i] = prefix[i];
+	for (let i = 0; i < charString.length; i++)
+		out[prefix.length + i] = charString[i];
+	return out;
+}
+
+/**
+ * Walk a Type 2 charstring's bytes (skipping operands) and report whether an
+ * `endchar` (0x0e) opcode terminates it. Returns false for empty or operand-
+ * only byte sequences, which would otherwise cause the width-prefix logic
+ * above to keep growing the bytes on every round-trip.
+ */
+function hasEndChar(bytes) {
+	if (!bytes || bytes.length === 0) return false;
+	let i = 0;
+	while (i < bytes.length) {
+		const b = bytes[i];
+		if (b === 0x0e) return true;
+		if (b >= 32 && b <= 246) {
+			i += 1;
+			continue;
+		}
+		if (b >= 247 && b <= 254) {
+			i += 2;
+			continue;
+		}
+		if (b === 28) {
+			i += 3;
+			continue;
+		}
+		if (b === 255) {
+			i += 5;
+			continue;
+		}
+		// Any other byte (0..27, 29..31) is an operator
+		i += b === 12 ? 2 : 1;
+	}
+	return false;
+}
+
+/**
  * Build a minimal CFF table shell from simplified glyphs.
  * Note: This creates the parsed CFF structure that the existing
  * writeCFF function can encode.
@@ -1022,14 +1121,21 @@ function buildCFFShell(font, glyphs) {
 	const fontName = font.postScriptName || buildPostScriptName(font);
 	const charset = glyphs.slice(1).map((g) => g.name || '.notdef');
 	const charStrings = glyphs.map((g) => {
-		if (g.charString && g.charString.length > 0) return g.charString;
+		const width = Number.isFinite(g.advanceWidth) ? g.advanceWidth : undefined;
+		if (g.charString && g.charString.length > 0) {
+			return ensureCharStringWidth(g.charString, width);
+		}
 		// Auto-compile CFF contours to charstring bytes if not provided.
 		// compileCharString() also handles the empty case by emitting
 		// `0 0 rmoveto endchar`, ensuring every entry in the CharStrings
 		// INDEX is a valid Type 2 charstring (terminated by endchar 0x0E).
 		// An empty byte sequence here would be rejected by font sanitizers
 		// (e.g. Firefox/OTS: "Failed validating CharStrings INDEX").
-		return compileCharString(g.contours || []);
+		// The leading width operand (when supplied) is required for renderers
+		// that read glyph advances from the CFF charstring rather than hmtx
+		// — notably Chrome/Blink for OpenType-CFF, which would otherwise see
+		// defaultWidthX = 0 and render every glyph stacked at x = 0.
+		return compileCharString(g.contours || [], width);
 	});
 
 	// CFF Top DICT string values (FullName, FamilyName, Weight) must be

@@ -86,14 +86,27 @@ const OP_ENDCHAR = 14;
  *
  * @param {Array<Array<{type: string, x: number, y: number, x1?: number, y1?: number, x2?: number, y2?: number}>>} contours
  *   Array of contour arrays, each containing path commands with type 'M', 'L', or 'C'
+ * @param {number} [width] - Optional advance-width operand prepended to the
+ *   charstring. With Private DICT defaultWidthX = nominalWidthX = 0 (font-flux's
+ *   convention for synthesized CFF tables), this equals the glyph's hmtx
+ *   advanceWidth. Required for correct rendering in CFF-width-honoring engines
+ *   (notably Chrome/Blink), which otherwise read the CFF default width of 0
+ *   and render every glyph with zero advance.
  * @returns {number[]} Type 2 CharString bytecode
  */
-export function compileCharString(contours) {
+export function compileCharString(contours, width) {
+	const prefix = Number.isFinite(width) ? encodeNumber(width) : [];
 	if (!contours || contours.length === 0) {
-		return [...encodeNumber(0), ...encodeNumber(0), OP_RMOVETO, OP_ENDCHAR];
+		return [
+			...prefix,
+			...encodeNumber(0),
+			...encodeNumber(0),
+			OP_RMOVETO,
+			OP_ENDCHAR,
+		];
 	}
 
-	const bytes = [];
+	const bytes = [...prefix];
 	let curX = 0;
 	let curY = 0;
 
