@@ -14,7 +14,7 @@ export function createLoadingScreen(container, onFontLoaded) {
 				<p class="hero-tagline">Convert fonts to JSON, make edits, then convert them back!</p>
 				<p class="hero-links">An open source frontend library. Read the <a href="docs/" target="_blank" rel="noopener">Docs</a>, use it with <a href="https://www.npmjs.com/package/font-flux-js" target="_blank" rel="noopener">NPM</a> or <a href="https://github.com/mattlag/Font-Flux-JS" target="_blank" rel="noopener">GitHub</a></p>
 				<p class="hero-demo-hint">This demo app can edit metadata, subset glyphs, and change file formats.<br>${versionLine}</p>
-				<div class="beta-notice"><strong>May 2026</strong><br>Battle testing real world scenarios. Is it working for you? <a href="mailto:mail@glyphrstudio.com">mail@glyphrstudio.com</a></div>
+				<div class="beta-notice"><strong>June 2026</strong><br>Things seem good - have you tried it yet? <a href="mailto:mail@glyphrstudio.com">mail@glyphrstudio.com</a></div>
 				<p class="tagline">Drop a font file anywhere, or <a href="#" class="browse-link">browse for files</a></p>
 				<p class="supported-formats">Supports OTF, TTF, WOFF, WOFF2, TTC, OTC, CFF, PFB, PFA, JSON</p>
 				<input type="file" accept="${ACCEPT}" hidden>

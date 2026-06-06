@@ -196,3 +196,88 @@ function findGlyphByCodePoint(glyphs, codePoint) {
 	}
 	return undefined;
 }
+
+/**
+ * Resolve a composite glyph component's 2×2 transform and offset into a flat
+ * affine description `{ a, b, c, d, dx, dy }`, where a point (x, y) maps to:
+ *   x' = a·x + c·y + dx
+ *   y' = b·x + d·y + dy
+ *
+ * (matrix order matches the OpenType/fonttools convention where the stored
+ * scale fields are xScale=a, scale01=b, scale10=c, yScale=d).
+ */
+function componentTransform(component) {
+	let a = 1;
+	let b = 0;
+	let c = 0;
+	let d = 1;
+	const tf = component.transform;
+	if (tf) {
+		if (typeof tf.scale === 'number') {
+			a = tf.scale;
+			d = tf.scale;
+		} else {
+			if (typeof tf.xScale === 'number') a = tf.xScale;
+			if (typeof tf.yScale === 'number') d = tf.yScale;
+			if (typeof tf.scale01 === 'number') b = tf.scale01;
+			if (typeof tf.scale10 === 'number') c = tf.scale10;
+		}
+	}
+
+	// Offsets are only meaningful when the arguments are XY values. Point
+	// matching (argsAreXYValues === false) is not supported by decomposition.
+	let dx = 0;
+	let dy = 0;
+	if (component.flags?.argsAreXYValues) {
+		dx = component.argument1 || 0;
+		dy = component.argument2 || 0;
+	}
+
+	return { a, b, c, d, dx, dy };
+}
+
+/**
+ * Recursively flatten a composite (component-based) TrueType glyph into
+ * absolute outline contours, applying each component's offset and 2×2
+ * transform. Simple glyphs are returned as-is (a shallow copy of their
+ * contours). Glyphs with neither contours nor components yield `[]`.
+ *
+ * The stored glyph is never mutated, so composite references remain intact for
+ * a lossless export round-trip; this is purely a read helper for consumers
+ * that want renderable geometry.
+ *
+ * @param {object[]} glyphs - The full glyphs array (component refs are indices).
+ * @param {object} glyph - The glyph to decompose.
+ * @param {number} [depth] - Internal recursion guard.
+ * @returns {Array} Array of contours ([{ x, y, onCurve }, …]).
+ */
+export function decomposeGlyph(glyphs, glyph, depth = 0) {
+	if (!glyph) return [];
+	if (!glyph.components || glyph.components.length === 0) {
+		return Array.isArray(glyph.contours)
+			? glyph.contours.map((contour) => contour.slice())
+			: [];
+	}
+	// Guard against pathological / cyclic component references.
+	if (depth > 16 || !Array.isArray(glyphs)) return [];
+
+	const out = [];
+	for (const component of glyph.components) {
+		const ref = glyphs[component.glyphIndex];
+		if (!ref) continue;
+		const refContours = decomposeGlyph(glyphs, ref, depth + 1);
+		if (refContours.length === 0) continue;
+		const { a, b, c, d, dx, dy } = componentTransform(component);
+		const identity = a === 1 && b === 0 && c === 0 && d === 1;
+		for (const contour of refContours) {
+			out.push(
+				contour.map((pt) => ({
+					x: identity ? pt.x + dx : Math.round(a * pt.x + c * pt.y + dx),
+					y: identity ? pt.y + dy : Math.round(b * pt.x + d * pt.y + dy),
+					onCurve: pt.onCurve,
+				})),
+			);
+		}
+	}
+	return out;
+}

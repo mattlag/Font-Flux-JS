@@ -277,68 +277,313 @@ function extractFontInfo(tables) {
 // ===========================================================================
 
 /**
+ * Mac OS Roman (platform 1, encoding 0) high-byte (0x80–0xFF) to Unicode
+ * scalar value mapping. Bytes 0x00–0x7F are identical to ASCII/Unicode.
+ *
+ * Without this table, the raw single-byte Mac Roman positions would be
+ * surfaced as if they were Unicode code points (e.g. byte 0xA0 — “†” in Mac
+ * Roman — would be reported as U+00A0 instead of U+2020).
+ */
+const MAC_ROMAN_HIGH_TO_UNICODE = [
+	0x00c4,
+	0x00c5,
+	0x00c7,
+	0x00c9,
+	0x00d1,
+	0x00d6,
+	0x00dc,
+	0x00e1, // 0x80
+	0x00e0,
+	0x00e2,
+	0x00e4,
+	0x00e3,
+	0x00e5,
+	0x00e7,
+	0x00e9,
+	0x00e8, // 0x88
+	0x00ea,
+	0x00eb,
+	0x00ed,
+	0x00ec,
+	0x00ee,
+	0x00ef,
+	0x00f1,
+	0x00f3, // 0x90
+	0x00f2,
+	0x00f4,
+	0x00f6,
+	0x00f5,
+	0x00fa,
+	0x00f9,
+	0x00fb,
+	0x00fc, // 0x98
+	0x2020,
+	0x00b0,
+	0x00a2,
+	0x00a3,
+	0x00a7,
+	0x2022,
+	0x00b6,
+	0x00df, // 0xA0
+	0x00ae,
+	0x00a9,
+	0x2122,
+	0x00b4,
+	0x00a8,
+	0x2260,
+	0x00c6,
+	0x00d8, // 0xA8
+	0x221e,
+	0x00b1,
+	0x2264,
+	0x2265,
+	0x00a5,
+	0x00b5,
+	0x2202,
+	0x2211, // 0xB0
+	0x220f,
+	0x03c0,
+	0x222b,
+	0x00aa,
+	0x00ba,
+	0x03a9,
+	0x00e6,
+	0x00f8, // 0xB8
+	0x00bf,
+	0x00a1,
+	0x00ac,
+	0x221a,
+	0x0192,
+	0x2248,
+	0x2206,
+	0x00ab, // 0xC0
+	0x00bb,
+	0x2026,
+	0x00a0,
+	0x00c0,
+	0x00c3,
+	0x00d5,
+	0x0152,
+	0x0153, // 0xC8
+	0x2013,
+	0x2014,
+	0x201c,
+	0x201d,
+	0x2018,
+	0x2019,
+	0x00f7,
+	0x25ca, // 0xD0
+	0x00ff,
+	0x0178,
+	0x2044,
+	0x20ac,
+	0x2039,
+	0x203a,
+	0xfb01,
+	0xfb02, // 0xD8
+	0x2021,
+	0x00b7,
+	0x201a,
+	0x201e,
+	0x2030,
+	0x00c2,
+	0x00ca,
+	0x00c1, // 0xE0
+	0x00cb,
+	0x00c8,
+	0x00cd,
+	0x00ce,
+	0x00cf,
+	0x00cc,
+	0x00d3,
+	0x00d4, // 0xE8
+	0xf8ff,
+	0x00d2,
+	0x00da,
+	0x00db,
+	0x00d9,
+	0x0131,
+	0x02c6,
+	0x02dc, // 0xF0
+	0x00af,
+	0x02d8,
+	0x02d9,
+	0x02da,
+	0x00b8,
+	0x02dd,
+	0x02db,
+	0x02c7, // 0xF8
+];
+
+/**
+ * Determine whether a cmap encoding record refers to a genuine Unicode
+ * subtable, i.e. one whose character codes are Unicode scalar values.
+ *
+ *   • platform 0 (Unicode)            — any encoding
+ *   • platform 3 (Windows) encoding 0 — Symbol (PUA U+F0xx, still Unicode)
+ *   • platform 3 (Windows) encoding 1 — Unicode BMP
+ *   • platform 3 (Windows) encoding 10 — Unicode full repertoire
+ *
+ * Legacy encodings (Mac Roman at platform 1, or Windows DBCS encodings such
+ * as Shift-JIS / Big5) are intentionally excluded — their character codes are
+ * NOT Unicode scalar values.
+ */
+function isUnicodeCmapEncoding(platformID, encodingID) {
+	if (platformID === 0) return true;
+	if (platformID === 3) {
+		return encodingID === 0 || encodingID === 1 || encodingID === 10;
+	}
+	return false;
+}
+
+/**
+ * Translate a raw character code from a subtable into a Unicode scalar value.
+ * For Mac Roman subtables the single-byte value is mapped through the Mac
+ * Roman → Unicode table; otherwise the code is already Unicode.
+ */
+function toUnicodeCodepoint(code, translateMacRoman) {
+	if (!translateMacRoman) return code;
+	if (code < 0x80) return code;
+	if (code <= 0xff) return MAC_ROMAN_HIGH_TO_UNICODE[code - 0x80];
+	return code;
+}
+
+/**
+ * Read a single cmap subtable's character-code → glyph mappings into `map`.
+ * When `translateMacRoman` is set, character codes are interpreted as Mac
+ * Roman byte values and converted to Unicode before being recorded.
+ */
+function readSubtableInto(map, subtable, translateMacRoman) {
+	switch (subtable.format) {
+		case 0:
+			for (let code = 0; code < subtable.glyphIdArray.length; code++) {
+				const gid = subtable.glyphIdArray[code];
+				if (gid !== 0)
+					addToMap(map, gid, toUnicodeCodepoint(code, translateMacRoman));
+			}
+			break;
+
+		case 4:
+			for (const seg of subtable.segments) {
+				for (let c = seg.startCode; c <= seg.endCode; c++) {
+					let gid;
+					if (seg.idRangeOffset === 0) {
+						gid = (c + seg.idDelta) & 0xffff;
+					} else {
+						// idRangeOffset-based lookup: we need the glyphIdArray
+						const idx =
+							seg.idRangeOffset / 2 +
+							(c - seg.startCode) -
+							(subtable.segments.length - subtable.segments.indexOf(seg));
+						gid = subtable.glyphIdArray[idx];
+						if (gid !== undefined && gid !== 0) {
+							gid = (gid + seg.idDelta) & 0xffff;
+						}
+					}
+					if (gid !== undefined && gid !== 0)
+						addToMap(map, gid, toUnicodeCodepoint(c, translateMacRoman));
+				}
+			}
+			break;
+
+		case 6:
+			for (let i = 0; i < subtable.glyphIdArray.length; i++) {
+				const gid = subtable.glyphIdArray[i];
+				if (gid !== 0)
+					addToMap(
+						map,
+						gid,
+						toUnicodeCodepoint(subtable.firstCode + i, translateMacRoman),
+					);
+			}
+			break;
+
+		case 12:
+			for (const group of subtable.groups) {
+				for (let c = group.startCharCode; c <= group.endCharCode; c++) {
+					const gid = group.startGlyphID + (c - group.startCharCode);
+					if (gid !== 0)
+						addToMap(map, gid, toUnicodeCodepoint(c, translateMacRoman));
+				}
+			}
+			break;
+
+		case 13:
+			for (const group of subtable.groups) {
+				for (let c = group.startCharCode; c <= group.endCharCode; c++) {
+					if (group.glyphID !== 0)
+						addToMap(
+							map,
+							group.glyphID,
+							toUnicodeCodepoint(c, translateMacRoman),
+						);
+				}
+			}
+			break;
+		// Format 14 (variation selectors) — skip for simplified mapping
+	}
+}
+
+/**
  * Build a reverse map: glyphIndex -> array of unicode codepoints.
+ *
+ * Only genuine Unicode subtables are used so that `glyph.unicode` /
+ * `glyph.unicodes` never contain legacy byte values. A legacy Macintosh (Mac
+ * Roman) subtable is consulted only as a fallback when the font has no Unicode
+ * subtable at all, and then only after translating its single-byte values
+ * through the Mac Roman → Unicode mapping table.
  */
 function buildGlyphToUnicodeMap(cmapTable) {
 	const map = new Map();
 	if (!cmapTable || cmapTable._raw || !cmapTable.subtables) return map;
 
-	for (const subtable of cmapTable.subtables) {
-		switch (subtable.format) {
-			case 0:
-				for (let code = 0; code < subtable.glyphIdArray.length; code++) {
-					const gid = subtable.glyphIdArray[code];
-					if (gid !== 0) addToMap(map, gid, code);
-				}
-				break;
+	const subtables = cmapTable.subtables;
+	const records = cmapTable.encodingRecords;
 
-			case 4:
-				for (const seg of subtable.segments) {
-					for (let c = seg.startCode; c <= seg.endCode; c++) {
-						let gid;
-						if (seg.idRangeOffset === 0) {
-							gid = (c + seg.idDelta) & 0xffff;
-						} else {
-							// idRangeOffset-based lookup: we need the glyphIdArray
-							const idx =
-								seg.idRangeOffset / 2 +
-								(c - seg.startCode) -
-								(subtable.segments.length - subtable.segments.indexOf(seg));
-							gid = subtable.glyphIdArray[idx];
-							if (gid !== undefined && gid !== 0) {
-								gid = (gid + seg.idDelta) & 0xffff;
-							}
-						}
-						if (gid !== undefined && gid !== 0) addToMap(map, gid, c);
-					}
-				}
-				break;
-
-			case 6:
-				for (let i = 0; i < subtable.glyphIdArray.length; i++) {
-					const gid = subtable.glyphIdArray[i];
-					if (gid !== 0) addToMap(map, gid, subtable.firstCode + i);
-				}
-				break;
-
-			case 12:
-				for (const group of subtable.groups) {
-					for (let c = group.startCharCode; c <= group.endCharCode; c++) {
-						const gid = group.startGlyphID + (c - group.startCharCode);
-						if (gid !== 0) addToMap(map, gid, c);
-					}
-				}
-				break;
-
-			case 13:
-				for (const group of subtable.groups) {
-					for (let c = group.startCharCode; c <= group.endCharCode; c++) {
-						if (group.glyphID !== 0) addToMap(map, group.glyphID, c);
-					}
-				}
-				break;
-			// Format 14 (variation selectors) — skip for simplified mapping
+	// Each entry: { index, translateMacRoman }
+	let entries;
+	if (Array.isArray(records) && records.length > 0) {
+		const unicodeIdx = new Set();
+		const macRomanIdx = new Set();
+		for (const r of records) {
+			if (isUnicodeCmapEncoding(r.platformID, r.encodingID)) {
+				unicodeIdx.add(r.subtableIndex);
+			} else if (r.platformID === 1 && r.encodingID === 0) {
+				macRomanIdx.add(r.subtableIndex);
+			}
 		}
+
+		if (unicodeIdx.size > 0) {
+			// Prefer genuine Unicode subtables and ignore everything else.
+			entries = [...unicodeIdx].map((index) => ({
+				index,
+				translateMacRoman: false,
+			}));
+		} else if (macRomanIdx.size > 0) {
+			// No Unicode subtable — fall back to Mac Roman, translated to Unicode.
+			entries = [...macRomanIdx].map((index) => ({
+				index,
+				translateMacRoman: true,
+			}));
+		} else {
+			// No recognized encodings; read all subtables as-is (legacy behavior).
+			entries = subtables.map((_, index) => ({
+				index,
+				translateMacRoman: false,
+			}));
+		}
+	} else {
+		// No encoding records (e.g. synthetic cmap from a Type 1 / CFF import).
+		// Preserve historical behavior and read all subtables as-is.
+		entries = subtables.map((_, index) => ({
+			index,
+			translateMacRoman: false,
+		}));
+	}
+
+	for (const { index, translateMacRoman } of entries) {
+		const subtable = subtables[index];
+		if (subtable) readSubtableInto(map, subtable, translateMacRoman);
 	}
 
 	return map;
@@ -379,7 +624,9 @@ function getGlyphNames(tables, numGlyphs) {
 				if (typeof sid === 'string') return sid;
 				if (typeof sid === 'number' && sid >= 391) {
 					const custom = strings[sid - 391];
-					return typeof custom === 'string' && custom !== '' ? custom : String(sid);
+					return typeof custom === 'string' && custom !== ''
+						? custom
+						: String(sid);
 				}
 				return String(sid);
 			});
@@ -495,7 +742,11 @@ function buildSimplifiedGlyphs(tables) {
 				// Interpret bytecode into cubic Bézier contours
 				const globalSubrs = cffTable.globalSubrs || [];
 				const localSubrs = font.localSubrs || [];
-				const result = interpretCharString(charStrings[i], globalSubrs, localSubrs);
+				const result = interpretCharString(
+					charStrings[i],
+					globalSubrs,
+					localSubrs,
+				);
 				if (result.contours.length > 0) {
 					glyph.contours = result.contours;
 				}
@@ -582,7 +833,8 @@ function extractPairPosFormat1(st, glyphs, pairs) {
 		for (const pvr of st.pairSets[i]) {
 			const value = pvr.value1?.xAdvance;
 			if (value === undefined || value === 0) continue;
-			const rightName = glyphs[pvr.secondGlyph]?.name || `glyph${pvr.secondGlyph}`;
+			const rightName =
+				glyphs[pvr.secondGlyph]?.name || `glyph${pvr.secondGlyph}`;
 			pairs.push({ left: leftName, right: rightName, value });
 		}
 	}
@@ -731,7 +983,9 @@ function extractKernFormat2Pairs(subtable, glyphs, pairs) {
 		const rawOffset = leftClassTable.offsets[i] || 0;
 		// Left class = (offset - kerningArrayOffset) / rowWidth
 		const classIdx =
-			rowWidth > 0 ? Math.floor((rawOffset - kerningArrayOffset) / rowWidth) : 0;
+			rowWidth > 0
+				? Math.floor((rawOffset - kerningArrayOffset) / rowWidth)
+				: 0;
 		if (classIdx >= 0 && classIdx < values.length) {
 			leftGlyphToClass.set(g, classIdx);
 		}
@@ -1500,7 +1754,9 @@ function extractAlternateSubst(st, glyphs, base, rules) {
 			type: 'alternate',
 			...base,
 			from: glyphName(glyphs, covGlyphs[i]),
-			alternates: (st.alternateSets[i] || []).map((gid) => glyphName(glyphs, gid)),
+			alternates: (st.alternateSets[i] || []).map((gid) =>
+				glyphName(glyphs, gid),
+			),
 		});
 	}
 }

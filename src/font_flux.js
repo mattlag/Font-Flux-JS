@@ -12,7 +12,7 @@
 
 import { createColorGlyph, normalizePalette } from './color.js';
 import { exportFont } from './export.js';
-import { createGlyph, getGlyph, resolveGlyphId } from './glyph.js';
+import { createGlyph, decomposeGlyph, getGlyph, resolveGlyphId } from './glyph.js';
 import { importFont } from './import.js';
 import { fontFromJSON, fontToJSON } from './json.js';
 import { createKerning, getKerningValue } from './kerning.js';
@@ -115,6 +115,37 @@ const DEFAULT_NOTDEF = {
 		],
 	],
 };
+
+/**
+ * Produce a glyph name that is not already used by any glyph in `glyphs`.
+ * Prefers an AGL-style code-point name (`uniXXXX` for the BMP, `uXXXXXX`
+ * above it) so the result is meaningful; falls back to suffixing the glyph's
+ * existing name with `.N`. Used to resolve name collisions in addGlyph without
+ * discarding data.
+ *
+ * @param {object[]} glyphs - Existing glyphs.
+ * @param {object} glyph - The incoming glyph needing a unique name.
+ * @returns {string}
+ */
+function uniqueGlyphName(glyphs, glyph) {
+	const used = new Set(glyphs.map((g) => g.name));
+
+	let base;
+	if (glyph.unicode != null) {
+		const hex = glyph.unicode.toString(16).toUpperCase();
+		base =
+			glyph.unicode <= 0xffff
+				? `uni${hex.padStart(4, '0')}`
+				: `u${hex.padStart(6, '0')}`;
+	} else {
+		base = glyph.name || 'glyph';
+	}
+
+	if (!used.has(base)) return base;
+	let n = 1;
+	while (used.has(`${base}.${n}`)) n++;
+	return `${base}.${n}`;
+}
 
 // ============================================================================
 //  FONTFLUX CLASS
@@ -471,8 +502,38 @@ export class FontFlux {
 	}
 
 	/**
+	 * Get a glyph's renderable outline contours, recursively flattening
+	 * composite (component-based) glyphs into absolute TrueType contours and
+	 * applying each component's offset and 2×2 transform.
+	 *
+	 * Simple glyphs return a copy of their own contours. Composite glyphs (e.g.
+	 * accented letters built from a base letter plus a diacritic) return the
+	 * decomposed geometry rather than an empty array. The stored glyph is not
+	 * mutated, so its `components` remain intact for a lossless export.
+	 *
+	 * @param {string|number} id - Glyph name, code point, or hex string.
+	 * @returns {Array} Array of contours ([{ x, y, onCurve }, …]), or [] when
+	 *   the glyph has no geometry or does not exist.
+	 */
+	getGlyphContours(id) {
+		const glyph = getGlyph(this._data, id);
+		if (!glyph) return [];
+		return decomposeGlyph(this._data.glyphs, glyph);
+	}
+
+	/**
 	 * Add or replace a glyph. If raw options are provided (not a glyph object),
 	 * they are passed through createGlyph() automatically.
+	 *
+	 * Replacement rules (in priority order):
+	 *   1. A Unicode code point maps to exactly one glyph, so a new glyph that
+	 *      claims a code point already owned by another glyph replaces it.
+	 *   2. Otherwise, a glyph with the same `name` is replaced in place — but
+	 *      only when doing so would not discard a glyph that owns a *different*
+	 *      code point. Two glyphs that merely share a name yet map to distinct
+	 *      code points must both survive; the incoming one is auto-uniquified
+	 *      (AGL `uniXXXX` / `uXXXXXX`) and appended instead of silently dropping
+	 *      the existing glyph.
 	 *
 	 * @param {object} glyphOrOptions - A glyph object or createGlyph() options.
 	 */
@@ -487,20 +548,31 @@ export class FontFlux {
 
 		const glyphs = this._data.glyphs;
 
-		// Check for existing glyph with same name — replace in place
-		const existingIdx = glyphs.findIndex((g) => g.name === glyph.name);
-		if (existingIdx >= 0) {
-			glyphs[existingIdx] = glyph;
-			return;
-		}
-
-		// Check for existing glyph with same unicode — replace in place
+		// 1. A code point can map to only one glyph — replace the current owner.
 		if (glyph.unicode != null) {
 			const byUnicode = glyphs.findIndex((g) => g.unicode === glyph.unicode);
 			if (byUnicode >= 0) {
 				glyphs[byUnicode] = glyph;
 				return;
 			}
+		}
+
+		// 2. Replace by name, but never drop a glyph that owns a different code
+		//    point. Such a name collision is resolved by uniquifying the new
+		//    glyph's name and appending it so both glyphs (and both cmap
+		//    entries) survive.
+		const existingIdx = glyphs.findIndex((g) => g.name === glyph.name);
+		if (existingIdx >= 0) {
+			const existing = glyphs[existingIdx];
+			const distinctCodePoints =
+				existing.unicode != null &&
+				glyph.unicode != null &&
+				existing.unicode !== glyph.unicode;
+			if (!distinctCodePoints) {
+				glyphs[existingIdx] = glyph;
+				return;
+			}
+			glyph.name = uniqueGlyphName(glyphs, glyph);
 		}
 
 		// Append new glyph
