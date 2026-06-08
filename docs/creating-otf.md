@@ -121,6 +121,27 @@ For a complete guide to hand-authoring glyph data — including `.addGlyph()`, a
 - Keep required metrics tables (`head`, `hhea`, `hmtx`, `maxp`) consistent with your outline and glyph count.
 - Validate early with [`.validate()`](./validation.md).
 
+### Converting a TrueType font to OTF
+
+If you have a TrueType (`glyf`) font and want a CFF-based `.otf`, export with `format: 'otf'`. Font Flux promotes the quadratic outlines to cubic Bézier charstrings, swaps `glyf`/`loca` for a `CFF ` table, and sets the `sfntVersion` to `OTTO`:
+
+```js
+const font = FontFlux.open(ttfBuffer); // TrueType source
+const otf = font.export({ format: 'otf' }); // CFF-based OTF bytes
+```
+
+You can also convert in place (chainable) if you want to keep editing afterwards:
+
+```js
+font.convertOutlines('cff');
+```
+
+Notes:
+
+- Quadratic → cubic promotion is exact (degree elevation), but composite glyphs are flattened into contours.
+- TrueType-only hinting tables (`cvt`, `fpgm`, `prep`, `gasp`) are dropped — they have no meaning in CFF.
+- Static fonts only; variable fonts (`fvar`/`gvar`/`CFF2`) and collections are rejected.
+
 ## Creating an OTC (OpenType Collection)
 
 An `.otc` file bundles multiple CFF-based OpenType font faces into a single binary. Each face is a complete OTF — it must satisfy all the requirements above.

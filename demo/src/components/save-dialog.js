@@ -29,6 +29,11 @@ export function createSaveDialog(root, fontData) {
 			ext: hasCFF ? '.otf' : '.ttf',
 			format: 'sfnt',
 		},
+		// Cross-technology export: convert outlines to the other flavour.
+		// (CFF source → also offer TTF; glyf source → also offer OTF.)
+		hasCFF
+			? { id: 'ttf', label: 'TTF', ext: '.ttf', format: 'ttf' }
+			: { id: 'otf', label: 'OTF', ext: '.otf', format: 'otf' },
 		{ id: 'woff', label: 'WOFF', ext: '.woff', format: 'woff' },
 		{ id: 'woff2', label: 'WOFF2', ext: '.woff2', format: 'woff2' },
 	];
@@ -37,13 +42,29 @@ export function createSaveDialog(root, fontData) {
 		formats.push({ id: 'cff', label: 'CFF', ext: '.cff', format: 'cff' });
 	}
 
+	// Variable and color fonts can't have their outlines converted; drop the
+	// cross-technology option when conversion would fail.
+	const isVariable = !!(
+		fontData.axes?.length ||
+		fontData.tables?.fvar ||
+		fontData.tables?.gvar ||
+		fontData.tables?.CFF2
+	);
+	if (isVariable) {
+		const crossId = hasCFF ? 'ttf' : 'otf';
+		const idx = formats.findIndex((f) => f.id === crossId);
+		if (idx !== -1) formats.splice(idx, 1);
+	}
+
 	// Default selection based on source format
+	const woff2Idx = formats.findIndex((f) => f.id === 'woff2');
+	const woffIdx = formats.findIndex((f) => f.id === 'woff');
 	let selectedIdx = isStandaloneCFF
 		? formats.length - 1
 		: woffVersion === 2
-			? 2
+			? woff2Idx
 			: woffVersion === 1
-				? 1
+				? woffIdx
 				: 0;
 
 	// Build filename from font data

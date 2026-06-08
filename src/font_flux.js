@@ -11,8 +11,14 @@
  */
 
 import { createColorGlyph, normalizePalette } from './color.js';
+import { convertOutlines } from './convert.js';
 import { exportFont } from './export.js';
-import { createGlyph, decomposeGlyph, getGlyph, resolveGlyphId } from './glyph.js';
+import {
+	createGlyph,
+	decomposeGlyph,
+	getGlyph,
+	resolveGlyphId,
+} from './glyph.js';
 import { importFont } from './import.js';
 import { fontFromJSON, fontToJSON } from './json.js';
 import { createKerning, getKerningValue } from './kerning.js';
@@ -1072,11 +1078,26 @@ export class FontFlux {
 	 * Export the font to binary data.
 	 *
 	 * @param {object} [options]
-	 * @param {string} [options.format] - 'sfnt', 'woff', or 'woff2'.
+	 * @param {string} [options.format] - 'sfnt', 'woff', 'woff2', 'cff', 'ttf',
+	 *   or 'otf'. `ttf` and `otf` emit an SFNT file but first convert the glyph
+	 *   outlines to TrueType (`glyf`) or PostScript (`CFF `) respectively.
 	 * @returns {ArrayBuffer}
 	 */
 	export(options) {
 		return exportFont(this._data, options);
+	}
+
+	/**
+	 * Convert the font's glyph outlines between TrueType (`glyf`, quadratic) and
+	 * PostScript/CFF (`CFF `, cubic) technologies in place, switching the
+	 * sfntVersion and swapping the outline tables. Static fonts only.
+	 *
+	 * @param {'truetype'|'cff'} target - Desired outline technology.
+	 * @returns {FontFlux} this (for chaining).
+	 */
+	convertOutlines(target) {
+		this._data = convertOutlines(this._data, target);
+		return this;
 	}
 
 	/**

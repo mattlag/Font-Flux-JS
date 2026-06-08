@@ -86,6 +86,28 @@ const woff2 = font.export({ format: 'woff2' }); // WOFF 2.0 (Brotli)
 
 Fonts opened from WOFF or WOFF2 files re-export to their original format by default. Use `format: 'sfnt'` to force raw SFNT output.
 
+## Outline technology (TTF ↔ OTF)
+
+`.otf` and `.ttf` are both SFNT files — the only real binary differences are the 4‑byte `sfntVersion` in the file header and which glyph-outline tables are present: `glyf` + `loca` (TrueType, quadratic curves) versus `CFF ` (PostScript, cubic curves). Font Flux can convert the outlines between these two technologies and emit the matching file:
+
+```js
+const ttf = font.export({ format: 'ttf' }); // force TrueType outlines (.ttf)
+const otf = font.export({ format: 'otf' }); // force CFF outlines (.otf)
+```
+
+If the font already uses the requested technology, the conversion is a no-op. You can also convert in place and keep editing:
+
+```js
+font.convertOutlines('cff'); // 'cff' or 'truetype'; chainable
+```
+
+Notes and limitations:
+
+- Conversion re-fits curves (cubic ↔ quadratic), so it is **not** a lossless round-trip — coordinates are approximated to within ~0.5 units.
+- TrueType-only hinting (`cvt`, `fpgm`, `prep`, `gasp`, per-glyph instructions) is dropped when converting to CFF.
+- Composite glyphs are flattened into contours when converting to CFF.
+- Only **static** fonts are supported. Variable fonts (`fvar`/`gvar`/`CFF2`) and collections are rejected.
+
 See [Validation guide](./validation.md) and [All table references](./tables/index.md).
 
 ## Legacy formats (PFB / PFA / CFF)

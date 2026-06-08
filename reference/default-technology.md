@@ -29,7 +29,7 @@ These defaults apply to **Scenario 2** (author from scratch). For **Scenario 1**
 
 **Where implemented**: `src/glyph.js` (format default), `src/expand.js` (outline table selection based on absence of `charString` on glyphs).
 
-**User override**: Pass `format: 'cff'` to `createGlyph()`, or set `charString` bytes directly on glyphs. The presence of any `charString` on any glyph triggers CFF output.
+**User override**: Pass `format: 'cff'` to `createGlyph()`, or set `charString` bytes directly on glyphs. The presence of any `charString` on any glyph triggers CFF output. An existing font's outlines can also be converted between technologies via `exportFont(data, { format: 'ttf' | 'otf' })` or `FontFlux.convertOutlines('truetype' | 'cff')` (see `src/convert.js`; static fonts only).
 
 ---
 

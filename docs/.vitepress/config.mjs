@@ -29,6 +29,7 @@ export default defineConfig({
 			{ text: 'Home', link: '/' },
 			{ text: 'Creating Fonts', link: '/creating-fonts' },
 			{ text: 'Validation', link: '/validation' },
+			{ text: 'API', link: '/api' },
 			{ text: 'Tables', link: '/tables/' },
 		],
 		sidebar: [
@@ -60,6 +61,7 @@ export default defineConfig({
 			{
 				text: 'Reference',
 				items: [
+					{ text: 'API Reference', link: '/api' },
 					{ text: 'Creating an OTF', link: '/creating-otf' },
 					{ text: 'Creating a TTF', link: '/creating-ttf' },
 					{ text: 'All Tables', link: '/tables/' },

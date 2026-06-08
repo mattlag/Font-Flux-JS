@@ -19,6 +19,8 @@ Font Flux defaults to **TrueType** because:
 
 When you pass an SVG path string to `.addGlyph()`, it's automatically converted to TrueType contours. If you need CFF output, pass `format: 'cff'` to `createGlyph()` or set `charString` bytes directly on your glyphs.
 
+You can also convert an existing font's outlines between the two technologies at export time with `font.export({ format: 'ttf' })` or `font.export({ format: 'otf' })`, or in place with `font.convertOutlines('truetype' | 'cff')`. Conversion re-fits curves (cubic ↔ quadratic) and is supported for static fonts only. See [Creating a TTF](./creating-ttf.md#converting-an-otf-to-ttf) and [Creating an OTF](./creating-otf.md#converting-a-truetype-font-to-otf).
+
 ## GPOS kerning (not the kern table)
 
 There are two places kerning can live: the old `kern` table or the modern `GPOS` table. The OpenType specification explicitly recommends GPOS:

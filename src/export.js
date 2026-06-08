@@ -3,6 +3,7 @@
  * Takes a JSON font object and converts it back to binary font data.
  */
 
+import { convertOutlines } from './convert.js';
 import { buildRawFromSimplified, ensureCharStringWidth } from './expand.js';
 import { writeCFF } from './otf/table_CFF.js';
 import { writeCFF2 } from './otf/table_CFF2.js';
@@ -172,7 +173,24 @@ function computeTableChecksum(data) {
 	return sum;
 }
 
-const SUPPORTED_FORMATS = new Set(['sfnt', 'woff', 'woff2', 'cff']);
+const SUPPORTED_FORMATS = new Set([
+	'sfnt',
+	'woff',
+	'woff2',
+	'cff',
+	'ttf',
+	'otf',
+]);
+
+/**
+ * Container formats that request a specific outline technology. `ttf` forces
+ * TrueType (`glyf`) outlines, `otf` forces PostScript/CFF outlines; both emit a
+ * plain SFNT file. The value is the `convertOutlines` target.
+ */
+const OUTLINE_FORMAT_TARGETS = {
+	ttf: 'truetype',
+	otf: 'cff',
+};
 
 /**
  * Determine the default export format from the font data's origin.
@@ -195,8 +213,10 @@ function defaultFormatFrom(fontData) {
  *
  * @param {object} fontData - Font data object (simplified, legacy, or collection).
  * @param {object} [options] - Export options.
- * @param {string} [options.format] - Output format: 'sfnt', 'woff' (or 'woff2'
- *   once supported). Defaults to the original import format.
+ * @param {string} [options.format] - Output format: 'sfnt', 'woff', 'woff2',
+ *   'cff', 'ttf', or 'otf'. `ttf` and `otf` emit an SFNT file but first convert
+ *   the glyph outlines to TrueType (`glyf`) or PostScript (`CFF `) respectively,
+ *   switching the sfntVersion accordingly. Defaults to the original import format.
  * @param {boolean} [options.split] - Collections only: when true, return an
  *   array of individual ArrayBuffers (one per face) instead of a single file.
  * @returns {ArrayBuffer|ArrayBuffer[]} Binary font file bytes.
@@ -206,14 +226,21 @@ export function exportFont(fontData, options = {}) {
 		throw new TypeError('exportFont expects a font data object');
 	}
 
-	const format = options.format
+	let format = options.format
 		? options.format.toLowerCase()
 		: defaultFormatFrom(fontData);
 
 	if (!SUPPORTED_FORMATS.has(format)) {
 		throw new Error(
-			`Unknown export format "${format}". Supported: sfnt, woff, woff2, cff.`,
+			`Unknown export format "${format}". Supported: sfnt, woff, woff2, cff, ttf, otf.`,
 		);
+	}
+
+	// `ttf`/`otf` request a specific outline technology. Convert the outlines
+	// (no-op when the font already uses that technology) and then emit SFNT.
+	if (OUTLINE_FORMAT_TARGETS[format]) {
+		fontData = convertOutlines(fontData, OUTLINE_FORMAT_TARGETS[format]);
+		format = 'sfnt';
 	}
 
 	if (isCollection(fontData)) {

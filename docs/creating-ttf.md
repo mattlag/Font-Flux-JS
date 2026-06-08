@@ -130,6 +130,27 @@ See the [SVG path conversion docs](./index.md#svg-path-conversion) for details o
 
 For a complete guide to hand-authoring glyph data — including `.addGlyph()`, all outline formats, metadata reference, and examples — see [Creating Glyphs](./creating-glyphs.md).
 
+### Converting an OTF to TTF
+
+If you have a CFF-based OpenType font (`.otf`) and want a TrueType `.ttf`, export with `format: 'ttf'`. Font Flux re-fits the cubic outlines to quadratic contours, swaps the `CFF ` table for `glyf`/`loca`, and sets the `sfntVersion` to `0x00010000`:
+
+```js
+const font = FontFlux.open(otfBuffer); // CFF/OTF source
+const ttf = font.export({ format: 'ttf' }); // TrueType TTF bytes
+```
+
+You can also convert in place (chainable) if you want to keep editing afterwards:
+
+```js
+font.convertOutlines('truetype');
+```
+
+Notes:
+
+- Cubic → quadratic is an approximation (subdivision with a 0.5-unit error threshold), so it is not a lossless round-trip.
+- CFF hinting and charstring subroutines are not carried over; the result is unhinted.
+- Static fonts only; variable fonts (`fvar`/`gvar`/`CFF2`) and collections are rejected.
+
 ## Creating a TTC (TrueType Collection)
 
 A `.ttc` file bundles multiple TrueType font faces into a single binary. Each face is a complete TTF — it must satisfy all the requirements above.

@@ -482,7 +482,7 @@ function parseSVGPath(d) {
  *
  * @returns {Array<{cx, cy, x, y}>} Quadratic segments (control point + endpoint)
  */
-function cubicToQuadratics(x0, y0, x1, y1, x2, y2, x3, y3, depth = 0) {
+export function cubicToQuadratics(x0, y0, x1, y1, x2, y2, x3, y3, depth = 0) {
 	// Try single quadratic approximation:
 	// QCP = average of the two cubic control points (weighted intersection)
 	const qcx = (3 * (x1 + x2) - x0 - x3) / 4;

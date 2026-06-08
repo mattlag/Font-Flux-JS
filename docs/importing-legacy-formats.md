@@ -31,10 +31,11 @@ You can also export to any other format:
 
 ```js
 const otf = font.export({ format: 'sfnt' }); // full OTF with SFNT wrapper
+const ttf = font.export({ format: 'ttf' }); // convert CFF outlines to TrueType .ttf
 const woff = font.export({ format: 'woff' }); // WOFF 1.0
 ```
 
-> **Note:** CFF export is only available for fonts with CFF outlines. Attempting to export a TrueType font as CFF will throw an error.
+> **Note:** CFF export is only available for fonts with CFF outlines. Attempting to export a TrueType font as CFF will throw an error. Use `format: 'ttf'`/`'otf'` to convert outlines between technologies (static fonts only) — see [Creating a TTF](./creating-ttf.md#converting-an-otf-to-ttf).
 
 ## PFB (PostScript Type 1 Binary)
 

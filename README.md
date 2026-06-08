@@ -281,12 +281,13 @@ See [Creating Color Fonts](https://www.glyphrstudio.com/fontfluxjs/creating-colo
 
 ### Export & serialization
 
-| Method              | Description                                                                              |
-| ------------------- | ---------------------------------------------------------------------------------------- |
-| `.export(options?)` | Export to binary `ArrayBuffer`. Options: `{ format: 'sfnt' ∣ 'woff' ∣ 'woff2' ∣ 'cff' }` |
-| `.toJSON(indent?)`  | Serialize to JSON string                                                                 |
-| `.validate()`       | Check for structural issues. Returns `{ valid, errors, warnings, ... }`                  |
-| `.detach()`         | Strip stored tables/header, converting to a pure hand-authored shape                     |
+| Method                     | Description                                                                                               |
+| -------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `.export(options?)`        | Export to binary `ArrayBuffer`. Options: `{ format: 'sfnt' ∣ 'woff' ∣ 'woff2' ∣ 'cff' ∣ 'ttf' ∣ 'otf' }`  |
+| `.convertOutlines(target)` | Convert glyph outlines between TrueType and CFF in place. `target` is `'truetype'` or `'cff'`. Chainable. |
+| `.toJSON(indent?)`         | Serialize to JSON string                                                                                  |
+| `.validate()`              | Check for structural issues. Returns `{ valid, errors, warnings, ... }`                                   |
+| `.detach()`                | Strip stored tables/header, converting to a pure hand-authored shape                                      |
 
 See [Validation](https://www.glyphrstudio.com/fontfluxjs/validation) for a full guide with examples.
 
@@ -311,6 +312,23 @@ await initWoff2(); // Call once at startup
 const font = FontFlux.open(woff2Buffer);
 const woff2Output = font.export({ format: 'woff2' });
 ```
+
+### Converting between TTF and OTF outlines
+
+`.otf` and `.ttf` share the same SFNT container — the only real binary differences are the 4‑byte `sfntVersion` and which glyph-outline tables are present (`glyf`/`loca` for TrueType vs `CFF ` for PostScript). Font Flux can convert the outlines themselves between the two technologies (cubic ↔ quadratic Bézier):
+
+```js
+// Export a CFF/OTF font as a real TrueType .ttf (outlines re-fitted to quadratic)
+const ttf = font.export({ format: 'ttf' });
+
+// Export a TrueType/TTF font as a real CFF .otf (outlines promoted to cubic)
+const otf = font.export({ format: 'otf' });
+
+// Or convert in place (chainable) and keep editing
+font.convertOutlines('cff'); // 'cff' or 'truetype'
+```
+
+The `'ttf'` and `'otf'` export formats convert the outlines (a no-op if the font already uses that technology) and then emit a plain SFNT file with the correct `sfntVersion`. Conversion is for **static fonts only** — variable fonts (`fvar`/`gvar`/`CFF2`) and collections are rejected. TrueType-only hinting (`cvt `, `fpgm`, `prep`, `gasp`) is dropped when converting to CFF, since the bytecode is meaningless there.
 
 ## What `FontFlux.open()` gives you
 
