@@ -128,6 +128,17 @@ function cffToTrueType(fontData) {
 		} else {
 			out.contours = [];
 		}
+
+		// TrueType requires the hmtx left side bearing to equal the glyph's
+		// xMin. CFF rasterizers position glyphs by their absolute outline
+		// coordinates and ignore any lsb/xMin mismatch, so OTF hmtx lsb values
+		// frequently disagree with the real outline xMin (common in oblique /
+		// italic faces where strokes overhang to the left). TrueType
+		// rasterizers, however, shift the outline by (lsb − xMin), which would
+		// push such glyphs out of their advance and overlap their neighbours.
+		// Recompute lsb from the converted outline so lsb === xMin and the
+		// glyph keeps the same visual position relative to the pen.
+		out.leftSideBearing = pointsXMin(out.contours);
 		return out;
 	});
 
@@ -329,6 +340,23 @@ function quadToCubic(p0x, p0y, cx, cy, p1x, p1y) {
 /** Round to the integer grid used by font outlines. */
 function r(v) {
 	return Math.round(v);
+}
+
+/**
+ * Minimum x across TrueType point contours, used as the glyph's left side
+ * bearing (TrueType requires lsb === glyf xMin). Returns 0 for empty outlines,
+ * matching the xMin buildGlyfTable assigns to contour-less glyphs.
+ * @param {Array<Array<{x:number}>>} contours
+ * @returns {number}
+ */
+function pointsXMin(contours) {
+	let min = Infinity;
+	for (const contour of contours) {
+		for (const p of contour) {
+			if (p.x < min) min = p.x;
+		}
+	}
+	return min === Infinity ? 0 : min;
 }
 
 /** True when `contours` are CFF-style command objects (have a `type` field). */

@@ -104,6 +104,31 @@ describe('convertOutlines — CFF (OTF) → TrueType (TTF)', () => {
 		expect(typeof dstGlyph.contours[0][0].onCurve).toBe('boolean');
 		expect(dstGlyph.contours[0][0].type).toBeUndefined();
 	});
+
+	it('sets hmtx lsb to glyf xMin so glyphs do not shift/overlap', async () => {
+		// oblegg is an oblique CFF face whose hmtx lsb values are 0 even though
+		// many glyph outlines overhang to the left (negative xMin). CFF ignores
+		// that mismatch, but TrueType rasterizers shift the outline by
+		// (lsb − xMin), pushing such glyphs past their advance and overlapping
+		// the next glyph (e.g. "u" overlapping "j" in "jump"). After conversion
+		// every glyph's lsb must equal its outline xMin.
+		const buffer = await loadBuffer('oblegg.otf');
+		const original = importFont(buffer);
+		const out = exportFont(original, { format: 'ttf' });
+		const reimported = importFont(out);
+
+		// Sanity: the source really does have the lsb≠xMin mismatch we fix.
+		const srcJ = original.glyphs.find((g) => g.name === 'j');
+		const srcBox = contoursBBox(srcJ.contours);
+		expect(srcBox.xMin).toBeLessThan(0);
+		expect(srcJ.leftSideBearing).not.toBe(Math.round(srcBox.xMin));
+
+		for (const g of reimported.glyphs) {
+			const box = contoursBBox(g.contours);
+			if (!box) continue; // contour-less glyphs (space) — lsb is 0
+			expect(g.leftSideBearing).toBe(box.xMin);
+		}
+	});
 });
 
 describe('convertOutlines — TrueType (TTF) → CFF (OTF)', () => {

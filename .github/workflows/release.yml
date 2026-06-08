@@ -1,0 +1,76 @@
+# Publish to npm and create a GitHub Release when a version tag is pushed.
+#
+# This is the single entry point for a release. Pushing a tag like `v2.5.3`
+# runs the full test suite, publishes the package to npm, and creates a
+# GitHub Release with auto-generated notes. The demo-deploy workflow keys off
+# the same tag, so one `git push` of a tag drives publish + release + deploy.
+#
+# Kick it off from VS Code with the "Release: tag & push" task, or manually:
+#   git tag v2.5.3 && git push origin v2.5.3
+#
+# Prerequisite — add this once as a Repository Secret
+# (Settings → Secrets and variables → Actions → New repository secret):
+#   NPM_TOKEN — an npm "Automation" access token with publish rights.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write # create the GitHub Release
+  id-token: write # npm provenance attestation
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify tag matches package.json version
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          echo "Tag version:     $TAG"
+          echo "package.json:    $PKG"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Tag v$TAG does not match package.json version $PKG. Bump package.json or retag."
+            exit 1
+          fi
+
+      - name: Lint (Biome)
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build library
+        run: npm run build
+
+      - name: Publish to npm
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

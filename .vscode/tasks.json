@@ -1,0 +1,18 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Release: tag & push",
+			"detail": "Tag the current commit with the package.json version and push it to trigger npm publish + GitHub Release + demo deploy.",
+			"type": "shell",
+			"command": "npm",
+			"args": ["run", "release"],
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"clear": true
+			}
+		}
+	]
+}
