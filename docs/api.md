@@ -118,7 +118,7 @@ they return (e.g. pushing to `.glyphs`) persists on the font.
 | `.features`      | `object`     | OpenType layout features (GPOS, GSUB, GDEF).                                  |
 | `.tables`        | `object`     | All parsed tables (advanced / lossless access).                               |
 | `.glyphCount`    | `number`     | Number of glyphs.                                                             |
-| `.format`        | `string`     | Outline format: `'truetype'`, `'cff'`, or `'cff2'`.                           |
+| `.format`        | `string`     | Outline format: `'truetype'` or `'cff'`.                                      |
 | `.data`          | `object`     | The full simplified font data object. Escape hatch for bulk reads/transforms. |
 
 ## Glyph methods
@@ -562,7 +562,8 @@ Interpret Type 2 charstring bytecode into cubic Bézier contours.
 | `globalSubrs` | `Array` | _Optional_ global subroutine index. |
 | `localSubrs`  | `Array` | _Optional_ local subroutine index.  |
 
-**Returns** decoded cubic Bézier contours.
+**Returns** `{ contours, width }` — decoded cubic Bézier contours and the
+explicit glyph width (or `null` when not encoded in the charstring).
 
 ### `FontFlux.disassembleCharString(bytes)`
 

@@ -25,9 +25,17 @@ export async function initBrotli() {
 	if (_brotliDecompress) return;
 	try {
 		// Node.js built-in brotli (available since Node.js 10.16)
-		const { brotliCompressSync, brotliDecompressSync } = await import(
-			'node:zlib'
-		);
+		const { brotliCompressSync, brotliDecompressSync } =
+			await import('node:zlib');
+		// A bundler may stub `node:zlib` in browser builds: the import resolves
+		// but the functions are missing. Only use them when actually callable;
+		// otherwise fall through to the brotli-wasm path below.
+		if (
+			typeof brotliCompressSync !== 'function' ||
+			typeof brotliDecompressSync !== 'function'
+		) {
+			throw new Error('node:zlib brotli functions unavailable');
+		}
 		_brotliCompress = (data) => new Uint8Array(brotliCompressSync(data));
 		_brotliDecompress = (data) => new Uint8Array(brotliDecompressSync(data));
 	} catch {
@@ -285,12 +293,26 @@ function buildTripletTable() {
 
 	// Flags 120–123: 3 data bytes, x=12, y=12
 	for (const [xs, ys] of signs) {
-		t.push({ xBits: 12, yBits: 12, deltaX: 0, deltaY: 0, xSign: xs, ySign: ys });
+		t.push({
+			xBits: 12,
+			yBits: 12,
+			deltaX: 0,
+			deltaY: 0,
+			xSign: xs,
+			ySign: ys,
+		});
 	}
 
 	// Flags 124–127: 4 data bytes, x=16, y=16
 	for (const [xs, ys] of signs) {
-		t.push({ xBits: 16, yBits: 16, deltaX: 0, deltaY: 0, xSign: xs, ySign: ys });
+		t.push({
+			xBits: 16,
+			yBits: 16,
+			deltaX: 0,
+			deltaY: 0,
+			xSign: xs,
+			ySign: ys,
+		});
 	}
 
 	return t;
@@ -615,7 +637,10 @@ function reverseGlyfTransform(transformedData, origLocaLength) {
 				glyphPos,
 			);
 			glyphPos += instrLenBytes;
-			const instructions = d.subarray(instructionPos, instructionPos + instrLen);
+			const instructions = d.subarray(
+				instructionPos,
+				instructionPos + instrLen,
+			);
 			instructionPos += instrLen;
 
 			// Compute or read bounding box
@@ -987,7 +1012,10 @@ export function unwrapWOFF2(buffer) {
 	if (flavor === 0x74746366) {
 		const ttcVersion = readU32(bytes, dirPos);
 		dirPos += 4;
-		const { value: numFonts, bytesRead: nfBytes } = read255UInt16(bytes, dirPos);
+		const { value: numFonts, bytesRead: nfBytes } = read255UInt16(
+			bytes,
+			dirPos,
+		);
 		dirPos += nfBytes;
 
 		const fonts = [];

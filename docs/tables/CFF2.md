@@ -85,12 +85,13 @@ Like CFF v1, CFF2 stores glyph outlines as Type 2 charstring byte arrays. Font F
 ```js
 import { FontFlux } from 'font-flux-js';
 
-const contours = FontFlux.interpretCharString(
+const { contours, width } = FontFlux.interpretCharString(
 	cff2.charStrings[glyphIndex],
-	fontDict.localSubrs,
 	cff2.globalSubrs,
+	fontDict.localSubrs,
 );
-// Returns: [[{ type: 'M', x, y }, { type: 'C', x1, y1, x2, y2, x, y }, ...], ...]
+// contours: [[{ type: 'M', x, y }, { type: 'C', x1, y1, x2, y2, x, y }, ...], ...]
+// width: explicit glyph width if encoded in the charstring, else null
 ```
 
 Use `FontFlux.disassembleCharString(bytes)` for a human-readable text representation of the charstring program.

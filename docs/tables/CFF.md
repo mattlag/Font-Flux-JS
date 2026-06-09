@@ -87,19 +87,20 @@ Notes:
 
 The `charStrings` byte arrays are opaque Type 2 programs that encode glyph outlines. Font Flux provides two functions for working with them directly:
 
-### `FontFlux.interpretCharString(bytes, localSubrs, globalSubrs)`
+### `FontFlux.interpretCharString(bytes, globalSubrs, localSubrs)`
 
-Interprets a charstring byte array into an array of cubic Bézier contour commands:
+Interprets a charstring byte array into cubic Bézier contour commands:
 
 ```js
 import { FontFlux } from 'font-flux-js';
 
-const contours = FontFlux.interpretCharString(
+const { contours, width } = FontFlux.interpretCharString(
 	font.charStrings[glyphIndex],
-	font.localSubrs,
 	font.globalSubrs,
+	font.localSubrs,
 );
-// Returns: [[{ type: 'M', x, y }, { type: 'L', x, y }, { type: 'C', x1, y1, x2, y2, x, y }, ...], ...]
+// contours: [[{ type: 'M', x, y }, { type: 'L', x, y }, { type: 'C', x1, y1, x2, y2, x, y }, ...], ...]
+// width: explicit glyph width if encoded in the charstring, else null
 ```
 
 Command types:
