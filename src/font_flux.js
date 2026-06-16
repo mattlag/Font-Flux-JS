@@ -174,8 +174,13 @@ export class FontFlux {
 	/**
 	 * Create a new font from scratch (Scenario 2).
 	 *
-	 * Returns a FontFlux instance with .notdef and space glyphs, ready for
-	 * addGlyph() calls and immediate export.
+	 * Returns a FontFlux instance pre-populated with two glyphs at the front of
+	 * the glyph order: `.notdef` at index 0 and `space` (U+0020) at index 1.
+	 * Glyphs you add via addGlyph() are appended after these, so the first
+	 * glyph you add lives at index 2. Because composite components can be
+	 * resolved by `glyphName` (see createGlyph), you normally never need to
+	 * reason about these indices — but if you do compute indices by hand,
+	 * account for the two leading glyphs.
 	 *
 	 * @param {object} [options]
 	 * @param {string} options.family - Font family name (required)

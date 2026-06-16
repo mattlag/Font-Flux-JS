@@ -145,29 +145,33 @@ export function svgPathToContours(pathData, format = 'cff') {
 	const commands = parseSVGPath(pathData);
 	if (commands.length === 0) return [];
 
-	// Split commands into contours (each M starts a new contour)
+	// Split commands into contours (each M starts a new contour).
+	//
+	// A subpath that contains only a move (e.g. a stray leading `M0,0` with no
+	// following draw command) carries no geometry. Emitting it as a contour
+	// produces a single-point "contour" that corrupts the glyf build and can
+	// break composite linking, so such degenerate subpaths are discarded.
 	const rawContours = [];
 	let current = null;
+	const flush = () => {
+		if (current && current.some((c) => c.op !== 'M')) {
+			rawContours.push(current);
+		}
+		current = null;
+	};
 
 	for (const cmd of commands) {
 		if (cmd.op === 'M') {
-			if (current && current.length > 0) {
-				rawContours.push(current);
-			}
+			flush();
 			current = [cmd];
 		} else if (cmd.op === 'Z') {
-			if (current && current.length > 0) {
-				rawContours.push(current);
-			}
-			current = null;
+			flush();
 		} else if (current) {
 			current.push(cmd);
 		}
 	}
-	// Flush if no Z at end
-	if (current && current.length > 0) {
-		rawContours.push(current);
-	}
+	// Flush any trailing subpath that has no closing Z.
+	flush();
 
 	if (format === 'truetype') {
 		return rawContours.map((cmds) => svgCommandsToTTF(cmds));

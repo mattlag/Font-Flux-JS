@@ -99,10 +99,32 @@ function detectOutline(fontData) {
 	const tables = fontData.tables || {};
 	if (tables['CFF '] || tables.CFF2) return 'cff';
 	if (tables.glyf) return 'truetype';
-	// Hand-authored fonts with no raw tables: infer from glyph data.
+	// Hand-authored fonts with no raw tables: infer from glyph data, using the
+	// same dominant-signal rule as expand.js buildRawFromSimplified so the two
+	// code paths never disagree. Composite components are glyf-only, and a lone
+	// cubic glyph (e.g. a command-format .notdef carrying a compiled charString)
+	// must not flip a composite-bearing TrueType font to CFF — doing so would
+	// strip its components during conversion.
 	const glyphs = fontData.glyphs || [];
-	if (glyphs.some((g) => g.charString)) return 'cff';
-	return 'truetype';
+	if (glyphs.some((g) => g.components && g.components.length > 0)) {
+		return 'truetype';
+	}
+	let charStringCount = 0;
+	let pointContourCount = 0;
+	for (const g of glyphs) {
+		if (g.charString) {
+			charStringCount++;
+		} else if (
+			g.contours &&
+			g.contours.length > 0 &&
+			!isCubicContours(g.contours)
+		) {
+			pointContourCount++;
+		}
+	}
+	return charStringCount > 0 && charStringCount >= pointContourCount
+		? 'cff'
+		: 'truetype';
 }
 
 // ===========================================================================
@@ -155,7 +177,7 @@ function cffToTrueType(fontData) {
  * @param {Array<object>} contour
  * @returns {Array<{x:number,y:number,onCurve:boolean}>}
  */
-function cubicContourToPoints(contour) {
+export function cubicContourToPoints(contour) {
 	if (!Array.isArray(contour) || contour.length === 0) return [];
 	const points = [];
 	let curX = 0;
@@ -360,7 +382,7 @@ function pointsXMin(contours) {
 }
 
 /** True when `contours` are CFF-style command objects (have a `type` field). */
-function isCubicContours(contours) {
+export function isCubicContours(contours) {
 	return (
 		Array.isArray(contours) &&
 		contours.length > 0 &&

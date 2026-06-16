@@ -23,6 +23,13 @@ import { svgPathToContours } from './svg_path.js';
  * when converting from SVG path input. If omitted, it defaults to 'truetype'
  * (TrueType quadratic outlines), which is the recommended format for new fonts.
  *
+ * Outline format note: command-format (cubic `{type:'M'|'L'|'C', …}`) contours
+ * are accepted for any glyph, but for TrueType output they are normalised to
+ * on/off-curve points at export time. Supplying command-format contours never
+ * forces the whole font to CFF — composite-bearing fonts always export as
+ * TrueType. createGlyph returns a NEW glyph object and never mutates the
+ * `options` you pass in.
+ *
  * @param {object} options
  * @param {string} options.name - Glyph name (e.g. 'A', 'space', '.notdef')
  * @param {number} [options.unicode] - Single Unicode code point
@@ -34,7 +41,11 @@ import { svgPathToContours } from './svg_path.js';
  * @param {string} [options.path] - SVG path `d` string for the outline
  * @param {Array} [options.contours] - Contour arrays (CFF or TrueType format)
  * @param {number[]} [options.charString] - Raw CFF charstring bytes
- * @param {Array} [options.components] - Composite glyph components
+ * @param {Array} [options.components] - Composite glyph components. Each may
+ *   reference its base glyph by `glyphIndex` (number) or, more conveniently,
+ *   by `glyphName` (string) which is resolved to an index at export time —
+ *   after any auto-injected glyphs — so you never have to track shifting
+ *   indices yourself.
  * @param {number[]} [options.instructions] - TrueType instructions (bytecode)
  * @param {'cff'|'truetype'} [options.format='truetype'] - Contour format for SVG path conversion
  * @returns {object} A glyph object ready for use in font.glyphs[]
@@ -198,6 +209,100 @@ function findGlyphByCodePoint(glyphs, codePoint) {
 }
 
 /**
+ * Resolve a composite component's 2×2 transform into the canonical writer
+ * shape (`{ scale }` | `{ xScale, yScale }` | `{ xScale, scale01, scale10,
+ * yScale }`), accepting both that shape and the high-level authoring shapes
+ * documented in Creating Glyphs:
+ *   - `transform: { xx, xy, yx, yy }`  (full 2×2 matrix)
+ *   - `scale: number`                  (uniform scale)
+ *   - `scaleXY: { x, y }`              (non-uniform scale)
+ *
+ * @param {object} comp
+ * @returns {object|null} Writer-shape transform, or null when there is none.
+ */
+export function normalizeComponentTransform(comp) {
+	const tf = comp.transform;
+	if (tf) {
+		// Already in writer shape.
+		if ('scale' in tf || 'xScale' in tf) return tf;
+		// High-level 2×2 matrix { xx, xy, yx, yy }.
+		if ('xx' in tf || 'xy' in tf || 'yx' in tf || 'yy' in tf) {
+			return {
+				xScale: tf.xx ?? 1,
+				scale01: tf.xy ?? 0,
+				scale10: tf.yx ?? 0,
+				yScale: tf.yy ?? 1,
+			};
+		}
+	}
+	if (typeof comp.scale === 'number') return { scale: comp.scale };
+	if (comp.scaleXY && typeof comp.scaleXY === 'object') {
+		return { xScale: comp.scaleXY.x ?? 1, yScale: comp.scaleXY.y ?? 1 };
+	}
+	return null;
+}
+
+/**
+ * Normalise a composite component descriptor into the canonical low-level
+ * shape consumed by the glyf writer and {@link decomposeGlyph}:
+ *   `{ glyphIndex, flags, argument1, argument2, transform? }`
+ *
+ * Accepts both that low-level shape (as produced by font import) and the
+ * higher-level authoring shape documented in Creating Glyphs:
+ *   `{ glyphName | glyphIndex, dx, dy, scale?, scaleXY?, transform?, useMyMetrics? }`
+ *
+ * When `glyphName` is present it is resolved against `nameToIndex`; this lets
+ * callers reference base glyphs by name and have the index assigned at export
+ * time, after any auto-injected glyphs.
+ *
+ * @param {object} comp - Component descriptor (either shape).
+ * @param {Map<string, number>} [nameToIndex] - Glyph name → index map.
+ * @returns {object} Component in low-level writer shape.
+ */
+export function normalizeComponent(comp, nameToIndex) {
+	// 1. Resolve the base-glyph reference.
+	let glyphIndex = comp.glyphIndex;
+	if (comp.glyphName != null) {
+		const resolved = nameToIndex ? nameToIndex.get(comp.glyphName) : undefined;
+		if (resolved === undefined) {
+			throw new Error(
+				`Composite component references unknown glyph name "${comp.glyphName}". ` +
+					'Add that glyph to the font before exporting, or use glyphIndex.',
+			);
+		}
+		glyphIndex = resolved;
+	}
+
+	// 2. Offsets + flags. A component already carrying the low-level shape
+	//    (a flags object plus numeric argument1/argument2) is preserved as-is
+	//    so point-matching composites and imported fonts round-trip exactly.
+	//    Otherwise translate the high-level dx/dy offsets into XY arguments.
+	const hasLowLevelArgs =
+		comp.flags && comp.argument1 !== undefined && comp.argument2 !== undefined;
+
+	let flags;
+	let argument1;
+	let argument2;
+	if (hasLowLevelArgs) {
+		flags = { ...comp.flags };
+		argument1 = comp.argument1;
+		argument2 = comp.argument2;
+	} else {
+		flags = { ...(comp.flags || {}), argsAreXYValues: true };
+		argument1 = comp.argument1 ?? comp.dx ?? 0;
+		argument2 = comp.argument2 ?? comp.dy ?? 0;
+	}
+	if (comp.useMyMetrics) flags.useMyMetrics = true;
+
+	const out = { glyphIndex, flags, argument1, argument2 };
+
+	// 3. Transform.
+	const transform = normalizeComponentTransform(comp);
+	if (transform) out.transform = transform;
+	return out;
+}
+
+/**
  * Resolve a composite glyph component's 2×2 transform and offset into a flat
  * affine description `{ a, b, c, d, dx, dy }`, where a point (x, y) maps to:
  *   x' = a·x + c·y + dx
@@ -211,7 +316,7 @@ function componentTransform(component) {
 	let b = 0;
 	let c = 0;
 	let d = 1;
-	const tf = component.transform;
+	const tf = normalizeComponentTransform(component);
 	if (tf) {
 		if (typeof tf.scale === 'number') {
 			a = tf.scale;
@@ -226,11 +331,16 @@ function componentTransform(component) {
 
 	// Offsets are only meaningful when the arguments are XY values. Point
 	// matching (argsAreXYValues === false) is not supported by decomposition.
+	// Low-level components flag this explicitly; high-level authoring shapes
+	// (no flags object) carry their offset as argument1/argument2 or dx/dy.
 	let dx = 0;
 	let dy = 0;
 	if (component.flags?.argsAreXYValues) {
 		dx = component.argument1 || 0;
 		dy = component.argument2 || 0;
+	} else if (component.flags == null) {
+		dx = component.argument1 ?? component.dx ?? 0;
+		dy = component.argument2 ?? component.dy ?? 0;
 	}
 
 	return { a, b, c, d, dx, dy };
@@ -263,7 +373,10 @@ export function decomposeGlyph(glyphs, glyph, depth = 0) {
 
 	const out = [];
 	for (const component of glyph.components) {
-		const ref = glyphs[component.glyphIndex];
+		let ref = glyphs[component.glyphIndex];
+		if (!ref && component.glyphName != null) {
+			ref = glyphs.find((g) => g && g.name === component.glyphName);
+		}
 		if (!ref) continue;
 		const refContours = decomposeGlyph(glyphs, ref, depth + 1);
 		if (refContours.length === 0) continue;

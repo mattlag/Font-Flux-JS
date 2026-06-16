@@ -21,6 +21,8 @@ font.addGlyph({
 
 That's the simplest form — a name, a Unicode code point, a width, and an SVG path string. The method handles everything else: contour conversion, format detection, and charstring compilation.
 
+`.addGlyph()` stores a normalized copy of your glyph; the object you pass in is never mutated (its `path` field is left untouched). `FontFlux.create()` pre-populates the font with two glyphs — `.notdef` at index 0 and `space` (U+0020) at index 1 — so glyphs you add are appended after them. Because composite components can reference base glyphs by `glyphName` (see below), you normally never need to reason about these indices.
+
 You can also construct glyph objects directly as plain JSON and push them into `font.glyphs` without using `.addGlyph()`. The method is a convenience, not a requirement.
 
 ## Looking up glyphs with `.getGlyph()`
@@ -138,6 +140,8 @@ font.addGlyph({
 
 If the SVG path contains cubic curves (`C` commands) and you specify `format: 'truetype'`, the cubics are automatically approximated as quadratic curves.
 
+Empty subpaths are ignored. A move command with no following draw command — for example a leading `M 0 0` in `M0,0 M100,100 L…` — carries no geometry and is dropped rather than emitted as a zero-area contour, so it can't corrupt the outline or composite linking.
+
 #### When to use SVG paths
 
 - You're exporting outlines from an SVG-based design tool (Figma, Illustrator, Inkscape).
@@ -220,6 +224,8 @@ font.addGlyph({
 #### Charstring auto-compilation
 
 When you provide CFF contours, Font Flux automatically compiles them into the Type 2 charstring byte array needed for OTF export. You don't need to understand or produce charstring bytecode.
+
+> **Mixing CFF contours into a TrueType font is safe.** If the font is exported as TrueType — for example because it contains composite glyphs, or you call `font.export({ format: 'ttf' })` — any CFF/cubic contours (including ones on `.notdef`) are automatically converted to quadratic on/off-curve points when the `glyf` table is built. A stray cubic glyph no longer forces the whole font to CFF or corrupts composite linking.
 
 #### When to use CFF contours
 
@@ -329,10 +335,24 @@ const text = FontFlux.disassembleCharString(bytes);
 
 Composite glyphs reference other glyphs instead of having their own outlines. This is common for accented characters (é = e + combining acute accent).
 
+You can reference each base glyph either by **name** (`glyphName`) or by **index** (`glyphIndex`). Referencing by name is recommended: the index is resolved at export time — after the auto-injected `.notdef`/`space` glyphs (see below) and any other glyphs you add — so you never have to track indices that shift underneath you.
+
 ```js
+// Reference base glyphs by name (recommended)
 font.addGlyph({
 	name: 'eacute',
 	unicode: 233,
+	advanceWidth: 550,
+	components: [
+		{ glyphName: 'e', dx: 0, dy: 0 },
+		{ glyphName: 'acutecomb', dx: 100, dy: 0 },
+	],
+});
+
+// …or by index, if you already know the final glyph order
+font.addGlyph({
+	name: 'agrave',
+	unicode: 224,
 	advanceWidth: 550,
 	components: [
 		{ glyphIndex: 72, dx: 0, dy: 0 },
@@ -343,15 +363,18 @@ font.addGlyph({
 
 Component properties:
 
-| Field          | Type                 | Description                                                          |
-| -------------- | -------------------- | -------------------------------------------------------------------- |
-| `glyphIndex`   | `number`             | Index into the `glyphs` array for the referenced glyph.              |
-| `dx`           | `number`             | Horizontal translation offset.                                       |
-| `dy`           | `number`             | Vertical translation offset.                                         |
-| `scale`        | `number`             | Uniform scale factor (optional).                                     |
-| `scaleXY`      | `{ x, y }`           | Non-uniform scale (optional).                                        |
-| `transform`    | `{ xx, xy, yx, yy }` | Full 2×2 transformation matrix (optional).                           |
-| `useMyMetrics` | `boolean`            | If `true`, use this composite's metrics instead of the base glyph's. |
+| Field          | Type                 | Description                                                                          |
+| -------------- | -------------------- | ------------------------------------------------------------------------------------ |
+| `glyphName`    | `string`             | Name of the referenced base glyph. Resolved to an index at export time.              |
+| `glyphIndex`   | `number`             | Index into the `glyphs` array for the referenced glyph (alternative to `glyphName`). |
+| `dx`           | `number`             | Horizontal translation offset.                                                       |
+| `dy`           | `number`             | Vertical translation offset.                                                         |
+| `scale`        | `number`             | Uniform scale factor (optional).                                                     |
+| `scaleXY`      | `{ x, y }`           | Non-uniform scale (optional).                                                        |
+| `transform`    | `{ xx, xy, yx, yy }` | Full 2×2 transformation matrix (optional).                                           |
+| `useMyMetrics` | `boolean`            | If `true`, use this composite's metrics instead of the base glyph's.                 |
+
+> **Note:** Composite glyphs only exist in TrueType (`glyf`) fonts. A font that contains any composite glyph always exports as TrueType, even if some glyphs were supplied as CFF/cubic contours.
 
 ## Common glyph patterns
 

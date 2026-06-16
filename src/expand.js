@@ -49,7 +49,8 @@ import {
 	hexToBGRA,
 	resolvePaintGlyphNames,
 } from './color.js';
-import { resolveGlyphId } from './glyph.js';
+import { cubicContourToPoints, isCubicContours } from './convert.js';
+import { normalizeComponent, resolveGlyphId } from './glyph.js';
 import { compileCharString } from './otf/charstring_compiler.js';
 import { interpretCharString } from './otf/charstring_interpreter.js';
 import { isoToLongdatetime, MVAR_NAME_TAGS } from './simplify.js';
@@ -68,8 +69,43 @@ import { isoToLongdatetime, MVAR_NAME_TAGS } from './simplify.js';
 export function buildRawFromSimplified(simplified) {
 	const { font, glyphs } = simplified;
 
-	// Determine outline format: CFF if any glyph has charString, else TrueType
-	const isCFF = glyphs.some((g) => g.charString);
+	// Determine outline format: CFF (PostScript) vs TrueType (glyf).
+	//
+	// A bare `charString` is NOT sufficient evidence of a CFF font: createGlyph
+	// opportunistically compiles a charString whenever it is handed
+	// command-format (cubic M/L/C) contours, even for a TrueType-bound font.
+	// If a single such glyph (e.g. a hand-authored .notdef) flipped the whole
+	// font to CFF, every composite glyph would be silently dropped because CFF
+	// has no composite-glyph concept.
+	//
+	// Decide by the dominant signal instead:
+	//   - Any composite component is glyf-only ⇒ the font is TrueType.
+	//   - Otherwise compare how many glyphs carry CFF charstrings against how
+	//     many carry TrueType point-format contours ({x, y, onCurve}). The
+	//     charstring side must win (ties go to CFF) for the font to be CFF.
+	// The tie rule keeps a from-scratch CFF font correct: FontFlux.create seeds
+	// a point-format .notdef box, so a single-glyph CFF font has one charstring
+	// vs one point contour.
+	const hasComposites = glyphs.some(
+		(g) => g.components && g.components.length > 0,
+	);
+	let charStringCount = 0;
+	let pointContourCount = 0;
+	for (const g of glyphs) {
+		if (g.charString) {
+			charStringCount++;
+		} else if (
+			g.contours &&
+			g.contours.length > 0 &&
+			!isCubicContours(g.contours)
+		) {
+			pointContourCount++;
+		}
+	}
+	const isCFF =
+		!hasComposites &&
+		charStringCount > 0 &&
+		charStringCount >= pointContourCount;
 
 	const metrics = computeGlyphMetrics(glyphs, font);
 	const tables = {};
@@ -1008,32 +1044,57 @@ function buildVmtxTable(glyphs) {
 
 /**
  * Build the glyf table from simplified glyphs.
+ *
+ * Two robustness passes happen here so hand-authored fonts survive export:
+ *   1. Command-format (cubic M/L/C) contours are normalised to TrueType
+ *      point format. createGlyph accepts cubic contours for convenience, but
+ *      the glyf writer needs on/off-curve points; without this conversion a
+ *      stray cubic glyph would be written as garbage points.
+ *   2. Composite components may reference their base glyph by `glyphName`
+ *      instead of `glyphIndex`. Names are resolved against the final glyph
+ *      order here — after any auto-injected glyphs — so callers never have to
+ *      track indices that shift underneath them.
  */
 function buildGlyfTable(glyphs) {
+	// name -> index map for resolving composite component references by name.
+	const nameToIndex = new Map();
+	for (let i = 0; i < glyphs.length; i++) {
+		const nm = glyphs[i] && glyphs[i].name;
+		if (nm != null && !nameToIndex.has(nm)) nameToIndex.set(nm, i);
+	}
+
 	const rawGlyphs = glyphs.map((glyph) => {
 		if (glyph.contours && glyph.contours.length > 0) {
+			// Normalise cubic command contours to TrueType points if needed.
+			const contours = isCubicContours(glyph.contours)
+				? glyph.contours.map(cubicContourToPoints)
+				: glyph.contours;
 			// Simple glyph
-			const bbox = getGlyphBBox(glyph);
+			const bbox = getGlyphBBox({ contours });
 			return {
 				type: 'simple',
 				xMin: bbox ? bbox.xMin : 0,
 				yMin: bbox ? bbox.yMin : 0,
 				xMax: bbox ? bbox.xMax : 0,
 				yMax: bbox ? bbox.yMax : 0,
-				contours: glyph.contours,
+				contours,
 				instructions: glyph.instructions || [],
 				overlapSimple: false,
 			};
 		}
 		if (glyph.components && glyph.components.length > 0) {
-			// Composite glyph
+			// Composite glyph — normalise each component into the low-level
+			// writer shape, resolving any name-based references.
+			const components = glyph.components.map((comp) =>
+				normalizeComponent(comp, nameToIndex),
+			);
 			return {
 				type: 'composite',
 				xMin: 0,
 				yMin: 0,
 				xMax: 0,
 				yMax: 0,
-				components: glyph.components,
+				components,
 				instructions: glyph.instructions || [],
 			};
 		}
