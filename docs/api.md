@@ -105,21 +105,22 @@ const woff2 = font.export({ format: 'woff2' });
 These getters read directly into the simplified font data. Mutating the objects
 they return (e.g. pushing to `.glyphs`) persists on the font.
 
-| Property         | Type         | Description                                                                   |
-| ---------------- | ------------ | ----------------------------------------------------------------------------- |
-| `.info`          | `object`     | Font metadata (`familyName`, `styleName`, `unitsPerEm`, `ascender`, …).       |
-| `.glyphs`        | `object[]`   | Glyph objects (`name`, `unicode`, `advanceWidth`, `contours`, …).             |
-| `.kerning`       | `object[]`   | Kerning pairs `{ left, right, value }`.                                       |
-| `.substitutions` | `object[]`   | GSUB substitution rules (ligatures, small caps, alternates, …).               |
-| `.axes`          | `object[]`   | Variable font axes (from `fvar`).                                             |
-| `.instances`     | `object[]`   | Named instances (from `fvar`).                                                |
-| `.palettes`      | `string[][]` | Color palettes — arrays of hex strings (`#RRGGBB` / `#RRGGBBAA`).             |
-| `.colorGlyphs`   | `object[]`   | Color glyph definitions (COLR layers or paint graphs).                        |
-| `.features`      | `object`     | OpenType layout features (GPOS, GSUB, GDEF).                                  |
-| `.tables`        | `object`     | All parsed tables (advanced / lossless access).                               |
-| `.glyphCount`    | `number`     | Number of glyphs.                                                             |
-| `.format`        | `string`     | Outline format: `'truetype'` or `'cff'`.                                      |
-| `.data`          | `object`     | The full simplified font data object. Escape hatch for bulk reads/transforms. |
+| Property          | Type         | Description                                                                   |
+| ----------------- | ------------ | ----------------------------------------------------------------------------- |
+| `.info`           | `object`     | Font metadata (`familyName`, `styleName`, `unitsPerEm`, `ascender`, …).       |
+| `.glyphs`         | `object[]`   | Glyph objects (`name`, `unicode`, `advanceWidth`, `contours`, …).             |
+| `.kerning`        | `object[]`   | Kerning pairs `{ left, right, value }`.                                       |
+| `.kerningClasses` | `object[]`   | Class-based kerning groups preserved from import (one per source subtable).   |
+| `.substitutions`  | `object[]`   | GSUB substitution rules (ligatures, small caps, alternates, …).               |
+| `.axes`           | `object[]`   | Variable font axes (from `fvar`).                                             |
+| `.instances`      | `object[]`   | Named instances (from `fvar`).                                                |
+| `.palettes`       | `string[][]` | Color palettes — arrays of hex strings (`#RRGGBB` / `#RRGGBBAA`).             |
+| `.colorGlyphs`    | `object[]`   | Color glyph definitions (COLR layers or paint graphs).                        |
+| `.features`       | `object`     | OpenType layout features (GPOS, GSUB, GDEF).                                  |
+| `.tables`         | `object`     | All parsed tables (advanced / lossless access).                               |
+| `.glyphCount`     | `number`     | Number of glyphs.                                                             |
+| `.format`         | `string`     | Outline format: `'truetype'` or `'cff'`.                                      |
+| `.data`           | `object`     | The full simplified font data object. Escape hatch for bulk reads/transforms. |
 
 ## Glyph methods
 

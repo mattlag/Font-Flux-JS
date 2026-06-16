@@ -147,24 +147,77 @@ function expandPair(left, right, value, classes, out) {
  * 'U+0041' / '0x41' hex string). When code points are given, the
  * font's glyphs array is used to resolve them to names.
  *
- * @param {object} font   - A Font Flux simplified font (with `.kerning` and `.glyphs`)
+ * @param {object} font   - A Font Flux simplified font (with `.kerning` /
+ *                          `.kerningClasses` and `.glyphs`)
  * @param {string|number} left  - Glyph name, code point number, or hex string
  * @param {string|number} right - Glyph name, code point number, or hex string
  * @returns {number|undefined} The kerning value, or undefined if no pair exists
  */
 export function getKerningValue(font, left, right) {
 	const kerning = font?.kerning;
-	if (!kerning || !Array.isArray(kerning) || kerning.length === 0)
-		return undefined;
+	const kerningClasses = font?.kerningClasses;
+	const hasFlat = Array.isArray(kerning) && kerning.length > 0;
+	const hasClasses =
+		Array.isArray(kerningClasses) &&
+		kerningClasses.some(
+			(g) => g && Array.isArray(g.pairs) && g.pairs.length > 0,
+		);
+	if (!hasFlat && !hasClasses) return undefined;
 
 	const glyphs = font.glyphs;
 	const leftName = resolveGlyphId(glyphs, left);
 	const rightName = resolveGlyphId(glyphs, right);
 	if (leftName === undefined || rightName === undefined) return undefined;
 
-	for (let i = kerning.length - 1; i >= 0; i--) {
-		const p = kerning[i];
-		if (p.left === leftName && p.right === rightName) return p.value;
+	// Individual pairs take priority (last definition wins).
+	if (hasFlat) {
+		for (let i = kerning.length - 1; i >= 0; i--) {
+			const p = kerning[i];
+			if (p.left === leftName && p.right === rightName) return p.value;
+		}
+	}
+
+	// Fall back to class-based kerning. Later groups win (match GPOS subtable
+	// ordering on import).
+	if (hasClasses) {
+		for (let i = kerningClasses.length - 1; i >= 0; i--) {
+			const value = lookupKerningClassValue(
+				kerningClasses[i],
+				leftName,
+				rightName,
+			);
+			if (value !== undefined) return value;
+		}
+	}
+
+	return undefined;
+}
+
+/**
+ * Look up a kerning value from a single class-based kerningClasses group.
+ * Resolves the left/right glyph to the class (or singleton) that contains it
+ * and returns the matching pair value, if any.
+ */
+function lookupKerningClassValue(group, leftName, rightName) {
+	const { leftClasses = {}, rightClasses = {}, pairs = [] } = group;
+
+	const matchesRef = (ref, glyphName, classDict) => {
+		if (typeof ref === 'string' && ref.startsWith('@')) {
+			const members = classDict[ref.slice(1)];
+			return Array.isArray(members) && members.includes(glyphName);
+		}
+		return ref === glyphName;
+	};
+
+	// Later definitions win (matches GPOS subtable ordering on import).
+	for (let i = pairs.length - 1; i >= 0; i--) {
+		const p = pairs[i];
+		if (
+			matchesRef(p.left, leftName, leftClasses) &&
+			matchesRef(p.right, rightName, rightClasses)
+		) {
+			return p.value;
+		}
 	}
 	return undefined;
 }

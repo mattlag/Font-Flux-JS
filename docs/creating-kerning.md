@@ -167,20 +167,48 @@ Returns the glyph object or `undefined`. See [Creating Glyphs](./creating-glyphs
 
 ## How kerning is stored in fonts
 
-Font Flux extracts kerning from imported fonts and normalises it into the `kerning[]` array regardless of the source format. When exporting, it builds the appropriate binary table(s) from that array.
+Font Flux stores kerning in two complementary places:
 
-### Import (any format → `kerning[]`)
+- `kerning[]` — individual `{ left, right, value }` pairs (the flat representation used by `.addKerning()`, `.getKerning()`, and authoring from scratch).
+- `kerningClasses[]` — **class-based** kerning preserved verbatim from the source font, so large class tables survive a round-trip without being permuted into millions of individual pairs.
+
+When exporting, Font Flux builds the appropriate binary table(s) from these two structures.
+
+### Import (any format → `kerning[]` + `kerningClasses[]`)
 
 When you call `FontFlux.open()`, kerning is extracted from all available sources:
 
 - **GPOS PairPos** (Format 1 and 2) — the modern standard
 - **kern table** (OpenType Format 0 and 2, Apple Format 0, 1, 2, and 3)
 
-If both GPOS and kern tables contain kerning, they are merged. GPOS values take priority on conflicts.
+Individual pairs (GPOS Format 1, kern Format 0/1) are merged into `kerning[]`. GPOS values take priority over kern on conflicts.
 
-### Export (`kerning[]` → binary)
+Class-based subtables (GPOS Format 2, kern Format 2/3) are preserved as `kerningClasses[]` instead of being expanded. Each source subtable becomes one entry in the array, so overlapping classes across subtables stay independent. See [Class-based kerning preservation](#class-based-kerning-preservation) below.
 
-By default, `.export()` writes kerning as **GPOS PairPos Format 1** — the modern standard supported by all major text engines.
+### Class-based kerning preservation
+
+`kerningClasses` is an **array of subtable groups**. Each group maps 1:1 to a binary class-based subtable and has this shape:
+
+```js
+kerningClasses: [
+	{
+		// Multi-member classes only; singletons are referenced by bare glyph name.
+		leftClasses: { '@kern_L1': ['A', 'Aacute', 'Agrave'] },
+		rightClasses: { '@kern_R1': ['V', 'W', 'Y'] },
+		// Pairs reference a class by '@name' or a single glyph by its bare name.
+		pairs: [{ left: '@kern_L1', right: '@kern_R1', value: -80 }],
+	},
+	// ...one entry per source Format 2 / Format 3 subtable
+];
+```
+
+`.getKerning()` resolves values from both `kerning[]` (individual pairs win) and every group in `kerningClasses[]` (later groups win), so lookups behave the same whether a pair came from a flat pair or a class.
+
+On export, each group is written back as a single class-based subtable (GPOS PairPos Format 2) rather than being permuted. If a group's classes can't be represented as a single Format 2 subtable, only that group falls back to individual pairs. If you author or edit `kerningClasses` so that it deep-equals what was imported, the export is a fixed point — re-importing reproduces the same structure.
+
+### Export (`kerning[]` + `kerningClasses[]` → binary)
+
+By default, `.export()` writes individual pairs as **GPOS PairPos Format 1** and any `kerningClasses[]` groups as **GPOS PairPos Format 2** — the modern standard supported by all major text engines.
 
 To target a different format, set `_options.kerningFormat`:
 
@@ -204,7 +232,7 @@ const fontData = {
 
 ### Cross-format conversion
 
-Since all formats funnel through the same `kerning[]` array, importing from one format and exporting to another happens automatically:
+Since formats funnel through the same `kerning[]` and `kerningClasses[]` structures, importing from one format and exporting to another happens automatically:
 
 ```js
 // Open a font with legacy kern table

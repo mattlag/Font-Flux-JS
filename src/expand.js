@@ -101,19 +101,40 @@ export function buildRawFromSimplified(simplified) {
 
 	// == Optional kerning =============================================
 	const kerningFormat = simplified._options?.kerningFormat || 'gpos';
-	if (simplified.kerning && simplified.kerning.length > 0) {
+	const hasFlatKerning = simplified.kerning && simplified.kerning.length > 0;
+	const hasClassKerning =
+		Array.isArray(simplified.kerningClasses) &&
+		simplified.kerningClasses.some(
+			(g) => g && Array.isArray(g.pairs) && g.pairs.length > 0,
+		);
+	if (hasFlatKerning || hasClassKerning) {
 		const wantGpos = kerningFormat === 'gpos' || kerningFormat === 'gpos+kern';
 		const wantKern = kerningFormat !== 'gpos';
 
 		if (wantGpos) {
-			// Build or merge GPOS kerning
 			const existingGPOS = simplified.features?.GPOS;
 			const hasValidGPOS =
 				existingGPOS?.scriptList?.scriptRecords &&
 				existingGPOS?.featureList?.featureRecords &&
 				existingGPOS?.lookupList?.lookups;
 			let gpos;
-			if (hasValidGPOS) {
+			if (hasClassKerning) {
+				// Class-based path: emit PairPos Format 2 directly (no permutation),
+				// plus a Format 1 lookup for any individual pairs.
+				const lookups = buildKerningLookups(
+					simplified.kerningClasses,
+					simplified.kerning || [],
+					glyphs,
+				);
+				if (lookups.length > 0) {
+					gpos = hasValidGPOS
+						? replaceKernLookupsInGPOS(existingGPOS, lookups) ||
+							buildGPOSFromLookups(lookups)
+						: buildGPOSFromLookups(lookups);
+				} else if (hasValidGPOS) {
+					gpos = existingGPOS;
+				}
+			} else if (hasValidGPOS) {
 				gpos = mergeKerningIntoGPOS(existingGPOS, simplified.kerning, glyphs);
 			} else {
 				gpos = buildGPOSFromKerning(simplified.kerning, glyphs);
@@ -122,8 +143,16 @@ export function buildRawFromSimplified(simplified) {
 		}
 
 		if (wantKern) {
+			// Legacy kern table builders operate on flat pairs; expand any
+			// class-based kerning into individual pairs for these formats.
+			let flatKerning = simplified.kerning || [];
+			if (hasClassKerning) {
+				flatKerning = flatKerning.concat(
+					expandKerningClasses(simplified.kerningClasses, glyphs),
+				);
+			}
 			const kernTable = buildKernTableForFormat(
-				simplified.kerning,
+				flatKerning,
 				glyphs,
 				kerningFormat,
 			);
@@ -1598,7 +1627,16 @@ function buildGPOSFromKerning(kerning, glyphs) {
 	const { pairs } = resolveKerningPairs(kerning, glyphs);
 	if (pairs.length === 0) return null;
 
-	const lookup = buildPairPosLookup(pairs);
+	return buildGPOSFromLookups([buildPairPosLookup(pairs)]);
+}
+
+/**
+ * Wrap one or more GPOS lookups in a minimal GPOS table whose 'kern' feature
+ * references every supplied lookup (in order).
+ */
+function buildGPOSFromLookups(lookups) {
+	if (!lookups || lookups.length === 0) return null;
+	const lookupIndices = lookups.map((_, i) => i);
 
 	return {
 		majorVersion: 1,
@@ -1624,13 +1662,13 @@ function buildGPOSFromKerning(kerning, glyphs) {
 					featureTag: 'kern',
 					feature: {
 						featureParamsOffset: 0,
-						lookupListIndices: [0],
+						lookupListIndices: lookupIndices,
 					},
 				},
 			],
 		},
 		lookupList: {
-			lookups: [lookup],
+			lookups,
 		},
 	};
 }
@@ -1776,6 +1814,299 @@ function buildPairPosLookup(pairs) {
 			},
 		],
 	};
+}
+
+// ===========================================================================
+//  CLASS-BASED GPOS KERNING BUILDERS
+// ===========================================================================
+
+/**
+ * Build a compact ClassDef (format 2) from a Map<glyphIndex, classIndex>.
+ * Coalesces consecutive same-class glyphs into ranges.
+ */
+function buildKerningClassDef(glyphClassMap) {
+	const entries = Array.from(glyphClassMap.entries()).sort(
+		(a, b) => a[0] - b[0],
+	);
+	const ranges = [];
+	for (const [gi, cls] of entries) {
+		const last = ranges[ranges.length - 1];
+		if (last && last.class === cls && gi === last.endGlyphID + 1) {
+			last.endGlyphID = gi;
+		} else {
+			ranges.push({ startGlyphID: gi, endGlyphID: gi, class: cls });
+		}
+	}
+	return { format: 2, ranges };
+}
+
+/**
+ * Build a compact Coverage (format 2) from a sorted array of glyph indices.
+ */
+function buildKerningCoverage(sortedGlyphs) {
+	const ranges = [];
+	for (let i = 0; i < sortedGlyphs.length; i++) {
+		const gi = sortedGlyphs[i];
+		const last = ranges[ranges.length - 1];
+		if (last && gi === last.endGlyphID + 1) {
+			last.endGlyphID = gi;
+		} else {
+			ranges.push({ startGlyphID: gi, endGlyphID: gi, startCoverageIndex: i });
+		}
+	}
+	return { format: 2, ranges };
+}
+
+/**
+ * Resolve a kerningClasses reference (`@className` or a bare glyph name) to an
+ * array of glyph indices, using the provided class dictionary.
+ */
+function resolveKernClassRefToIndices(ref, classDict, nameToIndex) {
+	if (typeof ref === 'string' && ref.startsWith('@')) {
+		const members = classDict[ref.slice(1)];
+		if (!members) return [];
+		const out = [];
+		for (const n of members) {
+			const gi = nameToIndex.get(n);
+			if (gi !== undefined) out.push(gi);
+		}
+		return out;
+	}
+	const gi = nameToIndex.get(ref);
+	return gi !== undefined ? [gi] : [];
+}
+
+/**
+ * Build a single GPOS PairPos Format 2 (class-based) lookup directly from one
+ * kerningClasses group — WITHOUT permuting every member pair.
+ *
+ * Returns `null` when the group cannot be represented as a single Format 2
+ * subtable (empty, or overlapping classes assign a glyph to two classes); the
+ * caller then falls back to expanding the group into individual pairs.
+ *
+ * @returns {object|null} a lookup object, or null
+ */
+function buildPairPosFormat2Lookup(group, glyphs) {
+	const nameToIndex = new Map();
+	for (let i = 0; i < glyphs.length; i++) {
+		if (glyphs[i].name) nameToIndex.set(glyphs[i].name, i);
+	}
+
+	const { leftClasses = {}, rightClasses = {}, pairs = [] } = group;
+
+	// Assign a distinct class index (≥1) to every distinct left/right reference.
+	const leftRefClass = new Map();
+	const rightRefClass = new Map();
+	const leftClassIndices = [null]; // index 0 reserved (default / no-kern)
+	const rightClassIndices = [null];
+
+	function ensureClass(ref, dict, refMap, store) {
+		if (refMap.has(ref)) return refMap.get(ref);
+		const ci = store.length;
+		store.push(resolveKernClassRefToIndices(ref, dict, nameToIndex));
+		refMap.set(ref, ci);
+		return ci;
+	}
+
+	const cells = [];
+	for (const p of pairs) {
+		if (!p || !p.value) continue;
+		const lc = ensureClass(p.left, leftClasses, leftRefClass, leftClassIndices);
+		const rc = ensureClass(
+			p.right,
+			rightClasses,
+			rightRefClass,
+			rightClassIndices,
+		);
+		cells.push({ lc, rc, value: p.value });
+	}
+
+	const class1Count = leftClassIndices.length;
+	const class2Count = rightClassIndices.length;
+	if (class1Count <= 1 || class2Count <= 1 || cells.length === 0) return null;
+
+	// Build glyph→class maps with conflict detection (a glyph may belong to
+	// only one class per side in a single Format 2 subtable).
+	const glyphLeft = new Map();
+	const glyphRight = new Map();
+	for (let ci = 1; ci < class1Count; ci++) {
+		for (const gi of leftClassIndices[ci]) {
+			if (glyphLeft.has(gi) && glyphLeft.get(gi) !== ci) return null;
+			glyphLeft.set(gi, ci);
+		}
+	}
+	for (let ci = 1; ci < class2Count; ci++) {
+		for (const gi of rightClassIndices[ci]) {
+			if (glyphRight.has(gi) && glyphRight.get(gi) !== ci) return null;
+			glyphRight.set(gi, ci);
+		}
+	}
+	if (glyphLeft.size === 0 || glyphRight.size === 0) return null;
+
+	// Build the class1 × class2 value matrix.
+	const class1Records = [];
+	for (let c1 = 0; c1 < class1Count; c1++) {
+		const row = [];
+		for (let c2 = 0; c2 < class2Count; c2++) {
+			row.push({ value1: { xAdvance: 0 }, value2: null });
+		}
+		class1Records.push(row);
+	}
+	for (const { lc, rc, value } of cells) {
+		class1Records[lc][rc].value1.xAdvance = value;
+	}
+
+	const covGlyphs = Array.from(glyphLeft.keys()).sort((a, b) => a - b);
+
+	return {
+		lookupType: 2,
+		lookupFlag: 0,
+		subtables: [
+			{
+				format: 2,
+				coverage: buildKerningCoverage(covGlyphs),
+				valueFormat1: 0x0004, // xAdvance
+				valueFormat2: 0x0000,
+				classDef1: buildKerningClassDef(glyphLeft),
+				classDef2: buildKerningClassDef(glyphRight),
+				class1Count,
+				class2Count,
+				class1Records,
+			},
+		],
+	};
+}
+
+/**
+ * Expand a kerningClasses structure (array of groups) into a flat array of
+ * individual `{ left, right, value }` pairs (glyph names). Used for the legacy
+ * kern table and as a fallback when Format 2 cannot represent a group.
+ */
+function expandKerningClasses(kerningClasses, glyphs) {
+	if (!Array.isArray(kerningClasses)) return [];
+	const nameSet = new Set();
+	for (const g of glyphs) if (g.name) nameSet.add(g.name);
+
+	function resolve(ref, dict) {
+		if (typeof ref === 'string' && ref.startsWith('@')) {
+			const members = dict[ref.slice(1)];
+			return members ? members.filter((n) => nameSet.has(n)) : [];
+		}
+		return nameSet.has(ref) ? [ref] : [];
+	}
+
+	const out = [];
+	for (const group of kerningClasses) {
+		if (!group || !Array.isArray(group.pairs)) continue;
+		const { leftClasses = {}, rightClasses = {}, pairs = [] } = group;
+		for (const p of pairs) {
+			if (!p || !p.value) continue;
+			const lefts = resolve(p.left, leftClasses);
+			const rights = resolve(p.right, rightClasses);
+			for (const l of lefts) {
+				for (const r of rights) {
+					out.push({ left: l, right: r, value: p.value });
+				}
+			}
+		}
+	}
+	return out;
+}
+
+/**
+ * Build the GPOS lookups for kerning: one class-based PairPos Format 2 lookup
+ * per kerningClasses group (when representable) plus a PairPos Format 1 lookup
+ * for any individual pairs.
+ * @returns {object[]} array of lookup objects (possibly empty)
+ */
+function buildKerningLookups(kerningClasses, individualKerning, glyphs) {
+	const lookups = [];
+	let individual = individualKerning ? [...individualKerning] : [];
+
+	const groups = Array.isArray(kerningClasses) ? kerningClasses : [];
+	for (const group of groups) {
+		if (!group || !Array.isArray(group.pairs) || group.pairs.length === 0) {
+			continue;
+		}
+		const f2 = buildPairPosFormat2Lookup(group, glyphs);
+		if (f2) {
+			lookups.push(f2);
+		} else {
+			// Could not represent this group as Format 2 — expand to individuals.
+			individual = individual.concat(expandKerningClasses([group], glyphs));
+		}
+	}
+
+	if (individual.length > 0) {
+		const { pairs } = resolveKerningPairs(individual, glyphs);
+		if (pairs.length > 0) lookups.push(buildPairPosLookup(pairs));
+	}
+
+	return lookups;
+}
+
+/**
+ * Replace the 'kern' feature lookups of an existing GPOS table with the given
+ * lookups, preserving all other features and lookups. Returns a new GPOS object
+ * or null when the existing GPOS structure is incomplete.
+ */
+function replaceKernLookupsInGPOS(existingGPOS, newLookups) {
+	if (!newLookups || newLookups.length === 0) return null;
+	const gpos = JSON.parse(JSON.stringify(existingGPOS));
+
+	if (
+		!gpos.scriptList?.scriptRecords ||
+		!gpos.featureList?.featureRecords ||
+		!gpos.lookupList?.lookups
+	) {
+		return null;
+	}
+
+	// Collect and remove all existing kern lookups.
+	const oldKernIndices = new Set();
+	for (const rec of gpos.featureList.featureRecords) {
+		if (rec.featureTag === 'kern') {
+			for (const idx of rec.feature.lookupListIndices) oldKernIndices.add(idx);
+		}
+	}
+	const removed = [...oldKernIndices].sort((a, b) => a - b);
+	for (let i = removed.length - 1; i >= 0; i--) {
+		gpos.lookupList.lookups.splice(removed[i], 1);
+	}
+	if (removed.length > 0) remapLookupIndices(gpos, removed);
+
+	// Append the new lookups.
+	const newIndices = [];
+	for (const lk of newLookups) {
+		newIndices.push(gpos.lookupList.lookups.length);
+		gpos.lookupList.lookups.push(lk);
+	}
+
+	// Point the kern feature(s) at the new lookups (or create one).
+	let foundKern = false;
+	for (const rec of gpos.featureList.featureRecords) {
+		if (rec.featureTag === 'kern') {
+			rec.feature.lookupListIndices = [...newIndices];
+			foundKern = true;
+		}
+	}
+	if (!foundKern) {
+		gpos.featureList.featureRecords.push({
+			featureTag: 'kern',
+			feature: { featureParamsOffset: 0, lookupListIndices: [...newIndices] },
+		});
+		const kernFeatureIdx = gpos.featureList.featureRecords.length - 1;
+		for (const sr of gpos.scriptList.scriptRecords) {
+			if (sr.script.defaultLangSys) {
+				sr.script.defaultLangSys.featureIndices.push(kernFeatureIdx);
+			}
+			for (const lr of sr.script.langSysRecords || []) {
+				lr.langSys.featureIndices.push(kernFeatureIdx);
+			}
+		}
+	}
+
+	return gpos;
 }
 
 /**

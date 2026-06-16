@@ -71,12 +71,16 @@ export function parseSTAT(rawBytes) {
 	for (let i = 0; i < axisValueOffsets.length; i++) {
 		const relativeOffset = axisValueOffsets[i];
 		const start = offsetToAxisValueOffsets + relativeOffset;
-		const end =
-			i < axisValueOffsets.length - 1
-				? offsetToAxisValueOffsets + axisValueOffsets[i + 1]
-				: rawBytes.length;
+		// The axis value tables are not guaranteed to be stored in offset order,
+		// so derive `end` from the next-greater start offset rather than the
+		// next array entry. `end` is only used to slice unknown formats.
+		let end = rawBytes.length;
+		for (let j = 0; j < axisValueOffsets.length; j++) {
+			const other = offsetToAxisValueOffsets + axisValueOffsets[j];
+			if (other > start && other < end) end = other;
+		}
 
-		if (start >= rawBytes.length || end < start) {
+		if (start >= rawBytes.length) {
 			axisValues.push({ format: 0, _raw: [] });
 			continue;
 		}
@@ -222,7 +226,10 @@ export function writeSTAT(stat) {
 		0,
 	);
 	const totalSize =
-		headerSize + designAxesSize + axisValueOffsetsArraySize + axisValueTablesSize;
+		headerSize +
+		designAxesSize +
+		axisValueOffsetsArraySize +
+		axisValueTablesSize;
 
 	const w = new DataWriter(totalSize);
 
@@ -316,6 +323,8 @@ function buildAxisValueBlob(axisValue) {
 		}
 
 		default:
-			throw new Error(`Unsupported STAT axis value format: ${axisValue.format}`);
+			throw new Error(
+				`Unsupported STAT axis value format: ${axisValue.format}`,
+			);
 	}
 }

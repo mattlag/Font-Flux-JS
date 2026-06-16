@@ -119,6 +119,22 @@ The relevant binary tables built from `glyphs` are [`glyf`](./tables/glyf.md) + 
 
 By default this is written as [`GPOS`](./tables/GPOS.md) PairPos Format 1. To force a [`kern`](./tables/kern.md) variant instead, add `"_options": { "kerningFormat": "kern-ot-f0" }` at the top level. See [Creating Kerning](./creating-kerning.md) for the full menu of input shapes.
 
+### `kerningClasses` — optional
+
+Class-based kerning preserved verbatim from an imported font. This is an **array of subtable groups**, each mapping 1:1 to a binary class-based subtable, so large class tables round-trip without being permuted into individual pairs:
+
+```json
+"kerningClasses": [
+  {
+    "leftClasses": { "@kern_L1": ["A", "Aacute"] },
+    "rightClasses": { "@kern_R1": ["V", "W", "Y"] },
+    "pairs": [{ "left": "@kern_L1", "right": "@kern_R1", "value": -80 }]
+  }
+]
+```
+
+Each group is exported as a single [`GPOS`](./tables/GPOS.md) PairPos Format 2 subtable. Singleton classes are referenced by bare glyph name; multi-member classes use `@name`. See [Creating Kerning](./creating-kerning.md#class-based-kerning-preservation) for details.
+
 ### `substitutions` — optional
 
 ```json

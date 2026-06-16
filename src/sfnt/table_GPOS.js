@@ -92,7 +92,9 @@ function parseValueRecord(reader, valueFormat, subtableOffset) {
 			}
 
 			const msg =
-				primaryError instanceof Error ? primaryError.message : String(primaryError);
+				primaryError instanceof Error
+					? primaryError.message
+					: String(primaryError);
 			throw new Error(
 				`${msg}; ValueRecord context: valueFormat=${valueFormat}, subtableOffset=${subtableOffset}, valueRecordStart=${valueRecordStart}, offsets={xPla:${xPlaDevOff},yPla:${yPlaDevOff},xAdv:${xAdvDevOff},yAdv:${yAdvDevOff}}, field=${fieldName}`,
 			);
@@ -900,8 +902,12 @@ function writePairPos(st) {
 			w.uint16(ps.length);
 			for (const pvr of ps) {
 				w.uint16(pvr.secondGlyph);
-				w.rawBytes(writeValueRecord(pvr.value1, st.valueFormat1, deviceCollector));
-				w.rawBytes(writeValueRecord(pvr.value2, st.valueFormat2, deviceCollector));
+				w.rawBytes(
+					writeValueRecord(pvr.value1, st.valueFormat1, deviceCollector),
+				);
+				w.rawBytes(
+					writeValueRecord(pvr.value2, st.valueFormat2, deviceCollector),
+				);
 			}
 			return w.toArray();
 		});
@@ -965,8 +971,12 @@ function writePairPos(st) {
 
 		for (const c2Arr of st.class1Records) {
 			for (const rec of c2Arr) {
-				w.rawBytes(writeValueRecord(rec.value1, st.valueFormat1, deviceCollector));
-				w.rawBytes(writeValueRecord(rec.value2, st.valueFormat2, deviceCollector));
+				w.rawBytes(
+					writeValueRecord(rec.value1, st.valueFormat1, deviceCollector),
+				);
+				w.rawBytes(
+					writeValueRecord(rec.value2, st.valueFormat2, deviceCollector),
+				);
 			}
 		}
 

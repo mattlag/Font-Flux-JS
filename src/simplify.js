@@ -69,9 +69,15 @@ export function buildSimplified(raw) {
 	const result = { font, glyphs };
 
 	// Kerning
-	const kerning = extractKerning(tables, glyphs);
+	const { pairs: kerning, classes: kerningClasses } = extractKerning(
+		tables,
+		glyphs,
+	);
 	if (kerning.length > 0) {
 		result.kerning = kerning;
+	}
+	if (kerningClasses) {
+		result.kerningClasses = kerningClasses;
 	}
 
 	// Variable font axes
@@ -764,36 +770,123 @@ function buildSimplifiedGlyphs(tables) {
 // ===========================================================================
 
 /**
- * Extract kerning pairs from all available sources (GPOS and kern table),
- * resolved to glyph names. GPOS pairs take priority on conflict.
+ * Extract kerning from all available sources (GPOS and kern table),
+ * resolved to glyph names.
+ *
+ * Returns both individual pairs and a class-based representation:
+ *   - `pairs`  : flat `{ left, right, value }` entries from inherently
+ *                individual sources (PairPos Format 1, kern Format 0/1).
+ *   - `classes`: a `kerningClasses` object `{ leftClasses, rightClasses,
+ *                pairs }` built from class-based sources (GPOS PairPos
+ *                Format 2, kern Format 2/3) WITHOUT permuting every member
+ *                pair. `null` when no class-based kerning exists.
+ *
+ * GPOS takes priority over the legacy kern table on conflict.
+ *
+ * @returns {{ pairs: Array, classes: object|null }}
  */
 function extractKerning(tables, glyphs) {
-	const gposPairs = extractGPOSKerning(tables, glyphs);
-	const kernPairs = extractKernTableKerning(tables, glyphs);
+	const gpos = extractGPOSKerning(tables, glyphs);
+	const kern = extractKernTableKerning(tables, glyphs);
 
-	if (gposPairs.length === 0) return kernPairs;
-	if (kernPairs.length === 0) return gposPairs;
-
-	// Merge: GPOS wins on conflict, dedup by (left, right)
+	// Merge individual pairs: GPOS wins on conflict, dedup by (left, right)
 	const seen = new Map();
-	for (const p of gposPairs) {
+	for (const p of gpos.pairs) {
 		seen.set(`${p.left}\0${p.right}`, p);
 	}
-	for (const p of kernPairs) {
+	for (const p of kern.pairs) {
 		const key = `${p.left}\0${p.right}`;
-		if (!seen.has(key)) {
-			seen.set(key, p);
-		}
+		if (!seen.has(key)) seen.set(key, p);
 	}
-	return Array.from(seen.values());
+	const pairs = Array.from(seen.values());
+
+	// Class-based data: prefer GPOS; fall back to kern table classes. Each is an
+	// array of subtable groups (one per source PairPos Format 2 / kern class
+	// subtable), preserving the original grouping so it round-trips faithfully.
+	const classes =
+		(gpos.classes && gpos.classes.length ? gpos.classes : null) ||
+		(kern.classes && kern.classes.length ? kern.classes : null) ||
+		null;
+
+	return { pairs, classes };
 }
 
 /**
- * Extract kerning pairs from GPOS PairPos lookups tagged with 'kern' feature.
+ * Build a single class-based kerning group (one subtable) from a class matrix,
+ * materialising only the classes actually referenced by a non-zero value.
+ * Shared by GPOS Format 2 and kern Format 2/3 extraction.
+ *
+ * Each group is self-contained: `{ leftClasses, rightClasses, pairs }`. Class
+ * names are derived from the source class index (`kern_L{c1}` / `kern_R{c2}`)
+ * so the representation is stable across export → import round-trips. Singleton
+ * classes are emitted as bare glyph names rather than `@class` references.
+ *
+ * @param {object} opts
+ * @param {Map<number,string[]>} opts.leftMembers  - left class index → names
+ * @param {Map<number,string[]>} opts.rightMembers - right class index → names
+ * @param {number} opts.leftCount
+ * @param {number} opts.rightCount
+ * @param {(c1:number,c2:number)=>number} opts.valueAt
+ * @returns {object|null} a group object, or null when nothing was emitted
+ */
+function buildKerningClassGroup(opts) {
+	const { leftMembers, rightMembers, leftCount, rightCount, valueAt } = opts;
+	const group = { leftClasses: {}, rightClasses: {}, pairs: [] };
+	const leftCache = new Map();
+	const rightCache = new Map();
+
+	const resolveRef = (idx, members, cache, classDict, prefix) => {
+		const existing = cache.get(idx);
+		if (existing !== undefined) return existing;
+		let ref;
+		if (members.length === 1) {
+			ref = members[0]; // bare glyph name
+		} else {
+			const name = `${prefix}${idx}`;
+			classDict[name] = members;
+			ref = `@${name}`;
+		}
+		cache.set(idx, ref);
+		return ref;
+	};
+
+	for (let c1 = 0; c1 < leftCount; c1++) {
+		const lmembers = leftMembers.get(c1);
+		if (!lmembers || lmembers.length === 0) continue;
+		for (let c2 = 0; c2 < rightCount; c2++) {
+			const value = valueAt(c1, c2);
+			if (!value) continue;
+			const rmembers = rightMembers.get(c2);
+			if (!rmembers || rmembers.length === 0) continue;
+			const left = resolveRef(
+				c1,
+				lmembers,
+				leftCache,
+				group.leftClasses,
+				'kern_L',
+			);
+			const right = resolveRef(
+				c2,
+				rmembers,
+				rightCache,
+				group.rightClasses,
+				'kern_R',
+			);
+			group.pairs.push({ left, right, value });
+		}
+	}
+
+	return group.pairs.length > 0 ? group : null;
+}
+
+/**
+ * Extract kerning from GPOS PairPos lookups tagged with the 'kern' feature.
+ * @returns {{ pairs: Array, classes: object|null }}
  */
 function extractGPOSKerning(tables, glyphs) {
 	const gpos = tables.GPOS;
-	if (!gpos || gpos._raw || !gpos.featureList || !gpos.lookupList) return [];
+	const empty = { pairs: [], classes: null };
+	if (!gpos || gpos._raw || !gpos.featureList || !gpos.lookupList) return empty;
 
 	// Find 'kern' feature lookup indices
 	const kernLookupIndices = new Set();
@@ -804,9 +897,10 @@ function extractGPOSKerning(tables, glyphs) {
 			}
 		}
 	}
-	if (kernLookupIndices.size === 0) return [];
+	if (kernLookupIndices.size === 0) return empty;
 
 	const pairs = [];
+	const groups = [];
 	for (const idx of kernLookupIndices) {
 		const lookup = gpos.lookupList.lookups[idx];
 		if (!lookup || lookup.lookupType !== 2) continue; // PairPos only
@@ -815,11 +909,12 @@ function extractGPOSKerning(tables, glyphs) {
 			if (st.format === 1) {
 				extractPairPosFormat1(st, glyphs, pairs);
 			} else if (st.format === 2) {
-				extractPairPosFormat2(st, glyphs, pairs);
+				const grp = extractPairPosFormat2(st, glyphs);
+				if (grp) groups.push(grp);
 			}
 		}
 	}
-	return pairs;
+	return { pairs, classes: groups.length ? groups : null };
 }
 
 /**
@@ -841,49 +936,36 @@ function extractPairPosFormat1(st, glyphs, pairs) {
 }
 
 /**
- * Extract pairs from GPOS PairPos Format 2 (class-based).
- * Expands classes to individual glyph pairs; skips zero-value entries.
+ * Extract class-based kerning from GPOS PairPos Format 2 into a single
+ * kerningClasses group (no member-pair permutation).
+ * @returns {object|null} a group, or null when nothing was emitted
  */
-function extractPairPosFormat2(st, glyphs, pairs) {
+function extractPairPosFormat2(st, glyphs) {
 	const glyphToClass1 = buildClassMap(st.classDef1, glyphs.length);
 	const glyphToClass2 = buildClassMap(st.classDef2, glyphs.length);
 
-	// Build reverse maps: class → glyph indices
-	const class1Glyphs = new Map(); // classIdx → [glyphIdx, ...]
-	const class2Glyphs = new Map();
-
-	// Only include glyphs in the coverage for class 1 lookups
+	// class 1 members come only from the coverage; class 2 members from all glyphs
 	const covSet = new Set(expandCoverage(st.coverage));
-
+	const leftMembers = new Map();
+	for (const g of covSet) {
+		const c1 = glyphToClass1.get(g) ?? 0;
+		if (!leftMembers.has(c1)) leftMembers.set(c1, []);
+		leftMembers.get(c1).push(glyphs[g]?.name || `glyph${g}`);
+	}
+	const rightMembers = new Map();
 	for (let g = 0; g < glyphs.length; g++) {
-		if (covSet.has(g)) {
-			const c1 = glyphToClass1.get(g) ?? 0;
-			if (!class1Glyphs.has(c1)) class1Glyphs.set(c1, []);
-			class1Glyphs.get(c1).push(g);
-		}
 		const c2 = glyphToClass2.get(g) ?? 0;
-		if (!class2Glyphs.has(c2)) class2Glyphs.set(c2, []);
-		class2Glyphs.get(c2).push(g);
+		if (!rightMembers.has(c2)) rightMembers.set(c2, []);
+		rightMembers.get(c2).push(glyphs[g]?.name || `glyph${g}`);
 	}
 
-	for (let c1 = 0; c1 < st.class1Count; c1++) {
-		const leftGlyphs = class1Glyphs.get(c1);
-		if (!leftGlyphs) continue;
-		for (let c2 = 0; c2 < st.class2Count; c2++) {
-			const rec = st.class1Records[c1]?.[c2];
-			const value = rec?.value1?.xAdvance;
-			if (value === undefined || value === 0) continue;
-			const rightGlyphs = class2Glyphs.get(c2);
-			if (!rightGlyphs) continue;
-			for (const lg of leftGlyphs) {
-				const leftName = glyphs[lg]?.name || `glyph${lg}`;
-				for (const rg of rightGlyphs) {
-					const rightName = glyphs[rg]?.name || `glyph${rg}`;
-					pairs.push({ left: leftName, right: rightName, value });
-				}
-			}
-		}
-	}
+	return buildKerningClassGroup({
+		leftMembers,
+		rightMembers,
+		leftCount: st.class1Count,
+		rightCount: st.class2Count,
+		valueAt: (c1, c2) => st.class1Records[c1]?.[c2]?.value1?.xAdvance || 0,
+	});
 }
 
 /**
@@ -923,18 +1005,21 @@ function buildClassMap(classDef, numGlyphs) {
 }
 
 /**
- * Extract kerning pairs from the kern table (all supported formats).
+ * Extract kerning from the legacy kern table (all supported formats).
+ * @returns {{ pairs: Array, classes: object|null }}
  */
 function extractKernTableKerning(tables, glyphs) {
 	const kern = tables.kern;
-	if (!kern || kern._raw || !kern.subtables) return [];
+	if (!kern || kern._raw || !kern.subtables)
+		return { pairs: [], classes: null };
 
 	const pairs = [];
+	const groups = [];
 	for (const subtable of kern.subtables) {
 		if (subtable._raw) continue;
 
 		if (subtable.format === 0 && subtable.pairs) {
-			// Format 0: ordered pair list (OT and Apple)
+			// Format 0: ordered pair list (OT and Apple) — individual pairs
 			for (const pair of subtable.pairs) {
 				const leftName = glyphs[pair.left]?.name || `glyph${pair.left}`;
 				const rightName = glyphs[pair.right]?.name || `glyph${pair.right}`;
@@ -946,24 +1031,28 @@ function extractKernTableKerning(tables, glyphs) {
 			}
 		} else if (subtable.format === 2 && subtable.values) {
 			// Format 2: class-based n×m array (OT and Apple)
-			extractKernFormat2Pairs(subtable, glyphs, pairs);
+			const grp = extractKernFormat2Pairs(subtable, glyphs);
+			if (grp) groups.push(grp);
 		} else if (subtable.format === 3 && subtable.kernValues) {
 			// Format 3: compact class-based (Apple)
-			extractKernFormat3Pairs(subtable, glyphs, pairs);
+			const grp = extractKernFormat3Pairs(subtable, glyphs);
+			if (grp) groups.push(grp);
 		} else if (subtable.format === 1 && subtable.states) {
 			// Format 1: state table contextual kerning (Apple) — best-effort
 			extractKernFormat1Pairs(subtable, glyphs, pairs);
 		}
 	}
 
-	return pairs;
+	return { pairs, classes: groups.length ? groups : null };
 }
 
 /**
- * Extract pairs from kern Format 2 (class-based n×m array).
+ * Extract class-based kerning from kern Format 2 (n×m array) into a single
+ * kerningClasses group (no member-pair permutation).
  * Left/right class tables map glyphs to row/column indices.
+ * @returns {object|null} a group, or null when nothing was emitted
  */
-function extractKernFormat2Pairs(subtable, glyphs, pairs) {
+function extractKernFormat2Pairs(subtable, glyphs) {
 	const {
 		leftClassTable,
 		rightClassTable,
@@ -971,13 +1060,13 @@ function extractKernFormat2Pairs(subtable, glyphs, pairs) {
 		kerningArrayOffset,
 		values,
 	} = subtable;
-	if (!values) return;
+	if (!values) return null;
 
 	const nRightClasses = rowWidth > 0 ? rowWidth / 2 : 0;
 
 	// Build glyph → class index maps
 	// Left offsets are pre-multiplied by rowWidth, offset from kerningArrayOffset
-	const leftGlyphToClass = new Map();
+	const leftMembers = new Map();
 	for (let i = 0; i < leftClassTable.nGlyphs; i++) {
 		const g = leftClassTable.firstGlyph + i;
 		const rawOffset = leftClassTable.offsets[i] || 0;
@@ -987,40 +1076,39 @@ function extractKernFormat2Pairs(subtable, glyphs, pairs) {
 				? Math.floor((rawOffset - kerningArrayOffset) / rowWidth)
 				: 0;
 		if (classIdx >= 0 && classIdx < values.length) {
-			leftGlyphToClass.set(g, classIdx);
+			if (!leftMembers.has(classIdx)) leftMembers.set(classIdx, []);
+			leftMembers.get(classIdx).push(glyphs[g]?.name || `glyph${g}`);
 		}
 	}
 
 	// Right offsets are pre-multiplied by 2 (sizeof int16)
-	const rightGlyphToClass = new Map();
+	const rightMembers = new Map();
 	for (let i = 0; i < rightClassTable.nGlyphs; i++) {
 		const g = rightClassTable.firstGlyph + i;
 		const rawOffset = rightClassTable.offsets[i] || 0;
 		const classIdx = Math.floor(rawOffset / 2);
 		if (classIdx >= 0 && classIdx < nRightClasses) {
-			rightGlyphToClass.set(g, classIdx);
+			if (!rightMembers.has(classIdx)) rightMembers.set(classIdx, []);
+			rightMembers.get(classIdx).push(glyphs[g]?.name || `glyph${g}`);
 		}
 	}
 
-	// Expand class pairs to individual glyph pairs
-	for (const [leftGlyph, leftClass] of leftGlyphToClass) {
-		const row = values[leftClass];
-		if (!row) continue;
-		const leftName = glyphs[leftGlyph]?.name || `glyph${leftGlyph}`;
-		for (const [rightGlyph, rightClass] of rightGlyphToClass) {
-			const value = row[rightClass];
-			if (value === 0) continue;
-			const rightName = glyphs[rightGlyph]?.name || `glyph${rightGlyph}`;
-			pairs.push({ left: leftName, right: rightName, value });
-		}
-	}
+	return buildKerningClassGroup({
+		leftMembers,
+		rightMembers,
+		leftCount: values.length,
+		rightCount: nRightClasses,
+		valueAt: (lc, rc) => values[lc]?.[rc] || 0,
+	});
 }
 
 /**
- * Extract pairs from kern Format 3 (compact class-based).
+ * Extract class-based kerning from kern Format 3 (compact class-based) into a
+ * single kerningClasses group (no member-pair permutation).
  * value = kernValues[kernIndices[leftClass[L] * rightClassCount + rightClass[R]]]
+ * @returns {object|null} a group, or null when nothing was emitted
  */
-function extractKernFormat3Pairs(subtable, glyphs, pairs) {
+function extractKernFormat3Pairs(subtable, glyphs) {
 	const {
 		glyphCount,
 		leftClassCount,
@@ -1033,26 +1121,32 @@ function extractKernFormat3Pairs(subtable, glyphs, pairs) {
 
 	const maxGlyph = Math.min(glyphCount, glyphs.length);
 
-	for (let left = 0; left < maxGlyph; left++) {
-		const lc = leftClasses[left];
-		if (lc >= leftClassCount) continue;
-		const leftName = glyphs[left]?.name || `glyph${left}`;
-
-		for (let right = 0; right < maxGlyph; right++) {
-			const rc = rightClasses[right];
-			if (rc >= rightClassCount) continue;
-
-			const idx = lc * rightClassCount + rc;
-			const kernIdx = kernIndices[idx];
-			if (kernIdx === undefined || kernIdx >= kernValues.length) continue;
-
-			const value = kernValues[kernIdx];
-			if (value === 0) continue;
-
-			const rightName = glyphs[right]?.name || `glyph${right}`;
-			pairs.push({ left: leftName, right: rightName, value });
+	const leftMembers = new Map();
+	const rightMembers = new Map();
+	for (let g = 0; g < maxGlyph; g++) {
+		const lc = leftClasses[g];
+		if (lc < leftClassCount) {
+			if (!leftMembers.has(lc)) leftMembers.set(lc, []);
+			leftMembers.get(lc).push(glyphs[g]?.name || `glyph${g}`);
+		}
+		const rc = rightClasses[g];
+		if (rc < rightClassCount) {
+			if (!rightMembers.has(rc)) rightMembers.set(rc, []);
+			rightMembers.get(rc).push(glyphs[g]?.name || `glyph${g}`);
 		}
 	}
+
+	return buildKerningClassGroup({
+		leftMembers,
+		rightMembers,
+		leftCount: leftClassCount,
+		rightCount: rightClassCount,
+		valueAt: (lc, rc) => {
+			const kernIdx = kernIndices[lc * rightClassCount + rc];
+			if (kernIdx === undefined || kernIdx >= kernValues.length) return 0;
+			return kernValues[kernIdx] || 0;
+		},
+	});
 }
 
 /**

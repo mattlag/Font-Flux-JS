@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { buildRawFromSimplified } from '../src/expand.js';
+import { getKerningValue } from '../src/kerning.js';
 import { parseGPOS, writeGPOS } from '../src/sfnt/table_GPOS.js';
 import { buildSimplified } from '../src/simplify.js';
 
@@ -230,11 +231,16 @@ describe('GPOS kerning extraction', () => {
 
 		const simplified = buildSimplified(raw);
 
-		expect(simplified.kerning).toBeDefined();
-		// Glyphs 1, 2 (class 1) × glyphs 3, 4 (class 1) → 4 pairs all with -60
-		expect(simplified.kerning.length).toBe(4);
-		for (const p of simplified.kerning) {
-			expect(p.value).toBe(-60);
+		// Class-based kerning is preserved as kerningClasses (no permutation).
+		expect(Array.isArray(simplified.kerningClasses)).toBe(true);
+		expect(simplified.kerningClasses).toHaveLength(1);
+		expect(simplified.kerningClasses[0].pairs.length).toBe(1);
+		expect(simplified.kerning).toBeUndefined();
+		// All four member combinations still resolve to -60 via the class lookup.
+		for (const left of ['glyph1', 'glyph2']) {
+			for (const right of ['glyph3', 'glyph4']) {
+				expect(getKerningValue(simplified, left, right)).toBe(-60);
+			}
 		}
 	});
 
@@ -369,13 +375,12 @@ describe('kern Format 2 extraction', () => {
 
 		const simplified = buildSimplified(raw);
 
-		expect(simplified.kerning).toBeDefined();
-		expect(simplified.kerning.length).toBeGreaterThan(0);
+		// Class-based kern Format 2 is preserved as kerningClasses.
+		expect(Array.isArray(simplified.kerningClasses)).toBe(true);
 		// glyph1 (class 0) × glyph4 (class 1) = -40
-		const pair1 = simplified.kerning.find(
-			(p) => p.left === 'glyph1' && p.right === 'glyph4',
-		);
-		expect(pair1?.value).toBe(-40);
+		expect(getKerningValue(simplified, 'glyph1', 'glyph4')).toBe(-40);
+		// glyph2 (class 1) × glyph3 (class 0) = -20
+		expect(getKerningValue(simplified, 'glyph2', 'glyph3')).toBe(-20);
 	});
 });
 
@@ -407,13 +412,10 @@ describe('kern Format 3 extraction', () => {
 
 		const simplified = buildSimplified(raw);
 
-		expect(simplified.kerning).toBeDefined();
-		expect(simplified.kerning.length).toBe(1);
-		expect(simplified.kerning[0]).toEqual({
-			left: 'glyph1',
-			right: 'glyph2',
-			value: -50,
-		});
+		// Class-based kern Format 3 is preserved as kerningClasses.
+		expect(Array.isArray(simplified.kerningClasses)).toBe(true);
+		expect(simplified.kerningClasses[0].pairs.length).toBe(1);
+		expect(getKerningValue(simplified, 'glyph1', 'glyph2')).toBe(-50);
 	});
 });
 
@@ -456,8 +458,12 @@ describe('GPOS kerning building', () => {
 		const aIdx = st.coverage.glyphs.indexOf(1);
 		const pairSet = st.pairSets[aIdx];
 		expect(pairSet.length).toBe(2);
-		expect(pairSet.find((p) => p.secondGlyph === 2)?.value1?.xAdvance).toBe(-80);
-		expect(pairSet.find((p) => p.secondGlyph === 3)?.value1?.xAdvance).toBe(-50);
+		expect(pairSet.find((p) => p.secondGlyph === 2)?.value1?.xAdvance).toBe(
+			-80,
+		);
+		expect(pairSet.find((p) => p.secondGlyph === 3)?.value1?.xAdvance).toBe(
+			-50,
+		);
 	});
 
 	it('should build GPOS from kerning and write valid binary', () => {
@@ -762,8 +768,12 @@ describe('cross-format kerning conversion', () => {
 		const st = result.tables.GPOS.lookupList.lookups[0].subtables[0];
 		const aIdx = st.coverage.glyphs.indexOf(1);
 		const pairSet = st.pairSets[aIdx];
-		expect(pairSet.find((p) => p.secondGlyph === 2)?.value1?.xAdvance).toBe(-80);
-		expect(pairSet.find((p) => p.secondGlyph === 3)?.value1?.xAdvance).toBe(-50);
+		expect(pairSet.find((p) => p.secondGlyph === 2)?.value1?.xAdvance).toBe(
+			-80,
+		);
+		expect(pairSet.find((p) => p.secondGlyph === 3)?.value1?.xAdvance).toBe(
+			-50,
+		);
 	});
 
 	it('should convert: kern F0 → kerning[] → GPOS', () => {
@@ -811,6 +821,112 @@ describe('cross-format kerning conversion', () => {
 		expect(result.tables.kern).toBeUndefined();
 	});
 });
+
+describe('class-based kerning round-trip', () => {
+	// Build a raw font whose GPOS has a single class-based PairPos Format 2
+	// subtable: glyph1/glyph2 (left class) × glyph3/glyph4 (right class) = -60.
+	function makeClassKernFont() {
+		return makeRawFont({
+			GPOS: {
+				majorVersion: 1,
+				minorVersion: 0,
+				scriptList: {
+					scriptRecords: [
+						{
+							scriptTag: 'DFLT',
+							script: {
+								defaultLangSys: {
+									lookupOrderOffset: 0,
+									requiredFeatureIndex: 0xffff,
+									featureIndices: [0],
+								},
+								langSysRecords: [],
+							},
+						},
+					],
+				},
+				featureList: {
+					featureRecords: [
+						{
+							featureTag: 'kern',
+							feature: { featureParamsOffset: 0, lookupListIndices: [0] },
+						},
+					],
+				},
+				lookupList: {
+					lookups: [
+						{
+							lookupType: 2,
+							lookupFlag: 0,
+							subtables: [
+								{
+									format: 2,
+									coverage: { format: 1, glyphs: [1, 2] },
+									valueFormat1: 0x0004,
+									valueFormat2: 0,
+									classDef1: {
+										format: 1,
+										startGlyphID: 1,
+										classValues: [1, 1],
+									},
+									classDef2: {
+										format: 1,
+										startGlyphID: 3,
+										classValues: [1, 1],
+									},
+									class1Count: 2,
+									class2Count: 2,
+									class1Records: [
+										[
+											{ value1: null, value2: null },
+											{ value1: null, value2: null },
+										],
+										[
+											{ value1: null, value2: null },
+											{ value1: { xAdvance: -60 }, value2: null },
+										],
+									],
+								},
+							],
+						},
+					],
+				},
+			},
+		});
+	}
+
+	it('exports class-based kerning as PairPos Format 2 (no permutation)', () => {
+		const simplified = buildSimplified(makeClassKernFont());
+		expect(Array.isArray(simplified.kerningClasses)).toBe(true);
+
+		const result = buildRawFromSimplified(simplified);
+		expect(result.tables.GPOS).toBeDefined();
+
+		// At least one lookup subtable must remain class-based Format 2 rather
+		// than being permuted into individual Format 1 pairs.
+		const subtables = result.tables.GPOS.lookupList.lookups.flatMap(
+			(l) => l.subtables,
+		);
+		expect(subtables.some((st) => st.format === 2)).toBe(true);
+	});
+
+	it('is a fixed point across import → export → import', () => {
+		const first = buildSimplified(makeClassKernFont());
+		const exported = buildRawFromSimplified(first);
+		const second = buildSimplified(exported);
+
+		// kerningClasses survives the round-trip unchanged.
+		expect(second.kerningClasses).toEqual(first.kerningClasses);
+
+		// And all four member combinations still resolve to -60.
+		for (const left of ['glyph1', 'glyph2']) {
+			for (const right of ['glyph3', 'glyph4']) {
+				expect(getKerningValue(second, left, right)).toBe(-60);
+			}
+		}
+	});
+});
+
 describe('GPOS kerning with incomplete features.GPOS', () => {
 	const glyphs = Array.from({ length: 10 }, (_, i) => ({
 		name: `glyph${i}`,
@@ -833,7 +949,9 @@ describe('GPOS kerning with incomplete features.GPOS', () => {
 		const fontData = { ...baseFont, features: { GPOS: {} } };
 		const result = buildRawFromSimplified(fontData);
 		expect(result.tables.GPOS).toBeDefined();
-		expect(result.tables.GPOS.scriptList.scriptRecords.length).toBeGreaterThan(0);
+		expect(result.tables.GPOS.scriptList.scriptRecords.length).toBeGreaterThan(
+			0,
+		);
 
 		const bytes = writeGPOS(result.tables.GPOS);
 		expect(bytes.length).toBeGreaterThan(0);
@@ -853,7 +971,9 @@ describe('GPOS kerning with incomplete features.GPOS', () => {
 		};
 		const result = buildRawFromSimplified(fontData);
 		expect(result.tables.GPOS).toBeDefined();
-		expect(result.tables.GPOS.scriptList.scriptRecords.length).toBeGreaterThan(0);
+		expect(result.tables.GPOS.scriptList.scriptRecords.length).toBeGreaterThan(
+			0,
+		);
 	});
 
 	it('should build GPOS when features.GPOS has no featureList', () => {
@@ -870,15 +990,17 @@ describe('GPOS kerning with incomplete features.GPOS', () => {
 		};
 		const result = buildRawFromSimplified(fontData);
 		expect(result.tables.GPOS).toBeDefined();
-		expect(result.tables.GPOS.featureList.featureRecords.length).toBeGreaterThan(
-			0,
-		);
+		expect(
+			result.tables.GPOS.featureList.featureRecords.length,
+		).toBeGreaterThan(0);
 	});
 
 	it('should build GPOS when features.GPOS is true (truthy non-object)', () => {
 		const fontData = { ...baseFont, features: { GPOS: true } };
 		const result = buildRawFromSimplified(fontData);
 		expect(result.tables.GPOS).toBeDefined();
-		expect(result.tables.GPOS.scriptList.scriptRecords.length).toBeGreaterThan(0);
+		expect(result.tables.GPOS.scriptList.scriptRecords.length).toBeGreaterThan(
+			0,
+		);
 	});
 });
