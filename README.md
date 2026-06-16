@@ -186,6 +186,7 @@ See [Creating Fonts](https://www.glyphrstudio.com/fontfluxjs/creating-fonts) for
 | `.info`             | Font metadata object (familyName, styleName, unitsPerEm, ascender, descender, etc.) |
 | `.glyphs`           | Array of glyph objects (name, unicode, advanceWidth, contours, ...)                 |
 | `.kerning`          | Array of kerning pairs `{ left, right, value }`                                     |
+| `.kerningClasses`   | Class-based kerning groups preserved from import (one per source subtable)          |
 | `.substitutions`    | Array of GSUB substitution rules (ligatures, small caps, alternates, etc.)          |
 | `.axes`             | Variable font axes (from fvar)                                                      |
 | `.instances`        | Named instances (from fvar)                                                         |
