@@ -168,7 +168,10 @@ export function drawGlyphTile(canvas, options) {
 	}
 
 	ctx.fillStyle = fillColor || resolveFillColor();
-	ctx.fill('evenodd');
+	// Font outlines (TrueType glyf and CFF) use the nonzero winding rule.
+	// Even-odd would treat overlapping same-direction contours (e.g. Inter's
+	// "Q" tail crossing the bowl) as holes, rendering them transparent.
+	ctx.fill('nonzero');
 	ctx.restore();
 
 	if (showBounds) {
