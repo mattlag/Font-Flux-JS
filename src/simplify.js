@@ -191,7 +191,12 @@ const NAME_ID_MAP = {
 	12: 'designerURL',
 	13: 'license',
 	14: 'licenseURL',
+	16: 'typographicFamily',
+	17: 'typographicSubfamily',
 	19: 'sampleText',
+	21: 'wwsFamily',
+	22: 'wwsSubfamily',
+	25: 'variationsPostScriptNamePrefix',
 };
 
 /**
@@ -248,6 +253,9 @@ function extractFontInfo(tables) {
 		font.unitsPerEm = head.unitsPerEm;
 		font.created = longdatetimeToISO(head.created);
 		font.modified = longdatetimeToISO(head.modified);
+		// Preserve the style bits so an imported font round-trips its exact
+		// macStyle instead of having it re-derived from weight/italic angle.
+		if (head.macStyle !== undefined) font.macStyle = head.macStyle;
 	}
 
 	// Vertical metrics from hhea

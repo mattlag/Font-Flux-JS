@@ -75,16 +75,29 @@ By default `font.export()` produces a TrueType `.ttf` (quadratic outlines via th
 
 ### `font` — metadata
 
-| Field                 | Type   | Notes                                             |
-| --------------------- | ------ | ------------------------------------------------- |
-| `familyName`          | string | Required.                                         |
-| `styleName`           | string | e.g. `"Regular"`, `"Bold Italic"`.                |
-| `unitsPerEm`          | number | 16..16384. Common values: 1000 (CFF), 2048 (TTF). |
-| `ascender`            | number | In font units, positive.                          |
-| `descender`           | number | In font units, negative.                          |
-| `lineGap`             | number | Extra leading. Usually 0.                         |
-| `xMin/yMin/xMax/yMax` | number | Optional; recomputed from glyphs on export.       |
-| `version`             | string | Optional version string written to `name` table.  |
+| Field                            | Type   | Notes                                                                                                                                                                                   |
+| -------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `familyName`                     | string | Required. Legacy family name (name ID 1).                                                                                                                                               |
+| `styleName`                      | string | e.g. `"Regular"`, `"Bold Italic"` (name ID 2).                                                                                                                                          |
+| `typographicFamily`              | string | Name ID 16. The shared "true" family name across every weight/style. Set the _same_ value on every font you want grouped as one family. Written only when it differs from `familyName`. |
+| `typographicSubfamily`           | string | Name ID 17. The unique style name within the typographic family (e.g. `"Light"`, `"Condensed Bold"`). Written only when it differs from `styleName`.                                    |
+| `wwsFamily`                      | string | Name ID 21. WWS (Weight/Width/Slope) family fallback — use when the typographic family carries non-WWS attributes (Display, Caption, optical size, etc.).                               |
+| `wwsSubfamily`                   | string | Name ID 22. WWS subfamily name.                                                                                                                                                         |
+| `variationsPostScriptNamePrefix` | string | Name ID 25. PostScript name prefix for variable-font named instances.                                                                                                                   |
+| `postScriptName`                 | string | Name ID 6. If omitted, a sanitized `Family-Style` fallback is generated (ASCII-only, no spaces, ≤63 chars).                                                                             |
+| `unitsPerEm`                     | number | 16..16384. Common values: 1000 (CFF), 2048 (TTF).                                                                                                                                       |
+| `ascender`                       | number | In font units, positive.                                                                                                                                                                |
+| `descender`                      | number | In font units, negative.                                                                                                                                                                |
+| `lineGap`                        | number | Extra leading. Usually 0.                                                                                                                                                               |
+| `weightClass`                    | number | OS/2 `usWeightClass` (100..900).                                                                                                                                                        |
+| `widthClass`                     | number | OS/2 `usWidthClass` (1..9).                                                                                                                                                             |
+| `fsSelection`                    | number | OS/2 style bits. Honored verbatim when set; otherwise derived.                                                                                                                          |
+| `macStyle`                       | number | `head` style bits. Honored verbatim when set; otherwise derived. Kept coordinated with `fsSelection`.                                                                                   |
+| `isBold` / `isItalic`            | bool   | Optional explicit style flags. When omitted, bold is derived by the RIBBI rule (weight _exactly_ 700) and italic from `italicAngle`.                                                    |
+| `xMin/yMin/xMax/yMax`            | number | Optional; recomputed from glyphs on export.                                                                                                                                             |
+| `version`                        | string | Optional version string written to `name` table.                                                                                                                                        |
+
+> **Familying multiple fonts:** to make separate files (Light, Regular, Bold, …) group as one family in Windows, Office, Affinity, Adobe, etc., give every file the _same_ `typographicFamily` (ID 16) and a _unique_ `typographicSubfamily` (ID 17), keep `familyName`/`styleName` (IDs 1/2) legacy-safe (only Regular/Bold/Italic/Bold Italic in `styleName`), and set `weightClass`/`widthClass` accurately. FFJS never overwrites these values when importing an existing binary — round-trip fidelity is preserved even if the imported metadata does not follow this guidance.
 
 See the [`head`](./tables/head.md), [`hhea`](./tables/hhea.md), [`OS/2`](./tables/OS-2.md), and [`name`](./tables/name.md) table docs for the full set of fields that get written into the binary.
 
