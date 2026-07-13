@@ -413,15 +413,15 @@ function xl(t) {
         break;
       }
       case "C": {
-        let d = u(), x = u(), y = u(), m = u(), w = u(), S = u();
-        p && (d += o, x += s, y += o, m += s, w += o, S += s), e.push({ op: "C", x1: d, y1: x, x2: y, y2: m, x: w, y: S }), c = y, f = m, o = w, s = S, a = h;
+        let d = u(), x = u(), y = u(), m = u(), w = u(), _ = u();
+        p && (d += o, x += s, y += o, m += s, w += o, _ += s), e.push({ op: "C", x1: d, y1: x, x2: y, y2: m, x: w, y: _ }), c = y, f = m, o = w, s = _, a = h;
         break;
       }
       case "S": {
         let d = 2 * o - c, x = 2 * s - f;
         a.toUpperCase() !== "C" && a.toUpperCase() !== "S" && (d = o, x = s);
-        let y = u(), m = u(), w = u(), S = u();
-        p && (y += o, m += s, w += o, S += s), e.push({ op: "C", x1: d, y1: x, x2: y, y2: m, x: w, y: S }), c = y, f = m, o = w, s = S, a = h;
+        let y = u(), m = u(), w = u(), _ = u();
+        p && (y += o, m += s, w += o, _ += s), e.push({ op: "C", x1: d, y1: x, x2: y, y2: m, x: w, y: _ }), c = y, f = m, o = w, s = _, a = h;
         break;
       }
       case "Q": {
@@ -451,7 +451,7 @@ function Ln(t, e, n, o, s, r, i, a, c = 0) {
   const f = (3 * (n + s) - t - i) / 4, l = (3 * (o + r) - e - a) / 4, u = t + 2 / 3 * (f - t), h = e + 2 / 3 * (l - e), p = i + 2 / 3 * (f - i), g = a + 2 / 3 * (l - a), d = Math.hypot(n - u, o - h), x = Math.hypot(s - p, r - g);
   if (Math.max(d, x) <= 0.5 || c >= 8)
     return [{ cx: f, cy: l, x: i, y: a }];
-  const m = (t + n) / 2, w = (e + o) / 2, S = (n + s) / 2, _ = (o + r) / 2, b = (s + i) / 2, A = (r + a) / 2, k = (m + S) / 2, O = (w + _) / 2, I = (S + b) / 2, E = (_ + A) / 2, T = (k + I) / 2, D = (O + E) / 2, R = Ln(
+  const m = (t + n) / 2, w = (e + o) / 2, _ = (n + s) / 2, S = (o + r) / 2, b = (s + i) / 2, A = (r + a) / 2, k = (m + _) / 2, O = (w + S) / 2, I = (_ + b) / 2, E = (S + A) / 2, T = (k + I) / 2, D = (O + E) / 2, R = Ln(
     t,
     e,
     m,
@@ -824,21 +824,21 @@ function Qn(t, e = [], n = []) {
   const o = [], s = [];
   let r = null, i = 0, a = 0, c = null, f = !1, l = !0;
   const u = Ks(e.length), h = Ks(n.length);
-  function p(S, _) {
-    r && r.length > 0 && s.push(r), i += S, a += _, r = [{ type: "M", x: i, y: a }];
+  function p(_, S) {
+    r && r.length > 0 && s.push(r), i += _, a += S, r = [{ type: "M", x: i, y: a }];
   }
-  function g(S, _) {
-    i += S, a += _, r && r.push({ type: "L", x: i, y: a });
+  function g(_, S) {
+    i += _, a += S, r && r.push({ type: "L", x: i, y: a });
   }
-  function d(S, _, b, A, k, O) {
-    const I = i + S, E = a + _, T = I + b, D = E + A;
+  function d(_, S, b, A, k, O) {
+    const I = i + _, E = a + S, T = I + b, D = E + A;
     i = T + k, a = D + O, r && r.push({ type: "C", x1: I, y1: E, x2: T, y2: D, x: i, y: a });
   }
   function x() {
     l && (o.length % 2 !== 0 && (c = o.shift()), l = !1, f = !0);
   }
-  function y(S) {
-    switch (S) {
+  function y(_) {
+    switch (_) {
       case 1:
       // hstem
       case 3:
@@ -852,35 +852,35 @@ function Qn(t, e = [], n = []) {
         l && (o.length > 1 && (c = o.shift()), l = !1, f = !0), p(0, o.pop()), o.length = 0;
         break;
       case 5:
-        for (let _ = 0; _ < o.length; _ += 2)
-          g(o[_], o[_ + 1]);
+        for (let S = 0; S < o.length; S += 2)
+          g(o[S], o[S + 1]);
         o.length = 0;
         break;
       case 6:
-        for (let _ = 0; _ < o.length; _++)
-          _ % 2 === 0 ? g(o[_], 0) : g(0, o[_]);
+        for (let S = 0; S < o.length; S++)
+          S % 2 === 0 ? g(o[S], 0) : g(0, o[S]);
         o.length = 0;
         break;
       case 7:
-        for (let _ = 0; _ < o.length; _++)
-          _ % 2 === 0 ? g(0, o[_]) : g(o[_], 0);
+        for (let S = 0; S < o.length; S++)
+          S % 2 === 0 ? g(0, o[S]) : g(o[S], 0);
         o.length = 0;
         break;
       case 8:
-        for (let _ = 0; _ + 5 < o.length; _ += 6)
+        for (let S = 0; S + 5 < o.length; S += 6)
           d(
-            o[_],
-            o[_ + 1],
-            o[_ + 2],
-            o[_ + 3],
-            o[_ + 4],
-            o[_ + 5]
+            o[S],
+            o[S + 1],
+            o[S + 2],
+            o[S + 3],
+            o[S + 4],
+            o[S + 5]
           );
         o.length = 0;
         break;
       case 10: {
-        const _ = o.pop() + h;
-        n[_] && (callStack.push(null), execute(n[_]));
+        const S = o.pop() + h;
+        n[S] && (callStack.push(null), execute(n[S]));
         break;
       }
       case 11:
@@ -897,8 +897,8 @@ function Qn(t, e = [], n = []) {
       case 21:
         x();
         {
-          const _ = o.pop(), b = o.pop();
-          p(b, _);
+          const S = o.pop(), b = o.pop();
+          p(b, S);
         }
         o.length = 0;
         break;
@@ -941,50 +941,50 @@ function Qn(t, e = [], n = []) {
         break;
       case 26:
         {
-          let _ = 0, b = 0;
-          for (o.length % 4 !== 0 && (b = o[_++]); _ + 3 < o.length; _ += 4)
-            d(b, o[_], o[_ + 1], o[_ + 2], 0, o[_ + 3]), b = 0;
+          let S = 0, b = 0;
+          for (o.length % 4 !== 0 && (b = o[S++]); S + 3 < o.length; S += 4)
+            d(b, o[S], o[S + 1], o[S + 2], 0, o[S + 3]), b = 0;
         }
         o.length = 0;
         break;
       case 27:
         {
-          let _ = 0, b = 0;
-          for (o.length % 4 !== 0 && (b = o[_++]); _ + 3 < o.length; _ += 4)
-            d(o[_], b, o[_ + 1], o[_ + 2], o[_ + 3], 0), b = 0;
+          let S = 0, b = 0;
+          for (o.length % 4 !== 0 && (b = o[S++]); S + 3 < o.length; S += 4)
+            d(o[S], b, o[S + 1], o[S + 2], o[S + 3], 0), b = 0;
         }
         o.length = 0;
         break;
       case 29: {
-        const _ = o.pop() + u;
-        e[_] && (callStack.push(null), execute(e[_]));
+        const S = o.pop() + u;
+        e[S] && (callStack.push(null), execute(e[S]));
         break;
       }
       case 30:
         {
-          let _ = 0;
-          for (; _ < o.length && _ + 3 < o.length; ) {
+          let S = 0;
+          for (; S < o.length && S + 3 < o.length; ) {
             {
-              const b = o.length - _ === 5 ? o[_ + 4] : 0;
+              const b = o.length - S === 5 ? o[S + 4] : 0;
               d(
                 0,
-                o[_],
-                o[_ + 1],
-                o[_ + 2],
-                o[_ + 3],
+                o[S],
+                o[S + 1],
+                o[S + 2],
+                o[S + 3],
                 b
-              ), _ += b !== 0 ? 5 : 4;
+              ), S += b !== 0 ? 5 : 4;
             }
-            if (_ + 3 < o.length) {
-              const b = o.length - _ === 5 ? o[_ + 4] : 0;
+            if (S + 3 < o.length) {
+              const b = o.length - S === 5 ? o[S + 4] : 0;
               d(
-                o[_],
+                o[S],
                 0,
-                o[_ + 1],
-                o[_ + 2],
+                o[S + 1],
+                o[S + 2],
                 b,
-                o[_ + 3]
-              ), _ += b !== 0 ? 5 : 4;
+                o[S + 3]
+              ), S += b !== 0 ? 5 : 4;
             } else break;
           }
         }
@@ -992,29 +992,29 @@ function Qn(t, e = [], n = []) {
         break;
       case 31:
         {
-          let _ = 0;
-          for (; _ < o.length && _ + 3 < o.length; ) {
+          let S = 0;
+          for (; S < o.length && S + 3 < o.length; ) {
             {
-              const b = o.length - _ === 5 ? o[_ + 4] : 0;
+              const b = o.length - S === 5 ? o[S + 4] : 0;
               d(
-                o[_],
+                o[S],
                 0,
-                o[_ + 1],
-                o[_ + 2],
+                o[S + 1],
+                o[S + 2],
                 b,
-                o[_ + 3]
-              ), _ += b !== 0 ? 5 : 4;
+                o[S + 3]
+              ), S += b !== 0 ? 5 : 4;
             }
-            if (_ + 3 < o.length) {
-              const b = o.length - _ === 5 ? o[_ + 4] : 0;
+            if (S + 3 < o.length) {
+              const b = o.length - S === 5 ? o[S + 4] : 0;
               d(
                 0,
-                o[_],
-                o[_ + 1],
-                o[_ + 2],
-                o[_ + 3],
+                o[S],
+                o[S + 1],
+                o[S + 2],
+                o[S + 3],
                 b
-              ), _ += b !== 0 ? 5 : 4;
+              ), S += b !== 0 ? 5 : 4;
             } else break;
           }
         }
@@ -1025,12 +1025,12 @@ function Qn(t, e = [], n = []) {
         break;
     }
   }
-  function m(S) {
-    switch (S) {
+  function m(_) {
+    switch (_) {
       case 34:
         {
-          const _ = o[0], b = 0, A = o[1], k = o[2], O = o[3], I = 0, E = o[4], T = 0, D = o[5], R = -k, M = o[6], L = 0;
-          d(_, b, A, k, O, I), d(E, T, D, R, M, L);
+          const S = o[0], b = 0, A = o[1], k = o[2], O = o[3], I = 0, E = o[4], T = 0, D = o[5], R = -k, M = o[6], L = 0;
+          d(S, b, A, k, O, I), d(E, T, D, R, M, L);
         }
         o.length = 0;
         break;
@@ -1039,16 +1039,16 @@ function Qn(t, e = [], n = []) {
         break;
       case 36:
         {
-          const _ = o[0], b = o[1], A = o[2], k = o[3], O = o[4], I = 0, E = o[5], T = 0, D = o[6], R = o[7], M = o[8], L = -(b + k + R);
-          d(_, b, A, k, O, I), d(E, T, D, R, M, L);
+          const S = o[0], b = o[1], A = o[2], k = o[3], O = o[4], I = 0, E = o[5], T = 0, D = o[6], R = o[7], M = o[8], L = -(b + k + R);
+          d(S, b, A, k, O, I), d(E, T, D, R, M, L);
         }
         o.length = 0;
         break;
       case 37:
         {
-          const _ = o[0], b = o[1], A = o[2], k = o[3], O = o[4], I = o[5], E = o[6], T = o[7], D = o[8], R = o[9], M = o[10], L = _ + A + O + E + D, H = b + k + I + T + R;
+          const S = o[0], b = o[1], A = o[2], k = o[3], O = o[4], I = o[5], E = o[6], T = o[7], D = o[8], R = o[9], M = o[10], L = S + A + O + E + D, H = b + k + I + T + R;
           let P, Z;
-          Math.abs(L) > Math.abs(H) ? (P = M, Z = -H) : (P = -L, Z = M), d(_, b, A, k, O, I), d(E, T, D, R, P, Z);
+          Math.abs(L) > Math.abs(H) ? (P = M, Z = -H) : (P = -L, Z = M), d(S, b, A, k, O, I), d(E, T, D, R, P, Z);
         }
         o.length = 0;
         break;
@@ -1057,17 +1057,17 @@ function Qn(t, e = [], n = []) {
         break;
     }
   }
-  function w(S, _) {
-    let b = _ || 0, A = 0;
-    for (; A < S.length; ) {
-      const k = S[A], O = xa(S, A);
+  function w(_, S) {
+    let b = S || 0, A = 0;
+    for (; A < _.length; ) {
+      const k = _[A], O = xa(_, A);
       if (O !== null) {
         o.push(O.value), A += O.bytesConsumed;
         continue;
       }
       if (k === 12) {
         A++;
-        const I = S[A];
+        const I = _[A];
         A++, m(I);
       } else if (k === 19 || k === 20) {
         f || (o.length % 2 !== 0 && (c = o.shift()), f = !0, l = !1), b += o.length >> 1, o.length = 0, A++;
@@ -1556,12 +1556,12 @@ function Pl(t) {
       const x = t["CFF "], y = x.fonts[0], m = y.charStrings;
       if (m[p]) {
         g.charString = m[p], g.charStringDisassembly = Sa(m[p]);
-        const w = x.globalSubrs || [], S = y.localSubrs || [], _ = Qn(
+        const w = x.globalSubrs || [], _ = y.localSubrs || [], S = Qn(
           m[p],
           w,
-          S
+          _
         );
-        _.contours.length > 0 && (g.contours = _.contours);
+        S.contours.length > 0 && (g.contours = S.contours);
       }
     }
     h.push(g);
@@ -1820,10 +1820,10 @@ function ql(t, e, n, o, s, r, i, a) {
     const d = s[g], x = (d.flags & 32768) !== 0, y = d.flags & 16383;
     if (x && l.push(h), y > 0 && l.length > 0) {
       const w = Math.floor((y - (r._offset || 0)) / 2);
-      for (let S = 0; S < l.length; S++) {
-        const _ = w + S;
-        if (_ >= 0 && _ < r.length) {
-          const b = r[_], A = (b & 1) !== 0;
+      for (let _ = 0; _ < l.length; _++) {
+        const S = w + _;
+        if (S >= 0 && S < r.length) {
+          const b = r[S], A = (b & 1) !== 0;
           if (f += A ? b & -2 : b, A) break;
         }
       }
@@ -2304,12 +2304,12 @@ function pu(t, e) {
     const m = to(x);
     if (m) {
       m.xMin < n && (n = m.xMin), m.yMin < o && (o = m.yMin), m.xMax > s && (s = m.xMax), m.yMax > r && (r = m.yMax);
-      const S = x.leftSideBearing ?? m.xMin, _ = y - (S + (m.xMax - m.xMin)), b = S + (m.xMax - m.xMin);
-      S < c && (c = S), _ < f && (f = _), b > l && (l = b);
+      const _ = x.leftSideBearing ?? m.xMin, S = y - (_ + (m.xMax - m.xMin)), b = _ + (m.xMax - m.xMin);
+      _ < c && (c = _), S < f && (f = S), b > l && (l = b);
     }
     const w = x.unicodes || (x.unicode ? [x.unicode] : []);
-    for (const S of w)
-      S < u && (u = S), S > h && (h = S), p.add(S);
+    for (const _ of w)
+      _ < u && (u = _), _ > h && (h = _), p.add(_);
   }
   n === 1 / 0 && (n = 0), o === 1 / 0 && (o = 0), s === -1 / 0 && (s = 0), r === -1 / 0 && (r = 0), c === 1 / 0 && (c = 0), f === 1 / 0 && (f = 0), l === -1 / 0 && (l = 0), u === 65535 && (u = 0), h === 0 && (h = 0);
   const g = rr(
@@ -2996,7 +2996,7 @@ function Bu(t, e) {
     rightGlyphToClass: a
   } = Ia(n), c = o.length, f = s.length, l = f * 2, u = 8, h = Array.from(i.keys()).sort((O, I) => O - I), p = Array.from(a.keys()).sort(
     (O, I) => O - I
-  ), g = h.length > 0 ? h[0] : 0, d = h.length > 0 ? h[h.length - 1] - g + 1 : 0, x = p.length > 0 ? p[0] : 0, y = p.length > 0 ? p[p.length - 1] - x + 1 : 0, m = 4 + d * 2, w = 4 + y * 2, S = u, _ = S + m, b = _ + w, A = [];
+  ), g = h.length > 0 ? h[0] : 0, d = h.length > 0 ? h[h.length - 1] - g + 1 : 0, x = p.length > 0 ? p[0] : 0, y = p.length > 0 ? p[p.length - 1] - x + 1 : 0, m = 4 + d * 2, w = 4 + y * 2, _ = u, S = _ + m, b = S + w, A = [];
   for (let O = 0; O < d; O++) {
     const I = g + O, E = i.get(I) ?? 0;
     A.push(b + E * l);
@@ -3017,8 +3017,8 @@ function Bu(t, e) {
         // format 2, horizontal
         format: 2,
         rowWidth: l,
-        leftOffsetTable: S,
-        rightOffsetTable: _,
+        leftOffsetTable: _,
+        rightOffsetTable: S,
         kerningArrayOffset: b,
         leftClassTable: {
           firstGlyph: g,
@@ -3118,8 +3118,8 @@ function Ia(t) {
     e.has(y) || e.set(y, /* @__PURE__ */ new Map()), e.get(y).set(m, w), n.add(m);
   const o = /* @__PURE__ */ new Map();
   for (const [y, m] of e) {
-    const w = Array.from(m.entries()).sort((S, _) => S[0] - _[0]);
-    o.set(y, w.map((S) => `${S[0]}:${S[1]}`).join(","));
+    const w = Array.from(m.entries()).sort((_, S) => _[0] - S[0]);
+    o.set(y, w.map((_) => `${_[0]}:${_[1]}`).join(","));
   }
   const s = /* @__PURE__ */ new Map(), r = /* @__PURE__ */ new Map();
   let i = 1;
@@ -3130,8 +3130,8 @@ function Ia(t) {
     a.has(m) || a.set(m, /* @__PURE__ */ new Map()), a.get(m).set(y, w);
   const c = /* @__PURE__ */ new Map();
   for (const [y, m] of a) {
-    const w = Array.from(m.entries()).sort((S, _) => S[0] - _[0]);
-    c.set(y, w.map((S) => `${S[0]}:${S[1]}`).join(","));
+    const w = Array.from(m.entries()).sort((_, S) => _[0] - S[0]);
+    c.set(y, w.map((_) => `${_[0]}:${_[1]}`).join(","));
   }
   const f = /* @__PURE__ */ new Map(), l = /* @__PURE__ */ new Map();
   let u = 1;
@@ -3141,8 +3141,8 @@ function Ia(t) {
   for (let y = 0; y < h; y++)
     g.push(new Array(p).fill(0));
   for (const { left: y, right: m, value: w } of t) {
-    const S = r.get(y) ?? 0, _ = l.get(m) ?? 0;
-    g[S][_] = w;
+    const _ = r.get(y) ?? 0, S = l.get(m) ?? 0;
+    g[_][S] = w;
   }
   const d = Array.from({ length: h }, (y, m) => m), x = Array.from({ length: p }, (y, m) => m);
   return {
@@ -3307,21 +3307,21 @@ function Pu(t, e) {
   for (let m = 0; m < e.length; m++)
     e[m].name && n.set(e[m].name, m);
   const { leftClasses: o = {}, rightClasses: s = {}, pairs: r = [] } = t, i = /* @__PURE__ */ new Map(), a = /* @__PURE__ */ new Map(), c = [null], f = [null];
-  function l(m, w, S, _) {
-    if (S.has(m)) return S.get(m);
-    const b = _.length;
-    return _.push(Gu(m, w, n)), S.set(m, b), b;
+  function l(m, w, _, S) {
+    if (_.has(m)) return _.get(m);
+    const b = S.length;
+    return S.push(Gu(m, w, n)), _.set(m, b), b;
   }
   const u = [];
   for (const m of r) {
     if (!m || !m.value) continue;
-    const w = l(m.left, o, i, c), S = l(
+    const w = l(m.left, o, i, c), _ = l(
       m.right,
       s,
       a,
       f
     );
-    u.push({ lc: w, rc: S, value: m.value });
+    u.push({ lc: w, rc: _, value: m.value });
   }
   const h = c.length, p = f.length;
   if (h <= 1 || p <= 1 || u.length === 0) return null;
@@ -3340,12 +3340,12 @@ function Pu(t, e) {
   const x = [];
   for (let m = 0; m < h; m++) {
     const w = [];
-    for (let S = 0; S < p; S++)
+    for (let _ = 0; _ < p; _++)
       w.push({ value1: { xAdvance: 0 }, value2: null });
     x.push(w);
   }
-  for (const { lc: m, rc: w, value: S } of u)
-    x[m][w].value1.xAdvance = S;
+  for (const { lc: m, rc: w, value: _ } of u)
+    x[m][w].value1.xAdvance = _;
   const y = Array.from(g.keys()).sort((m, w) => m - w);
   return {
     lookupType: 2,
@@ -3612,49 +3612,62 @@ function Yu(t) {
 }
 function Zu(t) {
   const { axes: e, metricVariations: n } = t, { regions: o, metrics: s } = n, r = {};
-  for (let g = 0; g < e.length; g++)
-    r[e[g].tag] = g;
-  const i = o.map((g) => {
-    const d = [];
-    for (let x = 0; x < e.length; x++) {
-      const y = e[x].tag;
-      if (g.axes[y]) {
-        const [m, w, S] = g.axes[y];
-        d.push({ startCoord: m, peakCoord: w, endCoord: S });
+  for (let S = 0; S < e.length; S++)
+    r[e[S].tag] = S;
+  const i = o.map((S) => {
+    const b = [];
+    for (let A = 0; A < e.length; A++) {
+      const k = e[A].tag;
+      if (S.axes[k]) {
+        const [O, I, E] = S.axes[k];
+        b.push({ startCoord: O, peakCoord: I, endCoord: E });
       } else
-        d.push({ startCoord: 0, peakCoord: 0, endCoord: 0 });
+        b.push({ startCoord: 0, peakCoord: 0, endCoord: 0 });
     }
-    return { regionAxes: d };
+    return { regionAxes: b };
   }), a = /* @__PURE__ */ new Set();
-  for (const g of Object.values(s))
-    for (const d of g)
-      a.add(d.region);
-  const c = [...a].sort((g, d) => g - d), f = /* @__PURE__ */ new Map();
-  for (let g = 0; g < c.length; g++)
-    f.set(c[g], g);
+  for (const S of Object.values(s))
+    for (const b of S)
+      a.add(b.region);
+  const c = [...a].sort((S, b) => S - b), f = /* @__PURE__ */ new Map();
+  for (let S = 0; S < c.length; S++)
+    f.set(c[S], S);
   const l = Object.entries(s), u = [], h = [];
-  for (const [g, d] of l) {
-    const x = Ql[g] || g, y = new Array(c.length).fill(0);
-    for (const m of d) {
-      const w = f.get(m.region);
-      w !== void 0 && (y[w] = m.delta);
+  for (const [S, b] of l) {
+    const A = Ql[S] || S, k = new Array(c.length).fill(0);
+    for (const O of b) {
+      const I = f.get(O.region);
+      I !== void 0 && (k[I] = O.delta);
     }
-    u.push(y), h.push({
-      valueTag: x,
+    u.push(k), h.push({
+      valueTag: A,
       deltaSetOuterIndex: 0,
       deltaSetInnerIndex: u.length - 1
     });
   }
-  let p = 0;
-  for (let g = 0; g < c.length; g++) {
-    let d = !1;
-    for (const x of u)
-      if (x[g] < -128 || x[g] > 127) {
-        d = !0;
+  const p = 32768;
+  let g = !1;
+  for (const S of u) {
+    for (const b of S)
+      if (b < -32768 || b > 32767) {
+        g = !0;
         break;
       }
-    d && p++;
+    if (g) break;
   }
+  const d = [], x = [];
+  for (let S = 0; S < c.length; S++) {
+    let b = !1;
+    for (const A of u) {
+      const k = A[S];
+      if (g ? k < -32768 || k > 32767 : k < -128 || k > 127) {
+        b = !0;
+        break;
+      }
+    }
+    (b ? d : x).push(S);
+  }
+  const y = [...d, ...x], m = y.map((S) => c[S]), w = u.map((S) => y.map((b) => S[b])), _ = g ? d.length | p : d.length;
   return {
     majorVersion: 1,
     minorVersion: 0,
@@ -3669,10 +3682,10 @@ function Zu(t) {
       },
       itemVariationData: [
         {
-          itemCount: u.length,
-          wordDeltaCount: p,
-          regionIndexes: c,
-          deltaSets: u
+          itemCount: w.length,
+          wordDeltaCount: _,
+          regionIndexes: m,
+          deltaSets: w
         }
       ]
     }
@@ -3704,11 +3717,11 @@ function qu(t, e, n) {
     const m = r.get(d);
     m.lookupIndices.add(y);
     for (const w of p) {
-      const S = w.allScripts || [
+      const _ = w.allScripts || [
         { script: w.script, language: w.language }
       ];
-      for (const _ of S) {
-        const b = _.script || "DFLT", A = _.language || null;
+      for (const S of _) {
+        const b = S.script || "DFLT", A = S.language || null;
         m.scripts.has(b) || m.scripts.set(b, /* @__PURE__ */ new Set()), m.scripts.get(b).add(A);
       }
     }
@@ -3758,7 +3771,7 @@ function qu(t, e, n) {
       const m = {
         lookupOrderOffset: 0,
         requiredFeatureIndex: 65535,
-        featureIndices: Array.from(y).sort((w, S) => w - S)
+        featureIndices: Array.from(y).sort((w, _) => w - _)
       };
       x === null ? d = m : g.push({
         langSysTag: x,
@@ -4608,17 +4621,17 @@ function mh(t, e) {
   const c = o.FDArray, f = o.FDSelect;
   delete o.FDArray, delete o.FDSelect;
   let l = [];
-  s !== void 0 && (l = Mt(t, s).items.map((_) => Array.from(_)));
+  s !== void 0 && (l = Mt(t, s).items.map((S) => Array.from(S)));
   const u = l.length, h = gh(t, r, u), p = dh(t, i);
   let g = {}, d = [];
   if (Array.isArray(a) && a.length === 2) {
-    const [S, _] = a, b = jt(t, _, _ + S);
-    g = Yt(b, Ho), g.Subrs !== void 0 && (d = Mt(t, _ + g.Subrs).items.map((k) => Array.from(k)), delete g.Subrs);
+    const [_, S] = a, b = jt(t, S, S + _);
+    g = Yt(b, Ho), g.Subrs !== void 0 && (d = Mt(t, S + g.Subrs).items.map((k) => Array.from(k)), delete g.Subrs);
   }
   const x = o.ROS !== void 0;
   let y, m;
-  x && (c !== void 0 && (y = Mt(t, c).items.map((_) => {
-    const b = jt(_, 0, _.length), A = Yt(b, zo);
+  x && (c !== void 0 && (y = Mt(t, c).items.map((S) => {
+    const b = jt(S, 0, S.length), A = Yt(b, zo);
     let k = {}, O = [];
     if (Array.isArray(A.Private) && A.Private.length === 2) {
       const [I, E] = A.Private, T = jt(t, E, E + I);
@@ -4651,17 +4664,17 @@ function $a(t) {
   } = t, a = [e, n, 4, 4], c = Dt(o.map(lr)), f = Dt(s.map(lr)), l = Dt(
     r.map((w) => new Uint8Array(w))
   ), u = i.map((w) => yh(w)), h = i.map(
-    (w, S) => hr(
+    (w, _) => hr(
       w,
-      u[S],
+      u[_],
       /* baseOffset */
       0
     )
   ), p = Dt(h);
   let d = a.length + c.length + p.length + f.length + l.length;
-  const x = i.map((w, S) => {
-    const _ = hr(w, u[S], d);
-    return d += u[S].totalSize, _;
+  const x = i.map((w, _) => {
+    const S = hr(w, u[_], d);
+    return d += u[_].totalSize, S;
   }), y = Dt(x);
   if (y.length !== p.length)
     throw new Error(
@@ -4675,8 +4688,8 @@ function $a(t) {
     ...l
   ];
   for (const w of u)
-    for (const S of w.sections)
-      for (let _ = 0; _ < S.length; _++) m.push(S[_]);
+    for (const _ of w.sections)
+      for (let S = 0; S < _.length; S++) m.push(_[S]);
   return m;
 }
 function yh(t) {
@@ -5112,7 +5125,7 @@ function ne(t) {
       continue;
     }
     l.push(f);
-    const d = g.regionIndexes.length, x = (g.wordDeltaCount & jo) !== 0, y = g.wordDeltaCount & Yo, m = 6 + 2 * d, w = x ? 4 : 2, S = x ? 2 : 1, _ = y * w + (d - y) * S, b = m + g.itemCount * _;
+    const d = g.regionIndexes.length, x = (g.wordDeltaCount & jo) !== 0, y = g.wordDeltaCount & Yo, m = 6 + 2 * d, w = x ? 4 : 2, _ = x ? 2 : 1, S = y * w + (d - y) * _, b = m + g.itemCount * S;
     f += b;
   }
   const u = f, h = new v(u);
@@ -5202,12 +5215,12 @@ function Ih(t, e) {
       localSubrs: E
     };
   }));
-  let S = null;
-  g !== void 0 && m > 0 && (S = Ma(n, g, m));
   let _ = null;
+  g !== void 0 && m > 0 && (_ = Ma(n, g, m));
+  let S = null;
   if (h !== void 0) {
     const b = n[h] << 8 | n[h + 1];
-    _ = Pt(
+    S = Pt(
       Array.from(
         n.slice(
           h + 2,
@@ -5223,8 +5236,8 @@ function Ih(t, e) {
     globalSubrs: x,
     charStrings: y,
     fontDicts: w,
-    fdSelect: S,
-    variationStore: _
+    fdSelect: _,
+    variationStore: S
   };
 }
 function Oh(t) {
@@ -5250,9 +5263,9 @@ function Oh(t) {
   y += l.length;
   let w;
   u && (w = y, y += u.length);
-  let S;
-  h && (S = y, y += h.length);
-  const _ = i.map((T) => {
+  let _;
+  h && (_ = y, y += h.length);
+  const S = i.map((T) => {
     const D = be(
       T.privateDict || {},
       Ah
@@ -5273,7 +5286,7 @@ function Oh(t) {
       totalSize: M.length + (R ? R.length : 0)
     };
   }), b = [];
-  for (const T of _)
+  for (const T of S)
     b.push({ offset: y, size: T.privBytes.length }), y += T.totalSize;
   let A = null, k;
   if (i.length > 0) {
@@ -5294,7 +5307,7 @@ function Oh(t) {
     charStrings: m,
     fdArray: k,
     fdSelect: w,
-    variationStore: S
+    variationStore: _
   });
   if (O.length !== g)
     throw new Error(
@@ -5317,7 +5330,7 @@ function Oh(t) {
   if (h)
     for (let T = 0; T < h.length; T++)
       E.push(h[T]);
-  for (const T of _) {
+  for (const T of S) {
     for (let D = 0; D < T.privBytes.length; D++) E.push(T.privBytes[D]);
     if (T.localSubrBytes)
       for (let D = 0; D < T.localSubrBytes.length; D++)
@@ -5499,8 +5512,8 @@ function Ae(t, e) {
     const x = t.uint16(), y = Math.min(h, c - d * h);
     for (let m = 0; m < y; m++) {
       const w = 16 - f * (m + 1);
-      let S = x >> w & l;
-      S >= u && (S -= u * 2), g.push(S);
+      let _ = x >> w & l;
+      _ >= u && (_ -= u * 2), g.push(_);
     }
   }
   return { format: a, startSize: r, endSize: i, deltaValues: g };
@@ -5662,14 +5675,14 @@ function ja(t, e, n) {
     return { ...p, subtableBytes: g };
   }), i = (p) => {
     const { lookupType: g, lookupFlag: d, subtableBytes: x, markFilteringSet: y } = p, m = y !== void 0;
-    let S = 6 + x.length * 2 + (m ? 2 : 0);
-    const _ = x.map((A) => {
-      const k = S;
-      return S += A.length, k;
-    }), b = new v(S);
-    b.uint16(g), b.uint16(d), b.uint16(x.length), b.array("uint16", _), m && b.uint16(y);
+    let _ = 6 + x.length * 2 + (m ? 2 : 0);
+    const S = x.map((A) => {
+      const k = _;
+      return _ += A.length, k;
+    }), b = new v(_);
+    b.uint16(g), b.uint16(d), b.uint16(x.length), b.array("uint16", S), m && b.uint16(y);
     for (let A = 0; A < x.length; A++)
-      b.seek(_[A]), b.rawBytes(x[A]);
+      b.seek(S[A]), b.rawBytes(x[A]);
     return b.toArray();
   }, a = r.map(i), c = 2 + o.length * 2;
   if (((p) => {
@@ -5681,19 +5694,19 @@ function ja(t, e, n) {
     return !1;
   })(a) && n !== void 0) {
     const p = r.map((m) => {
-      const { lookupType: w, lookupFlag: S, subtableBytes: _, markFilteringSet: b } = m, A = b !== void 0;
-      let O = 6 + _.length * 2 + (A ? 2 : 0);
-      const I = _.map(() => {
+      const { lookupType: w, lookupFlag: _, subtableBytes: S, markFilteringSet: b } = m, A = b !== void 0;
+      let O = 6 + S.length * 2 + (A ? 2 : 0);
+      const I = S.map(() => {
         const T = O;
         return O += s, T;
       }), E = new v(O);
-      E.uint16(n), E.uint16(S), E.uint16(_.length), E.array("uint16", I), A && E.uint16(b);
-      for (let T = 0; T < _.length; T++)
+      E.uint16(n), E.uint16(_), E.uint16(S.length), E.array("uint16", I), A && E.uint16(b);
+      for (let T = 0; T < S.length; T++)
         E.seek(I[T]), E.uint16(1), E.uint16(w), E.uint32(0);
       return {
         compactBytes: E.toArray(),
         subtableOffsets: I,
-        innerDataBytes: _
+        innerDataBytes: S
       };
     });
     let g = c;
@@ -5702,8 +5715,8 @@ function ja(t, e, n) {
       return g += m.compactBytes.length, w;
     }), x = p.map(
       (m) => m.innerDataBytes.map((w) => {
-        const S = g;
-        return g += w.length, S;
+        const _ = g;
+        return g += w.length, _;
       })
     ), y = new v(g);
     y.uint16(o.length), y.array("uint16", d);
@@ -5711,9 +5724,9 @@ function ja(t, e, n) {
       y.seek(d[m]), y.rawBytes(p[m].compactBytes);
     for (let m = 0; m < p.length; m++) {
       const w = p[m];
-      for (let S = 0; S < w.innerDataBytes.length; S++) {
-        const _ = d[m] + w.subtableOffsets[S], b = x[m][S], A = b - _;
-        y.seek(_ + 4), y.uint32(A), y.seek(b), y.rawBytes(w.innerDataBytes[S]);
+      for (let _ = 0; _ < w.innerDataBytes.length; _++) {
+        const S = d[m] + w.subtableOffsets[_], b = x[m][_], A = b - S;
+        y.seek(S + 4), y.uint32(A), y.seek(b), y.rawBytes(w.innerDataBytes[_]);
       }
     }
     return y.toArray();
@@ -5984,8 +5997,8 @@ function Yh(t) {
   h += f.length;
   const y = l.map((w) => {
     if (w === null) return 0;
-    const S = h;
-    return h += w.length, S;
+    const _ = h;
+    return h += w.length, _;
   }), m = new v(h);
   m.uint16(2), m.uint16(p), m.uint16(g), m.uint16(d), m.uint16(x), m.uint16(r.length), m.array("uint16", y), m.seek(p), m.rawBytes(i), m.seek(g), m.rawBytes(a), m.seek(d), m.rawBytes(c), m.seek(x), m.rawBytes(f);
   for (let w = 0; w < l.length; w++)
@@ -7595,7 +7608,7 @@ function pg(t) {
   let h = 0;
   for (const D of f)
     u.set(D, h), h += l.get(D);
-  const p = h, g = e ? e.length : 0, d = 4 + g * 6, x = n ? n.length : 0, y = x > 0 ? 4 + x * 4 : 0, m = o ? Sg(o) : [], w = s ? og(s) : [], S = r ? ne(r) : [], _ = d + y + p + m.length + w.length + S.length, b = 0, A = d, k = d + y, O = k + p, I = O + m.length, E = I + w.length, T = new v(_);
+  const p = h, g = e ? e.length : 0, d = 4 + g * 6, x = n ? n.length : 0, y = x > 0 ? 4 + x * 4 : 0, m = o ? Sg(o) : [], w = s ? og(s) : [], _ = r ? ne(r) : [], S = d + y + p + m.length + w.length + _.length, b = 0, A = d, k = d + y, O = k + p, I = O + m.length, E = I + w.length, T = new v(S);
   T.uint32(g);
   for (const D of e || [])
     T.uint16(D.glyphID), T.uint32(k - b + u.get(D.paint));
@@ -7612,13 +7625,13 @@ function pg(t) {
       u,
       k
     );
-  return T.rawBytes(m), T.rawBytes(w), T.rawBytes(S), {
+  return T.rawBytes(m), T.rawBytes(w), T.rawBytes(_), {
     bodyBytes: T.toArray(),
     bglBodyOffset: b,
     llBodyOffset: x > 0 ? A : 0,
     clipBodyOffset: m.length > 0 ? O : 0,
     dimBodyOffset: w.length > 0 ? I : 0,
-    ivsBodyOffset: S.length > 0 ? E : 0
+    ivsBodyOffset: _.length > 0 ? E : 0
   };
 }
 function Zo(t) {
@@ -7853,8 +7866,8 @@ function bg(t) {
       clipList: t.clipList,
       varIndexMap: t.varIndexMap,
       itemVariationStore: t.itemVariationStore
-    }), w = m.bodyBytes, S = y + m.bglBodyOffset, _ = m.llBodyOffset ? y + m.llBodyOffset : 0, b = m.clipBodyOffset ? y + m.clipBodyOffset : 0, A = m.dimBodyOffset ? y + m.dimBodyOffset : 0, k = m.ivsBodyOffset ? y + m.ivsBodyOffset : 0, O = y + w.length, I = new v(O);
-    I.uint16(t.version), I.uint16(e.length), I.uint32(e.length > 0 ? d : 0), I.uint32(n.length > 0 ? d + u : 0), I.uint16(n.length), I.uint32(S), I.uint32(_), I.uint32(b), I.uint32(A), I.uint32(k);
+    }), w = m.bodyBytes, _ = y + m.bglBodyOffset, S = m.llBodyOffset ? y + m.llBodyOffset : 0, b = m.clipBodyOffset ? y + m.clipBodyOffset : 0, A = m.dimBodyOffset ? y + m.dimBodyOffset : 0, k = m.ivsBodyOffset ? y + m.ivsBodyOffset : 0, O = y + w.length, I = new v(O);
+    I.uint16(t.version), I.uint16(e.length), I.uint32(e.length > 0 ? d : 0), I.uint32(n.length > 0 ? d + u : 0), I.uint16(n.length), I.uint32(_), I.uint32(S), I.uint32(b), I.uint32(A), I.uint32(k);
     for (const E of e)
       I.uint16(E.glyphID), I.uint16(E.firstLayerIndex), I.uint16(E.numLayers);
     for (const E of n)
@@ -9526,7 +9539,7 @@ function fd(t) {
     const m = s + y * n;
     e.seek(m);
     const w = [];
-    for (let S = 0; S < n; S++)
+    for (let _ = 0; _ < n; _++)
       e.position < t.length ? w.push(e.uint8()) : w.push(0);
     h.push(w);
   }
@@ -10128,41 +10141,41 @@ function Pd(t) {
   return n === 1 && i.length > 0 && (c.langTagRecords = i), c;
 }
 function Ud(t) {
-  const { version: e, names: n, langTagRecords: o = [] } = t, r = [...n].sort((_, b) => _.platformID !== b.platformID ? _.platformID - b.platformID : _.encodingID !== b.encodingID ? _.encodingID - b.encodingID : _.languageID !== b.languageID ? _.languageID - b.languageID : _.nameID - b.nameID).map((_) => ({
-    platformID: _.platformID,
-    encodingID: _.encodingID,
-    languageID: _.languageID,
-    nameID: _.nameID,
-    bytes: $d(_.value, _.platformID, _.encodingID)
-  })), i = o.map((_) => ts(_.tag)), a = 6, c = 12, u = e === 1 ? (e === 1 ? 2 : 0) + o.length * 4 : 0, h = a + r.length * c + u, p = [];
+  const { version: e, names: n, langTagRecords: o = [] } = t, r = [...n].sort((S, b) => S.platformID !== b.platformID ? S.platformID - b.platformID : S.encodingID !== b.encodingID ? S.encodingID - b.encodingID : S.languageID !== b.languageID ? S.languageID - b.languageID : S.nameID - b.nameID).map((S) => ({
+    platformID: S.platformID,
+    encodingID: S.encodingID,
+    languageID: S.languageID,
+    nameID: S.nameID,
+    bytes: $d(S.value, S.platformID, S.encodingID)
+  })), i = o.map((S) => ts(S.tag)), a = 6, c = 12, u = e === 1 ? (e === 1 ? 2 : 0) + o.length * 4 : 0, h = a + r.length * c + u, p = [];
   let g = 0;
   const d = /* @__PURE__ */ new Map();
-  function x(_) {
-    const b = _.join(",");
+  function x(S) {
+    const b = S.join(",");
     if (d.has(b))
       return d.get(b);
     const A = g;
-    return d.set(b, A), p.push(_), g += _.length, A;
+    return d.set(b, A), p.push(S), g += S.length, A;
   }
-  const y = r.map((_) => ({
-    ..._,
-    stringOffset: x(_.bytes),
-    stringLength: _.bytes.length
-  })), m = i.map((_) => ({
-    stringOffset: x(_),
-    stringLength: _.length
-  })), w = h + g, S = new v(w);
-  S.uint16(e), S.uint16(r.length), S.uint16(h);
-  for (const _ of y)
-    S.uint16(_.platformID).uint16(_.encodingID).uint16(_.languageID).uint16(_.nameID).uint16(_.stringLength).uint16(_.stringOffset);
+  const y = r.map((S) => ({
+    ...S,
+    stringOffset: x(S.bytes),
+    stringLength: S.bytes.length
+  })), m = i.map((S) => ({
+    stringOffset: x(S),
+    stringLength: S.length
+  })), w = h + g, _ = new v(w);
+  _.uint16(e), _.uint16(r.length), _.uint16(h);
+  for (const S of y)
+    _.uint16(S.platformID).uint16(S.encodingID).uint16(S.languageID).uint16(S.nameID).uint16(S.stringLength).uint16(S.stringOffset);
   if (e === 1) {
-    S.uint16(m.length);
-    for (const _ of m)
-      S.uint16(_.stringLength).uint16(_.stringOffset);
+    _.uint16(m.length);
+    for (const S of m)
+      _.uint16(S.stringLength).uint16(S.stringOffset);
   }
-  for (const _ of p)
-    S.rawBytes(_);
-  return S.toArray();
+  for (const S of p)
+    _.rawBytes(S);
+  return _.toArray();
 }
 const wc = 78, bc = 86, Ac = 96, Cc = 100;
 function zd(t) {
@@ -10495,8 +10508,8 @@ function Zd(t) {
       m > g && (g = m);
     const d = g >= 258 ? g - 258 + 1 : 0, x = [];
     for (let m = 0; m < d; m++) {
-      const w = e.uint8(), S = e.bytes(w);
-      x.push(String.fromCharCode(...S));
+      const w = e.uint8(), _ = e.bytes(w);
+      x.push(String.fromCharCode(..._));
     }
     const y = p.map((m) => m < 258 ? es[m] : x[m - 258]);
     return u.glyphNames = y, u;
@@ -10567,8 +10580,8 @@ function Kd(t, e) {
         continue;
       }
       n.seek(y);
-      const S = n.int16(), _ = n.int16(), b = n.tag(), A = w > 8 ? t.slice(y + 8, m) : [];
-      d.push({ originOffsetX: S, originOffsetY: _, graphicType: b, imageData: A });
+      const _ = n.int16(), S = n.int16(), b = n.tag(), A = w > 8 ? t.slice(y + 8, m) : [];
+      d.push({ originOffsetX: _, originOffsetY: S, graphicType: b, imageData: A });
     }
     c.push({ ppem: h, ppi: p, glyphs: d });
   }
@@ -10727,20 +10740,20 @@ function o1(t) {
   }), w = x.reduce(
     (b, A) => b + A.length,
     0
-  ), S = f + p + d + w, _ = new v(S);
-  _.uint16(e), _.uint16(n), _.uint16(a), _.uint16(l), _.offset32(h), _.uint16(u), _.offset32(g), c && _.uint16(t.elidedFallbackNameID ?? 2);
+  ), _ = f + p + d + w, S = new v(_);
+  S.uint16(e), S.uint16(n), S.uint16(a), S.uint16(l), S.offset32(h), S.uint16(u), S.offset32(g), c && S.uint16(t.elidedFallbackNameID ?? 2);
   for (const b of o) {
-    _.tag(b.axisTag), _.uint16(b.axisNameID ?? 0), _.uint16(b.axisOrdering ?? 0);
+    S.tag(b.axisTag), S.uint16(b.axisNameID ?? 0), S.uint16(b.axisOrdering ?? 0);
     const A = b._extra ?? [];
-    _.rawBytes(A);
+    S.rawBytes(A);
     const k = a - pe - A.length;
-    k > 0 && _.rawBytes(new Array(k).fill(0));
+    k > 0 && S.rawBytes(new Array(k).fill(0));
   }
   for (const b of m)
-    _.offset16(b);
+    S.offset16(b);
   for (const b of x)
-    _.rawBytes(b);
-  return _.toArray();
+    S.rawBytes(b);
+  return S.toArray();
 }
 function s1(t) {
   if (t._raw)
@@ -11333,17 +11346,17 @@ function B1(t, e) {
     let m = so;
     a || (m |= io), y.intermediateStartTuple && (m |= ro), u.push(f[x] >> 8 & 255), u.push(f[x] & 255), u.push(m >> 8 & 255), u.push(m & 255);
     for (let w = 0; w < e; w++) {
-      const S = Math.round((y.peakTuple[w] ?? 0) * 16384) & 65535;
-      u.push(S >> 8 & 255, S & 255);
+      const _ = Math.round((y.peakTuple[w] ?? 0) * 16384) & 65535;
+      u.push(_ >> 8 & 255, _ & 255);
     }
     if (y.intermediateStartTuple) {
       for (let w = 0; w < e; w++) {
-        const S = Math.round((y.intermediateStartTuple[w] ?? 0) * 16384) & 65535;
-        u.push(S >> 8 & 255, S & 255);
+        const _ = Math.round((y.intermediateStartTuple[w] ?? 0) * 16384) & 65535;
+        u.push(_ >> 8 & 255, _ & 255);
       }
       for (let w = 0; w < e; w++) {
-        const S = Math.round((y.intermediateEndTuple[w] ?? 0) * 16384) & 65535;
-        u.push(S >> 8 & 255, S & 255);
+        const _ = Math.round((y.intermediateEndTuple[w] ?? 0) * 16384) & 65535;
+        u.push(_ >> 8 & 255, _ & 255);
       }
     }
   }
@@ -11411,7 +11424,7 @@ function j1(t, e, n, o, s, r) {
     const m = t.uint8();
     if (l.push(m), m & Gc) {
       const w = t.uint8();
-      for (let S = 0; S < w; S++)
+      for (let _ = 0; _ < w; _++)
         l.push(m);
     }
   }
@@ -11420,8 +11433,8 @@ function j1(t, e, n, o, s, r) {
   for (let m = 0; m < a; m++) {
     const w = l[m];
     if (w & $c) {
-      const S = t.uint8();
-      h += w & Gn ? S : -S;
+      const _ = t.uint8();
+      h += w & Gn ? _ : -_;
     } else w & Gn || (h += t.int16());
     u[m] = h;
   }
@@ -11430,22 +11443,22 @@ function j1(t, e, n, o, s, r) {
   for (let m = 0; m < a; m++) {
     const w = l[m];
     if (w & Nc) {
-      const S = t.uint8();
-      g += w & Pn ? S : -S;
+      const _ = t.uint8();
+      g += w & Pn ? _ : -_;
     } else w & Pn || (g += t.int16());
     p[m] = g;
   }
   const d = a > 0 && (l[0] & Pc) !== 0, x = [];
   let y = 0;
   for (let m = 0; m < e; m++) {
-    const w = i[m], S = [];
+    const w = i[m], _ = [];
     for (; y <= w; )
-      S.push({
+      _.push({
         x: u[y],
         y: p[y],
         onCurve: (l[y] & Vc) !== 0
       }), y++;
-    x.push(S);
+    x.push(_);
   }
   return {
     type: "simple",
@@ -11539,7 +11552,7 @@ function q1(t) {
     const T = g[I], D = d[I];
     T === 0 ? E |= Gn : T >= -255 && T <= 255 ? (E |= $c, T > 0 ? (E |= Gn, y.push(T)) : y.push(-T)) : y.push(T >> 8 & 255, T & 255), D === 0 ? E |= Pn : D >= -255 && D <= 255 ? (E |= Nc, D > 0 ? (E |= Pn, m.push(D)) : m.push(-D)) : m.push(D >> 8 & 255, D & 255), I === 0 && a && (E |= Pc), x.push(E);
   }
-  const w = K1(x), S = 10, _ = c * 2, b = 2, A = n.length, k = S + _ + b + A + w.length + y.length + m.length, O = new v(k);
+  const w = K1(x), _ = 10, S = c * 2, b = 2, A = n.length, k = _ + S + b + A + w.length + y.length + m.length, O = new v(k);
   return O.int16(c), O.int16(o), O.int16(s), O.int16(r), O.int16(i), O.array("uint16", l), O.uint16(n.length), O.rawBytes(n), O.rawBytes(w), O.rawBytes(y), O.rawBytes(m), O.toArray();
 }
 function K1(t) {
@@ -11603,9 +11616,9 @@ function em(t, e = {}) {
       d.push([]);
       continue;
     }
-    const S = l + y, _ = t.slice(S, S + w), b = nm(e, x);
+    const _ = l + y, S = t.slice(_, _ + w), b = nm(e, x);
     d.push(
-      F1(_, r, g, b)
+      F1(S, r, g, b)
     );
   }
   return {
@@ -11629,22 +11642,22 @@ function nm(t, e) {
   return n.type === "composite" && n.components ? n.components.length + 4 : 0;
 }
 function om(t) {
-  const e = t.majorVersion ?? 1, n = t.minorVersion ?? 0, o = t.axisCount ?? 0, s = t.glyphVariationData ?? [], r = s.length, i = s.map((_) => Array.isArray(_) && (_.length === 0 || typeof _[0] == "number") ? _ : Array.isArray(_) ? M1(_, o) : []), a = t.sharedTuples ?? sm(s, o), c = a.length, f = c * o * 2, l = [0];
+  const e = t.majorVersion ?? 1, n = t.minorVersion ?? 0, o = t.axisCount ?? 0, s = t.glyphVariationData ?? [], r = s.length, i = s.map((S) => Array.isArray(S) && (S.length === 0 || typeof S[0] == "number") ? S : Array.isArray(S) ? M1(S, o) : []), a = t.sharedTuples ?? sm(s, o), c = a.length, f = c * o * 2, l = [0];
   let u = 0;
-  for (const _ of i)
-    u += _.length, l.push(u);
+  for (const S of i)
+    u += S.length, l.push(u);
   const h = l.every(
-    (_) => _ % 2 === 0 && _ / 2 <= 65535
-  ), p = h ? 2 : 4, g = (r + 1) * p, d = tm + g, x = d + f, y = x + u, m = t.flags ?? 0, w = h ? m & ~os : m | os, S = new v(y);
-  S.uint16(e), S.uint16(n), S.uint16(o), S.uint16(c), S.offset32(d), S.uint16(r), S.uint16(w), S.offset32(x);
-  for (const _ of l)
-    h ? S.uint16(_ / 2) : S.uint32(_);
-  for (const _ of a)
+    (S) => S % 2 === 0 && S / 2 <= 65535
+  ), p = h ? 2 : 4, g = (r + 1) * p, d = tm + g, x = d + f, y = x + u, m = t.flags ?? 0, w = h ? m & ~os : m | os, _ = new v(y);
+  _.uint16(e), _.uint16(n), _.uint16(o), _.uint16(c), _.offset32(d), _.uint16(r), _.uint16(w), _.offset32(x);
+  for (const S of l)
+    h ? _.uint16(S / 2) : _.uint32(S);
+  for (const S of a)
     for (let b = 0; b < o; b++)
-      S.f2dot14(_[b] ?? 0);
-  for (const _ of i)
-    S.rawBytes(_);
-  return S.toArray();
+      _.f2dot14(S[b] ?? 0);
+  for (const S of i)
+    _.rawBytes(S);
+  return _.toArray();
 }
 function sm(t, e) {
   if (e === 0) return [];
@@ -12535,7 +12548,7 @@ var zy = Uy, Hy = {
 };
 const bn = 16209, Wy = 16191;
 var jy = function(e, n) {
-  let o, s, r, i, a, c, f, l, u, h, p, g, d, x, y, m, w, S, _, b, A, k, O, I;
+  let o, s, r, i, a, c, f, l, u, h, p, g, d, x, y, m, w, _, S, b, A, k, O, I;
   const E = e.state;
   o = e.next_in, O = e.input, s = o + (e.avail_in - 5), r = e.next_out, I = e.output, i = r - (n - e.avail_out), a = r + (e.avail_out - 257), c = E.dmax, f = E.wsize, l = E.whave, u = E.wnext, h = E.window, p = E.hold, g = E.bits, d = E.lencode, x = E.distcode, y = (1 << E.lenbits) - 1, m = (1 << E.distbits) - 1;
   t:
@@ -12543,63 +12556,63 @@ var jy = function(e, n) {
       g < 15 && (p += O[o++] << g, g += 8, p += O[o++] << g, g += 8), w = d[p & y];
       e:
         for (; ; ) {
-          if (S = w >>> 24, p >>>= S, g -= S, S = w >>> 16 & 255, S === 0)
+          if (_ = w >>> 24, p >>>= _, g -= _, _ = w >>> 16 & 255, _ === 0)
             I[r++] = w & 65535;
-          else if (S & 16) {
-            _ = w & 65535, S &= 15, S && (g < S && (p += O[o++] << g, g += 8), _ += p & (1 << S) - 1, p >>>= S, g -= S), g < 15 && (p += O[o++] << g, g += 8, p += O[o++] << g, g += 8), w = x[p & m];
+          else if (_ & 16) {
+            S = w & 65535, _ &= 15, _ && (g < _ && (p += O[o++] << g, g += 8), S += p & (1 << _) - 1, p >>>= _, g -= _), g < 15 && (p += O[o++] << g, g += 8, p += O[o++] << g, g += 8), w = x[p & m];
             n:
               for (; ; ) {
-                if (S = w >>> 24, p >>>= S, g -= S, S = w >>> 16 & 255, S & 16) {
-                  if (b = w & 65535, S &= 15, g < S && (p += O[o++] << g, g += 8, g < S && (p += O[o++] << g, g += 8)), b += p & (1 << S) - 1, b > c) {
+                if (_ = w >>> 24, p >>>= _, g -= _, _ = w >>> 16 & 255, _ & 16) {
+                  if (b = w & 65535, _ &= 15, g < _ && (p += O[o++] << g, g += 8, g < _ && (p += O[o++] << g, g += 8)), b += p & (1 << _) - 1, b > c) {
                     e.msg = "invalid distance too far back", E.mode = bn;
                     break t;
                   }
-                  if (p >>>= S, g -= S, S = r - i, b > S) {
-                    if (S = b - S, S > l && E.sane) {
+                  if (p >>>= _, g -= _, _ = r - i, b > _) {
+                    if (_ = b - _, _ > l && E.sane) {
                       e.msg = "invalid distance too far back", E.mode = bn;
                       break t;
                     }
                     if (A = 0, k = h, u === 0) {
-                      if (A += f - S, S < _) {
-                        _ -= S;
+                      if (A += f - _, _ < S) {
+                        S -= _;
                         do
                           I[r++] = h[A++];
-                        while (--S);
+                        while (--_);
                         A = r - b, k = I;
                       }
-                    } else if (u < S) {
-                      if (A += f + u - S, S -= u, S < _) {
-                        _ -= S;
+                    } else if (u < _) {
+                      if (A += f + u - _, _ -= u, _ < S) {
+                        S -= _;
                         do
                           I[r++] = h[A++];
-                        while (--S);
-                        if (A = 0, u < _) {
-                          S = u, _ -= S;
+                        while (--_);
+                        if (A = 0, u < S) {
+                          _ = u, S -= _;
                           do
                             I[r++] = h[A++];
-                          while (--S);
+                          while (--_);
                           A = r - b, k = I;
                         }
                       }
-                    } else if (A += u - S, S < _) {
-                      _ -= S;
+                    } else if (A += u - _, _ < S) {
+                      S -= _;
                       do
                         I[r++] = h[A++];
-                      while (--S);
+                      while (--_);
                       A = r - b, k = I;
                     }
-                    for (; _ > 2; )
-                      I[r++] = k[A++], I[r++] = k[A++], I[r++] = k[A++], _ -= 3;
-                    _ && (I[r++] = k[A++], _ > 1 && (I[r++] = k[A++]));
+                    for (; S > 2; )
+                      I[r++] = k[A++], I[r++] = k[A++], I[r++] = k[A++], S -= 3;
+                    S && (I[r++] = k[A++], S > 1 && (I[r++] = k[A++]));
                   } else {
                     A = r - b;
                     do
-                      I[r++] = I[A++], I[r++] = I[A++], I[r++] = I[A++], _ -= 3;
-                    while (_ > 2);
-                    _ && (I[r++] = I[A++], _ > 1 && (I[r++] = I[A++]));
+                      I[r++] = I[A++], I[r++] = I[A++], I[r++] = I[A++], S -= 3;
+                    while (S > 2);
+                    S && (I[r++] = I[A++], S > 1 && (I[r++] = I[A++]));
                   }
-                } else if ((S & 64) === 0) {
-                  w = x[(w & 65535) + (p & (1 << S) - 1)];
+                } else if ((_ & 64) === 0) {
+                  w = x[(w & 65535) + (p & (1 << _) - 1)];
                   continue n;
                 } else {
                   e.msg = "invalid distance code", E.mode = bn;
@@ -12607,10 +12620,10 @@ var jy = function(e, n) {
                 }
                 break;
               }
-          } else if ((S & 64) === 0) {
-            w = d[(w & 65535) + (p & (1 << S) - 1)];
+          } else if ((_ & 64) === 0) {
+            w = d[(w & 65535) + (p & (1 << _) - 1)];
             continue e;
-          } else if (S & 32) {
+          } else if (_ & 32) {
             E.mode = Wy;
             break t;
           } else {
@@ -12620,7 +12633,7 @@ var jy = function(e, n) {
           break;
         }
     } while (o < s && r < a);
-  _ = g >> 3, o -= _, g -= _ << 3, p &= (1 << g) - 1, e.next_in = o, e.next_out = r, e.avail_in = o < s ? 5 + (s - o) : 5 - (o - s), e.avail_out = r < a ? 257 + (a - r) : 257 - (r - a), E.hold = p, E.bits = g;
+  S = g >> 3, o -= S, g -= S << 3, p &= (1 << g) - 1, e.next_in = o, e.next_out = r, e.avail_in = o < s ? 5 + (s - o) : 5 - (o - s), e.avail_out = r < a ? 257 + (a - r) : 257 - (r - a), E.hold = p, E.bits = g;
 };
 const ce = 15, ei = 852, ni = 592, oi = 0, Ro = 1, si = 2, Yy = new Uint16Array([
   /* Length codes 257..285 base */
@@ -12758,7 +12771,7 @@ const ce = 15, ei = 852, ni = 592, oi = 0, Ro = 1, si = 2, Yy = new Uint16Array(
   64
 ]), Ky = (t, e, n, o, s, r, i, a) => {
   const c = a.bits;
-  let f = 0, l = 0, u = 0, h = 0, p = 0, g = 0, d = 0, x = 0, y = 0, m = 0, w, S, _, b, A, k = null, O;
+  let f = 0, l = 0, u = 0, h = 0, p = 0, g = 0, d = 0, x = 0, y = 0, m = 0, w, _, S, b, A, k = null, O;
   const I = new Uint16Array(ce + 1), E = new Uint16Array(ce + 1);
   let T = null, D, R, M;
   for (f = 0; f <= ce; f++)
@@ -12780,13 +12793,13 @@ const ce = 15, ei = 852, ni = 592, oi = 0, Ro = 1, si = 2, Yy = new Uint16Array(
     E[f + 1] = E[f] + I[f];
   for (l = 0; l < o; l++)
     e[n + l] !== 0 && (i[E[e[n + l]]++] = l);
-  if (t === oi ? (k = T = i, O = 20) : t === Ro ? (k = Yy, T = Zy, O = 257) : (k = Xy, T = qy, O = 0), m = 0, l = 0, f = u, A = r, g = p, d = 0, _ = -1, y = 1 << p, b = y - 1, t === Ro && y > ei || t === si && y > ni)
+  if (t === oi ? (k = T = i, O = 20) : t === Ro ? (k = Yy, T = Zy, O = 257) : (k = Xy, T = qy, O = 0), m = 0, l = 0, f = u, A = r, g = p, d = 0, S = -1, y = 1 << p, b = y - 1, t === Ro && y > ei || t === si && y > ni)
     return 1;
   for (; ; ) {
-    D = f - d, i[l] + 1 < O ? (R = 0, M = i[l]) : i[l] >= O ? (R = T[i[l] - O], M = k[i[l] - O]) : (R = 96, M = 0), w = 1 << f - d, S = 1 << g, u = S;
+    D = f - d, i[l] + 1 < O ? (R = 0, M = i[l]) : i[l] >= O ? (R = T[i[l] - O], M = k[i[l] - O]) : (R = 96, M = 0), w = 1 << f - d, _ = 1 << g, u = _;
     do
-      S -= w, s[A + (m >> d) + S] = D << 24 | R << 16 | M | 0;
-    while (S !== 0);
+      _ -= w, s[A + (m >> d) + _] = D << 24 | R << 16 | M | 0;
+    while (_ !== 0);
     for (w = 1 << f - 1; m & w; )
       w >>= 1;
     if (w !== 0 ? (m &= w - 1, m += w) : m = 0, l++, --I[f] === 0) {
@@ -12794,12 +12807,12 @@ const ce = 15, ei = 852, ni = 592, oi = 0, Ro = 1, si = 2, Yy = new Uint16Array(
         break;
       f = e[n + i[l]];
     }
-    if (f > p && (m & b) !== _) {
+    if (f > p && (m & b) !== S) {
       for (d === 0 && (d = p), A += u, g = f - d, x = 1 << g; g + d < h && (x -= I[g + d], !(x <= 0)); )
         g++, x <<= 1;
       if (y += 1 << g, t === Ro && y > ei || t === si && y > ni)
         return 1;
-      _ = m & b, s[_] = p << 24 | g << 16 | A - r | 0;
+      S = m & b, s[S] = p << 24 | g << 16 | A - r | 0;
     }
   }
   return m !== 0 && (s[A + m] = f - d << 24 | 64 << 16 | 0), a.bits = p, 0;
@@ -12873,7 +12886,7 @@ const fx = (t) => {
   const r = t.state;
   return r.window === null && (r.window = new Uint8Array(1 << r.wbits)), r.wsize === 0 && (r.wsize = 1 << r.wbits, r.wnext = 0, r.whave = 0), o >= r.wsize ? (r.window.set(e.subarray(n - r.wsize, n), 0), r.wnext = 0, r.whave = r.wsize) : (s = r.wsize - r.wnext, s > o && (s = o), r.window.set(e.subarray(n - o, n - o + s), r.wnext), o -= s, o ? (r.window.set(e.subarray(n - o, n), 0), r.wnext = o, r.whave = r.wsize) : (r.wnext += s, r.wnext === r.wsize && (r.wnext = 0), r.whave < r.wsize && (r.whave += s))), 0;
 }, lx = (t, e) => {
-  let n, o, s, r, i, a, c, f, l, u, h, p, g, d, x = 0, y, m, w, S, _, b, A, k;
+  let n, o, s, r, i, a, c, f, l, u, h, p, g, d, x = 0, y, m, w, _, S, b, A, k;
   const O = new Uint8Array(4);
   let I, E;
   const T = (
@@ -13187,12 +13200,12 @@ const fx = (t) => {
             a--, f += o[r++] << l, l += 8;
           }
           if (m && (m & 240) === 0) {
-            for (S = y, _ = m, b = w; x = n.lencode[b + ((f & (1 << S + _) - 1) >> S)], y = x >>> 24, m = x >>> 16 & 255, w = x & 65535, !(S + y <= l); ) {
+            for (_ = y, S = m, b = w; x = n.lencode[b + ((f & (1 << _ + S) - 1) >> _)], y = x >>> 24, m = x >>> 16 & 255, w = x & 65535, !(_ + y <= l); ) {
               if (a === 0)
                 break t;
               a--, f += o[r++] << l, l += 8;
             }
-            f >>>= S, l -= S, n.back += S;
+            f >>>= _, l -= _, n.back += _;
           }
           if (f >>>= y, l -= y, n.back += y, n.length = w, m === 0) {
             n.mode = vi;
@@ -13226,12 +13239,12 @@ const fx = (t) => {
             a--, f += o[r++] << l, l += 8;
           }
           if ((m & 240) === 0) {
-            for (S = y, _ = m, b = w; x = n.distcode[b + ((f & (1 << S + _) - 1) >> S)], y = x >>> 24, m = x >>> 16 & 255, w = x & 65535, !(S + y <= l); ) {
+            for (_ = y, S = m, b = w; x = n.distcode[b + ((f & (1 << _ + S) - 1) >> _)], y = x >>> 24, m = x >>> 16 & 255, w = x & 65535, !(_ + y <= l); ) {
               if (a === 0)
                 break t;
               a--, f += o[r++] << l, l += 8;
             }
-            f >>>= S, l -= S, n.back += S;
+            f >>>= _, l -= _, n.back += _;
           }
           if (f >>>= y, l -= y, n.back += y, m & 64) {
             t.msg = "invalid distance code", n.mode = z;
@@ -13475,14 +13488,14 @@ function Rf(t) {
   let m = g;
   for (const O of h)
     m += O.paddedLength;
-  const w = new ArrayBuffer(m), S = new DataView(w), _ = new Uint8Array(w);
-  S.setUint32(0, s), S.setUint16(4, r), S.setUint16(6, d), S.setUint16(8, x), S.setUint16(10, y);
+  const w = new ArrayBuffer(m), _ = new DataView(w), S = new Uint8Array(w);
+  _.setUint32(0, s), _.setUint16(4, r), _.setUint16(6, d), _.setUint16(8, x), _.setUint16(10, y);
   const b = h.map((O, I) => ({ ...O, originalIndex: I })).sort((O, I) => O.tag < I.tag ? -1 : O.tag > I.tag ? 1 : 0);
   for (let O = 0; O < b.length; O++) {
     const I = b[O], E = jn + O * Yn;
     for (let T = 0; T < 4; T++)
-      S.setUint8(E + T, I.tag.charCodeAt(T));
-    S.setUint32(E + 4, I.checksum), S.setUint32(E + 8, g), S.setUint32(E + 12, I.length), _.set(I.data, g), g += I.paddedLength;
+      _.setUint8(E + T, I.tag.charCodeAt(T));
+    _.setUint32(E + 4, I.checksum), _.setUint32(E + 8, g), _.setUint32(E + 12, I.length), S.set(I.data, g), g += I.paddedLength;
   }
   let A = null;
   if (i && a) {
@@ -13532,17 +13545,17 @@ function ds(t, e = null, n = null) {
   let m = jn + i * Yn;
   for (const b of c)
     m += b.origLength + (4 - b.origLength % 4) % 4;
-  const w = new ArrayBuffer(y), S = new DataView(w), _ = new Uint8Array(w);
-  S.setUint32(0, Df), S.setUint32(4, r), S.setUint32(8, y), S.setUint16(12, i), S.setUint16(14, 0), S.setUint32(16, m), S.setUint16(20, 0), S.setUint16(22, 0), S.setUint32(24, p), S.setUint32(28, g), S.setUint32(32, l), S.setUint32(36, d), S.setUint32(40, x);
+  const w = new ArrayBuffer(y), _ = new DataView(w), S = new Uint8Array(w);
+  _.setUint32(0, Df), _.setUint32(4, r), _.setUint32(8, y), _.setUint16(12, i), _.setUint16(14, 0), _.setUint32(16, m), _.setUint16(20, 0), _.setUint16(22, 0), _.setUint32(24, p), _.setUint32(28, g), _.setUint32(32, l), _.setUint32(36, d), _.setUint32(40, x);
   for (let b = 0; b < c.length; b++) {
     const A = c[b], k = gs + b * ps;
     for (let O = 0; O < 4; O++)
-      S.setUint8(k + O, A.tag.charCodeAt(O));
-    S.setUint32(k + 4, A.woffOffset), S.setUint32(k + 8, A.compLength), S.setUint32(k + 12, A.origLength), S.setUint32(k + 16, A.origChecksum);
+      _.setUint8(k + O, A.tag.charCodeAt(O));
+    _.setUint32(k + 4, A.woffOffset), _.setUint32(k + 8, A.compLength), _.setUint32(k + 12, A.origLength), _.setUint32(k + 16, A.origChecksum);
   }
   for (const b of c)
-    _.set(b.data, b.woffOffset);
-  return f && _.set(f, p), n && n.length > 0 && _.set(n, d), w;
+    S.set(b.data, b.woffOffset);
+  return f && S.set(f, p), n && n.length > 0 && S.set(n, d), w;
 }
 function Lx(t) {
   let e = 1, n = 0;
@@ -13837,18 +13850,18 @@ function Ux(t, e) {
   o += 4;
   const g = vt(n, o);
   o += 4;
-  const d = o, x = d + c, y = x + f, m = y + l, w = m + u, S = w + h, _ = S + p, b = 4 * Math.floor((i + 31) / 32), A = S, k = A + b;
+  const d = o, x = d + c, y = x + f, m = y + l, w = m + u, _ = w + h, S = _ + p, b = 4 * Math.floor((i + 31) / 32), A = _, k = A + b;
   function O(J) {
     const at = J >> 3, Et = 7 - (J & 7);
     return !!(n[A + at] & 1 << Et);
   }
-  const I = !!(r & 1), E = _ + g;
+  const I = !!(r & 1), E = S + g;
   function T(J) {
     if (!I) return !1;
     const at = J >> 3, Et = 7 - (J & 7);
     return !!(n[E + at] & 1 << Et);
   }
-  let D = d, R = x, M = y, L = m, H = w, P = k, Z = _;
+  let D = d, R = x, M = y, L = m, H = w, P = k, Z = S;
   const q = [], K = [0];
   let _t = 0;
   for (let J = 0; J < i; J++) {
@@ -14086,14 +14099,14 @@ function Vf(t) {
     y += D, m.set(T.tag, { data: R, entry: T });
   }
   const w = /* @__PURE__ */ new Map();
-  let S = null;
-  const _ = m.get("glyf"), b = m.get("loca");
-  _ && _.entry.isTransformed && (b && b.entry.origLength, S = Ux(_.data), w.set("glyf", S.glyfBytes), w.set(
+  let _ = null;
+  const S = m.get("glyf"), b = m.get("loca");
+  S && S.entry.isTransformed && (b && b.entry.origLength, _ = Ux(S.data), w.set("glyf", _.glyfBytes), w.set(
     "loca",
-    Hx(S.locaOffsets, S.indexFormat)
+    Hx(_.locaOffsets, _.indexFormat)
   ));
   const A = m.get("hmtx");
-  if (A && A.entry.isTransformed && S) {
+  if (A && A.entry.isTransformed && _) {
     const T = m.get("hhea"), D = m.get("maxp");
     let R = 0, M = 0;
     T && (R = T.data[34] << 8 | T.data[35]), D && (M = D.data[4] << 8 | D.data[5]), w.set(
@@ -14102,8 +14115,8 @@ function Vf(t) {
         A.data,
         R,
         M,
-        S.glyfBytes,
-        S.locaOffsets
+        _.glyfBytes,
+        _.locaOffsets
       )
     );
   }
@@ -14201,20 +14214,20 @@ function xs(t, e = null, n = null) {
   e && e.length > 0 && (y = e.length, x = Zn(e));
   const m = [];
   for (const R of f) m.push(...R);
-  let S = ms + m.length;
-  const _ = S;
-  S += d.length;
+  let _ = ms + m.length;
+  const S = _;
+  _ += d.length;
   let b = 0, A = 0;
-  x && (S += (4 - S % 4) % 4, b = S, A = x.length, S += A);
+  x && (_ += (4 - _ % 4) % 4, b = _, A = x.length, _ += A);
   let k = 0, O = 0;
-  n && n.length > 0 && (S += (4 - S % 4) % 4, k = S, O = n.length, S += O);
-  const I = S, E = new ArrayBuffer(I), T = new DataView(E), D = new Uint8Array(E);
+  n && n.length > 0 && (_ += (4 - _ % 4) % 4, k = _, O = n.length, _ += O);
+  const I = _, E = new ArrayBuffer(I), T = new DataView(E), D = new Uint8Array(E);
   T.setUint32(0, Lf), T.setUint32(4, r), T.setUint32(8, I), T.setUint16(12, c.length), T.setUint16(14, 0), T.setUint32(16, u), T.setUint32(20, d.length), T.setUint16(24, 0), T.setUint16(26, 0), T.setUint32(28, b), T.setUint32(32, A), T.setUint32(36, y), T.setUint32(40, k), T.setUint32(44, O);
   for (let R = 0; R < m.length; R++)
     D[ms + R] = m[R];
   return D.set(
     d instanceof Uint8Array ? d : new Uint8Array(d),
-    _
+    S
   ), x && D.set(
     x instanceof Uint8Array ? x : new Uint8Array(x),
     b
@@ -14480,24 +14493,24 @@ function Xn(t) {
 function qn(t, e) {
   const { header: n, tables: o } = t, s = Object.keys(o).sort(Xx), r = s.length, i = sS(o), a = s.map((m) => {
     const w = o[m];
-    let S;
+    let _;
     if (i.has(m))
-      S = i.get(m);
+      _ = i.get(m);
     else if (w._raw)
-      S = w._raw;
+      _ = w._raw;
     else {
       const A = Zx[m];
       if (!A)
         throw new Error(`No writer registered for parsed table: ${m}`);
-      S = A(w);
+      _ = A(w);
     }
-    const _ = new Uint8Array(S), b = w._raw && typeof w._checksum == "number" && !i.has(m);
+    const S = new Uint8Array(_), b = w._raw && typeof w._checksum == "number" && !i.has(m);
     return {
       tag: m,
-      data: _,
-      length: _.length,
-      paddedLength: _.length + (4 - _.length % 4) % 4,
-      checksum: b ? w._checksum >>> 0 : qx(_)
+      data: S,
+      length: S.length,
+      paddedLength: S.length + (4 - S.length % 4) % 4,
+      checksum: b ? w._checksum >>> 0 : qx(S)
     };
   }), c = Vi + r * $i;
   let f = c + (4 - c % 4) % 4;
@@ -14506,10 +14519,10 @@ function qn(t, e) {
   const l = f, u = new ArrayBuffer(l), h = new DataView(u), p = new Uint8Array(u), g = r > 0 ? 2 ** Math.floor(Math.log2(r)) : 0, d = g * 16, x = g > 0 ? Math.floor(Math.log2(g)) : 0, y = r * 16 - d;
   h.setUint32(0, n.sfVersion), h.setUint16(4, r), h.setUint16(6, d), h.setUint16(8, x), h.setUint16(10, y);
   for (let m = 0; m < a.length; m++) {
-    const w = a[m], S = Vi + m * $i;
-    for (let _ = 0; _ < 4; _++)
-      h.setUint8(S + _, w.tag.charCodeAt(_));
-    h.setUint32(S + 4, w.checksum), h.setUint32(S + 8, w.offset + e), h.setUint32(S + 12, w.length);
+    const w = a[m], _ = Vi + m * $i;
+    for (let S = 0; S < 4; S++)
+      h.setUint8(_ + S, w.tag.charCodeAt(S));
+    h.setUint32(_ + 4, w.checksum), h.setUint32(_ + 8, w.offset + e), h.setUint32(_ + 12, w.length);
   }
   for (const m of a)
     p.set(m.data, m.offset);
@@ -14862,9 +14875,9 @@ function cS(t) {
   for (let m = 0; m < i; m++) {
     let w = p;
     if (r[m] && r[m].length > 0) {
-      const S = n.globalSubrs || [], _ = o.localSubrs || [];
+      const _ = n.globalSubrs || [], S = o.localSubrs || [];
       try {
-        const b = Qn(r[m], S, _);
+        const b = Qn(r[m], _, S);
         b.width !== void 0 && (w = b.width + g);
       } catch {
       }
@@ -14911,9 +14924,9 @@ function cS(t) {
     isFixedPitch: s.isFixedPitch || 0
   }, o?.encoding && typeof o.encoding != "string") {
     const m = o.encoding.codes || [], w = new Array(256).fill(0);
-    for (let S = 0; S < m.length && S < 256; S++) {
-      const _ = m[S];
-      _ >= 0 && _ < 256 && (w[_] = S + 1);
+    for (let _ = 0; _ < m.length && _ < 256; _++) {
+      const S = m[_];
+      S >= 0 && S < 256 && (w[S] = _ + 1);
     }
     l.cmap = {
       version: 0,
@@ -15011,8 +15024,8 @@ function Ui(t, e) {
   function p(x, y) {
     r && r.push({ type: "L", x, y });
   }
-  function g(x, y, m, w, S, _) {
-    r && r.push({ type: "C", x1: x, y1: y, x2: m, y2: w, x: S, y: _ });
+  function g(x, y, m, w, _, S) {
+    r && r.push({ type: "C", x1: x, y1: y, x2: m, y2: w, x: _, y: S });
   }
   function d(x, y) {
     if (y > 10) return;
@@ -15032,13 +15045,13 @@ function Ui(t, e) {
         continue;
       }
       if (w === 255) {
-        const S = (x[m + 1] << 24 | x[m + 2] << 16 | x[m + 3] << 8 | x[m + 4]) >> 0;
-        n.push(S), m += 5;
+        const _ = (x[m + 1] << 24 | x[m + 2] << 16 | x[m + 3] << 8 | x[m + 4]) >> 0;
+        n.push(_), m += 5;
         continue;
       }
       if (w === 12) {
-        const S = x[m + 1];
-        switch (m += 2, S) {
+        const _ = x[m + 1];
+        switch (m += 2, _) {
           case 0:
             n.length = 0;
             break;
@@ -15051,19 +15064,19 @@ function Ui(t, e) {
             break;
           }
           case 12: {
-            const _ = n.pop(), b = n.pop();
-            n.push(_ !== 0 ? b / _ : 0);
+            const S = n.pop(), b = n.pop();
+            n.push(S !== 0 ? b / S : 0);
             break;
           }
           case 16: {
-            const _ = n.pop(), b = n.pop(), A = n.splice(n.length - b, b);
-            if (_ === 0) {
+            const S = n.pop(), b = n.pop(), A = n.splice(n.length - b, b);
+            if (S === 0) {
               if (u = !1, l.length >= 7) {
                 const k = l;
                 g(k[1].x, k[1].y, k[2].x, k[2].y, k[3].x, k[3].y), g(k[4].x, k[4].y, k[5].x, k[5].y, k[6].x, k[6].y), i = k[6].x, a = k[6].y;
               }
               l = [], o.push(A[1]), o.push(A[0]);
-            } else _ === 1 ? (u = !0, l = [{ x: i, y: a }], o.push(...A)) : _ === 2 ? o.push(...A) : _ === 3 ? o.push(3) : o.push(...A);
+            } else S === 1 ? (u = !0, l = [{ x: i, y: a }], o.push(...A)) : S === 2 ? o.push(...A) : S === 3 ? o.push(3) : o.push(...A);
             break;
           }
           case 17: {
@@ -15086,28 +15099,28 @@ function Ui(t, e) {
           n.length = 0;
           break;
         case 4: {
-          const S = n.pop() || 0;
-          u ? (a += S, l.push({ x: i, y: a })) : (a += S, h(i, a)), n.length = 0;
+          const _ = n.pop() || 0;
+          u ? (a += _, l.push({ x: i, y: a })) : (a += _, h(i, a)), n.length = 0;
           break;
         }
         case 5: {
-          const S = n.pop() || 0, _ = n.pop() || 0;
-          i += _, a += S, p(i, a), n.length = 0;
+          const _ = n.pop() || 0, S = n.pop() || 0;
+          i += S, a += _, p(i, a), n.length = 0;
           break;
         }
         case 6: {
-          const S = n.pop() || 0;
-          i += S, p(i, a), n.length = 0;
+          const _ = n.pop() || 0;
+          i += _, p(i, a), n.length = 0;
           break;
         }
         case 7: {
-          const S = n.pop() || 0;
-          a += S, p(i, a), n.length = 0;
+          const _ = n.pop() || 0;
+          a += _, p(i, a), n.length = 0;
           break;
         }
         case 8: {
-          const S = n.pop() || 0, _ = n.pop() || 0, b = n.pop() || 0, A = n.pop() || 0, k = n.pop() || 0, O = n.pop() || 0, I = i + O, E = a + k, T = I + A, D = E + b;
-          i = T + _, a = D + S, g(I, E, T, D, i, a), n.length = 0;
+          const _ = n.pop() || 0, S = n.pop() || 0, b = n.pop() || 0, A = n.pop() || 0, k = n.pop() || 0, O = n.pop() || 0, I = i + O, E = a + k, T = I + A, D = E + b;
+          i = T + S, a = D + _, g(I, E, T, D, i, a), n.length = 0;
           break;
         }
         case 9: {
@@ -15115,8 +15128,8 @@ function Ui(t, e) {
           break;
         }
         case 10: {
-          const S = n.pop();
-          S >= 0 && S < e.length && e[S] && d(e[S], y + 1);
+          const _ = n.pop();
+          _ >= 0 && _ < e.length && e[_] && d(e[_], y + 1);
           break;
         }
         case 11:
@@ -15130,23 +15143,23 @@ function Ui(t, e) {
           return;
         }
         case 21: {
-          const S = n.pop() || 0, _ = n.pop() || 0;
-          u ? (i += _, a += S, l.push({ x: i, y: a })) : (i += _, a += S, h(i, a)), n.length = 0;
+          const _ = n.pop() || 0, S = n.pop() || 0;
+          u ? (i += S, a += _, l.push({ x: i, y: a })) : (i += S, a += _, h(i, a)), n.length = 0;
           break;
         }
         case 22: {
-          const S = n.pop() || 0;
-          u ? (i += S, l.push({ x: i, y: a })) : (i += S, h(i, a)), n.length = 0;
+          const _ = n.pop() || 0;
+          u ? (i += _, l.push({ x: i, y: a })) : (i += _, h(i, a)), n.length = 0;
           break;
         }
         case 30: {
-          const S = n.pop() || 0, _ = n.pop() || 0, b = n.pop() || 0, A = n.pop() || 0, k = i, O = a + A, I = k + b, E = O + _;
-          i = I + S, a = E, g(k, O, I, E, i, a), n.length = 0;
+          const _ = n.pop() || 0, S = n.pop() || 0, b = n.pop() || 0, A = n.pop() || 0, k = i, O = a + A, I = k + b, E = O + S;
+          i = I + _, a = E, g(k, O, I, E, i, a), n.length = 0;
           break;
         }
         case 31: {
-          const S = n.pop() || 0, _ = n.pop() || 0, b = n.pop() || 0, A = n.pop() || 0, k = i + A, O = a, I = k + b, E = O + _;
-          i = I, a = E + S, g(k, O, I, E, i, a), n.length = 0;
+          const _ = n.pop() || 0, S = n.pop() || 0, b = n.pop() || 0, A = n.pop() || 0, k = i + A, O = a, I = k + b, E = O + S;
+          i = I, a = E + _, g(k, O, I, E, i, a), n.length = 0;
           break;
         }
         default:
