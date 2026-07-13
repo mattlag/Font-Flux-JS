@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>glyf — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/glyf">https://learn.microsoft.com/en-us/typography/opentype/spec/glyf</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="glyf--glyph-data">glyf — Glyph Data</h1>
+<p>This table contains information that describes the glyphs in the font in the TrueType outline format. Information regarding the rasterizer (scaler) refers to the TrueType rasterizer. For details regarding scaling, grid-fitting and rasterization of TrueType outlines, see the <a href="ttch01.html" data-linktype="relative-path">TrueType Fundamentals</a> chapter.</p>
+<p><a id="organization"></a></p>
+<h2 id="table-organization">Table organization</h2>
+<p>The 'glyf' table is comprised of a list of glyph data blocks, each of which provides the description for a single glyph. Glyphs are referenced by identifiers (glyph IDs), which are sequential integers beginning at zero. The total number of glyphs is specified by the numGlyphs field in the <a href="maxp.html" data-linktype="relative-path">'maxp' table</a>. The 'glyf' table does not include any overall table header or records providing offsets to glyph data blocks. Rather, the <a href="loca.html" data-linktype="relative-path">'loca' table</a> provides an array of offsets, indexed by glyph IDs, which provide the location of each glyph data block within the 'glyf' table. Note that the 'glyf' table must always be used in conjunction with the 'loca' and 'maxp' tables. The size of each glyph data block is inferred from the difference between two consecutive offsets in the 'loca' table (with one extra offset provided to give the size of the last glyph data block). As a result of the 'loca' format, glyph data blocks within the 'glyf' table must be in glyph ID order.</p>
+<p>Each glyph description uses one of two formats:</p>
+<ul>
+<li>Simple glyph descriptions specify a glyph outline directly using Bezier control points.</li>
+<li>Composite glyph descriptions specify a glyph outline indirectly by referencing one or more glyph IDs to use as components.</li>
+</ul>
+<p>In both cases, the glyph description begins with a glyph header that is common to both types of glyph description.</p>
+<p><a id="glyphHeaders"></a></p>
+<h2 id="glyph-headers">Glyph headers</h2>
+<p>Each glyph description begins with a header:</p>
+<p><a id="glyphHeaderFormat"></a></p>
+<p><em>Glyph Header</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>int16</td>
+<td>numberOfContours</td>
+<td>If the number of contours is greater than or equal to zero, this is a simple glyph. If negative, this is a composite glyph — the value -1 should be used for composite glyphs.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>xMin</td>
+<td>Minimum x for coordinate data.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>yMin</td>
+<td>Minimum y for coordinate data.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>xMax</td>
+<td>Maximum x for coordinate data.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>yMax</td>
+<td>Maximum y for coordinate data.</td>
+</tr>
+</tbody>
+</table>
+<p>The bounding rectangle from each glyph is defined as the rectangle with a lower left corner of (xMin, yMin) and an upper right corner of (xMax, yMax). These values are obtained directly from the point coordinate data for the glyph, comparing all on-curve and off-curve points. Phantom points computed by the rasterizer are not relevant. Note that the bounding box defined by control points is guaranteed to contain the outline, but might not be tight to the outline.</p>
+<p>The scaler will perform better if the glyph coordinates have been created such that the xMin is equal to the lsb. For example, if the lsb is 123, then xMin for the glyph should be 123. If the lsb is -12 then the xMin should be -12. If the lsb is 0 then xMin is 0. If all glyphs are done like this, set bit 1 of flags field in the 'head' table.</p>
+<blockquote>
+<p><em>Note:</em> The glyph descriptions do not include side bearing information. Left side bearings are provided in the <a href="hmtx.html" data-linktype="relative-path">'hmtx' table</a>, and right side bearings are inferred from the advance width (also provided in the 'hmtx' table) and the bounding box coordinates provided in the 'glyf' table. For vertical layout, top side bearings are provided in the <a href="vmtx.html" data-linktype="relative-path">'vmtx' table</a>, and bottom side bearings are inferred. The rasterizer will generate a representation of side bearings in the form of “phantom” points, which are added as four additional points at the end of the glyph description, and which can be referenced and manipulated by glyph instructions. See the chapter <a href="tt_instructing_glyphs.html#phantoms" data-linktype="relative-path">Instructing TrueType Glyphs</a> for more background on phantom points.</p>
+</blockquote>
+<p>In a variable font, the minimum and maximum x or y values of control points can vary, and a tight bounding rectangle containing the outline or all points for an instance could be smaller or larger than for the default instance (that is, for the glyph description in this table). The xMin, yMin, xMax and yMax values might or might not encompass the derived outline for an instance. Also, the <a href="gvar.html" data-linktype="relative-path">'gvar'</a> table does not provide deltas for these values. If an application requires a bounding rectangle for a non-default instance of a glyph, the derived point data (with deltas applied) should be processed to determine a bounding rectangle.</p>
+<p><a id="simpleGlyphDescription"></a></p>
+<h2 id="simple-glyph-description">Simple glyph description</h2>
+<p>This is the information used to describe a glyph if numberOfContours is greater than or equal to zero—that is, if a glyph is not a composite.</p>
+<p>If a glyph has zero contours, no additional glyph data beyond the header is required. A glyph with zero contours may have additional data, however; in particular, it may have instructions that operate on phantom points.</p>
+<p>Point numbers are base-zero indices numbered sequentially across all of the contours for a glyph. The first point of the first contour has point number zero; the first point number of each additional contour is one greater than the last point number of the preceding contour. Phantom point numbers follow after the last point number of the last contour.</p>
+<p><a id="simpleGlyphTable"></a></p>
+<p><em>Simple Glyph table</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>endPtsOfContours[numberOfContours]</td>
+<td>Array of point indices for the last point of each contour, in increasing numeric order.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>instructionLength</td>
+<td>Total number of bytes for instructions. If instructionLength is zero, no instructions are present for this glyph, and this field is followed directly by the flags field.</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>instructions[instructionLength]</td>
+<td>Array of instruction byte code for the glyph.</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>flags[<em>variable</em>]</td>
+<td>Array of flag elements. See below for details regarding the number of flag array elements.</td>
+</tr>
+<tr>
+<td>uint8 or int16</td>
+<td>xCoordinates[<em>variable</em>]</td>
+<td>Contour point x-coordinates. See below for details regarding the number of coordinate array elements. Coordinate for the first point is relative to (0,0); others are relative to previous point.</td>
+</tr>
+<tr>
+<td>uint8 or int16</td>
+<td>yCoordinates[<em>variable</em>]</td>
+<td>Contour point y-coordinates. See below for details regarding the number of coordinate array elements. Coordinate for the first point is relative to (0,0); others are relative to previous point.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em> In the 'glyf' table, the position of a point is not stored in absolute terms but as a vector relative to the previous point. The delta-x and delta-y vectors represent these (often small) changes in position. Coordinate values are in font design units, as defined by the <a href="head.html" data-linktype="relative-path">unitsPerEm</a> field in the 'head' table. Note that smaller unitsPerEm values will make it more likely that delta-x and delta-y values can fit in a smaller representation (8-bit rather than 16-bit), though with a trade-off in the level or precision that can be used for describing an outline.</p>
+</blockquote>
+<p>Each element in the flags array is a single byte, each of which has multiple flag bits with distinct meanings, as shown below.</p>
+<p>In logical terms, there is one flag byte element, one x-coordinate, and one y-coordinate for each point.  The number of points is determined by the last entry in the endPtsOfContours array. Note, however, that the flag byte elements and the coordinate arrays use packed representations. In particular, if a logical sequence of flag elements or sequence of x- or y-coordinates is repeated, then the actual flag byte element or coordinate value can be given in a single entry, with special flags used to indicate that this value is repeated for subsequent logical entries. The actual stored size of the flags or coordinate arrays must be determined by parsing the flags array entries. See the flag descriptions below for details.</p>
+<p><a id="simpleGlyphFlags"></a></p>
+<p><em>Simple Glyph flags</em></p>
+<table>
+<thead>
+<tr>
+<th>Mask</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0x01</td>
+<td>ON_CURVE_POINT</td>
+<td>Bit 0: If set, the point is on the curve; otherwise, it is off the curve.</td>
+</tr>
+<tr>
+<td>0x02</td>
+<td>X_SHORT_VECTOR</td>
+<td>Bit 1: If set, the corresponding x-coordinate is 1 byte long, and the sign is determined by the X_IS_SAME_OR_POSITIVE_X_SHORT_VECTOR flag. If not set, its interpretation depends on the X_IS_SAME_OR_POSITIVE_X_SHORT_VECTOR flag: If that other flag is set, the x-coordinate is the same as the previous x-coordinate, and no element is added to the xCoordinates array. If both flags are not set, the corresponding element in the xCoordinates array is two bytes and interpreted as a signed integer. See the description of the X_IS_SAME_OR_POSITIVE_X_SHORT_VECTOR flag for additional information.</td>
+</tr>
+<tr>
+<td>0x04</td>
+<td>Y_SHORT_VECTOR</td>
+<td>Bit 2: If set, the corresponding y-coordinate is 1 byte long, and the sign is determined by the Y_IS_SAME_OR_POSITIVE_Y_SHORT_VECTOR flag. If not set, its interpretation depends on the Y_IS_SAME_OR_POSITIVE_Y_SHORT_VECTOR flag: If that other flag is set, the y-coordinate is the same as the previous y-coordinate, and no element is added to the yCoordinates array. If both flags are not set, the corresponding element in the yCoordinates array is two bytes and interpreted as a signed integer. See the description of the Y_IS_SAME_OR_POSITIVE_Y_SHORT_VECTOR flag for additional information.</td>
+</tr>
+<tr>
+<td>0x08</td>
+<td>REPEAT_FLAG</td>
+<td>Bit 3: If set, the next byte (read as unsigned) specifies the number of additional times this flag byte is to be repeated in the logical flags array — that is, the number of additional logical flag entries inserted after this entry. (In the expanded logical array, this bit is ignored.) In this way, the number of flags listed can be smaller than the number of points in the glyph description.</td>
+</tr>
+<tr>
+<td>0x10</td>
+<td>X_IS_SAME_OR_POSITIVE_X_SHORT_VECTOR</td>
+<td>Bit 4: This flag has two meanings, depending on how the X_SHORT_VECTOR flag is set. If X_SHORT_VECTOR is set, this bit describes the sign of the value, with 1 equaling positive and 0 negative. If X_SHORT_VECTOR is not set and this bit is set, then the current x-coordinate is the same as the previous x-coordinate. If X_SHORT_VECTOR is not set and this bit is also not set, the current x-coordinate is a signed 16-bit delta vector.</td>
+</tr>
+<tr>
+<td>0x20</td>
+<td>Y_IS_SAME_OR_POSITIVE_Y_SHORT_VECTOR</td>
+<td>Bit 5: This flag has two meanings, depending on how the Y_SHORT_VECTOR flag is set. If Y_SHORT_VECTOR is set, this bit describes the sign of the value, with 1 equaling positive and 0 negative. If Y_SHORT_VECTOR is not set and this bit is set, then the current y-coordinate is the same as the previous y-coordinate. If Y_SHORT_VECTOR is not set and this bit is also not set, the current y-coordinate is a signed 16-bit delta vector.</td>
+</tr>
+<tr>
+<td>0x40</td>
+<td>OVERLAP_SIMPLE</td>
+<td>Bit 6: If set, contours in the glyph description could overlap. Use of this flag is not required — that is, contours may overlap without having this flag set. When used, it must be set on the first flag byte for the glyph. See additional details below.</td>
+</tr>
+<tr>
+<td>0x80</td>
+<td>Reserved</td>
+<td>Bit 7 is reserved: set to zero.</td>
+</tr>
+</tbody>
+</table>
+<p>The OVERLAP_SIMPLE flag is not required and ignored by some rasterizer implementations. However, it may be (and is) used by some rasterizers to activate additional logic required when contours overlap to obtain correct rasterization. This flag can be used in fonts to provide broad interoperability across rasterizer implementations.</p>
+<p>Variable fonts often make use of overlapping contours. This has implications for tools that generate static-font data for a specific instance of a variable font, if broad interoperability of the derived font is desired: if a glyph has overlapping contours in the given instance, then the tool should either set the OVERLAP_SIMPLE flag in the derived glyph data, or else should merge contours to remove overlap of separate contours.</p>
+<blockquote>
+<p><em>Note:</em> The OVERLAP_COMPOUND flag, described below, has a similar purpose in relation to composite glyphs. The same considerations described for the OVERLAP_SIMPLE flag also apply to the OVERLAP_COMPOUND flag.</p>
+</blockquote>
+<p><a id="compositeGlyphDescription"></a></p>
+<h2 id="composite-glyph-description">Composite glyph description</h2>
+<p>If numberOfContours is negative, a composite glyph description is used.</p>
+<blockquote>
+<p><em>Note:</em> A numberOfContours value of -1 is recommended to indicate a composite glyph.</p>
+</blockquote>
+<p>A composite, or compound, glyph describes an outline indirectly by referencing other glyphs that get incorporated into the composite glyph as components. This is useful when the same contours are needed for multiple glyphs as it provides consistency for contours that are repeated across multiple glyphs and can also provide significant size reduction.</p>
+<p>To add clarity in explaining composite glyphs, the terms <em>parent</em> and <em>child</em> will be used, a composite glyph description being the parent, and the other glyphs referenced as components being the children.</p>
+<p>Composite glyphs may be nested within other composite glyphs—that is, a composite glyph parent may include other composite glyphs as child components. Thus, a composite glyph description is a directed graph. This graph must be acyclic, with every path through the graph leading to a simple glyph as a leaf node. The maxComponentDepth field in the <a href="maxp.html" data-linktype="relative-path">'maxp'</a> table is set to indicate the maximum nesting depth across all composite glyphs in a font. There is no minimum nesting depth that must be supported. For fonts to be compatible with the widest range of implementations, nesting of composites should be avoided.</p>
+<blockquote>
+<p><em>Note:</em> Some PostScript devices (and possibly other implementations) do not correctly render glyphs that have nested composite descriptions. A composite glyph description that has nested composites can be flattened to reference only simple glyphs as child components. This can lose some benefits of de-duplication of information, but can still retain significant size-saving benefits as well as providing broader compatibility.</p>
+</blockquote>
+<p>The data for a composite glyph description is comprised of a sequence of data blocks for each child component glyph. A flag within the data for each component is used to indicate if there are additional components in the sequence. The sequence is processed in the order given, with the contours from each child glyph incorporated into the parent. As the contours from a child are incorporated, its control points are renumbered to follow sequentially after all points previously incorporated into the parent.</p>
+<p>Each glyph has an outline positioned within the font design grid based on the x and y coordinates of its control points. When incorporated as a child into a composite glyph, the parent can control placement of the child outline within the parent’s design grid. This can be done in two different ways: by specifying a vector offset added to (x, y) coordinates of the child’s control points, or by specifying one control point from the child’s outline that is aligned with a specified control point in the parent. The second mechanism assumes some outlines have already been incorporated into the parent, so cannot be used for the first component glyph.</p>
+<p>The parent can also specify a scale or other affine transform to be applied to a child glyph as it is incorporated into the parent. The transform can affect an offset vector used to position the child glyph; see below for additional details.</p>
+<p>Each component glyph can include instructions that apply to its outline. A parent composite glyph description can include instructions that apply to the composite as a whole, after instructions for each child have been performed. Instructions for the parent composite apply to the accumulated contour data from components with points renumbered, as described above.</p>
+<p>Before each child is incorporated into the parent, it is processed, with phantom points defined and hinting instructions performed. Thus, if placement of the child is done by alignment of points, the child’s phantom points can be used for this alignment, and instructions in child glyphs that affected their points will already have been performed.</p>
+<p>The data block for each child component starts with two uint16 values: a flags field, and a glyph ID. These are followed by two argument fields, though the size and interpretation of the arguments varies according to the flags that are set. Optional fields describing a transformation can follow the arguments, depending on the flags.</p>
+<p><a id="compositeGlyphTable"></a></p>
+<p><em>Component Glyph record</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>flags</td>
+<td>component flag</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>glyphIndex</td>
+<td>glyph index of component</td>
+</tr>
+<tr>
+<td>uint8, int8, uint16 or int16</td>
+<td>argument1</td>
+<td>x-offset for component or point number; type depends on bits 0 and 1 in component flags</td>
+</tr>
+<tr>
+<td>uint8, int8, uint16 or int16</td>
+<td>argument2</td>
+<td>y-offset for component or point number; type depends on bits 0 and 1 in component flags</td>
+</tr>
+<tr>
+<td>[transform data]</td>
+<td></td>
+<td>optional transform data—see below</td>
+</tr>
+</tbody>
+</table>
+<p>The C pseudo-code fragment below shows how the sequence of component glyph records is stored and parsed; definitions for the flag bits follow this fragment:</p>
+<pre><code>do {
+    uint16 flags;
+    uint16 glyphIndex;
+    if ( flags &amp; ARG_1_AND_2_ARE_WORDS) {
+    (int16 or FWORD) argument1;
+    (int16 or FWORD) argument2;
+    } else {
+        uint16 arg1and2; /* (arg1 &lt;&lt; 8) | arg2 */
+    }
+    if ( flags &amp; WE_HAVE_A_SCALE ) {
+        F2DOT14  scale;    /* Format 2.14 */
+    } else if ( flags &amp; WE_HAVE_AN_X_AND_Y_SCALE ) {
+        F2DOT14  xscale;    /* Format 2.14 */
+        F2DOT14  yscale;    /* Format 2.14 */
+    } else if ( flags &amp; WE_HAVE_A_TWO_BY_TWO ) {
+        F2DOT14  xscale;    /* Format 2.14 */
+        F2DOT14  scale01;   /* Format 2.14 */
+        F2DOT14  scale10;   /* Format 2.14 */
+        F2DOT14  yscale;    /* Format 2.14 */
+    }
+} while ( flags &amp; MORE_COMPONENTS )
+if (flags &amp; WE_HAVE_INSTRUCTIONS){
+    uint16 numInstr
+    uint8 instr[numInstr]
+}
+</code></pre>
+<p>The following component glyph flags are defined:</p>
+<p><a id="compositeGlyphFlags"></a></p>
+<p><em>Component Glyph flags</em></p>
+<table>
+<thead>
+<tr>
+<th>Mask</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0x0001</td>
+<td>ARG_1_AND_2_ARE_WORDS</td>
+<td>Bit 0: If this is set, the arguments are 16-bit (uint16 or int16); otherwise, they are bytes (uint8 or int8).</td>
+</tr>
+<tr>
+<td>0x0002</td>
+<td>ARGS_ARE_XY_VALUES</td>
+<td>Bit 1: If this is set, the arguments are signed xy values; otherwise, they are unsigned point numbers.</td>
+</tr>
+<tr>
+<td>0x0004</td>
+<td>ROUND_XY_TO_GRID</td>
+<td>Bit 2: If set and ARGS_ARE_XY_VALUES is also set, the xy values are rounded to the nearest grid line. Ignored if ARGS_ARE_XY_VALUES is not set.</td>
+</tr>
+<tr>
+<td>0x0008</td>
+<td>WE_HAVE_A_SCALE</td>
+<td>Bit 3: This indicates that there is a simple scale for the component. Otherwise, scale = 1.0.</td>
+</tr>
+<tr>
+<td>0x0020</td>
+<td>MORE_COMPONENTS</td>
+<td>Bit 5: Indicates at least one more glyph after this one.</td>
+</tr>
+<tr>
+<td>0x0040</td>
+<td>WE_HAVE_AN_X_AND_Y_SCALE</td>
+<td>Bit 6: The x direction will use a different scale from the y direction.</td>
+</tr>
+<tr>
+<td>0x0080</td>
+<td>WE_HAVE_A_TWO_BY_TWO</td>
+<td>Bit 7: There is a 2 by 2 transformation that will be used to scale the component.</td>
+</tr>
+<tr>
+<td>0x0100</td>
+<td>WE_HAVE_INSTRUCTIONS</td>
+<td>Bit 8: Following the last component are instructions for the composite glyph.</td>
+</tr>
+<tr>
+<td>0x0200</td>
+<td>USE_MY_METRICS</td>
+<td>Bit 9: If set, this forces the aw and lsb (and rsb) for the composite to be equal to those from this component glyph. This works for hinted and unhinted glyphs.</td>
+</tr>
+<tr>
+<td>0x0400</td>
+<td>OVERLAP_COMPOUND</td>
+<td>Bit 10: If set, the components of the compound glyph overlap. Use of this flag is not required — that is, component glyphs may overlap without having this flag set. When used, it must be set on the flag word for the first component. Some rasterizer implementations may require fonts to use this flag to obtain correct behavior — see additional remarks, above, for the similar OVERLAP_SIMPLE flag used in simple-glyph descriptions.</td>
+</tr>
+<tr>
+<td>0x0800</td>
+<td>SCALED_COMPONENT_OFFSET</td>
+<td>Bit 11: The composite is designed to have the component offset scaled. Ignored if ARGS_ARE_XY_VALUES is not set.</td>
+</tr>
+<tr>
+<td>0x1000</td>
+<td>UNSCALED_COMPONENT_OFFSET</td>
+<td>Bit 12: The composite is designed not to have the component offset scaled. Ignored if ARGS_ARE_XY_VALUES is not set.</td>
+</tr>
+<tr>
+<td>0xE010</td>
+<td>Reserved</td>
+<td>Bits 4, 13, 14 and 15 are reserved: set to 0.</td>
+</tr>
+</tbody>
+</table>
+<p>The argument1 and argument2 fields of the component glyph record are used to determine the placement of the child component glyph within the parent composite glyph. They are interpreted either as an offset vector or as points from the parent and the child, according to whether the ARGS_ARE_XY_VALUES flag is set. This flag must always be set for the first component of a composite glyph.</p>
+<p>If ARGS_ARE_XY_VALUES is set, then argument1 and argument2 are interpreted as units in the design coordinate system and an offset vector (x, y) = (argument1, argument2) is added to the coordinates of each control point of the component glyph. In a variable font, the offset vector can be modified by deltas in the 'gvar' table; see <a href="gvar.html#point-numbers-and-processing-for-composite-glyphs" data-linktype="relative-path">Point numbers and processing for composite glyphs</a> in the 'gvar' chapter for details. If a scale or transform matrix is provided, the offset vector might or might not be subject to the transformation; see the discussion below of the SCALED_COMPONENT_OFFSET and UNSCALED_COMPONENT_OFFSET flags for details.</p>
+<p>If ARGS_ARE_XY_VALUES is set and the ROUND_XY_TO_GRID flag is also set, the offset vector (after any transformation and variation deltas are applied) is grid-fitted, with the x and y values rounded to the nearest pixel grid line.</p>
+<p>If ARGS_ARE_XY_VALUES is not set, then argument1 is a point number in the parent glyph (from contours incoporated and re-numbered from previous component glyphs); and argument2 is a point number (prior to re-numbering) from the child component glyph. Phantom points from the parent or the child may be referenced. The child component glyph is positioned within the parent glyph by aligning the two points. If a scale or transform matrix is provided, the transformation is applied to the child’s point before the points are aligned.</p>
+<p>In a variable font, when a component is positioned by alignment of points, deltas are applied to component glyphs before this alignment is done. Any deltas specified for the parent composite glyph to be applied to components positioned by point alignment are ignored. See <a href="gvar.html#point-numbers-and-processing-for-composite-glyphs" data-linktype="relative-path">Point numbers and processing for composite glyphs</a> in the 'gvar' chapter for details.</p>
+<p>The WE_HAVE_A_SCALE, WE_HAVE_AN_X_AND_Y_SCALE and WE_HAVE_A_TWO_BY_TWO flags are mutually exclusive: no more than one of these may be set. If WE_HAVE_A_SCALE is set, one additional F2DOT14 value is appended to the component glyph data; if WE_HAVE_AN_X_AND_Y_SCALE is set, two F2DOT14 values are appended; if WE_HAVE_A_TWO_BY_TWO, four F2DOT14 values are appended. The appended values define an affine transformation, as described below. The child component glyph is transformed as it is incorporated into the parent composite glyph, prior to grid-fitting of the parent. The transform can affect an offset vector used to position the child; see discussion below of the SCALED_COMPONENT_OFFSET and UNSCALED_COMPONENT_OFFSET flags for details.</p>
+<p>For defining the affine transformation, the general case is handled by the WE_HAVE_A_TWO_BY_TWO flag. Four values are appended in the component glyph description: in order, <em>xscale</em>, <em>scale01</em>, <em>scale10</em>, and <em>yscale</em>. These form a two-by-two matrix used to transform x and y coordinates of points in the component glyph. For a pre-transformation position <em>(x, y)</em>, the post-transformation position <em>(x′, y′)</em> is calculated as follows:</p>
+<p><em>x′</em> = <em>xscale * x + scale10 * y</em><br>
+<em>y′</em> = <em>scale01 * x + yscale * y</em></p>
+<blockquote>
+<p><em>Note:</em> It can be helpful to understand a matrix transformation by the effect on <em>x</em> and <em>y</em> basis vectors <em>î = (1, 0)</em> and <em>ĵ = (0, 1)</em>. The transform described by the four values maps the basis vectors to <em>î′ = (xscale, scale01)</em> and <em>ĵ′ = (scale10, yscale)</em>.</p>
+</blockquote>
+<p>When the WE_HAVE_AN_X_AND_Y_SCALE flag is used, the appended <em>xscale</em> and <em>yscale</em> values are used as above, but the transformation is constrained by <em>scale01</em> and <em>scale10</em> both being set to zero. When the WE_HAVE_A_SCALE flag is used, the transformation is even further constrained by <em>xscale</em> and <em>yscale</em> both being set to the single appended value, <em>scale</em>.</p>
+<p>The WE_HAVE_INSTRUCTIONS flag is used to indicate that the parent composite glyph has instructions, in addition to instructions for any of the child component glyphs. If the flag is set on any component glyph, then a uint16 value is read immediately after the last component glyph to get the byte length for instructions.</p>
+<p>The purpose of USE_MY_METRICS is to force the lsb and rsb to take on values obtained from the component glyph. For example, an i-circumflex (U+00EF) is often composed of the circumflex and a dotless-i. In order to force the composite to have the same metrics as the dotless-i, set USE_MY_METRICS for the dotless-i component of the composite. Without this bit, the rsb and lsb would be calculated from the 'hmtx' entry for the composite (or would need to be explicitly set with TrueType instructions).</p>
+<p>Note that the behavior of the USE_MY_METRICS operation is undefined for rotated component glyphs.</p>
+<p>The SCALED_COMPONENT_OFFSET and UNSCALED_COMPONENT_OFFSET flags are used to determine how x and y offset values are to be interpreted when the component glyph is scaled. If the SCALED_COMPONENT_OFFSET flag is set, then the x and y offset values are deemed to be in the component glyph’s coordinate system, and the scale transformation is applied to both values. If the UNSCALED_COMPONENT_OFFSET flag is set, then the x and y offset values are deemed to be in the current glyph’s coordinate system, and the scale transformation is not applied to either value. If neither flag is set, then the rasterizer may apply a default behavior. On Microsoft and Apple platforms, the default behavior is the same as when the UNSCALED_COMPONENT_OFFSET flag is set; this behavior is recommended for all rasterizer implementations. If a font has both flags set, this is invalid; the rasterizer should use its default behavior for this case.</p>
+
+</body>
+</html>

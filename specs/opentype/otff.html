@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>otff — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/otff">https://learn.microsoft.com/en-us/typography/opentype/spec/otff</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="the-opentype-font-file">The OpenType Font File</h1>
+<p>An OpenType font file contains data, in table format, used for rendering of text. Portions of the data are used by applications to calculate the layout of text using the font; that is, the selection of glyphs and their placement within a line. Other data provide descriptions of glyphs as TrueType or Compact Font Format (CFF) outlines. Still other data can provide monochromatic or color bitmaps, SVG documents or binary, 2D vector graphics compositions as alternate glyph descriptions. The font data also includes meta-information, such as name strings that can be used to present the font as an available choice in a font-picker user interface. Each of these types of data is stored in one or more tables, each designed for a particular purpose.</p>
+<p><a id="filenames"></a></p>
+<h2 id="filenames">Filenames</h2>
+<p>OpenType font files may have the extension .OTF, .TTF, .OTC or .TTC. (The extension may be upper or lower case.) The extensions .OTC and .TTC should only be used for <a href="#collections" data-linktype="self-bookmark">font collection</a> files. For additional information on filename extension conventions, see “Filenames” in <a href="recom.html#filenames" data-linktype="relative-path">Recommendations for OpenType fonts</a>.</p>
+<p><a id="dataTypes"></a></p>
+<h2 id="data-types">Data Types</h2>
+<p>The following data types are used in the OpenType font file. All OpenType fonts use big-endian (network) byte order:</p>
+<table>
+<tbody>
+<tr>
+<th>Data Type</th>
+<th>Description</th>
+</tr>
+<tr id="dt_uint8">
+<td>uint8</td>
+<td>8-bit unsigned integer.</td>
+</tr>
+<tr id="dt_int8">
+<td>int8</td>
+<td>8-bit signed integer.</td>
+</tr>
+<tr id="dt_uint16">
+<td>uint16</td>
+<td>16-bit unsigned integer.</td>
+</tr>
+<tr id="dt_int16">
+<td>int16</td>
+<td>16-bit signed integer.</td>
+</tr>
+<tr id="dt_uint24">
+<td>uint24</td>
+<td>24-bit unsigned integer.</td>
+</tr>
+<tr id="dt_uint32">
+<td>uint32</td>
+<td>32-bit unsigned integer.</td>
+</tr>
+<tr id="dt_int32">
+<td>int32</td>
+<td>32-bit signed integer.</td>
+</tr>
+<tr id="dt_Fixed">
+<td>Fixed</td>
+<td>32-bit signed fixed-point number (16.16)</td>
+</tr>
+<tr id="dt_FWORD">
+<td>FWORD</td>
+<td>int16 that describes a quantity in font design units.</td>
+</tr>
+<tr id="dt_UFWORD">
+<td>UFWORD</td>
+<td>uint16 that describes a quantity in font design units.</td>
+</tr>
+<tr id="dt_F2DOT14">
+<td>F2DOT14</td>
+<td>16-bit signed fixed number with the low 14 bits of fraction (2.14).</td>
+</tr>
+<tr id="dt_LONGDATETIME">
+<td>LONGDATETIME</td>
+<td>Date and time represented in number of seconds since 12:00 midnight, January 1, 1904, UTC. The value is represented as a signed 64-bit integer.</td>
+</tr>
+<tr id="dt_Tag">
+<td>Tag</td>
+<td>Array of four uint8s (length = 32 bits) used to identify a table, design-variation axis, script, language system, feature, or baseline.</td>
+</tr>
+<tr id="dt_offset8">
+<td>Offset8</td>
+<td>8-bit offset to a table, same as uint8, NULL offset = 0x00</td>
+</tr>
+<tr id="dt_Offset16">
+<td>Offset16</td>
+<td>Short offset to a table, same as uint16, NULL offset = 0x0000</td>
+</tr>
+<tr id="dt_Offset24">
+<td>Offset24</td>
+<td>24-bit offset to a table, same as uint24, NULL offset = 0x000000</td>
+</tr>
+<tr id="dt_Offset32">
+<td>Offset32</td>
+<td>Long offset to a table, same as uint32, NULL offset = 0x00000000</td>
+</tr>
+<tr>
+<td>Version16Dot16</td>
+<td>Packed 32-bit value with major and minor version numbers. (See <a href="#table-version-numbers" data-linktype="self-bookmark">Table Version Numbers</a>.)</td>
+</tr>
+</tbody>
+</table>
+<p>The F2DOT14 format consists of a signed, 2’s complement integer and an unsigned fraction. To compute the actual value, take the integer and add the fraction. Examples of 2.14 values are:</p>
+<p><a id="examplesF2DOT14"></a></p>
+<table>
+<tbody>
+<tr>
+<th>Decimal Value</th>
+<th>Hex Value</th>
+<th>Integer</th>
+<th>Fraction</th>
+</tr>
+<tr>
+<td>1.999939</td>
+<td>0x7fff</td>
+<td>1</td>
+<td>16383/16384</td>
+</tr>
+<tr>
+<td>1.75</td>
+<td>0x7000</td>
+<td>1</td>
+<td>12288/16384</td>
+</tr>
+<tr>
+<td>0.000061</td>
+<td>0x0001</td>
+<td>0</td>
+<td>1/16384</td>
+</tr>
+<tr>
+<td>0.0</td>
+<td>0x0000</td>
+<td>0</td>
+<td>0/16384</td>
+</tr>
+<tr>
+<td>-0.000061</td>
+<td>0xffff</td>
+<td>-1</td>
+<td>16383/16384</td>
+</tr>
+<tr>
+<td>-2.0</td>
+<td>0x8000</td>
+<td>-2</td>
+<td>0/16384</td>
+</tr>
+</tbody>
+</table>
+<p>A Tag value is a uint8 array. Each byte within the array must have a value in the range 0x20 to 0x7E. This corresponds to the range of values of Unicode Basic Latin characters in UTF-8 encoding, which is the same as the printable ASCII characters. As a result, a Tag value can be re-interpreted as a four-character sequence, which is conventionally how they are referred to. Formally, however, the value is a byte array. When re-interpreted as characters, the Tag value is case sensitive. It must have one to four non-space characters, padded with trailing spaces (byte value 0x20). A space character must not be followed by a non-space character.</p>
+<p>Within this specification, many structures are defined in terms of the data types listed above. Structures are characterized as either <em>records</em> or <em>tables</em>. The distinction between records and tables is based on these general criteria:</p>
+<ul>
+<li>Tables are referenced by offsets. If a table contains an offset to a sub-structure, the offset is normally from the start of that table.</li>
+<li>Records occur sequentially within a parent structure, either within a sequence of table fields or within an array of records of a given type. If a record contains an offset to a sub-structure, that structure is logically a subtable of the record’s parent table and the offset is normally from the start of the parent table.</li>
+</ul>
+<p>In some cases, fields for subtable offsets are documented as permitting NULL values when the given subtable is optional. For example, in the <a href="base.html#base-header" data-linktype="relative-path">BASE table header</a>, the horizAxisOffset and vertAxisOffset fields may be NULL, meaning that either subtable (or both) is optional. A NULL subtable offset always indicates that the given subtable is not present. Applications must never interpret a NULL offset value as the offset to subtable data. For cases in which subtable offset fields are not documented as permitting NULL values, font compilers must include a subtable of the indicated format, even if it is a header stub without further data (for example, a <a href="chapter2.html#coverage-table" data-linktype="relative-path">coverage</a> table with no glyph IDs). Applications parsing font data should, however, anticipate non-conformant font data that has a NULL subtable offset where only a non-NULL value is expected.</p>
+<p><a id="versionNumbers"></a></p>
+<h2 id="table-version-numbers">Table Version Numbers</h2>
+<p>Most tables have version numbers, and the version number for the entire font is contained in the <a href="#tabledirectory" data-linktype="self-bookmark">table directory</a>. Note that there are five different table version number types, each with its own numbering scheme.</p>
+<ul>
+<li>A single uint16 field. This is used in a number of tables, usually with versions starting at zero (0).</li>
+<li>Separate, uint16 major and minor version fields. This is used in a number of tables, usually with versions starting at 1.0.</li>
+<li>A uint32 field with enumerated values.</li>
+<li>A uint32 field with a numeric value. This is used only in the <a href="dsig.html" data-linktype="relative-path">DSIG</a> and <a href="meta.html" data-linktype="relative-path">'meta'</a> tables.</li>
+<li>A Version16Dot16 field for major/minor version numbers. This is used only in the <a href="maxp.html" data-linktype="relative-path">'maxp'</a>, <a href="post.html" data-linktype="relative-path">'post'</a> and <a href="vhea.html" data-linktype="relative-path">'vhea'</a> tables.</li>
+</ul>
+<p>The Version16Dot16 type is used for the version field of certain tables, and only for reasons of backward compatibility. (In earlier versions, these fields were documented as using a Fixed value, but had minor version numbers that did not follow the definition of the Fixed type.) Version16Dot16 is a packed value: the upper 16 bits comprise a major version number, and the lower 16 bits, a minor version. Non-zero minor version numbers are represented using digits 0 to 9 in the highest-order nibbles of the lower 16 bits. For example, the version field of 'maxp' table version 0.5 is 0x00005000, and that of 'vhea' table version 1.1 is 0x00011000. This type is used only in the 'maxp', 'post' and 'vhea' tables, and will not be used for any other tables in the future.</p>
+<p>The table directory uses a uint32 field, sfntVersion, with an enumeration of defined values, some of which represent four-character tags; see the section below, “Organization of an OpenType Font”, for details.</p>
+<p>Implementations reading tables must include code to check version numbers so that, if and when the format and version number changes, older implementations will handle newer versions gracefully.</p>
+<p>Minor version number changes always imply format changes that are compatible extensions. If an implementation understands a major version number, then it can safely proceed with reading the table. If the minor version is greater than the latest version recognized by the implementation, then the extension fields will be undetectable to the implementation.</p>
+<p>For purposes of compatibility, version numbers that are represented using a single uint16 or uint32 value are treated like a minor version number, and any format changes are compatible extensions.</p>
+<p>Note that some field values that were undefined or reserved in an earlier revision may be assigned meanings in a minor version change. Implementations should never make assumptions regarding reserved or unassigned values or bits in bit fields, and can ignore them if encountered. When writing font data, tools should always write zero for reserved fields or bits. Validators should warn of any non-zero values for fields or bits that are not defined for the given version against which data is being validated.</p>
+<p>If the major version is not recognized, the implementation must not read the table as it can make no assumptions regarding interpretation of the binary data. The implementation should treat the table as missing.</p>
+<p><a id="otFontOrganization"></a></p>
+<h2 id="organization-of-an-opentype-font">Organization of an OpenType Font</h2>
+<p><a id="tabledirectory"></a>
+<a id="offsetTable"></a></p>
+<h3 id="table-directory">Table Directory</h3>
+<p>A key characteristic of the OpenType format is the TrueType sfnt “wrapper”, which provides organization for a collection of tables in a general and extensible manner.</p>
+<p>The OpenType font starts with the table directory, which is a directory of the top-level tables in a font. If the font file contains only one font, the table directory will begin at byte 0 of the file. If the font file is an OpenType Font Collection file (see below), the beginning point of the table directory for each font is indicated in the TTCHeader.</p>
+<p><em>TableDirectory:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="sfntVersion">
+<td>uint32</td>
+<td>sfntVersion</td>
+<td>0x00010000 or 0x4F54544F ('OTTO') — see below.</td>
+</tr>
+<tr id="numTables">
+<td>uint16</td>
+<td>numTables</td>
+<td>Number of tables.</td>
+</tr>
+<tr id="searchRange">
+<td>uint16</td>
+<td>searchRange</td>
+<td>Maximum power of 2 less than or equal to numTables, times 16 ((2**floor(log2(numTables))) * 16, where “**” is an exponentiation operator).</td>
+</tr>
+<tr id="entrySelector">
+<td>uint16</td>
+<td>entrySelector</td>
+<td>Log<sub>2</sub> of the maximum power of 2 less than or equal to numTables (log<sub>2</sub>(searchRange/16), which is equal to floor(log<sub>2</sub>(numTables))).</td>
+</tr>
+<tr id="rangeShift">
+<td>uint16</td>
+<td>rangeShift</td>
+<td>numTables times 16, minus searchRange ((numTables * 16) - searchRange).</td>
+</tr>
+<tr id="tableRecords">
+<td>TableRecord</td>
+<td>tableRecords[numTables]</td>
+<td>Table records array—one for each top-level table in the font.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em> In the preceding table, the symbol “**” is an exponentiation operator, as used in several programming languages.</p>
+</blockquote>
+<p>OpenType fonts that contain TrueType outlines should use the value of 0x00010000 for sfntVersion. OpenType fonts containing CFF data (version 1 or 2) should use 0x4F54544F ('OTTO', when re-interpreted as a Tag) for sfntVersion.</p>
+<blockquote>
+<p><em>Note:</em> <a href="https://developer.apple.com/fonts/TrueType-Reference-Manual/" data-linktype="external">Apple's TrueType Reference Manual</a> allows for 'true' and 'typ1' for sfntVersion. These version tags should not be used for OpenType fonts.</p>
+</blockquote>
+<p>The table directory format allows for a large number of tables. To assist in quick binary searches, the searchRange, entrySelector and rangeShift fields are included as parameters that may be used in configuring search algorithms. Binary search is optimal when the number of entries is a power of two. The searchRange field provides the largest number of items that can be searched with that constraint (maximum power of two). The rangeShift field provides the remaining number of items that would also need to be searched. The entrySelector field indicates the maximum number of levels into the binary tree will need to be entered. Values are multiplied by 16, which is the size of each TableRecord.</p>
+<p>In early implementations on devices with limited hardware capabilities, optimizations provided by the searchRange, entrySelector and rangeShift fields were of high importance. They have less importance on modern devices, but may still be used in some implementations. However, incorrect values could potentially be used as an attack vector against some implementations. Since these values can be derived from the numTables field when the file is parsed, it is strongly recommended that parsing implementations not rely on the searchRange, entrySelector and rangeShift fields in the font but derive them independently from numTables. Font files, however, should continue to provide valid values for these fields to maintain compatibility with all existing implementations.</p>
+<p>The table directory ends with the tableRecords array. The TableRecord format is as follows.</p>
+<p><a id="tableRecord"></a></p>
+<p><em>TableRecord:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="tblrec_tag">
+<td>Tag</td>
+<td>tableTag</td>
+<td>Table identifier.</td>
+</tr>
+<tr id="tblrec_checkSum">
+<td>uint32</td>
+<td>checksum</td>
+<td>Checksum for this table.</td>
+</tr>
+<tr id="tblrec_offset">
+<td>Offset32</td>
+<td>offset</td>
+<td>Offset from beginning of font file.</td>
+</tr>
+<tr id="tblrec_length">
+<td>uint32</td>
+<td>length</td>
+<td>Length of this table.</td>
+</tr>
+</tbody>
+</table>
+<p>Table tags are the names given to tables in the OpenType font file. The tableRecords array makes it possible for a given font to contain only those tables it actually needs. As a result, there is no standard value for numTables. The records in the array must be sorted in ascending order by tag.</p>
+<p>For requirements of Tag values, see <a href="#dataTypes" data-linktype="self-bookmark">Data Types</a>, above. Several tags and their associated table formats are defined in this specification. For table tags defined in this specification, a font resource should have at most one table record using a given tag. If a font resource does contain more than one table of a given type, behaviour is unpredictable: apps or platforms may select one of the tables arbitrarily, or may reject the font as invalid.</p>
+<p>Platform vendors may define additional tables and associated tags to provide platform-specific functionality See, for example, Apple’s <a href="https://developer.apple.com/fonts/TrueType-Reference-Manual/" data-linktype="external">TrueType Reference Manual</a> which defines various tables with associated tags not defined in OpenType. Some font development tools may also define special tables. Fonts that contain such additional tables can still qualify as OpenType fonts if they satisfy the requirements of this specification. For custom tables defined outside this specification, an external specification of such a table may permit multiple tables of that type within a single font resource.</p>
+<blockquote>
+<p><em>Note:</em> Vendors should notify Microsoft when they define custom tags to ensure forward compatibility in the event of future expansion of OpenType.</p>
+</blockquote>
+<blockquote>
+<p><em>Note:</em> <a href="https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6.html" data-linktype="external">Apple’s specification</a> stipulates that tag names consisting of all lower case letters are reserved for Apple’s use.</p>
+</blockquote>
+<p>All tables must begin on four-byte boundaries, and any remaining space between tables must be padded with zeros. The length of each table should be recorded in the table record with the actual length of data, not the padded length.</p>
+<blockquote>
+<p>Note: The requirement for four-byte alignment applies to top-level tables only and does not extend to sub-table offsets, records, or fields within tables or records.</p>
+</blockquote>
+<p>Some tables have an internal structure with subtables located at specified offsets, and as a result, it is possible to construct a font with data for different tables interleaved. In general, tables should be arranged contiguously without overlapping the ranges of distinct tables. In any case, however, table lengths measure a contiguous range of bytes that encompasses all of the data for a table. This applies to any subtables as well as to top-level tables.</p>
+<p><a id="checksums"></a></p>
+<h3 id="calculating-checksums">Calculating Checksums</h3>
+<p>Table checksums are the unsigned sum of the uint32 units of a given table. In C, the following function can be used to determine a checksum:</p>
+<pre><code>uint32
+CalcTableChecksum(uint32 *Table, uint32 Length)
+{
+uint32 Sum = 0L;
+uint32 *EndPtr = Table+((Length+3) &amp; ~3) / sizeof(uint32);
+while (Table &lt; EndPtr)
+    Sum += *Table++;
+return Sum;
+}
+</code></pre>
+<blockquote>
+<p><em>Note:</em> This function assumes that the length of any table is a multiple of four bytes, or that tables are padded with zero to four-byte aligned offsets. Actual table lengths recorded in the table directory should not include padding, however. To accommodate data with a length that is not a multiple of four, the above algorithm must be modified to treat the data as though it contains zero padding to a length that is a multiple of four.</p>
+</blockquote>
+<p>The 'head' table is a special case in checksum calculations, as it includes a checksumAdjustment field that is calculated and written after the table’s checksum is calculated and written into the table directory entry, necessarily invalidating that checksum value.</p>
+<p>When generating font data, to calculate and write the 'head' table checksum and checksumAdjustment field, do the following:</p>
+<ol>
+<li>Set the checksumAdjustment field to 0.</li>
+<li>Calculate the checksum for all tables including the 'head' table and enter the value for each table into the corresponding record in the table directory.</li>
+<li>Calculate the checksum for the entire font.</li>
+<li>Subtract that value from 0xB1B0AFBA.</li>
+<li>Store the result in the 'head' table checksumAdjustment field.</li>
+</ol>
+<p>An application attempting to verify that the 'head' table has not changed should calculate the checksum for that table assuming that the checksumAdjustment value is zero, rather than the actual value in the font, before comparing the result with the 'head' table record in the table directory.</p>
+<p>Within a font collection file (see below), table checksums must reflect the tables as they are in the collection file. The checksumAdjustment field in the 'head' table is not used for collection files and may be set to zero.</p>
+<p><a id="collections"></a></p>
+<h2 id="font-collections">Font Collections</h2>
+<p>An OpenType Font Collection (either TTC or OTC, formerly known as TrueType Collection) is a means of delivering multiple OpenType font resources in a single file structure. The format for font collections allows font tables that are identical between two or more fonts to be shared. Font collections containing outline glyph data (TrueType, CFF, CFF2 or SVG) are most useful when the fonts to be delivered together share many glyphs in common. By allowing multiple fonts to share glyph sets and other common font tables, font collections can result in a significant saving of file space.</p>
+<p>For example, a group of Japanese fonts may each have their own designs for the kana glyphs, but share identical designs for the kanji. With ordinary OpenType font files, the only way to include the common kanji glyphs is to copy their glyph data into each font. Since the kanji represent much more data than the kana, this results in a great deal of wasteful duplication of glyph data. Font collections were defined to solve this problem.</p>
+<blockquote>
+<p><em>Note:</em>
+Even though the original definition of Font Collection (as part of the TrueType specification) was intended to be used with fonts containing TrueType outlines, and this constraint was maintained in earlier OpenType versions, this is no longer a constraint in OpenType. Font collection files may contain various types of outlines (or a mix of them), regardless of whether or not fonts have layout tables present. For backward compatibility and simplicity, the description of the font collection file structure is using the term “TrueType Collection”, or “TTC”, though it is understood that it is used to identify a generic font collection structure containing any type of outline tables.</p>
+</blockquote>
+<blockquote>
+<p><em>Note:</em> An OpenType variable font is functionally equivalent to multiple non-variable fonts. Variable fonts do not need to be contained within a collection file. A collection file can include one or even multiple variable fonts, however, and may even combine variable and non-variable fonts.</p>
+</blockquote>
+<p><a id="collectionFile"></a></p>
+<h3 id="the-font-collection-file-structure">The Font Collection File Structure</h3>
+<p>A font collection file consists of a single TTC header table, one or more table directories (each corresponding to a different font resource), and a number of OpenType tables. The TTC header must be located at the beginning of the TTC file.</p>
+<p>The TTC file must contain a complete table directory for each font resource. The same TableDirectory format is used for each font resource in a collection file as is used in a non-collection file. The table offsets in all table directories within a TTC file are measured from the beginning of the TTC file.</p>
+<p>Each OpenType table in a TTC file is referenced through the table directory of each font which uses that table. Some of the OpenType tables must appear multiple times, once for each font included in the TTC; while other tables may be shared by multiple fonts in the TTC.</p>
+<p>As an example, consider a TTC file which combines two Japanese fonts (Font1 and Font2). The fonts have different kana designs (Kana1 and Kana2) but use the same design for kanji. The TTC file contains a single 'glyf' table which includes both designs of kana together with the kanji; both fonts’ table directories point to this 'glyf' table. But each font’s table directory points to a different 'cmap' table, which identifies the glyph set to use. Font1’s 'cmap' table points to the Kana1 region of the 'loca' and 'glyf' tables for kana glyphs, and to the kanji region for the kanji. Font2’s 'cmap' table points to the Kana2 region of the 'loca' and 'glyf' tables for kana glyphs, and to the same kanji region for the kanji.</p>
+<p>The tables that should have a unique copy per font are those that are used by the system in identifying the font and its character mapping, including 'cmap', 'name', and OS/2. The tables that should be shared by fonts in the TTC are those that define glyph and instruction data or use glyph indices to access data: 'glyf', 'loca', 'hmtx', 'hdmx', LTSH, 'cvt ', 'fpgm', 'prep', EBLC, EBDT, EBSC, 'maxp', and so on. In practice, any tables which have identical data for two or more fonts may be shared.</p>
+<blockquote>
+<p><em>Note:</em>
+When building a collection file from separate font files, close attention needs to be paid to the issue of glyph renumbering in a font and the side effects that can result in the 'cmap' table and elsewhere. The fonts to be merged also need to have compatible TrueType instructions; that is, their preprograms, function definitions, and control values cannot conflict.</p>
+</blockquote>
+<p>Collection files containing TrueType glyph outlines should use the file extension .TTC. Collection files containing CFF or CFF2 outlines should use the file extension .OTC.</p>
+<p><a id="ttcHeader"></a></p>
+<h3 id="ttc-header">TTC Header</h3>
+<p>There are two versions of the TTC header: Version 1.0 has been used for TTC files without digital signatures. Version 2.0 can be used for TTC files with <em>or</em> without digital signatures — if there’s no signature, then the last three fields of the version 2.0 header are left null.</p>
+<p>If a digital signature is used, the DSIG table for the file must be located at the end of the TTC file, following any other font tables. Signatures in a TTC file are expected to be Format 1 signatures.</p>
+<p>The purpose of the TTC header table is to locate the different table directories within a TTC file. The TTC header is located at the beginning of the TTC file (offset = 0). It consists of an identification tag, a version number, a count of the number of OpenType fonts in the file, and an array of offsets to each table directory.</p>
+<p><a id="ttcHeader_1"></a></p>
+<p><em>TTCHeader Version 1.0:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="ttcTag_1">
+<td>Tag</td>
+<td>ttcTag</td>
+<td>Font Collection ID string: 'ttcf' (used for fonts with CFF or CFF2 outlines, as well as TrueType outlines)</td>
+</tr>
+<tr id="majorVersion_1">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version of the TTCHeader, = 1.</td>
+</tr>
+<tr id="minorVersion_1">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version of the TTCHeader, = 0.</td>
+</tr>
+<tr id="numFonts_1">
+<td>uint32</td>
+<td>numFonts</td>
+<td>Number of fonts in TTC</td>
+</tr>
+<tr id="offsetTable_1">
+<td>Offset32</td>
+<td>tableDirectoryOffsets[numFonts]</td>
+<td>Array of offsets to the TableDirectory for each font from the beginning of the file</td>
+</tr>
+</tbody>
+</table>
+<p><a id="ttcHeader_2"></a></p>
+<p><em>TTCHeader Version 2.0:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="ttcTag_2">
+<td>Tag</td>
+<td>ttcTag</td>
+<td>Font Collection ID string: 'ttcf'</td>
+</tr>
+<tr id="majorVersion_2">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version of the TTCHeader, = 2.</td>
+</tr>
+<tr id="minorVersion_2">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version of the TTCHeader, = 0.</td>
+</tr>
+<tr id="numFonts_2">
+<td>uint32</td>
+<td>numFonts</td>
+<td>Number of fonts in TTC</td>
+</tr>
+<tr id="offsetTable_2">
+<td>Offset32</td>
+<td>tableDirectoryOffsets[numFonts]</td>
+<td>Array of offsets to the TableDirectory for each font from the beginning of the file</td>
+</tr>
+<tr id="dsigTag_2">
+<td>uint32</td>
+<td>dsigTag</td>
+<td>Tag indicating that a DSIG table exists, 0x44534947 ('DSIG') (null if no signature)</td>
+</tr>
+<tr id="dsigLength_2">
+<td>uint32</td>
+<td>dsigLength</td>
+<td>The length (in bytes) of the DSIG table (null if no signature)</td>
+</tr>
+<tr id="dsigOffset_2">
+<td>uint32</td>
+<td>dsigOffset</td>
+<td>The offset (in bytes) of the DSIG table from the beginning of the TTC file (null if no signature)</td>
+</tr>
+</tbody>
+</table>
+<p><a id="ottables"></a></p>
+<h2 id="font-tables">Font Tables</h2>
+<p><a id="reqdTables"></a></p>
+<h3 id="required-tables">Required Tables</h3>
+<p>Whether TrueType or CFF outlines are used in an OpenType font, the following tables are required for the font to function correctly:</p>
+<table>
+<tbody>
+<tr>
+<th>Tag</th>
+<th>Name</th>
+</tr>
+<tr>
+<td><a href="cmap.html" data-linktype="relative-path">'cmap'</a></td>
+<td>Character to glyph mapping</td>
+</tr>
+<tr>
+<td><a href="head.html" data-linktype="relative-path">'head'</a></td>
+<td>Font header</td>
+</tr>
+<tr>
+<td><a href="hhea.html" data-linktype="relative-path">'hhea'</a></td>
+<td>Horizontal header</td>
+</tr>
+<tr>
+<td><a href="hmtx.html" data-linktype="relative-path">'hmtx'</a></td>
+<td>Horizontal metrics</td>
+</tr>
+<tr>
+<td><a href="maxp.html" data-linktype="relative-path">'maxp'</a></td>
+<td>Maximum profile</td>
+</tr>
+<tr>
+<td><a href="name.html" data-linktype="relative-path">'name'</a></td>
+<td>Naming table</td>
+</tr>
+<tr>
+<td><a href="os2.html" data-linktype="relative-path">OS/2</a></td>
+<td>OS/2 and Windows specific metrics</td>
+</tr>
+<tr>
+<td><a href="post.html" data-linktype="relative-path">'post'</a></td>
+<td>PostScript information</td>
+</tr>
+</tbody>
+</table>
+<p><a id="ttTables"></a></p>
+<h3 id="tables-related-to-truetype-outlines">Tables Related to TrueType Outlines</h3>
+<p>For OpenType fonts based on TrueType outlines, the following tables are used:</p>
+<table>
+<tbody>
+<tr>
+<th>Tag</th>
+<th>Name</th>
+</tr>
+<tr>
+<td><a href="cvt.html" data-linktype="relative-path">'cvt '</a></td>
+<td>Control Value Table (optional table)</td>
+</tr>
+<tr>
+<td><a href="fpgm.html" data-linktype="relative-path">'fpgm'</a></td>
+<td>Font program (optional table)</td>
+</tr>
+<tr>
+<td><a href="glyf.html" data-linktype="relative-path">'glyf'</a></td>
+<td>Glyph data</td>
+</tr>
+<tr>
+<td><a href="loca.html" data-linktype="relative-path">'loca'</a></td>
+<td>Index to location</td>
+</tr>
+<tr>
+<td><a href="prep.html" data-linktype="relative-path">'prep'</a></td>
+<td>Control Value Program (optional table)</td>
+</tr>
+<tr>
+<td><a href="gasp.html" data-linktype="relative-path">'gasp'</a></td>
+<td>Grid-fitting/Scan-conversion (optional table)</td>
+</tr>
+</tbody>
+</table>
+<p><a id="cffTables"></a></p>
+<h3 id="tables-related-to-cff-outlines">Tables Related to CFF Outlines</h3>
+<p>For OpenType fonts based on CFF outlines, the following tables are used:</p>
+<table>
+<tbody>
+<tr>
+<th>Tag</th>
+<th>Name</th>
+</tr>
+<tr>
+<td><a href="cff.html" data-linktype="relative-path">'CFF '</a></td>
+<td>Compact Font Format 1.0</td>
+</tr>
+<tr>
+<td><a href="cff2.html" data-linktype="relative-path">CFF2</a></td>
+<td>Compact Font Format 2.0</td>
+</tr>
+<tr>
+<td><a href="vorg.html" data-linktype="relative-path">VORG</a></td>
+<td>Vertical Origin (optional table)</td>
+</tr>
+</tbody>
+</table>
+<p>It is strongly recommended that CFF OpenType fonts that are used for vertical writing include a <a href="vorg.html" data-linktype="relative-path">Vertical Origin (VORG) table</a>.</p>
+<p><a id="svgTables"></a></p>
+<h3 id="table-related-to-svg-outlines">Table Related to SVG Outlines</h3>
+<table>
+<tbody>
+<tr>
+<th>Tag</th>
+<th>Name</th>
+</tr>
+<tr>
+<td><a href="svg.html" data-linktype="relative-path">'SVG '</a></td>
+<td>The SVG (Scalable Vector Graphics) table</td>
+</tr>
+</tbody>
+</table>
+<p><a id="bitmapTables"></a></p>
+<h3 id="tables-related-to-bitmap-glyphs">Tables Related to Bitmap Glyphs</h3>
+<table>
+<tbody>
+<tr>
+<th>Tag</th>
+<th>Name</th>
+</tr>
+<tr>
+<td><a href="ebdt.html" data-linktype="relative-path">EBDT</a></td>
+<td>Embedded bitmap data</td>
+</tr>
+<tr>
+<td><a href="eblc.html" data-linktype="relative-path">EBLC</a></td>
+<td>Embedded bitmap location data</td>
+</tr>
+<tr>
+<td><a href="ebsc.html" data-linktype="relative-path">EBSC</a></td>
+<td>Embedded bitmap scaling data</td>
+</tr>
+<tr>
+<td><a href="cbdt.html" data-linktype="relative-path">CBDT</a></td>
+<td>Color bitmap data</td>
+</tr>
+<tr>
+<td><a href="cblc.html" data-linktype="relative-path">CBLC</a></td>
+<td>Color bitmap location data</td>
+</tr>
+<tr>
+<td><a href="sbix.html" data-linktype="relative-path">'sbix'</a></td>
+<td>Standard bitmap graphics</td>
+</tr>
+</tbody>
+</table>
+<p>OpenType fonts may also contain bitmaps of glyphs, in addition to outlines. Hand-tuned bitmaps are especially useful in OpenType fonts for representing complex glyphs at very small sizes. If a bitmap for a particular size is provided in a font, it will be used by the system instead of the outline when rendering the glyph.</p>
+<p><a id="otlTables"></a></p>
+<h3 id="advanced-typographic-tables">Advanced Typographic Tables</h3>
+<p>Several optional tables support advanced typographic functions:</p>
+<table>
+<tbody>
+<tr>
+<th>Tag</th>
+<th>Name</th>
+</tr>
+<tr>
+<td><a href="base.html" data-linktype="relative-path">BASE</a></td>
+<td>Baseline data</td>
+</tr>
+<tr>
+<td><a href="gdef.html" data-linktype="relative-path">GDEF</a></td>
+<td>Glyph definition data</td>
+</tr>
+<tr>
+<td><a href="gpos.html" data-linktype="relative-path">GPOS</a></td>
+<td>Glyph positioning data</td>
+</tr>
+<tr>
+<td><a href="gsub.html" data-linktype="relative-path">GSUB</a></td>
+<td>Glyph substitution data</td>
+</tr>
+<tr>
+<td><a href="jstf.html" data-linktype="relative-path">JSTF</a></td>
+<td>Justification data</td>
+</tr>
+<tr>
+<td><a href="math.html" data-linktype="relative-path">MATH</a></td>
+<td>Math layout data</td>
+</tr>
+</tbody>
+</table>
+<p>For information on common table formats, please see <a href="chapter2.html" data-linktype="relative-path">OpenType Layout Common Table Formats</a> .</p>
+<p><a id="vartables"></a></p>
+<h3 id="tables-used-for-opentype-font-variations">Tables used for OpenType Font Variations</h3>
+<table>
+<tbody>
+<tr>
+<th>Tag</th>
+<th>Name</th>
+</tr>
+<tr>
+<td><a href="avar.html" data-linktype="relative-path">'avar'</a></td>
+<td>Axis variations</td>
+</tr>
+<tr>
+<td><a href="cvar.html" data-linktype="relative-path">'cvar'</a></td>
+<td>CVT variations (TrueType outlines only)</td>
+</tr>
+<tr>
+<td><a href="fvar.html" data-linktype="relative-path">'fvar'</a></td>
+<td>Font variations</td>
+</tr>
+<tr>
+<td><a href="gvar.html" data-linktype="relative-path">'gvar'</a></td>
+<td>Glyph variations (TrueType outlines only)</td>
+</tr>
+<tr>
+<td><a href="hvar.html" data-linktype="relative-path">HVAR</a></td>
+<td>Horizontal metrics variations</td>
+</tr>
+<tr>
+<td><a href="mvar.html" data-linktype="relative-path">MVAR</a></td>
+<td>Metrics variations</td>
+</tr>
+<tr>
+<td><a href="stat.html" data-linktype="relative-path">STAT</a></td>
+<td>Style attributes (required for variable fonts, optional for non-variable fonts)</td>
+</tr>
+<tr>
+<td><a href="vvar.html" data-linktype="relative-path">VVAR</a></td>
+<td>Vertical metrics variations</td>
+</tr>
+</tbody>
+</table>
+<p>For an overview of OpenType Font Variations and the specification of the interpolation algorithm used for variations, see <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>. For details regarding which tables are required or optional in variable fonts, see <a href="otvaroverview.html#vartables" data-linktype="relative-path">Variation Data Tables and Miscellaneous Requirements</a> in the Overview chapter.</p>
+<p>For information on common table formats used for variations, see <a href="otvarcommonformats.html" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>.</p>
+<p>Note that some variation-related formats may be used in tables other than the variations-specific tables listed above. In particular, the GDEF, BASE or COLR tables in a variable font can include variation data using common table formats. A CFF2 table in a variable font can also include variation data, though using formats that are specific to the CFF2 table.</p>
+<p><a id="colorTables"></a></p>
+<h3 id="tables-related-to-color-fonts">Tables Related to Color Fonts</h3>
+<table>
+<tbody>
+<tr>
+<th>Tag</th>
+<th>Name</th>
+</tr>
+<tr>
+<td><a href="colr.html" data-linktype="relative-path">COLR</a></td>
+<td>Color table</td>
+</tr>
+<tr>
+<td><a href="cpal.html" data-linktype="relative-path">CPAL</a></td>
+<td>Color palette table</td>
+</tr>
+<tr>
+<td><a href="cbdt.html" data-linktype="relative-path">CBDT</a></td>
+<td>Color bitmap data</td>
+</tr>
+<tr>
+<td><a href="cblc.html" data-linktype="relative-path">CBLC</a></td>
+<td>Color bitmap location data</td>
+</tr>
+<tr>
+<td><a href="sbix.html" data-linktype="relative-path">'sbix'</a></td>
+<td>Standard bitmap graphics</td>
+</tr>
+<tr>
+<td><a href="svg.html" data-linktype="relative-path">'SVG '</a></td>
+<td>The SVG (Scalable Vector Graphics) table</td>
+</tr>
+</tbody>
+</table>
+<p>Note that several of these tables were also listed in other sections for tables related to SVG outlines, and for tables related to bitmap glyphs.</p>
+<p><a id="otherTables"></a></p>
+<h3 id="other-opentype-tables">Other OpenType Tables</h3>
+<table>
+<tbody>
+<tr>
+<th>Tag</th>
+<th>Name</th>
+</tr>
+<tr>
+<td><a href="dsig.html" data-linktype="relative-path">DSIG</a></td>
+<td>Digital signature</td>
+</tr>
+<tr>
+<td><a href="hdmx.html" data-linktype="relative-path">'hdmx'</a></td>
+<td>Horizontal device metrics</td>
+</tr>
+<tr>
+<td><a href="kern.html" data-linktype="relative-path">'kern'</a></td>
+<td>Kerning</td>
+</tr>
+<tr>
+<td><a href="ltsh.html" data-linktype="relative-path">LTSH</a></td>
+<td>Linear threshold data</td>
+</tr>
+<tr>
+<td><a href="merg.html" data-linktype="relative-path">MERG</a></td>
+<td>Merge</td>
+</tr>
+<tr>
+<td><a href="meta.html" data-linktype="relative-path">'meta'</a></td>
+<td>Metadata</td>
+</tr>
+<tr>
+<td><a href="stat.html" data-linktype="relative-path">STAT</a></td>
+<td>Style attributes</td>
+</tr>
+<tr>
+<td><a href="pclt.html" data-linktype="relative-path">PCLT</a></td>
+<td>PCL 5 data</td>
+</tr>
+<tr>
+<td><a href="vdmx.html" data-linktype="relative-path">VDMX</a></td>
+<td>Vertical device metrics</td>
+</tr>
+<tr>
+<td><a href="vhea.html" data-linktype="relative-path">'vhea'</a></td>
+<td>Vertical Metrics header</td>
+</tr>
+<tr>
+<td><a href="vmtx.html" data-linktype="relative-path">'vmtx'</a></td>
+<td>Vertical Metrics</td>
+</tr>
+</tbody>
+</table>
+<p>Note that the STAT table is required in variable fonts. Also, the 'hdmx' and VDMX tables are not used in variable fonts.</p>
+
+</body>
+</html>

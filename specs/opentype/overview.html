@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>overview — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/overview">https://learn.microsoft.com/en-us/typography/opentype/spec/overview</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="opentype-overview">OpenType Overview</h1>
+<p>The OpenType font format is a widely-supported format for font data with a rich set of capabilities for digital typography. It was developed as an extension of the original TrueType format, using the same 'sfnt' container structure, and maintaining compatibility for fonts created following the original TrueType specification. But several additional capabilities are also supported, including the following:</p>
+<ul>
+<li>Glyph outline data can use the CFF or CFF version 2 (“CFF2”) formats, as well as the TrueType glyph format.</li>
+<li>Multicolor glyph presentation is supported using embedded color bitmaps or SVG documents, or using 2D graphic compositions defined in the font using a binary format that combines outline-format glyphs with various graphics operations.</li>
+<li>All Unicode® characters can be supported, including supplementary-plane characters, as well as Unicode variation sequences.</li>
+<li>OpenType Layout tables provide the advanced typographic capabilities needed for high-quality typography as well as for international text using the wide variety of scripts supported in <a href="http://www.unicode.org/versions/latest/" data-linktype="external">The Unicode Standard®</a>.</li>
+<li>The <a href="math.html" data-linktype="relative-path"><em>mathematical typesetting table</em></a> allows a font to include data required for layout of complex, math formulas.</li>
+<li>OpenType collection files enable multiple fonts that share common data to be housed within a single file, allowing for de-duplication of data. This is especially useful, for example, for sets of CJK (Chinese, Japanese, Korean) fonts of the same design that share most glyphs in common but that vary with locale-specific glyphs for certain characters.</li>
+<li>Font variations (“variable fonts”) enable glyph outlines or other font data to be variable based on one or more design-axis parameters. Whereas a collection file can contain multiple discrete, static font resources, a variable font can provide continuous variation in design along each of its axes. This can provide great flexibility for content authors and designers while also allowing the font data for an entire font family to be represented in an efficient format.</li>
+</ul>
+<p>This specification is intended to be used in conjunction with other specifications.</p>
+<ul>
+<li><p>While various legacy character encoding standards are supported, it is primarily designed for use with <a href="http://www.unicode.org/versions/latest/" data-linktype="external">The Unicode Standard</a>, which provides the universal encoding for written characters and symbols, as well as specifications for how text in different scripts is to be represented.</p>
+</li>
+<li><p>This specification defines OpenType Layout tables and low-level glyph substitution and positioning operations needed for high-quality typography and for correct display of Unicode text in various scripts. (See <a href="ttochap1.html" data-linktype="relative-path">OpenType Layout Overview</a>.) The OpenType Layout <a href="featuretags" data-linktype="relative-path"><em>feature</em> registry</a> defines various features that represent specific typographic capabilities that may be supported in a font, and that are used to <em>activate</em> those capabilities in a given font. Many features expose optional capabilities that authors and typographers can choose to use at their discretion; for example, small cap forms, or kerning. But many other features are used to activate capabilities that are required for correct display of text; for example, required ligatures for Arabic script, or positioning of mark glyphs. Many scripts supported in Unicode have complex structural behaviors that require non-trivial operations, implemented in applications or in text-layout and “shaping” libraries, to derive a correct sequence of positioned glyphs for presentation of an underlying Unicode string. The feature registry will include features that can be used in those operations. However, complete specification of shaping algorithms for different scripts is beyond the scope of this specification. Such algorithms can be proprietary, “closed-source” implementations in particular applications; or they can be defined in vendor-specific specifications or in other industry specifications.</p>
+</li>
+<li><p>Support for mathematical text involving complex formulas requires a content format to describe text semantics combined with layout and presentation capabilities. This specification defines the font-specific data that would be needed for presentation. In this way, OpenType can be used to implement presentation capabilities for other document format specifications, such as T<sub>E</sub>X or <a href="https://www.w3.org/Math/" data-linktype="external">MathML</a>. Certain features can be defined in the OpenType Layout feature tag registry to support math layout operations.</p>
+</li>
+<li><p>Text layout involves operations within individual lines of text but also control over arrangement of lines into larger blocks within a page or similar context. This specification defines certain data that is used in block-level layout, such as default line metrics (ascent, descent, leading). Also, certain features can be defined in the OpenType Layout feature tag registry to support layout of text blocks for either horizontal or vertical layout orientation. Complete specification of block level layout is beyond the scope of this specification, however. It can be used in conjunction with other specifications, such as <a href="http://www.unicode.org/reports/tr50/" data-linktype="external"><em>Unicode Standard Annex #50: Unicode Vertical Text Layout</em></a>.</p>
+</li>
+<li><p>Some font capabilities can be subject to tailoring by applications or other higher-level protocols. For example, the TrueType instructions defined in this specification define operations used in rasterization of glyph outlines, but applications can supplement their own algorithms for final rasterization (for example, using over-sampling, or control of sub-pixel display elements) to optimize legibility of glyphs. Also, while the descriptions of features in the OpenType Layout feature tag registry can specify expected usage, applications may tailor their usage of features subject to other specifications or according to their own needs.</p>
+</li>
+</ul>
+
+</body>
+</html>

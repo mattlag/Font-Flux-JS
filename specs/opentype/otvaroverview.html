@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>otvaroverview — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/otvaroverview">https://learn.microsoft.com/en-us/typography/opentype/spec/otvaroverview</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="opentype-font-variations-overview">OpenType Font Variations Overview</h1>
+<p>This chapter of the OpenType Specification provides an overview of OpenType Font Variations, including an introduction to essential concepts, a glossary of terminology, and a specification of key algorithms: coordinate normalization, and interpolation of instance values.</p>
+<p><a id="Introduction"></a></p>
+<h2 id="introduction">Introduction</h2>
+<p>OpenType Font Variations allow a font designer to incorporate multiple font faces within a font family into a single font resource. Variable fonts — fonts that use OpenType Font Variations mechanisms — provide great flexibility for content authors and designers while also allowing the font data to be represented in an efficient format.</p>
+<p>A variable font allows for continuous variation along some given design axis, such as weight:</p>
+<figure><img src="media/otvo_fig1.png" alt="Variations of capital G along a weight axis" data-linktype="relative-path"><figcaption>Continuous variation along a design axis </figcaption></figure>
+<p>Conceptually, variable fonts define one or more axes over which design characteristics can vary. Weight is one possible axis of variation, but many different kinds of variation are possible. Variable fonts can combine two or more different axes of variation. For example, the following illustrates a combination of weight and width variation:</p>
+<figure><img src="media/otvo_fig2.png" alt="Variations of capital G in a design space with weight and width axes" data-linktype="relative-path"><figcaption>Continuous variation along multiple design axes </figcaption></figure>
+<p>Typically, variable fonts will vary the design of glyph outlines. In general, however, potentially any aspect of the visual appearance may vary. For example, a font could vary line height metrics or appearance of gradients in color glyphs rather than (or in addition to) glyph outlines.</p>
+<p>A variable font includes a table, the <a href="fvar.html" data-linktype="relative-path">font variations ('fvar')</a> table, that describes the axes of variation used by that font. This table determines how a variable font and its variation parameters will be presented to users and applications. Each axis is defined by a numeric range, using fractional values represented using the Fixed (16.16) data type. Conceptually, this provides a continuous gradient of variation, allowing for a large number of design-variation instances to be selected. Each instance would be designated by a coordinates array within the design-variation space — a specific value along each of the design axes. So, for instance, if a user or application requires small adjustments to width or slightly more pronounced serifs, fine control over such axes of variation is available.</p>
+<p>Every axis allows for a continuous range of instance-selection values, and typically there will be continuous variation in appearance for a given axis. In some cases, however, appearance can vary in discrete steps as the axis setting is changed. For example, an axis could trigger substitution to different alternate glyphs for discrete sub-ranges of axis values.</p>
+<p>A font designer can pre-define certain instances to have particular names. For example, a font can have continuous variation on a weight axis, but the designer may identify particular variation instances as “Light” or “Semibold”. Named instances can be used for any instance in the supported design-variation space. For example, in a font with weight and width axes, named instances might include “Light”, “Extended”, or “Semibold Condensed”. Details regarding named instances are also included in the font variations table.</p>
+<p>Weight and width are commonly-used axes of design variation, but a variable font may use a wide range of other, possible axes of variation. For more information regarding supported axes, see the font variations ('fvar') table chapter.</p>
+<p>In addition to a font variations table, a variable font also includes a <a href="stat.html" data-linktype="relative-path">style attributes (STAT)</a> table that describes additional details about each axis of variation and about particular values (chosen by the designer) along each axis. These details include descriptor strings for those values, such as “Bold”, “Extended” or “Semi-sans”. For example, a weight/width variable font might support a “Bold Extended” variation, and the STAT table would provide strings for “Bold” and “Extended” corresponding to the particular values along the weight and width axes, respectively. These strings can be used in the creation of font-picker user interfaces. They can also be used for projecting members of a multi-axis font family into different models for font families that assume a limited number of axes of sub-family variation, such as a weight/width/slant model. (See the STAT table chapter for more information.) Because the STAT table identifies values on each axis, software never needs to parse subfamily strings and guess that string tokens such as “Halbfett” refer to a particular value on some axis.</p>
+<blockquote>
+<p><em>Note:</em>
+The style attributes table makes it possible for fonts with many design axes to be defined as a single, multi-axis family, yet still have instances across all of those axes supported in older applications that may only recognize a limited set of axes of variation, or a limited number of values on an axis. The host platform, which must support the style attributes table, can translate instances in a multi-axis family into fewer instances in multiple families that older applications will recognize.</p>
+</blockquote>
+<p>As different variation instances of a font are selected, various items of data within a font can be adjusted accordingly. For example, a 'glyf' table can provide the default outline of a given glyph, but the outline can be adjusted in some manner to reflect different design variations. Several other data items besides glyph outlines may also need similar adjustments, including font-wide metrics, CVT values, or anchor positions within glyph-positioning lookup tables. A variable font includes required and optional tables that describe how such items within the font change from default values to different values as needed for different design-variation instances. For example, while a 'glyf' table can provide default outlines for glyphs, a <a href="gvar.html" data-linktype="relative-path">glyph variations ('gvar')</a> table would provide corresponding data that describes how each glyph outline changes for different variation instances.</p>
+<p>A variable font has a default instance, with axis parameter values set to the defaults defined for each axis in the 'fvar' table. Several tables in the font provide default values for many different data items — such as positions of glyph outline points in the 'glyf' table, or a font-wide ascender distance in the OS/2 table. The default instance of a font uses the default values for such items without any adjustments, and the variation-specific tables are not needed. If the variation-specific tables — 'fvar', 'gvar', MVAR, etc. — were to be removed from the font or ignored, the remaining data would comprise a complete font for the default instance.</p>
+<p>Font variation mechanisms for fonts using TrueType outlines were first introduced by Apple in “TrueType GX”. Some of the tables used for OpenType Font Variations have been adapted from Apple’s earlier specifications with some enhancements and revisions. (In particular, there are significant changes in the 'fvar' table specification in regard to both format and data values used, and the 'fmtx' table is not used.) Other extensions have also been created in order to integrate variation mechanisms into OpenType. Implementers may wish to refer to Apple’s specifications for historical insights, but should refer to the OpenType specification as the reference for implementation of OpenType Font Variations.</p>
+<p><a id="Terminology"></a></p>
+<h2 id="terminology">Terminology</h2>
+<p>Several terms are useful in discussing OpenType Font Variations and will be used in this specification.</p>
+<p><strong>OpenType Font Variations:</strong> The name of the technology described in this chapter.</p>
+<p><strong>Font face:</strong> A logical collection of glyph data sharing specific design parameters, along with associated metric data, and names or other metadata.</p>
+<p><strong>Font resource:</strong> OpenType data that includes (at least) the minimal set of tables needed to comprise a functional font face.</p>
+<blockquote>
+<p><em>Note:</em>
+Within OpenType font files, each <a href="otff.html#tabledirectory" data-linktype="relative-path">table directory</a> and the tables it references comprise a font resource. A well-formed .OTF or .TTF file includes a single font resource; a well-formed .OTC or .TTC file includes one or more font resources. A font resource without variation-related tables provides data for a single font face. A single font resource that includes variation-related tables can provide data for multiple font faces.</p>
+</blockquote>
+<p><strong>Font family:</strong> A set of font resources that have a common family name — the same string values for name ID 16 (Typographic Family Name) or name ID 1.</p>
+<blockquote>
+<p><em>Note:</em>
+It is assumed that all fonts within a family will share certain design characteristics, but differ in others. The design characteristics that are different potentially might be supported using OpenType Font Variations mechanisms.</p>
+</blockquote>
+<p><strong>Axis of variation:</strong> A designer-determined variable in a font face design that can be used to derive multiple, variant designs within a family.</p>
+<p><strong>Variable font:</strong> A font resource that supports multiple font faces in a family along designer-defined axes of variation using OpenType Font Variations mechanisms — that is, by means of variation tables and other variation data in tables generally.</p>
+<p><strong>Glyph design grid:</strong> The visual, two-dimensional space in which a font’s glyph outlines are designed.</p>
+<p><strong>Design-variation space:</strong> An abstract, multi-dimensional space defined by the axes of variation used by a font designer when designing a font family. In the context of a variable font, the variation space refers to the n-dimensional space defined by the axes of variation specified in the font’s 'fvar' table.</p>
+<blockquote>
+<p><em>Note:</em>
+A variation space can have one or more axes. In a variable font, the variation space is bounded by minimum and maximum values specified in the 'fvar' table. The zero origin has no special significance within a design-variation space. Within a variable font, however, the zero origin (using normalized coordinate scales — defined below) is a marked position since it corresponds to the font face represented directly by the font resource’s name, glyph and metric tables without reference to any variation tables or other variation data.</p>
+</blockquote>
+<p><strong>Variation data:</strong> Data used in a variable font to describe the way that values for data items in the font are adjusted from default values to alternate values needed for different instances within the variation space.</p>
+<p><strong>Variation tables:</strong> OpenType tables specifically related to Font Variations, including the following:</p>
+<ul>
+<li><a href="avar.html" data-linktype="relative-path">Axis variations ('avar')</a> table</li>
+<li><a href="cvar.html" data-linktype="relative-path">CVT (control value table) variations ('cvar')</a> table</li>
+<li><a href="fvar.html" data-linktype="relative-path">Font variations ('fvar')</a> table</li>
+<li><a href="gvar.html" data-linktype="relative-path">Glyph variations ('gvar')</a> table</li>
+<li><a href="hvar.html" data-linktype="relative-path">Horizontal metrics variations (HVAR)</a> table</li>
+<li><a href="mvar.html" data-linktype="relative-path">Metrics variations (MVAR)</a> table</li>
+<li><a href="vvar.html" data-linktype="relative-path">Vertical metrics variations (VVAR)</a> table</li>
+</ul>
+<blockquote>
+<p><em>Note:</em>
+The 'fvar' table describes a font’s variation space, and other variation tables provide variation data to describe how different data items are varied across the font’s variation space. Note that not all of these tables are required in a variable font. Also note that variation data for certain font data items may be contained in other tables not specifically related to Font Variations. In addition, certain tables not specifically related to Font Variations are required in variable fonts. See the section, <a href="#vartables" data-linktype="self-bookmark">Variation data tables and miscellaneous requirements</a> below for more details.</p>
+</blockquote>
+<p><strong>Point:</strong> In order to avoid ambiguity, point will be used only to refer to (X, Y) positions within the glyph design grid. When discussing the design-variation space, position will be used to refer to positions within that space.</p>
+<p><strong>Variation instance:</strong> A font face corresponding to a particular position within the variation space of a variable font.</p>
+<p><strong>Named instance:</strong> A variation instance that is specifically defined and assigned a name within the 'fvar' table.</p>
+<p><strong>User coordinate scale:</strong> The numeric scale used to characterize a given axis of variation, and the scale used by applications when selecting instances of a variable font.</p>
+<blockquote>
+<p><em>Note:</em>
+Some axes of variation have a prescribed, limited range, expressed in terms of the user scale. When using a particular variable font, the user scale for a given axis is bounded by minimum and maximum specified within the 'fvar' table, and may be a sub-range of the valid range for that axis generally.</p>
+</blockquote>
+<p><strong>Normalized coordinate scale:</strong> When processing variation data in a variable font to derive values for particular instances, a normalization process is applied to map user-scale values on each axis to a normalized scale applicable within that font that ranges from -1 to 1.</p>
+<blockquote>
+<p><em>Note:</em>
+The 'fvar' table specifies user-scale minimum, default and maximum values for each axis. In the normalization process, these get mapped to -1, 0 and 1 respectively, with other values along each axis mapping to intervening points. Mapping of other values is modulated by the 'avar' table, if present. All of the variation data within the font makes reference to axis values or positions within the font’s variation space in terms of normalized-scale values.</p>
+</blockquote>
+<p><strong>Tuple / N-tuple:</strong> An ordered set of coordinate values used to designate a position within the variation space of a font.</p>
+<blockquote>
+<p><em>Note:</em>
+“Tuple” is used here with a meaning that is consistent with conventional usage in computer science and mathematics. In Apple TrueType specifications, “tuple” has been used with a different meaning to refer to sets of variation data associated with a particular region of the font’s design-variation space. In the OpenType specification, “tuple variation data” is used for that meaning, and “n-tuple” is used in many cases so as to avoid confusion with usage in Apple specifications.</p>
+</blockquote>
+<p><strong>Region:</strong> A sub-space (that is, some portion or subset) of the design-variation space over which a variation adjustment is described.</p>
+<blockquote>
+<p><em>Note:</em>
+A region involves all of the axes of the font’s variation space; it is not a “sub-space” in the sense of involving only a subset of axes. In normalized coordinates, regions are always rectilinear: they have straight edges and right-angled corners. Variation data may be defined for up to 65,535 regions in a font’s variation space.</p>
+</blockquote>
+<p><strong>Master:</strong> A set of source font data that includes complete outline data for a particular font face, used in a font-development workflow.</p>
+<blockquote>
+<p><em>Note:</em>
+Some font-development workflows utilize several masters as source data for creating font resources for different faces within a family. Multiple source masters might also be used to create a variable font. Each source master would correspond to a single instance in the variation space, and possibly might correspond to variation data for a particular region in the variable font. Whereas each master includes complete outline data, however, the variable font includes only a single set of complete outline data (in the 'glyf' or CFF2 table), which is complemented with variation data for different regions to represent the full range of instances supported by the font.</p>
+</blockquote>
+<p><strong>Deltas / Adjustment deltas:</strong> Numeric values in variation data that specify adjustments to default values of data items for particular regions within the variation space or for sub-ranges within a particular axis.</p>
+<p><strong>Delta set:</strong> A set of adjustment deltas associated with a particular region of the variation space.</p>
+<p><strong>Scalars:</strong> Co-efficient values applied to deltas to derive adjustment values needed for a particular variation instance.</p>
+<p><strong>Interpolation:</strong> The process of deriving adjusted values for some font data items, such as the X and Y coordinates of glyph outline points, for a particular variation instance.</p>
+<p><a id="VariationSpace"></a></p>
+<h2 id="variation-space-default-instances-and-adjustment-deltas">Variation Space, Default Instances and Adjustment Deltas</h2>
+<p>A variable font supports one or more axes of variation. Commonly-used axes of variation should be registered, though custom, designer-defined axes can also be used. Each axis has a distinct tag that is used to identify it in the 'fvar' table. See the <a href="fvar.html" data-linktype="relative-path">'fvar' table specification</a> for more details about axis tags.</p>
+<p>The specification of axes used for a variable font is given in the 'fvar' table, along with minimum, default and maximum values for each axis. This defines a variation space for the font. It is entirely up to the designer what range of design variation is supported for each axis, and how the designs align with the scale for each axis.</p>
+<p>For example, a variable font may support a full range of weights from thin to black:</p>
+<figure><img src="media/otvo_fig3.png" alt="Variations of capital G from thin to black" data-linktype="relative-path"><figcaption>Font A: Thin to black weight variation </figcaption></figure>
+<p>But a designer might also choose to support only a limited weight range:</p>
+<figure><img src="media/otvo_fig4.png" alt="Variations of capital G from regular to black" data-linktype="relative-path"><figcaption>Font B: Regular to black weight variation </figcaption></figure>
+<p>The variable font has a default instance, which corresponds to the position in the variation space with coordinates set to the default values for each axis specified in the 'fvar' table. The default instance uses default values for various data items that are provided directly in non-variations-specific font tables, such as the grid coordinates of outlines points for a glyph in the 'glyf' table.</p>
+<figure><img src="media/otvo_fig5.png" alt="Outlines for capital Q" data-linktype="relative-path"><figcaption>Default glyph outline data in a 'glyf' table entry </figcaption></figure>
+<p>All other instances have non-default coordinate values for one or more axes. These other instances are supported by variation data that provide adjustment deltas for various font data items that produce an adjustment from their default values.</p>
+<figure><img src="media/otvo_fig6.png" alt="Outlines for capital Q and the adjusted outlines for a variation" data-linktype="relative-path"><figcaption>Default glyph outline and adjusted point positions for a non-default instance </figcaption></figure>
+<figure><img src="media/otvo_fig7.png" alt="Details of deltas applied to control points" data-linktype="relative-path"><figcaption>Detail inset showing contour point adjustments </figcaption></figure>
+<p>Typically, deltas are provided for the extremes on each variation axis, though deltas can be provided for other positions in the variation space as well. (See below for more details.) For axis positions between the default and minimum or maximum extreme, other values are interpolated.</p>
+<p>The font designer can determine which design is considered the default, and what deltas are provided. For example, a font with thin-to-black weight variation might be implemented with Regular (400) as the default, and Thin (100) and Black (900) as minimum/maximum values. In this case, variation data would include deltas for the Thin extreme and also deltas for the Black extreme.</p>
+<figure><img src="media/otvo_fig8.png" alt="Weight axis with deltas for both axis minimum and maximum" data-linktype="relative-path"><figcaption>Default near axis mid-point with deltas at minimum and maximum extremes </figcaption></figure>
+<p>But a different font with thin-to-black weight variation might be implemented with Thin as the <em>default and minimum</em> value and Black as the maximum. In this case, variation data might include deltas for only the Black extreme.</p>
+<figure><img src="media/otvo_fig9.png" alt="Weight axis with default at the axis minimum and deltas for only the maximum" data-linktype="relative-path"><figcaption>Default at axis minimum with deltas at maximum extreme </figcaption></figure>
+<p>Note that a consideration in the choice of default is desired behavior in legacy applications or platforms that do not support Font Variations: in such software, only the default instance of a variable font will be supported.</p>
+<p>A common process for developing a variable font involves the use of multiple, master source fonts. Each master provides complete glyph outline data for designs for a different position within a variation space. For example, a font designer might create fonts for thin and heavy extremes along a weight axis.</p>
+<figure><img src="media/otvo_fig10.png" alt="Design masters for thin and black" data-linktype="relative-path"><figcaption>Thin and Black source master outlines for font development workflow </figcaption></figure>
+<p>From these two source masters, font tools can derive a variable font that has complete glyph outlines for a default weight plus deltas for one or more non-default weights, including the minimum or maximum weights.</p>
+<figure><img src="media/otvo_fig11.png" alt="Production font with default outlines for regular plus deltas for thin and black" data-linktype="relative-path"><figcaption>Production variable font with single outline data plus deltas </figcaption></figure>
+<p>Note that each of the source, master fonts has complete outline data for a particular design variant. In contrast, the variable font has complete outlines for only one variation instance, with all other instances derived using the default outlines plus deltas. Each source master may correspond to a region with associated variation data in the variable font, though the relationship between source masters and the sets of variation data within the font will depend on the nature of the designs and on the tools used to produce the variable font.</p>
+<p>Also note that a requirement for using multiple, master, font sources to derive a variable font is that corresponding glyph outlines must be point-compatible: they must have the same number of contours and the same number of points in each contour.</p>
+<p><a id="CSN"></a></p>
+<h2 id="coordinate-scales-and-normalization">Coordinate Scales and Normalization</h2>
+<p>Positions within the variation space can be represented as an n-tuple — an ordered list of coordinate values. Examples will be seen below. The coordinate values of an n-tuple may use user-axis scales, or may use normalized scales. The precise relationship between these scales will be described.</p>
+<p><em>User coordinates</em> refers to an n-tuple of coordinate values expressed using <em>user axis scales</em>. User scales refer to the numeric scales used to describe a variation axis within the 'fvar' table. Each variation axis uses its own numeric scale, as appropriate to the nature of that axis of variation. The scales for registered axis tags are defined as part of the axis tag registration, though different fonts may support different sub-ranges of an axis scale. In this way, the 'fvar' table of a given font defines a particular coordinate system for the variation space of that font that may be unlike that of other fonts.</p>
+<p>Whereas the definitions in the 'fvar' table are expressed in user coordinates, the variation data formats used within a variable font use a normalized coordinate system — <em>normalized coordinates</em> — in which the minimum, default and maximum values specified for each axis in the 'fvar' table are mapped to -1, 0 and 1, respectively.</p>
+<p>For example, the following figure illustrates the user coordinate system of the variation space for a possible font with weight and width axes of variation. Various positions within the design space are indicated, including positions corresponding to the default, minimum and maximum values for each axis defined in the 'fvar' table.</p>
+<img src="media/otvo_fig12.png" alt="A two-dimensional coordinate space using 'user' coordinates" data-linktype="relative-path">
+<p>The following figure illustrates the normalized coordinate system for the same positions in the design space:</p>
+<img src="media/otvo_fig13.png" alt="A two-dimensional coordinate space using normalized coordinates" data-linktype="relative-path">
+<p>The normalization transformation uses a default transformation followed by a secondary modification of the transformation defined in the <a href="avar.html" data-linktype="relative-path">'avar'</a> table, if present. An 'avar' table does not affect the mapping of minimum, default, and maximum values to -1, 0 and 1; it can only affect mapping of intervening values. This is described in more detail below.</p>
+<p>The default normalization mapping divides the variation range for each axis into two segments: minimum value to default value, and default value to maximum value. The minimum, default and maximum values are mapped into -1, 0 and 1 respectively. Within each segment, all other values are interpolated linearly, as follows:</p>
+<ol>
+<li><p>Let <code>userValue</code> be the user-scale coordinate value for a user-selected instance value for a given axis, let <code>defaultNormalizedValue</code> be the default normalized instance value, let <code>axisMin</code> be the minimum value for the axis specified in the 'fvar' table, etc.</p>
+</li>
+<li><p>Force the user-scale coordinate value to be in range by clamping to the minimum and maximum values:</p>
+<pre><code>if userValue &lt; axisMin
+     userValue = axisMin;
+if userValue &gt; axisMax
+     userValue = axisMax;
+</code></pre>
+</li>
+<li><p>Interpolate values linearly within the different segments:</p>
+<pre><code>if (userValue &lt; axisDefault)
+{
+    defaultNormalizedValue = -(axisDefault - userValue) / (axisDefault - axisMin);
+}
+else if (userValue &gt; axisDefault)
+{
+    defaultNormalizedValue = (userValue - axisDefault) / (axisMax - axisDefault);
+}
+else
+{
+    defaultNormalizedValue = 0;
+}
+</code></pre>
+</li>
+</ol>
+<p>If an <a href="avar.html" data-linktype="relative-path">'avar'</a> table is present, then an additional normalization step is performed for each axis to compute the final normalized value. Within the 'avar' table, AxisValueMap records map default normalized values for an axis to modified normalized values. Pairs of consecutive AxisValueMap records define segments within the range for a given axis. Within a segment, intermediate values are interpreted linearly. Starting with the <code>defaultNormalizedValue</code> computed as above, the additional normalization step proceeds as follows:</p>
+<ol>
+<li><p>Retrieve the SegmentMaps record for a given axis from the <code>avar.axisSegmentMaps</code> array using the index for the axis as defined in the 'fvar' table.</p>
+</li>
+<li><p>Scan the AxisValueMaps records in the <code>SegmentMaps.axisValueMaps</code> array to find the first record that has an <code>AxisValueMaps.fromCoordinate</code> value greater than or equal to <code>defaultNormalizedValue</code>. Designate this record as <code>endSeg</code>. (Note that <code>endSeg</code> cannot be the first map record, which is for -1.)</p>
+</li>
+<li><p>If <code>endSeg.fromCoordinate</code> equals <code>defaultNormalizedValue</code>, then set <code>finalNormalizedValue</code> to <code>endSeg.toCoordinate</code>. Return this value and end.</p>
+</li>
+<li><p>Else <code>endSeg.fromCoordinate</code> is strictly greater than <code>defaultNormalizedValue</code>): designate the preceding AxisValueMaps record as <code>startSeg</code>.</p>
+</li>
+<li><p><code>finalNormalizedValue</code> is computed as follows:</p>
+<pre><code>ratio = (defaultNormalizedValue - startSeg.fromCoordinate) /
+        (endSeg.fromCoordinate - startSeg.fromCoordinate)
+
+finalNormalizedValue = startSeg.toCoordinate + ratio *
+                       (endSeg.toCoordinate - startSeg.toCoordinate)
+</code></pre>
+</li>
+</ol>
+<p>See the <a href="avar.html#tableFormats" data-linktype="relative-path">Table formats</a> section of the 'avar' table chapter for details on the structures mentioned above.</p>
+<p>When processing variation instance coordinates and variation data, the amount of precision used and the handling of rounding can potentially have noticeable impacts on visual results. In order to ensure consistent behavior for a given font across implementations, implementations must observe the following requirements in relation to precision and rounding:</p>
+<ol>
+<li><p>The input to normalization must be in 16.16 format. If an application provides an input value represented as either a <em>float</em> or <em>double</em> data type, the method described below must be used for conversion to 16.16.</p>
+</li>
+<li><p>The math calculations for normalization, specified above, are done in 16.16.</p>
+</li>
+<li><p>After the default normalization calculation is performed, some results may be slightly outside the range [-1, +1]. Values must be clamped to this range:</p>
+<pre><code>if result &lt; -1
+    result = -1;
+if result &gt; 1
+    result = 1;
+</code></pre>
+</li>
+<li><p>If an 'avar' table is present, math calculations are done in 16.16, and results are clamped to the range [-1, +1] as above.</p>
+</li>
+<li><p>Convert the final, normalized 16.16 coordinate value to 2.14 by this method: add 0x00000002, and sign-extend shift to the right by 2.</p>
+</li>
+<li><p>The 2.14 result must be stored and returned in certain operations, as described below.</p>
+</li>
+<li><p>For subsequent calculations — calculation of interpolation scalars or accumulation of scaled delta values — the 2.14 representation may be converted to float, 16.16 or other implementation-specific representations. It is recommended that at least 16 fractional bits of precision be maintained, and that any rounding be done at the last point before a value is used.</p>
+</li>
+</ol>
+<p>When converting from float or double data types to 16.16, the following method must be used:</p>
+<ol>
+<li>Multiply the fractional component by 65536, and round the result to the nearest integer (for fractional values of 0.5 and higher, take the next higher integer; for other fractional values, truncate). Store the result in the low-order word.</li>
+<li>Move the two’s-complement representation of the integer component into the high-order word.</li>
+</ol>
+<blockquote>
+<p><em>Note:</em> Apart from conversion of higher-precision representations to 16.16, this specification has no other requirements for instance coordinates, scaled deltas or derived instance values to be rounded. For example, for contour point coordinates after deltas have been applied, a rasterizer implementation can use a high-precision floating type or can round to a lower-precision representation depending on implementation-specific requirements. Different implementations can use different precision for calculation of instance values, resulting in minor visual differences. If data for a font instance is converted or exported to another representation — for example, in dynamic generation of a static font for a given instance — there can be minor differences between the derived static font versus the source variable font with that instance selected.</p>
+</blockquote>
+<p>A normalized value in 2.14 representation must be obtained exactly as specified in steps 1–5 above. In fonts with TrueType instructions, this exact value must be returned by the GET VARIATION instruction. (See <a href="tt_instructions.html" data-linktype="relative-path">The TrueType Instruction Set</a>.) If a font has OpenType Layout tables in which FeatureVariation tables are used, this exact value must be used when comparing with axis range values specified in a condition table.</p>
+<p><a id="normexample"></a></p>
+<h3 id="avar-normalization-example">'avar' normalization example</h3>
+<p>The following example illustrates how normalization using 'avar' mappings works.</p>
+<p>Suppose that an axis in a font has minimum value of 100, a default of 400, and maximum of 900. And suppose that the instance selected has a user coordinate of 250. By the algorithm described above, the default normalized value will be calculated as follows:</p>
+<pre><code>defaultNormalizedValue = -(axisDefault - userValue) / (axisDefault - axisMin)
+                       = -(400 - 250) / (400 - 100)
+                       = -150 / 300
+                       = -0.5
+</code></pre>
+<p>Suppose also that the font has an 'avar' table with the following mappings (AxisValueMap records) for this axis:</p>
+<table>
+<tbody>
+<tr>
+<th>Record index</th>
+<th>fromCoordinate</th>
+<th>toCoordinate</th>
+</tr>
+<tr>
+<td>0</td>
+<td>-1.0</td>
+<td>-1.0</td>
+</tr>
+<tr>
+<td>1</td>
+<td>-0.75</td>
+<td>-0.5</td>
+</tr>
+<tr>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>3</td>
+<td>0.4</td>
+<td>0.4</td>
+</tr>
+<tr>
+<td>4</td>
+<td>0.6</td>
+<td>0.9</td>
+</tr>
+<tr>
+<td>5</td>
+<td>1.0</td>
+<td>1.0</td>
+</tr>
+</tbody>
+</table>
+<p>Given the default normalized value of -0.5, the relevant segment is defined by record 1 and record 2:</p>
+<ul>
+<li>The first record having a <code>fromCoordinate</code> greater than or equal to <code>defaultNormalizedValue</code> is record index 2. Thus, record 2 is <code>endSeg</code>.</li>
+<li><code>endSeg.fromCoordinate</code> is strictly greater than <code>defaultNormalizedValue</code>. Thus, the preceding record, record 1, is <code>startSeg</code>.</li>
+</ul>
+<p>Thus, the final normalized value is computed as follows:</p>
+<pre><code>ratio = (defaultNormalizedValue - startSeg.fromCoordinate) /
+        (endSeg.fromCoordinate - startSeg.fromCoordinate)
+        = (-0.5 - (-0.75)) / (0 - (-0.75))
+        = 0.3333
+
+finalNormalizedValue = startSeg.toCoordinate + ratio *
+                        (endSeg.toCoordinate - startSeg.toCoordinate)
+                        = -0.5 + 0.3333 * (0 - (-0.5))
+                        = -0.3333
+</code></pre>
+<p>The following table shows how several normalized coordinate values would be modified by this 'avar' data:</p>
+<table>
+<tbody>
+<tr>
+<th>Default normalized value</th>
+<th>Final normalized value</th>
+</tr>
+<tr>
+<td>-1.0</td>
+<td>-1.0</td>
+</tr>
+<tr>
+<td>-0.75</td>
+<td>-0.5</td>
+</tr>
+<tr>
+<td>-0.5</td>
+<td>-0.3333</td>
+</tr>
+<tr>
+<td>-0.25</td>
+<td>-0.1667</td>
+</tr>
+<tr>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>0.25</td>
+<td>0.25</td>
+</tr>
+<tr>
+<td>0.5</td>
+<td>0.65</td>
+</tr>
+<tr>
+<td>0.75</td>
+<td>0.9375</td>
+</tr>
+<tr>
+<td>1.0</td>
+<td>1.0</td>
+</tr>
+</tbody>
+</table>
+<p><a id="VarData"></a></p>
+<h2 id="variation-data">Variation Data</h2>
+<p>Variation data provides data that describes variation of particular font values over the variation space. For example, variation data in the 'gvar' table describes how glyph outlines in the 'glyf' table are transformed by specifying how individual points in a glyph outline get moved for different variation instances.</p>
+<p>Variation for a given font value is expressed as combinations of deltas that apply to different regions of the variation space, and that are combined in a weighted manner to derive adjustments for instances at different positions in the variation space. Each delta in the variation data is associated with a specific region of the variation space over which it has an effect. The aggregate combination of deltas and their associated regions comprise the variation data. The variation data for different items in a font are stored in different locations. For example, variation data for entries in a 'glyf' table are stored in a 'gvar' table; variation data for certain entries in the OS/2 table is stored in an MVAR table. In the case of outline data in a CFF2 table, variation data is stored within the CFF2 table itself. See the following section below for more details.</p>
+<p>As mentioned, each delta value is associated with a particular region of the variation space over which it applies. The effective region for a delta is always rectilinear (in normalized coordinates). Therefore, this region can always be specified by a pair of n-tuples designating positions at diagonal-opposite corners of the region. Within the specified region, variation effects will vary from zero change to some peak change at a particular position within the region. Thus, in the general case, there are three positions that matter: the diagonal-opposite corners that define the extent of the region, and a position at which the peak change occurs.</p>
+<blockquote>
+<p><em>Note:</em>
+The figures shown below will use two axes of variation. The concepts and the statements made, however, apply to fonts with any number of axes of variation: regions are always rectilinear, and the diagonal-opposite corners plus a peak are the positions that describe a region.</p>
+</blockquote>
+<img src="media/otvo_fig14.png" alt="A region within a Cartesian space, with two positions that define the extent of the region and a peak position within the region" data-linktype="relative-path">
+<p>This general case is not the most common in practice. In most cases, there is a need to describe a maximal variation at an outer position of the variation space that diminishes to zero change at the zero origin — the default instance. In this case, then, the zero origin is one of the corner positions for the applicable region, and the peak change occurs at the diagonal-opposite position. For this common case, then, the effective region and peak position can be described using a single n-tuple.</p>
+<img src="media/otvo_fig15.png" alt="An entire quadrant as a region within a Cartesian space" data-linktype="relative-path">
+<p>The more general, but less common, case involves arbitrary regions, illustrated earlier; these are referred to as <em>intermediate</em> regions. In these cases, the variation data requires three n-tuples: one for the peak-change position, and two for <em>start</em> and <em>end</em> positions at diagonal-opposite corners.</p>
+<p>Delta values in the variation data specify a maximal adjustment for an instance at the peak position. The effects taper off for other instances, falling to zero adjustment for instances outside the region of applicability. When a given variation instance is selected, a scalar value is calculated and applied to a given delta to derive a net adjustment associated with that delta for that instance. These scalars will always be in the range 0 (zero adjustment) to 1 (maximal adjustment). Specific details on this scalar calculation are provided below.</p>
+<p>An example will help to explain these concepts. Consider a single-axis font with weight variation. A particular glyph outline defined in the 'glyf' table might have a pair of points (among others) that are on-curve points on opposite sides of a stem. The entry in the 'glyf' table would specify glyph-design-grid coordinates for these points for the default instance of the font, perhaps corresponding to the regular weight:</p>
+<img src="media/otvo_fig16.png" alt="Two points in a glyph outline" data-linktype="relative-path">
+<p>Variation data would be defined for the maximum value on the weight axis, corresponding to 1.0 in the normalized weight scale. This data would provide X and Y deltas for the two contour points to shift their positions as needed for the heaviest-supported weight instance:</p>
+<img src="media/otvo_fig17.png" alt="Adjusted positions of outline points using full delta amounts" data-linktype="relative-path">
+<p>In this example, the first point would have X and Y deltas of +40 and +10, respectively; the second point would have deltas of +140 and +10. These provide a maximal adjustment of the outline points, applied when the user-selected instance is at the maximum weight. For weights between the default and the maximum, such as a normalized weight value of 0.5, the effect is scaled back.</p>
+<img src="media/otvo_fig18.png" alt="Adjusted positions of outline points using scaled delta amounts" data-linktype="relative-path">
+<p>In this case, a scalar co-efficient of 0.5 is applied to the delta values.</p>
+<p>The scalar calculation can be thought of as a function that maps each normalized axis value from -1 to 1 onto a scalar range of 0 to 1. Each region that has associated variation data has its own scalar function, and the scalar function is defined precisely by the region description.</p>
+<p>For example, in a single-axis font, if a delta is provided for the region from 0 to 1 with the peak effect at 1, the scalar function would be as follows:</p>
+<img src="media/otvo_fig19.png" alt="The scalar function graph looks like a ramp, increasing for axis values between 0 and 1." data-linktype="relative-path">
+<p>This example considers a non-intermediate region. The same concepts can be generalized to intermediate regions. An intermediate region has start and end axis values between which there is some adjustment effect, and a peak axis value at which the full adjustment effect is applied. The scalar function has a triangular shape within the applicable range, with a value of 1.0 at the peak axis value, 0 at or below the start axis value, and 0 above the end axis value.</p>
+<img src="media/otvo_fig20.png" alt="The scalar function graph looks like a tooth." data-linktype="relative-path">
+<p>When generalizing to two or more axes, similar concepts apply, but contributions for each axis are combined into an overall effect. Scalars are calculated for each axis, and the per-axis scalars are multiplied together to produce an overall scalar for the given delta and the given instance. For example, the following graph illustrates an approximation of the scalar function for a region in a two-axis font with peak at (1, 1):</p>
+<img src="media/otvo_fig21.png" alt="The scalar function graph for two axes is a three-dimensional graph that looks like a portion of a cone with a square base." data-linktype="relative-path">
+<p>Since the scalar value calculated for each axis is between 0 and 1, the product when scalars for each axis are multiplied together is also between 0 and 1. The maximal adjustment effect for a given delta is obtained only when the instance axis values for all axes align with the peak coordinate values for the region associated with that delta.</p>
+<p>The minimum and maximum values specified for an axis in the 'fvar' table determine limits on instances that can be selected by a user. If a user requests an instance with an axis value below the minimum, the minimum value is used; or if an axis value above the maximum is requested, the maximum is used. Thus, when processing variation data for a selected instance, the normalized axis values will always be between -1 and 1.</p>
+<p>With that constraint assumed, let us consider the scalar value for a given delta when instance axis values are outside the region of applicability. If the selected instance is out of range on any axis, then the scalar value pertaining to that axis will be 0. As mentioned, per-axis scalars are multiplied together to produce an overall scalar. Thus, if the selected instance is out of range on any axis, then the overall scalar for that delta will be 0, and no adjustment from that delta will be applied.</p>
+<p>When a delta is provided for a region defined by n-tuples that have a peak value of 0 for some axis, then that axis does not factor into scalar calculations. This means that the adjustment effect is the same for any value in that axis, if other axis values remain constant. In effect, the region of applicability spans the full range for the zeroed axis. For example, suppose a font has two axes, weight and width, and that deltas are provided for a region from (0, 0) to (1, 0). In this case, the deltas are applicable for any instance value on the second axis (width), so long as the instance value in the first axis (weight) is in range:</p>
+<img src="media/otvo_fig22.png" alt="A region in a Cartesian space covering the two right quadrants" data-linktype="relative-path">
+<p>In this case, the scalar function for <em>the second axis</em> (width) is, effectively, a constant value of 1, with no effect on the net scalar calculation. The following graphs illustrate the scalar functions for each of the two axes, weight and width, in this example:</p>
+<img src="media/otvo_fig23.png" alt="The scalar function graph for the first axis looks like a ramp, increasing for axis values between 0 and 1." data-linktype="relative-path">
+<img src="media/otvo_fig24.png" alt="The scalar function graph for the second axis is a constant value of 1." data-linktype="relative-path">
+<p>For a given font value, deltas may be provided for several different regions in the variation space. When a particular variation instance is selected, zero, one or many of those deltas may have an effect, according to whether the position of the instance falls within the region of applicability for each delta. Different scalars are calculated for each applicable delta, and the scaled values for applicable deltas are combined to derive a net adjustment.</p>
+<p>When creating a single-axis font, deltas will be required for both the minimum and maximum extremes of that axis. (Both extremes, that is, unless one is also the default.) Additional intermediate-region deltas may also be provided. When creating a multi-axis font, deltas would typically be provided for the minimum and maximum extremes on each axis. The following figure illustrates this for a two-axis font:</p>
+<figure><img src="media/otvo_fig25.png" alt="A Cartesian space with points at (-1,0), (1,0), (0,-1) and (0,1)" data-linktype="relative-path"><figcaption>Two-axis font with deltas at minimum/maximum extremes on each axis </figcaption></figure>
+<p>As noted above, when deltas are specified for a region with some axis value being zero, then the deltas apply to all values on that axis. Therefore, for the instance at position (1, 1), deltas for (1, 0) and (0, 1) will both apply. This means that the adjustments for the (1, 0) deltas and the adjustments for the (0, 1) deltas will both be applied to produce a combined effect. If the adjustments made for each axis are entirely independent of the adjustments for the other axis, then the two sets of deltas may be sufficient to provide the intended values for the (1, 1) instance.</p>
+<p>Often, however, these two sets of deltas alone will not be sufficient to provide the desired results for all instances, and that additional deltas are required for the (1, 1) position in addition. Generalizing, in a multi-axis font, it will often be the case that at least some deltas are needed for the corner extremes as well as for the axis end points.</p>
+<figure><img src="media/otvo_fig26.png" alt="A Cartesian space with points at (-1,1), (-1,0), (-1,-1), (0,1), (0,-1), (1,1), (1,0) and (1,-1)" data-linktype="relative-path"><figcaption>Deltas at minimum/maximum extreme plus extrema-intersection corners </figcaption></figure>
+<p>As noted in the <a href="#VariationSpace" data-linktype="self-bookmark">Variation Space, Default Instances and Adjustment Deltas</a> section above, the default instance can correspond to the minimum or maximum value on one or more axes. This can allow variations across a variation space to be implemented using fewer regions and associated delta data. The following figures illustrate some additional possibilities for a two-axis font.</p>
+<figure><img src="media/otvo_fig26a.png" alt="A Cartesian space with points at (0,1), (0,-1), (1,1) and (1,0)" data-linktype="relative-path"><figcaption>Two-axis font with default at minimum for one axis </figcaption></figure>
+<figure><img src="media/otvo_fig26b.png" alt="A Cartesian space with points at (0,1), (1,1) and (1,0)" data-linktype="relative-path"><figcaption>Two-axis font with default at minimum for both axes </figcaption></figure>
+<blockquote>
+<p><em>Note:</em> Deltas for corner extremes are optional. Depending upon the needs of a particular font design, deltas can be added for none, some or all of the corner extremes. In the first example above, the design-space corners in the upper left and lower left of the diagram correspond to the minimum and maximum values for one of the axes, and so deltas in those corners are needed to provide variation on that axis. But deltas for the upper right and lower right corners are optional; in this example, supplemental deltas are added only for the upper right corner.</p>
+</blockquote>
+<p>As noted above, an intermediate region provides an axis scalar function with a triangular, or “tooth”, shape. A pair of intermediate regions that barely overlap and that have a sharp incline at the overlap can be used to provide an inflection point along an axis in regard to some variation behavior.</p>
+<img src="media/otvo_fig26c.png" alt="A graph of two overlapping tooth functions" data-linktype="relative-path">
+<p>Note that each intermediate region has its own associated delta values, and deltas can be used to give some sharp transition at the overlap point. For example, contour points could suddenly shift to make some element of a glyph’s structure appear or disappear, as illustrated in the following figure.</p>
+<figure><img src="media/otvo_fig26d.png" alt="Glyphs for weight variations of capital Q with simplified strokes at heavier weights" data-linktype="relative-path"><figcaption>Glyph structure simplified at heavier weights </figcaption></figure>
+<blockquote>
+<p><em>Note:</em>
+When using such techniques, placement of such a transition point along an axis and placement of named instances should be considered together so that sharp transitions do not occur close to a named instance. This will avoid any possibility of inconsistent behavior in different applications when using named instances that might arise due to small discrepancies in processing the numeric values.</p>
+<p><em>Note:</em>
+When using such techniques, it is important to bear in mind that some applications will support selection of arbitrary instances, including those with axis values in the overlapping range, and that, in the overlapping range, scaled deltas for both of the intermediate regions will apply with cumulative effect. Some design iteration may be needed, with small adjustments to delta values or the way that the regions overlap, in order to avoid unexpected or undesired results in the transitional range.</p>
+<p><em>Note:</em>
+The above figure illustrates the use of intermediate regions to implement a “stroke-reduction” effect. Another implementation technique that can be used to change the structure of a glyph for particular variation-axis value ranges is glyph substitution. The OpenType Layout <a href="features_pt#rvrn" data-linktype="relative-path">Required Variation Alternates</a> feature in combination with a <a href="chapter2.html#featVarTbl" data-linktype="relative-path">FeatureVariations</a> table within the GSUB table can be used to perform glyph substitutions when a variation instance is selected in some range along one or more axes. This may be an easier and more-easily maintained technique, and is generally recommended for achieving such effects.</p>
+</blockquote>
+<p>The above has provided an overview of the basic concepts involved in variation data: regions of applicability, per-axis and overall scalars, and combined effects of multiple, applicable deltas. A detailed specification of the interpolation process is provided below.</p>
+<p><a id="vartables"></a></p>
+<h2 id="variation-data-tables-and-miscellaneous-requirements">Variation Data Tables and Miscellaneous Requirements</h2>
+<p>The previous section identified X and Y coordinates of glyph outline points as data items that can be adjusted for different variation instances. Many other data items in a font can also be adjusted, including the following:</p>
+<ul>
+<li>Font-wide metric values in the <a href="os2.html#os2-table-and-opentype-font-variations" data-linktype="relative-path">OS/2</a>, <a href="hhea.html#hhea-table-and-opentype-font-variations" data-linktype="relative-path">'hhea'</a>, <a href="vhea.html#vhea-table-and-opentype-font-variations" data-linktype="relative-path">'vhea'</a> or <a href="post.html#post-table-and-opentype-font-variations" data-linktype="relative-path">'post'</a> tables.</li>
+<li>Glyph metric values in the <a href="hmtx.html" data-linktype="relative-path">'hmtx'</a>, <a href="vmtx.html" data-linktype="relative-path">'vmtx'</a> or <a href="vorg.html" data-linktype="relative-path">VORG</a> tables.</li>
+<li>PPEM ranges in the <a href="gasp.html#gasp-table-and-opentype-font-variations" data-linktype="relative-path">'gasp'</a> table.</li>
+<li>Anchor positions, and adjustments to glyph positions or advance in the <a href="gpos.html#gpos-table-and-opentype-font-variations" data-linktype="relative-path">GPOS</a> or <a href="jstf.html#jstf-table-and-opentype-font-variations" data-linktype="relative-path">JSTF</a> tables.</li>
+<li>X or Y coordinates for ligature caret positions in the <a href="gdef.html" data-linktype="relative-path">GDEF</a> table.</li>
+<li>X or Y coordinates for baseline metrics in the <a href="base.html#base-table-and-opentype-font-variations" data-linktype="relative-path">BASE</a> table.</li>
+<li><a href="cvt.html" data-linktype="relative-path">CVT</a> values.</li>
+<li>Gradient placement and color stop offsets, color alpha values, and transformations for color glyphs in the <a href="colr.html" data-linktype="relative-path">COLR</a> table.</li>
+</ul>
+<p>A variable font may contain variation data for any or all of these. The variation data for different items is provided in various tables within a font.</p>
+<blockquote>
+<p><em>Note:</em>
+While several data items in a font may require adjustment for different instances, there will be other items that do not change across instances. For example, the font family and unitsPerEm are not impacted by variation. It should be noted in particular, however, that certain values that can potentially be impacted by variations are not supported with variation data. In particular, the xMin, yMin, xMax, yMax, macStyle and lowestRecPPEM fields in the <a href="head.html" data-linktype="relative-path">font header ('head')</a> table are not supported by variation data and should only be used in relation to the default instance for the font. Also, variations for values in the <a href="kern.html" data-linktype="relative-path">kerning ('kern')</a> table are not supported; variable fonts should handle kerning using the GPOS table.</p>
+</blockquote>
+<p>Two tables are required in all variable fonts:</p>
+<ul>
+<li>A <a href="fvar.html" data-linktype="relative-path">font variations ('fvar')</a> table is required to describe the variations supported by the font.</li>
+<li>A <a href="stat.html" data-linktype="relative-path">style attributes (STAT)</a> table is required and is used to establish relationships between different fonts belonging to a family and to provide some degree of compatibility with legacy applications by allowing platforms to project variation instances involving many axes into older font-family models that assume a limited set of axes.</li>
+</ul>
+<p>A variable font must contain some other variation-related data, according to the ways in which the design varies, but no other specific type of variation-related data is required in all variable fonts.</p>
+<p>If a variable font has TrueType outlines in a 'glyf' table, the outline variation data can be provided in the <a href="gvar.html" data-linktype="relative-path">glyph variations ('gvar')</a> table. Variation data for CVT values can be provided in the optional <a href="cvar.html" data-linktype="relative-path">CVT variations ('cvar')</a> table.</p>
+<p>If a variable font has PostScript-style outlines in a <a href="cff2.html" data-linktype="relative-path">Compact Font Format 2.0 (CFF2)</a> table, the CFF2 table itself can also contain the associated variation data.</p>
+<blockquote>
+<p><em>Note:</em>
+A CFF2 table can be used in non-variable fonts as well as in variable fonts. Also note that variations for outlines using the <a href="cff.html" data-linktype="relative-path">Compact Font Format version 1.0 ('CFF ')</a> table are not supported.</p>
+</blockquote>
+<p>The <a href="mvar.html" data-linktype="relative-path">metrics variations (MVAR)</a> table is used to provide variation data for various font-wide metrics or other numeric values in the 'gasp', 'hhea', OS/2, 'post' and 'vhea' tables. An MVAR table should be added if adjustments to any of these values are required. Note that it is not required to provide variation data for all of the data items covered by the MVAR table: variation data is optional for all items. If there is no variation data for a given item, the default value applies to all instances.</p>
+<blockquote>
+<p><em>Note:</em>
+Apple platforms allow for use of a font metrics ('fmtx') table to specify various font-wide metric values by reference to the X or Y coordinates of contour points for a specified glyph. OpenType Font Variations does not use the font metrics table.</p>
+</blockquote>
+<p>The 'hmtx' and 'vmtx' tables provide horizontal and vertical glyph metrics. Variation data for horizontal and vertical glyph metrics can be provided using the <a href="hvar.html" data-linktype="relative-path">horizontal metrics variations (HVAR)</a> and <a href="vvar.html" data-linktype="relative-path">vertical metrics variations (VVAR)</a> tables.</p>
+<p>In a font with TrueType outlines, the rasterizer combines 'hmtx' and 'vmtx' values with glyph xMin, xMax, yMin and yMax values in the 'glyf' table to generate four “phantom” points that correspond to the glyph horizontal and vertical metric values. (See the chapter <a href="tt_instructing_glyphs.html#phantoms" data-linktype="relative-path">Instructing TrueType Glyphs</a> for more background on phantom points.) In a variable font, the variation data for a glyph in the 'gvar' table will include adjustment deltas for the glyph’s phantom points. As a result, interpolated glyph metrics for a given instance can be obtained by interpolating the phantom point positions for the instance. This may be costly for some text-layout operations, however. In order to provide the best performance on all platforms, it is recommended that all variable fonts with TrueType outlines include an HVAR table. If the font supports vertical layout and includes 'vhea' and 'vmtx' tables, it is recommended that the font include a VVAR table.</p>
+<p>The CFF2 rasterizer does not generate phantom points, and CFF2 variation data will not include adjustment deltas for phantom points. For this reason, in a variable font with CFF2 outlines, 'hmtx' and HVAR tables are required. Similarly, if the font supports vertical layout, then 'vmtx' and VVAR tables are required.</p>
+<blockquote>
+<p><em>Note:</em>
+The 'hdmx' and VDMX tables are not used in variable fonts.</p>
+</blockquote>
+<p>If a font has OpenType Layout tables, variation data for values from the GDEF, GPOS or JSTF table will be included, as needed, within the GDEF table. Variation data for the BASE table will be included, as needed, within the BASE table itself.</p>
+<p>In some variable fonts, it may be desirable to have different glyph-substitution or glyph-positioning actions used for different regions within the font’s variation space. For example, for narrow-width or heavy-weight instances in which counters become small, it may be desirable to make certain glyph substitutions to use alternate glyphs with certain strokes removed or outlines simplified to allow for larger counters. Such effects can be achieved using a feature variations subtable within either the GSUB or GPOS table. See the chapter <a href="chapter2.html" data-linktype="relative-path">OpenType Layout Common Table Formats</a> for more information.</p>
+<p>In a color font using the <a href="colr.html" data-linktype="relative-path">COLR</a> table, variation data can be included in the COLR table, as needed, for variable items in color glyph descriptions.</p>
+<p>In a variable font with TrueType outlines, the left side bearing for each glyph must equal xMin, and bit 1 in the flags field of the 'head' table must be set.</p>
+<p>In all variable fonts, bit 5 in the flags field of the 'head' table must be cleared. (On certain platforms, bit 5 affects metrics in vertical layout. Bit 5 must be clear to ensure compatible behavior on all platforms.)</p>
+<p><a id="IA"></a></p>
+<h2 id="algorithm-for-interpolation-of-instance-values">Algorithm for Interpolation of Instance Values</h2>
+<p>The process of interpolating adjusted values for different variation instances is used for all font data items that require variation — positions of outline glyph points, ascender or other font-wide metrics, etc. The interpolation process involves the following:</p>
+<ul>
+<li>Determining the deltas that are applicable for that instance.</li>
+<li>For each applicable delta, calculating per-axis scalars for that instance, then multiplying the per-axis scalars together to produce an overall scalar for that delta.</li>
+<li>Scaling each applicable delta by the calculated scalar for that delta.</li>
+<li>Combining all of the scaled deltas to produce an overall adjustment.</li>
+</ul>
+<p>When processing the 'gvar' table, there is an additional step in calculations, which is to infer delta adjustments for points when deltas are not given explicitly. This applies only to the 'gvar' table, and is described in the <a href="gvar.html" data-linktype="relative-path">'gvar'</a> table chapter.</p>
+<p>As described earlier, an instance axis value that is outside the region of applicability for a given delta is equivalent to having a per-axis scalar value of zero. Also, having an axis that has no effect in relation to a given delta (the n-tuples have a peak value of zero for that axis) is equivalent to having a per-axis scalar value of one. Thus, determination of applicability and axis interactions can all be combined into a step of deriving an overall scalar.</p>
+<p>The description of the interpolation process below will refer to start, peak, and end coordinate values. As described earlier, an intermediate region is described using three n-tuples, two for diagonal-opposite corners (start and end) that specify the extent of the region, and a peak. Non-intermediate regions have one of the corners at the peak and the other corner at the zero origin. In some variation data structures, a non-intermediate region is specified using a single n-tuple, that of the peak. In this case, the start and end coordinates are implicit: one is the same as the peak, and the other is the zero origin.</p>
+<p>In order for the definition of a region within variation data to be valid, start, peak and end values must be well ordered. That is, for each axis, the start axis coordinate must be less than or equal to the peak coordinate, and the peak coordinate must be less than or equal to the end. Also, the start and end coordinates must both be non-negative or non-positive — they cannot cross zero.</p>
+<p>In the discussion to this point, individual deltas have been described as having an associated region of applicability. Variation data can be organized in different ways. In some cases, as in the 'gvar' table, several deltas corresponding to many target items (all the outline points of a glyph) and a single region of the variation space are organized together. In some other cases, as in the MVAR or CFF2 tables, deltas covering multiple regions are organized together by individual target items. In either case, each individual delta is associated with a particular region of the variation space. The following description of the interpolation process will refer to interpolating a value for an individual item, but when applied to particular contexts such as the 'gvar' table, it should be understood that the same calculations are applied to many different items in parallel.</p>
+<p>As described above, the effect of a given delta is modulated by a scalar function ranging from 0 to 1, with a value of 1 for an instance at the peak position of the region associated with that delta. The overall scalar is the product of per-axis scalars, and each per-axis scalar is calculated as a proportion of the proximity of the instance coordinate value to the peak coordinate value relative to the distance of the peak from the edges of the region.</p>
+<p>For example, consider an intermediate region (green in the figure below) in a two-axis variation space, with corners at (0.3, 0.15) and (1, 1), and a peak (blue in the figure below) at (0.7, 0.5):</p>
+<img src="media/otvo_fig27.png" alt="A Cartesian space with a rectangular region from (0.3, 0.1) to (1,1) with a peak point at (0.75, 0.5)" data-linktype="relative-path">
+<p>Then consider the instance (red in the figure below) at (0.5, 0.35). The per-axis scalars will be the ratio of the distance of the instance coordinate value from the nearest edge of the region divided by the distance of the peak from that edge:</p>
+<img src="media/otvo_fig28.png" alt="A Cartesian space with a rectangular region, and the values used to calculate per-axis scalars" data-linktype="relative-path">
+<p>The overall scalar for the instance in relation to this region will be the product of the two axis scalars: 0.5 × 0.571429 = 0.285714.</p>
+<p>The detailed algorithm for calculating the interpolated value for a given target item and for a given instance is as follows.</p>
+<ul>
+<li>Let instanceCoords be the normalized instance coordinate n-tuple for the instance, with axis elements instanceCoords[i].</li>
+<li>Let Regions be the set of regions for which associated deltas are provided for the given item, and let R be a region within that set.</li>
+<li>Let startCoords, peakCoords and endCoords be the start, peak and end n-tuples for some specified region, R. Let startCoords[i], etc. be coordinate values for a given axis.</li>
+<li>Let AS be a per-axis scalar, and let S be an overall scalar for a given region.</li>
+<li>Let delta be the delta value in the variation data associated with a given region, and let scaledDelta be the scaled delta for a given region and instance.</li>
+<li>Let netAdjustment be the accumulated adjustment for the given item.</li>
+<li>Let defaultValue be the default value of the item specified in the font, and let interpolatedValue be the interpolated value of the item for a given instance.</li>
+</ul>
+<p>The following pseudo-code provides a specification of the interpolation algorithm:</p>
+<pre><code class="lang-csharp">netAdjustment = 0; /* initialize the accumulated adjustment to zero */
+(for each R in Regions) /* For each region, calculate a scalar S */
+{
+    S = 1; /* initialize the overall scalar for the region to one */
+
+    /* for each axis, calculate a per-axis scalar AS */
+    (for i = 0; i &lt; axisCount; i++)
+    {
+        /* If a region definition is not valid in relation to some axis,
+        then ignore the axis. For a region to be valid in relation to a
+        given axis, it must have a peak that is between the start and
+        end values, and the start and end values cannot have different
+        signs if the peak is non-zero. (Start and end can have different
+        signs if the peak is zero, however: this can be used if an axis is
+        to be ignored in the scalar calculation.) */
+
+        if (startCoords[i] &gt; peakCoords[i] || peakCoords[i] &gt; endCoords[i])
+            AS = 1;
+        else if (startCoords[i] &lt; 0 &amp;&amp; endCoords[i] &gt; 0 &amp;&amp; peakCoords[i] != 0)
+            AS = 1;
+
+        /* Note: for remaining cases, start, peak and end will all be &lt;= 0 or
+        will all be &gt;= 0, or else peak will be == 0. */
+
+        /* If the peak is zero for some axis, then ignore the axis. */
+        else if (peakCoords[i] == 0)
+            AS = 1;
+
+        /* If the instance coordinate is out of range for some axis, then the
+        region and its associated deltas are not applicable. */
+        else if (instanceCoords[i] &lt; startCoords[i]
+                 || instanceCoords[i] &gt; endCoords[i])
+            AS = 0;
+
+        /* The region is applicable: calculate a per-axis scalar as a proportion
+        of the proximity of the instance to the peak within the region. */
+        else
+        {
+            if (instanceCoords[i] == peakCoords[i])
+                AS = 1;
+            else if (instanceCoords[i] &lt; peakCoords[i])
+            {
+                AS = (instanceCoords[i] - startCoords[i])
+                     / (peakCoords[i] - startCoords[i]);
+            }
+            else /* instanceCoords[i] &gt; peakCoords[i] */
+            {
+                AS = (endCoords[i] - instanceCoords[i])
+                     / (endCoords[i] - peakCoords[i]);
+            }
+        }
+
+        /* The overall scalar is the product of all per-axis scalars.
+        Note: the axis scalar and the overall scalar will always be
+        &gt;= 0 and &lt;= 1. */
+        S = S * AS;
+    } /* per-axis loop */
+
+    /* get the scaled delta for this region */
+    scaledDelta = S * delta;
+
+    /* accumulate the adjustments from each region */
+    netAdjustment = netAdjustment + scaledDelta;
+} /* per-region loop */
+
+/* apply the accumulated adjustment to the default to derive the interpolated value */
+interpolatedValue = defaultValue + netAdjustment;
+</code></pre>
+<p>When scaled deltas are applied to a default value, it is possible that the combined result will be outside the range of the data type used in the font for the default value. For example, the default value could be represented in the font as a 16-bit value, but the instance value after applying deltas might require more bits to represent it. An implementation-determined representation may be used during calculation and for the final result (interpolatedValue). The numeric range used in calculation must be at least that of the data type of the item to which deltas are applied; for example, at least [-32768, 32767] when applying scaled deltas to an FWORD value.</p>
+<p>Applying scaled variation deltas to a scalar value requires calculations that involve fractional values.  In calculation of scalars (S, AS) and of interpolated values (scaledDelta, netAjustment, interpolatedValue), at least 16 fractional bits of precision should be maintained. If required for the internal representation, rounding should be done only when the final result is used, and may retain greater fractional bit-depth than that of the data type of the item to which deltas are applied. See also <a href="#coordinate-scales-and-normalization" data-linktype="self-bookmark">Coordinate Scales and Normalization</a>, above, for related discussion of precision and rounding.</p>
+<p>Depending on the internal representation used, there is a possibility that the result of arithmetic operations when applying deltas could exceed the range supported by the internal representation. The order in which deltas are added is not prescribed, but can also be a factor in whether overflow occurs and, if it does, what the final result could be. If resources permit, applications should allow for larger ranges to avoid the possibility of overflow at any point during calculation, and to ensure that the order in which deltas are applied does not affect the final result. Regardless of the type used in the font representation for the default value, at least 32 significant bits should be used for calculations.</p>
+<p>If overflow of the internal representation is inevitable, saturation arithmetic (clamping, rather than wrapping) may be used to mitigate error artifacts. In general, however, behavior on overflow is not defined. For this reason, font developers should take note of situations in which a combination of deltas could exceed the range of the data type of the font data to which the deltas are applied, and anticipate that resulting behavior could be inconsistent in different applications. In particular, font developers should not depend on the overflow behavior of particular applications.</p>
+<p><a id="IntExample"></a></p>
+<h2 id="interpolation-example">Interpolation Example</h2>
+<p>The following example illustrates the interpolation process for a particular instance. This example is based on glyph 45 of the Skia font (glyph name “hyphen.oldstyle”), which is the glyph for the character U+002D HYPHEN-MINUS.</p>
+<blockquote>
+<p><em>Note:</em>
+The Skia font is included in Apple’s OSX platform. At the time of publication of the OpenType 1.8 specification, existing versions of the Skia font did not conform to the OpenType 1.8 specification as a whole, but the implementation of variation data in the 'gvar' table, which is what is illustrated here, did conform.</p>
+</blockquote>
+<p>The glyph entry in the 'glyf' table has one contour with four points. Based on values for glyph 45 in the 'hmtx' table, “phantom” points are inferred in the rasterizer to represent left and right side-bearings. (For this example, horizontal layout is assumed, and so top and bottom phantom points are ignored.) These phantom points are at (0, 0) and (698, 0). Thus, there are six points requiring interpolation.</p>
+<img src="media/otvo_fig29.png" alt="A glyph outline with four points, plus two 'phantom' points. The glyph looks like a hyphen-minus." data-linktype="relative-path">
+<p>The Skia font has weight and width axes. The variation data for glyph 45 in the 'gvar' table has deltas associated with 8 regions within the weight-width variation space. Three of these will be considered, and will be referred to as R1, R2 and R3. Each of these is a non-intermediate region, and so is defined using a single n-tuple. The n-tuples for each are as follows:</p>
+<table>
+<tbody>
+<tr>
+<th>Region</th>
+<th>(weight, width)</th>
+</tr>
+<tr>
+<td>R1</td>
+<td>(1, 0)</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>(0, 1)</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>(1, 1)</td>
+</tr>
+</tbody>
+</table>
+<p>The following figures illustrate the range of applicability over the variation space for each of these regions:</p>
+<img src="media/otvo_fig30.png" alt="A Cartesian space with a region covering the right two quadrants" data-linktype="relative-path">
+<p>R1 has a zero coordinate value for the width axis, which means that changes in width for the variation instance have no effect on the scalar calculations for this region.</p>
+<img src="media/otvo_fig31.png" alt="A Cartesian space with a region covering the top two quadrants" data-linktype="relative-path">
+<p>R2 has a zero coordinate value for the weight axis, which means that changes in weight for the variation instance have no effect on the scalar calculations for this region.</p>
+<img src="media/otvo_fig32.png" alt="A Cartesian space with a region covering the upper right quadrant" data-linktype="relative-path">
+<p>R3 has non-zero coordinate values for both weight and width axes, which means that changes for the variation instance in either weight or width will affect the scalar calculations for this region.</p>
+<p>Now consider the delta values specified in the font for each point in association with these three regions. X and Y deltas are specified for each point.</p>
+<p>R1 has the following associated deltas:</p>
+<table>
+<tbody>
+<tr>
+<th></th>
+<th>pt 0</th>
+<th>pt 1</th>
+<th>pt 2</th>
+<th>pt 3</th>
+<th>pt 4</th>
+<th>pt 5</th>
+</tr>
+<tr>
+<th>X</th>
+<td>234</td>
+<td>-26</td>
+<td>-26</td>
+<td>234</td>
+<td>0</td>
+<td>209</td>
+</tr>
+<tr>
+<th>Y</th>
+<td>-135</td>
+<td>-135</td>
+<td>175</td>
+<td>175</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>Applying these deltas to the original point positions, the maximal effect of deltas associated with R1 would be to modify the outline as follows:</p>
+<img src="media/otvo_fig33.png" alt="A default glyph outline with four contour points, like a hyphen-minus, and phantom points. Also, the adjusted outline and phantom points after applying deltas for region R1." data-linktype="relative-path">
+<p>For a variation instance of (1, 0) (heaviest weight, default width), the scalars for other regions would be zero, and so this would be the resulting glyph outline for that instance. Reducing the weight value of the instance would attenuate the extent of the change, with the outline interpolated in between the original outline and this maximal modification of the outline.</p>
+<p>Now consider R2: it has the following deltas associated with it:</p>
+<table>
+<tbody>
+<tr>
+<th></th>
+<th>pt 0</th>
+<th>pt 1</th>
+<th>pt 2</th>
+<th>pt 3</th>
+<th>pt 4</th>
+<th>pt 5</th>
+</tr>
+<tr>
+<th>X</th>
+<td>165</td>
+<td>20</td>
+<td>20</td>
+<td>165</td>
+<td>0</td>
+<td>187</td>
+</tr>
+<tr>
+<th>Y</th>
+<td>-2</td>
+<td>-2</td>
+<td>2</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>Applying these deltas to the original point positions, the maximal effect of deltas associated with R2 would be to modify the outline as follows:</p>
+<img src="media/otvo_fig34.png" alt="A default glyph outline with four contour points, like a hyphen-minus, and phantom points. Also, the adjusted outline and phantom points after applying deltas for region R2." data-linktype="relative-path">
+<p>For a variation instance of (0, 1) (regular weight, widest width), the scalars for other regions would be zero, and so this would be the resulting, interpolated glyph outline for that instance.</p>
+<p>Now consider R3: it has the following associated deltas:</p>
+<table>
+<tbody>
+<tr>
+<th></th>
+<th>pt 0</th>
+<th>pt 1</th>
+<th>pt 2</th>
+<th>pt 3</th>
+<th>pt 4</th>
+<th>pt 5</th>
+</tr>
+<tr>
+<th>X</th>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<th>Y</th>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>Since all of the delta values are zero, the data associated with this region has no effect at all on the glyph outline. (In fact, this data is superfluous.)</p>
+<p>Now, consider a variation instance of (1, 1) (heaviest weight, widest width). All three regions, R1, R2 and R3, are applicable for this instance. As noted, the variation data associated with R3 will have no effect on the glyph. But the data for regions R1 and R2 would also be applicable for this instance, and their maximal effects would be combined. That is, the X and Y deltas for each point from data associated with both R1 and R2 would be applied to the point X and Y coordinates. This would result in the glyph outline being modified as follows:</p>
+<img src="media/otvo_fig35.png" alt="A default glyph outline with four contour points, like a hyphen-minus, and phantom points. Also, the adjusted outline and phantom points after applying deltas for regions R1 and R2." data-linktype="relative-path">
+<p>For other variation instances with weight &gt; 0 and &lt; 1 and with width &gt; 0 and &lt; 1, the data for regions R1 and R2 would both be applied, but scalars for the two regions would vary, resulting in different proportional effects on the outline of the data for each region. For example, consider a variation instance with coordinates (0.2, 0.7) — a slight weight increase and a large width increase. The region scalars for R1 and R2 would be 0.2 and 0.7. Each of these would be applied to the deltas for each region, and the scaled delta values for a given point combined:</p>
+<table>
+<tbody>
+<tr>
+<th></th>
+<th>pt 0</th>
+<th>pt 1</th>
+<th>pt 2</th>
+<th>pt 3</th>
+<th>pt 4</th>
+<th>pt 5</th>
+</tr>
+<tr>
+<th>X</th>
+<td>0.2 × 234<br>
++ 0.7 × 165<br>
+= 162.3</td>
+<td>0.2 × -26<br>
++ 0.7 × 20<br>
+= 8.8</td>
+<td>0.2 × -26<br>
++ 0.7 × 20<br>
+= 8.8</td>
+<td>0.2 × 234<br>
++ 0.7 × 165<br>
+= 162.3</td>
+<td>0.2 × 0<br>
++ 0.7 × 0<br>
+= 0</td>
+<td>0.2 × 209<br>
++ 0.7 × 187<br>
+= 172.7</td>
+</tr>
+<tr>
+<th>Y</th>
+<td>0.2 × -135<br>
++ 0.7 × -2<br>
+= -28.4</td>
+<td>0.2 × -135<br>
++ 0.7 × -2<br>
+= -28.4</td>
+<td>0.2 × 175<br>
++ 0.7 × 2<br>
+= 36.4</td>
+<td>0.2 × 175<br>
++ 0.7 × 2<br>
+= 36.4</td>
+<td>0.2 × 0<br>
++ 0.7 × 0<br>
+= 0</td>
+<td>0.2 × 0<br>
++ 0.7 × 0<br>
+= 0</td>
+</tr>
+</tbody>
+</table>
+<p>This would result in the glyph outline being modified as follows:</p>
+<img src="media/otvo_fig36.png" alt="A default glyph outline with four contour points, like a hyphen-minus, and phantom points. Also, the adjusted outline and phantom points after applying scaled deltas for regions R1 and R2." data-linktype="relative-path">
+<p><a id="InstanceGen"></a></p>
+<h2 id="dynamic-generation-of-static-instance-fonts">Dynamic Generation of Static Instance Fonts</h2>
+<p>In certain application workflows, it may be necessary to dynamically generate a static font resource for a particular instance — that is, conventional, non-variation font tables that use interpolated values for a particular instance. This may be needed in order to provide font data to legacy software or data formats that do not understand or support variable fonts, such as legacy printer drivers, or PDF or XPS files with embedded font data.</p>
+<p>For example, it may be necessary to process 'glyf' and 'gvar' tables in a variable font to generate a new 'glyf' table that has interpolated outline data for a particular instance; or to process 'hhea' and MVAR tables to generate a new 'hhea' table with data for a particular instance.</p>
+<p>Different application scenarios may require more- or less-complete font data, entailing different sets of non-variations-specific font tables that need to be generated. No minimal requirements are specified here. The following points should be noted, however:</p>
+<ul>
+<li>Some scenarios may require use of a PostScript name (name ID 6) in instance font data, with distinct names for each instance that is used. An Adobe technical note provides a specification for Postscript name generation that can be used for instance fonts derived from variable fonts. See <a href="https://adobe-type-tools.github.io/font-tech-notes/pdfs/5902.AdobePSNameGeneration.pdf" data-linktype="external">Adobe Technical Note #5902: “PostScript Name Generation for Variation Fonts”</a> .</li>
+<li>For a variable font with CFF2 outlines, some workflows — for example, printing — may require an instance font to be generated with a 'CFF ' table. In such cases, if the variable font has more than one Font DICT in the FontDICTINDEX, then a CID-keyed CFF font should be generated, with an ROS of “Adobe-Identity-0”. If the variable font has one Font DICT in the FontDICTINDEX, then a name-keyed CFF font can be generated if glyph names are supplied in the 'post' table (some legacy workflows look to a glyph name for semantics); otherwise, a CID-keyed CFF can be generated as above. Converting CFF2 CharStrings to Type2 CharStrings would involve re-optimizing the CharString arguments and operators to avoid exceeding the maximum permitted stack depth. Most of the CFF fields removed from the CFF2 specification can be omitted, so that they will inherit the CFF default values. For a summary of differences between CFF2 and CFF, see <a href="glyphformatcomparison.html" data-linktype="relative-path">Comparison of 'glyf', 'CFF ' and CFF2 tables</a>.</li>
+<li>A variable font that has TrueType outlines may utilize the GET VARIATION instruction to provide current variation axis coordinates to the glyph program. In scenarios that require dynamic generation of instance font data, it should be assumed that this instruction will not be supported. In the process for generating an interpolated 'glyf' table, special treatment of the GET VARIATION instruction will be needed to ensure that the program gets appropriate axis coordinate values for the given instance. For details, see <a href="tt_instructions.html" data-linktype="relative-path">The TrueType Instruction Set</a>.</li>
+</ul>
+
+</body>
+</html>

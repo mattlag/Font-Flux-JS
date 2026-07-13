@@ -2620,18 +2620,43 @@ function buildMVARTable(simplified) {
 		});
 	}
 
-	// Compute wordDeltaCount: count how many regions need int16 (vs int8)
-	let wordCount = 0;
+	// Determine the per-column delta width and reorder columns so that the
+	// "word" columns form the LEADING wordDeltaCount columns. The
+	// ItemVariationData format stores word deltas first, then short deltas, so a
+	// word-sized delta sitting in a trailing column would otherwise be written
+	// with the narrower short encoding and wrap around on round-trip.
+	const LONG_WORDS = 0x8000;
+	let needsLong = false;
+	for (const row of deltaSets) {
+		for (const v of row) {
+			if (v < -32768 || v > 32767) {
+				needsLong = true;
+				break;
+			}
+		}
+		if (needsLong) break;
+	}
+	// In long mode a "word" column is int32 (values beyond int16); otherwise a
+	// "word" column is int16 (values beyond int8).
+	const wordCols = [];
+	const shortCols = [];
 	for (let r = 0; r < regionIndexes.length; r++) {
 		let needsWord = false;
 		for (const row of deltaSets) {
-			if (row[r] < -128 || row[r] > 127) {
+			const v = row[r];
+			if (needsLong ? v < -32768 || v > 32767 : v < -128 || v > 127) {
 				needsWord = true;
 				break;
 			}
 		}
-		if (needsWord) wordCount++;
+		(needsWord ? wordCols : shortCols).push(r);
 	}
+	const columnOrder = [...wordCols, ...shortCols];
+	const orderedRegionIndexes = columnOrder.map((r) => regionIndexes[r]);
+	const orderedDeltaSets = deltaSets.map((row) => columnOrder.map((r) => row[r]));
+	const wordDeltaCount = needsLong
+		? wordCols.length | LONG_WORDS
+		: wordCols.length;
 
 	return {
 		majorVersion: 1,
@@ -2647,10 +2672,10 @@ function buildMVARTable(simplified) {
 			},
 			itemVariationData: [
 				{
-					itemCount: deltaSets.length,
-					wordDeltaCount: wordCount,
-					regionIndexes,
-					deltaSets,
+					itemCount: orderedDeltaSets.length,
+					wordDeltaCount,
+					regionIndexes: orderedRegionIndexes,
+					deltaSets: orderedDeltaSets,
 				},
 			],
 		},

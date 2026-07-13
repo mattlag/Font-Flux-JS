@@ -1,0 +1,2381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gsub — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/gsub">https://learn.microsoft.com/en-us/typography/opentype/spec/gsub</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="gsub--glyph-substitution-table">GSUB — Glyph Substitution Table</h1>
+<p><a id="overview"></a></p>
+<h2 id="overview">Overview</h2>
+<p>The Glyph Substitution (GSUB) table provides data for substitution of glyphs for appropriate rendering of scripts, such as cursively-connecting forms in Arabic script, or for advanced typographic effects, such as ligatures.</p>
+<p>Many language systems require substitution of alternate glyph forms. For example, in the Arabic script, the glyph shape that depicts a particular character varies according to its position in a word or text string (see Figure 1). In other language systems, glyph substitutes are aesthetic options for the user, such as the use of ligature glyphs in the English language (see Figure 2).</p>
+<figure><img alt="Glyphs for different positional forms of hah" src="media/gsub_fig3a.gif" data-linktype="relative-path"><figcaption>Figure 1. Isolated, initial, medial, and final forms of the Arabic character HAH</figcaption></figure>
+<figure><img alt="Glyphs for f and i and an f-i ligature glyph" src="media/gsub_fig3b.gif" data-linktype="relative-path"><figcaption>Figure 2. Two Latin glyphs and their associated ligature</figcaption></figure>
+<p>OpenType fonts use character encoding standards, such as the Unicode Standard, that assumes a distinction between characters and glyphs: text is encoded as sequences of characters, and the <a href="cmap.html" data-linktype="relative-path">'cmap' table</a> provides a mapping from that character to a single default glyph. Multiple characters are not directly mapped to a single glyph, as needed for ligatures; and a single character is not mapped directly to multiple glyphs, as may be needed for some complex-script scenarios. The GSUB table provides a way to describe such substitutions, enabling applications to apply such substitutions during text layout and rendering to achieve desired results.</p>
+<p>To access substitute glyphs, GSUB maps from the glyph index or indices defined in a 'cmap' subtable to the glyph index or indices of the substitute glyphs. For example, if a font has three alternative forms of an ampersand glyph, the 'cmap' table associates the ampersand’s character code with only one of these glyphs. In GSUB, the indices of the other ampersand glyphs are then referenced from this one default index.</p>
+<p>The text-processing client uses the GSUB data to manage glyph substitution actions. GSUB identifies the glyphs that are input to and output from each glyph substitution action, specifies how and where the client uses glyph substitutes, and regulates the order of glyph substitution operations. Any number of substitutions can be defined for each script or language system represented in a font.</p>
+<p>The GSUB table supports seven types of glyph substitutions that are widely used in international typography:</p>
+<ul>
+<li><p>A <em>single substitution</em> replaces a single glyph with another single glyph. This is used, for example, to render positional glyph variants in Arabic and vertical text in East Asia (see Figure 3).</p>
+  <figure> <img alt="Kanji ideograph with parentheses in horizontal and vertical layout" src="media/gsub_fig3c.gif" data-linktype="relative-path"> <figcaption>Figure 3. Alternative forms of parentheses used when positioning Kanji vertically</figcaption> </figure>
+</li>
+<li><p>A <em>multiple substitution</em> replaces a single glyph with more than one glyph. This is used to specify actions such as ligature decomposition (see Figure 4).</p>
+  <figure><img alt="An f-i ligature glyph decomposed to f and i glyphs" src="media/gsub_fig3d.gif" data-linktype="relative-path"> <figcaption>Figure 4. Decomposing a Latin ligature glyph into its individual glyph components</figcaption></figure>
+</li>
+<li><p>An <em>alternate substitution</em> identifies functionally equivalent but different looking forms of a glyph. These glyphs are often referred to as aesthetic alternatives. For example, a font might have five different glyphs for the ampersand symbol, but one would have a default glyph index in the 'cmap' table. The client could use the default glyph or substitute any of the four alternatives (see Figure 5).</p>
+  <figure><img alt="Alternative ampersand glyphs" src="media/gsub_fig3e.gif" data-linktype="relative-path"><figcaption>Figure 5. Alternative ampersand glyphs in a font</figcaption></figure>
+</li>
+<li><p>A <em>ligature substitution</em> replaces several glyph indices with a single glyph index, as when an Arabic ligature glyph replaces a string of separate glyphs (see Figure 6). When a string of glyphs can be replaced with a single ligature glyph, the first glyph is substituted with the ligature. The remaining glyphs in the string are deleted, this <em>does not</em> include those glyphs that are skipped as a result of lookup flags.</p>
+  <figure><img alt="Sequence of three Arabic glyphs and the associated ligature glyph" src="media/gsub_fig3f.gif" data-linktype="relative-path"><figcaption>Figure 6. Three Arabic glyphs and their associated ligature glyph</figcaption></figure>
+</li>
+<li><p><em>Contextual substitution</em> is an extension of the above lookup types, describing glyph substitutions in context — that is, a substitution of one or more glyphs within a certain pattern of glyphs. Each substitution describes one or more input glyph sequences and one or more substitutions to be performed on that sequence. Contextual substitutions can be applied to specific glyph sequences, glyph classes, or sets of glyphs.</p>
+</li>
+<li><p><em>Chained contexts substitution</em> extends the capabilities of contextual substitution. As with contextual substitution, actions can be performed on one or more glyphs within a pattern of glyphs—the <em>input sequence</em>. But the actions can be constrained by chained glyph sequence contexts: a <em>backtrack</em> sequence that precedes the input sequence, and a <em>lookahead</em> sequence that follows the input sequence. Three formats allow the backtrack, input and lookahead sequence patterns to be described using specific glyphs, glyph classes, or glyph sets.</p>
+</li>
+<li><p><em>Reverse Chaining contextual single substitution</em> allows one glyph to be substituted with another by chaining input glyph to a backtrack and/or lookahead sequence. The difference between this and other lookup types is that processing of input glyph sequence goes from end to start.</p>
+</li>
+</ul>
+<p>The GSUB data formats used to implement the different types of substitution include an eighth type, <em>substitution extension</em>. This provides a format extension mechanism, allowing reference to subtables using 32-bit offsets rather than 16-bit offsets. It does not provide an additional type of substitution action, however.</p>
+<p><a id="gsubVar"></a></p>
+<h2 id="gsub-table-and-opentype-font-variations">GSUB table and OpenType Font Variations</h2>
+<p>OpenType Font Variations allow a single font to support many design variations along one or more axes of design variation. For example, a font with weight and width variations might support weights from thin to black, and widths from ultra-condensed to ultra-expanded. For general information on OpenType Font Variations, see the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p>In a variable font, it may be desirable to have different glyph-substitution actions used for different regions within the font’s variation space. For example, for narrow or heavy instances in which counters become small, it may be desirable to make certain glyph substitutions to use alternate glyphs with certain strokes removed or outlines simplified to allow for larger counters. Such effects can be achieved using a FeatureVariations table within the GSUB table. The FeatureVariations table is described in the chapter, <a href="chapter2.html" data-linktype="relative-path">OpenType Layout Common Table Formats</a>. See also the <a href="features_pt#rvrn" data-linktype="relative-path">Required Variation Alternates ('rvrn')</a> feature in the OpenType Layout tag registry.</p>
+<p><a id="organization"></a></p>
+<h2 id="gsub-table-organization">GSUB table organization</h2>
+<p>The GSUB table begins with a header that defines offsets to a ScriptList, a FeatureList, a LookupList, and an optional FeatureVariations table (see Figure 7):</p>
+<ul>
+<li>The <a href="chapter2.html#slTbl_sRec" data-linktype="relative-path">ScriptList</a> identifies all the scripts and language systems in the font that use glyph substitutes.</li>
+<li>The <a href="chapter2.html#flTbl" data-linktype="relative-path">FeatureList</a> defines all the glyph substitution features required to render these scripts and language systems.</li>
+<li>The <a href="chapter2.html#lulTbl" data-linktype="relative-path">LookupList</a> contains all the lookup data needed to implement each glyph substitution feature.</li>
+<li>The <a href="chapter2.html#featVarTbl" data-linktype="relative-path">FeatureVariations</a> table can be used to substitute alternate sets of lookup tables to use for any given feature under specified conditions. This is currently used only in variable fonts.</li>
+</ul>
+<p>For a detailed discussion of ScriptLists, FeatureLists, LookupLists, and FeatureVariation tables, see the chapter, <a href="chapter2.html" data-linktype="relative-path">OpenType Layout Common Table Formats.</a></p>
+<figure><img alt="Block diagram of GSUB subtables" src="media/gsub_fig3g.png" data-linktype="relative-path"><figcaption>Figure 7. High-level organization of GSUB table</figcaption></figure>
+<p>This organization helps text-processing clients to easily locate the features and lookups that apply to a particular script or language system. To access GSUB information, clients should use the following procedure:</p>
+<ol>
+<li>Locate the current script in the GSUB ScriptList table.</li>
+<li>If the language system is known, search the script for the correct LangSys table; otherwise, use the script’s default LangSys table.</li>
+<li>The LangSys table provides index numbers into the GSUB FeatureList table to access a required feature and a number of additional features.</li>
+<li>Inspect the featureTag of each feature, and select the feature tables to apply to an input glyph string.</li>
+<li>If a Feature Variations table is present, evaluate conditions in the Feature Variation table to determine if any of the initially-selected feature tables should be substituted by an alternate feature table.</li>
+<li>Each feature table provides an array of index numbers into the GSUB LookupList table. Assemble all lookups from the set of chosen features, and apply the lookups in the order given in the LookupList table.</li>
+</ol>
+<p>For a detailed description of the Feature Variations table and how it is processed, see the <a href="chapter2.html#featVarTbl" data-linktype="relative-path">FeatureVariations table</a> section in the OpenType Layout Common Table Formats chapter.</p>
+<p>Lookup data is defined in <a href="chapter2.html#lookupTbl" data-linktype="relative-path">Lookup tables</a>, which are defined in the OpenType Layout Common Table Formats chapter. A Lookup table contains one or more Lookup subtables that define the specific conditions, type, and results of a substitution action used to implement a feature. Specific Lookup subtable types are used for glyph substitution actions, and are defined in this chapter. All subtables within a Lookup table must be of the same lookup type, as listed in the following table for the GsubLookupType enumeration:</p>
+<p><a id="gsubLookupTypeEnum"></a></p>
+<p><em>GsubLookupType enumeration</em></p>
+<table>
+<tbody>
+<tr>
+<th>Value</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr id="luTypeEnum_1">
+<td>1</td>
+<td><a href="#SS" data-linktype="self-bookmark">Single</a></td>
+<td>Replace one glyph with one glyph</td>
+</tr>
+<tr id="luTypeEnum_2">
+<td>2</td>
+<td><a href="#MS" data-linktype="self-bookmark">Multiple</a></td>
+<td>Replace one glyph with more than one glyph</td>
+</tr>
+<tr id="luTypeEnum_3">
+<td>3</td>
+<td><a href="#AS" data-linktype="self-bookmark">Alternate</a></td>
+<td>Replace one glyph with one of many glyphs</td>
+</tr>
+<tr id="luTypeEnum_4">
+<td>4</td>
+<td><a href="#LS" data-linktype="self-bookmark">Ligature</a></td>
+<td>Replace multiple glyphs with one glyph</td>
+</tr>
+<tr id="luTypeEnum_5">
+<td>5</td>
+<td><a href="#CS" data-linktype="self-bookmark">Contextual substitution</a></td>
+<td>Replace one or more glyphs in context</td>
+</tr>
+<tr id="luTypeEnum_6">
+<td>6</td>
+<td><a href="#CC" data-linktype="self-bookmark">Chained contexts substitution</a></td>
+<td>Replace one or more glyphs in chained context</td>
+</tr>
+<tr id="luTypeEnum_7">
+<td>7</td>
+<td><a href="#ES" data-linktype="self-bookmark">Substitution extension</a></td>
+<td>Extension mechanism for other substitution types</td>
+</tr>
+<tr id="luTypeEnum_8">
+<td>8</td>
+<td><a href="#RCCS" data-linktype="self-bookmark">Reverse chaining context single</a></td>
+<td>Applied in reverse order, replace single glyph in chained contexts</td>
+</tr>
+</tbody>
+</table>
+<p>Each lookup type has one or more subtable formats. The “best” format depends on the type of substitution and the resulting storage efficiency. When glyph information is best presented in more than one format, a single lookup may define more than one subtable, as long as all the subtables are for the same lookup type. For example, within a given lookup, a glyph index array format could best represent one set of target glyphs, whereas a glyph index range format could be better for another set.</p>
+<p>A series of substitution operations on the same glyph or string requires multiple lookups, one for each separate action. Each lookup has a different array index in the LookupList table and is applied in the LookupList order. The substitution action of each lookup is applied to the results of previous lookups. Some substitution lookups could “feed” later lookups by producing a glyph sequence that matches the input sequence pattern of a later lookup that would not have matched the original glyph sequence. The opposite is also possible: one substitution lookup produces a glyph sequence that does <em>not</em> match the pattern of a later lookup that <em>would</em> have matched the original glyph sequence. Thus, the ordering of lookups in the LookupList can be very significant.</p>
+<p>During text processing, a client applies a lookup to each glyph in the string before moving to the next lookup. A lookup is finished for a glyph after the client locates the target glyph or glyph context and performs a substitution, if specified. To move to the “next” glyph, the client will skip all the glyphs that participated in the lookup operation: glyphs that were substituted as well as any other glyphs that formed an input sequence context for the operation. Only glyphs in the input sequence are skipped; in the case of chained contexts substitution, the glyphs in the lookahead sequence are not skipped.</p>
+<p>The next section of this chapter describes the GSUB header and the subtables defined for each GsubLookupType. <a href="#examples" data-linktype="self-bookmark">Examples</a> at the end of this chapter illustrate the GSUB header and six of the eight LookupTypes, including the three formats available for contextual substitutions (LookupType 5).</p>
+<h2 id="gsub-table-structures">GSUB table structures</h2>
+<p><a id="header"></a></p>
+<h3 id="gsub-header">GSUB Header</h3>
+<p>The GSUB table begins with a header that contains a version number for the table and offsets to three tables: ScriptList, FeatureList, and LookupList. For descriptions of each of these tables, see the chapter, OpenType Layout Common Table Formats. <a href="#EX1" data-linktype="self-bookmark">Example 1</a> at the end of this chapter shows a GSUB Header version 1.0 table definition.</p>
+<p><a id="gsubHeader_10"></a></p>
+<p><em>GSUB Header, version 1.0</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion_10">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version of the GSUB table, = 1.</td>
+</tr>
+<tr id="minorVersion_10">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version of the GSUB table, = 0.</td>
+</tr>
+<tr id="scriptListOffset_10">
+<td>Offset16</td>
+<td>scriptListOffset</td>
+<td>Offset to ScriptList table, from beginning of GSUB table.</td>
+</tr>
+<tr id="featureListOffset_10">
+<td>Offset16</td>
+<td>featureListOffset</td>
+<td>Offset to FeatureList table, from beginning of GSUB table.</td>
+</tr>
+<tr id="lookupListOffset_10">
+<td>Offset16</td>
+<td>lookupListOffset</td>
+<td>Offset to LookupList table, from beginning of GSUB table.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="gsubHeader_11"></a></p>
+<p><em>GSUB Header, version 1.1</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion_11">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version of the GSUB table, = 1.</td>
+</tr>
+<tr id="minorVersion_11">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version of the GSUB table, = 1.</td>
+</tr>
+<tr id="scriptListOffset_11">
+<td>Offset16</td>
+<td>scriptListOffset</td>
+<td>Offset to ScriptList table, from beginning of GSUB table.</td>
+</tr>
+<tr id="featureListOffset_11">
+<td>Offset16</td>
+<td>featureListOffset</td>
+<td>Offset to FeatureList table, from beginning of GSUB table.</td>
+</tr>
+<tr id="lookupListOffset_11">
+<td>Offset16</td>
+<td>lookupListOffset</td>
+<td>Offset to LookupList table, from beginning of GSUB table.</td>
+</tr>
+<tr id="featureVariationsOffset_11">
+<td>Offset32</td>
+<td>featureVariationsOffset</td>
+<td>Offset to FeatureVariations table, from beginning of the GSUB table (may be NULL).</td>
+</tr>
+</tbody>
+</table>
+<p><a id="SS"></a></p>
+<h3 id="lookup-type-1-subtable-single-substitution">Lookup type 1 subtable: single substitution</h3>
+<p>Single substitution (SingleSubst) subtables tell a client to replace a single glyph with another glyph. The subtables can be either of two formats. Both formats require two distinct sets of glyph indices: one that defines input glyphs (specified in the Coverage table), and one that defines the output glyphs. Format 1 requires less space than format 2, but it is less flexible.</p>
+<p><a id="SSF1"></a></p>
+<p><strong>Single substitution format 1</strong></p>
+<p>Format 1 calculates the indices of the output glyphs, which are not explicitly defined in the subtable. To calculate an output glyph index, format 1 adds a constant delta value to the input glyph index. The input and output glyphs do not need to be in continuous glyph ID ranges, but the delta between input glyph IDs and output glyph IDs need to be constant. This format does not use the Coverage index that is returned from the Coverage table.</p>
+<p>The SingleSubstFormat1 subtable begins with a format identifier of 1. An offset references a Coverage table that specifies the indices of the input glyphs. The deltaGlyphID is a constant value added to each input glyph index to calculate the index of the corresponding output glyph. Addition of deltaGlyphID is modulo 65536. If the result after adding deltaGlyphID to the input glyph index is less than zero, add 65536 to obtain a valid glyph ID.</p>
+<p><a href="#EX2" data-linktype="self-bookmark">Example 2</a> at the end of this chapter uses format 1 to replace standard numerals with lining numerals.</p>
+<p><a id="singleSubst_1"></a></p>
+<p><em>SingleSubstFormat1 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="substFormat_ss1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier: format = 1.</td>
+</tr>
+<tr id="coverageOffset_ss1">
+<td>Offset16</td>
+<td>coverageOffset</td>
+<td>Offset to Coverage table, from beginning of substitution subtable.</td>
+</tr>
+<tr id="deltaGlyphID_ss1">
+<td>int16</td>
+<td>deltaGlyphID</td>
+<td>Add to original glyph ID to get substitute glyph ID.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="SSF2"></a></p>
+<p><strong>Single substitution format 2</strong></p>
+<p>Format 2 is more flexible than format 1 but requires more space. It provides an array of output glyph indices (substituteGlyphIDs) explicitly matched to the input glyph indices specified in the Coverage table.</p>
+<p>The SingleSubstFormat2 subtable specifies a format identifier, an offset to a Coverage table that defines the input glyph indices, and an array of output glyph indices (substituteGlyphIDs).</p>
+<p>The substituteGlyphIDs array must contain the same number of glyph indices as the Coverage table, and the glyphs must be ordered to match the order of corresponding input glyphs in the Coverage table. To locate the corresponding output glyph index in the substituteGlyphIDs array, this format uses the Coverage index returned from the Coverage table.</p>
+<p><a href="#EX3" data-linktype="self-bookmark">Example 3</a> at the end of this chapter uses format 2 to substitute vertically oriented glyphs for horizontally oriented glyphs.</p>
+<p><a id="singleSubst_2"></a></p>
+<p><em>SingleSubstFormat2 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="substFormat_ss2">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier: format = 2.</td>
+</tr>
+<tr id="coverageOffset_ss2">
+<td>Offset16</td>
+<td>coverageOffset</td>
+<td>Offset to Coverage table, from beginning of substitution subtable.</td>
+</tr>
+<tr id="glyphCount_ss2">
+<td>uint16</td>
+<td>glyphCount</td>
+<td>Number of glyph IDs in the substituteGlyphIDs array.</td>
+</tr>
+<tr id="substituteGlyphIDs_ss2">
+<td>uint16</td>
+<td>substituteGlyphIDs[glyphCount]</td>
+<td>Array of substitute glyph IDs — ordered by Coverage index.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="MS"></a></p>
+<h3 id="lookup-type-2-subtable-multiple-substitution">Lookup type 2 subtable: multiple substitution</h3>
+<p>A multiple substitution (MultipleSubst) subtable replaces a single glyph with a sequence of glyphs, as when multiple glyphs replace a single ligature. The subtable has a single format.</p>
+<p><a id="MSF1"></a></p>
+<p><strong>Multiple substitution format 1</strong></p>
+<p>The MultipleSubstFormat1 subtable specifies a format identifier, an offset to a Coverage table that defines the input glyph indices, and an array of offsets to Sequence tables that define the output glyph indices. The Sequence table offsets are ordered by the Coverage index of the input glyphs.</p>
+<p>For each input glyph listed in the Coverage table, a Sequence table defines the output glyphs. Each Sequence table contains a count of the glyphs in the output glyph sequence and an array of output glyph indices.</p>
+<blockquote>
+<p><em>Note:</em> The order of the output glyph indices depends on the writing direction of the text. For text written left to right, the left-most glyph will be first glyph in the sequence. Conversely, for text written right to left, the right-most glyph will be first.</p>
+</blockquote>
+<p>The use of multiple substitution for deletion of an input glyph is prohibited. The glyphCount value must always be greater than 0.</p>
+<p><a href="#EX4" data-linktype="self-bookmark">Example 4</a> at the end of this chapter shows how to replace a single ligature with three glyphs.</p>
+<p><a id="multipleSubst_1"></a>
+<em>MultipleSubstFormat1 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="substFormat_ms1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier: format = 1.</td>
+</tr>
+<tr id="coverageOffset_ms1">
+<td>Offset16</td>
+<td>coverageOffset</td>
+<td>Offset to Coverage table, from beginning of substitution subtable.</td>
+</tr>
+<tr id="sequenceCount_ms1">
+<td>uint16</td>
+<td>sequenceCount</td>
+<td>Number of Sequence table offsets in the sequenceOffsets array.</td>
+</tr>
+<tr id="sequenceOffsets_ms1">
+<td>Offset16</td>
+<td>sequenceOffsets[sequenceCount]</td>
+<td>Array of offsets to Sequence tables. Offsets are from beginning of substitution subtable, ordered by Coverage index.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="sequenceTable"></a></p>
+<p><em>Sequence table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="glyphCount_seqTbl">
+<td>uint16</td>
+<td>glyphCount</td>
+<td>Number of glyph IDs in the substituteGlyphIDs array. This must always be greater than 0.</td>
+</tr>
+<tr id="substituteGlyphIDs_seqTbl">
+<td>uint16</td>
+<td>substituteGlyphIDs[glyphCount]</td>
+<td>String of glyph IDs to substitute.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="AS"></a></p>
+<h3 id="lookup-type-3-subtable-alternate-substitution">Lookup type 3 subtable: alternate substitution</h3>
+<p>An alternate substitution (AlternateSubst) subtable identifies any number of aesthetic alternatives from which a user can choose a glyph variant to replace the input glyph. For example, if a font contains four variants of the ampersand symbol, the 'cmap' table will specify the index of one of the four glyphs as the default glyph index, and an AlternateSubst subtable will list the indices of the other three glyphs as alternatives. A text-processing client would then have the option of replacing the default glyph with any of the three alternatives.</p>
+<p>The subtable has one format.</p>
+<p><a id="ASF1"></a></p>
+<p><strong>Alternate substitution format 1</strong></p>
+<p>The AlternateSubstFormat1 subtable contains a format identifier, an offset to a Coverage table containing the indices of glyphs with alternative forms, and an array of offsets to AlternateSet tables.</p>
+<p>For each glyph in the Coverage table, an AlternateSet subtable contains a count of the alternative glyphs and an array of their glyph indices. Because all the glyphs are functionally equivalent, they can be in any order in the array.</p>
+<p><a href="#EX5" data-linktype="self-bookmark">Example 5</a> at the end of this chapter shows how to replace the default ampersand glyph with alternative glyphs.</p>
+<p><a id="alternateSubst_1"></a>
+<em>AlternateSubstFormat1 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="substFormat_as1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier: format = 1.</td>
+</tr>
+<tr id="coverageOffset_as1">
+<td>Offset16</td>
+<td>coverageOffset</td>
+<td>Offset to Coverage table, from beginning of substitution subtable.</td>
+</tr>
+<tr id="alternateSetCount_as1">
+<td>uint16</td>
+<td>alternateSetCount</td>
+<td>Number of AlternateSet tables</td>
+</tr>
+<tr id="alternateSetOffsets_as1">
+<td>Offset16</td>
+<td>alternateSetOffsets[alternateSetCount]</td>
+<td>Array of offsets to AlternateSet tables. Offsets are from beginning of substitution subtable, ordered by Coverage index.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="alternateSetTbl"></a></p>
+<p><em>AlternateSet table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="glyphCount_altSetTbl">
+<td>uint16</td>
+<td>glyphCount</td>
+<td>Number of glyph IDs in the alternateGlyphIDs array.</td>
+</tr>
+<tr id="alternateGlyphIDs_altSetTbl">
+<td>uint16</td>
+<td>alternateGlyphIDs[glyphCount]</td>
+<td>Array of alternate glyph IDs, in arbitrary order.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="LS"></a></p>
+<h3 id="lookup-type-4-subtable-ligature-substitution">Lookup type 4 subtable: ligature substitution</h3>
+<p>A ligature substitution (LigatureSubst) subtable identifies ligature substitutions where a single glyph replaces multiple glyphs. One LigatureSubst subtable can specify any number of ligature substitutions. The subtable has one format.</p>
+<p><a id="LSF1"></a></p>
+<p><strong>Ligature substitution format 1</strong></p>
+<p>The LigatureSubstFormat1 subtable contains a format identifier, a Coverage table offset, and an array of offsets to LigatureSet tables. The Coverage table specifies only the index of the first glyph component of each ligature set.</p>
+<p><a href="#EX6" data-linktype="self-bookmark">Example 6</a> at the end of this chapter shows how to replace a string of glyphs with a single ligature.</p>
+<p><a id="ligatureSubst_1"></a></p>
+<p><em>LigatureSubstFormat1 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="substFormat_ls1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier: format = 1.</td>
+</tr>
+<tr id="coverageOffset_ls1">
+<td>Offset16</td>
+<td>coverageOffset</td>
+<td>Offset to Coverage table, from beginning of substitution subtable.</td>
+</tr>
+<tr id="ligatureSetCount_ls1">
+<td>uint16</td>
+<td>ligatureSetCount</td>
+<td>Number of LigatureSet tables.</td>
+</tr>
+<tr id="ligatureSetOffsets_ls1">
+<td>Offset16</td>
+<td>ligatureSetOffsets[ligatureSetCount]</td>
+<td>Array of offsets to LigatureSet tables. Offsets are from beginning of substitution subtable, ordered by Coverage index.</td>
+</tr>
+</tbody>
+</table>
+<p>A LigatureSet table, one for each covered glyph, specifies all the ligature sequences that begin with the covered glyph. For example, if the Coverage table lists the glyph index for a lowercase “f,” then a LigatureSet table will define ligature that begin with “f”, such as the “ffl”, “fl”, “ffi”, “fi” and “ff” ligatures. If the Coverage table also lists the glyph index for a lowercase “e”, then a different LigatureSet table will define ligatures that begin with “e”, such as the “etc” ligature.</p>
+<p>A LigatureSet table consists of a count of the ligatures that begin with the covered glyph and an array of offsets to Ligature tables, which define the glyphs in each ligature. The order in the Ligature offset array defines the preference for using the ligatures. For example, if the “ffl” ligature is preferable to the “ff” ligature, then the Ligature array would list the offset to the “ffl” Ligature table before the offset to the “ff” Ligature table.</p>
+<p><a id="ligatureSetTbl"></a></p>
+<p><em>LigatureSet table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="ligatureCount_ligSetTbl">
+<td>uint16</td>
+<td>ligatureCount</td>
+<td>Number of Ligature tables.</td>
+</tr>
+<tr id="ligatureOffsets_litSetTbl">
+<td>Offset16</td>
+<td>ligatureOffsets[LigatureCount]</td>
+<td>Array of offsets to Ligature tables. Offsets are from beginning of LigatureSet table, ordered by preference.</td>
+</tr>
+</tbody>
+</table>
+<p>For each ligature in the set, a Ligature table specifies the glyph ID of the output ligature glyph; a count of the total number of component glyphs in the ligature, including the first component; and an array of glyph IDs for the components. The array starts with the second component glyph in the ligature (input glyph sequence index = 1, componentGlyphIDs array index = 0) because the first component glyph is specified in the Coverage table.</p>
+<blockquote>
+<p><em>Note:</em> The componentGlyphIDs array lists glyph IDs according to the writing direction — that is, the logical order — of the text. For text written right to left, the right-most glyph will be first. Conversely, for text written left to right, the left-most glyph will be first.</p>
+</blockquote>
+<p><a id="ligTbl"></a></p>
+<p><em>Ligature table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="ligatureGlyph_ligTbl">
+<td>uint16</td>
+<td>ligatureGlyph</td>
+<td>Glyph ID of ligature to substitute.</td>
+</tr>
+<tr id="componentCount_ligTbl">
+<td>uint16</td>
+<td>componentCount</td>
+<td>Number of components in the ligature.</td>
+</tr>
+<tr id="componentGlyphIDs_ligTbl">
+<td>uint16</td>
+<td>componentGlyphIDs[componentCount - 1]</td>
+<td>Array of component glyph IDs — start with the second component, ordered in writing direction.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="CS"></a></p>
+<h3 id="lookup-type-5-subtable-contextual-substitution">Lookup type 5 subtable: contextual substitution</h3>
+<p>A contextual substitution subtable describes glyph substitutions in context that replace one or more glyphs within a certain pattern of glyphs.</p>
+<p>Contextual substitution subtables can use any of three formats that are common to the GSUB and GPOS tables. These define input sequence patterns to be matched against the text glyph sequence, and then actions to be applied to glyphs within the input sequence. The actions are specified as “nested” lookups, and each is applied to a particular sequence position within the input sequence.</p>
+<p>Each sequence position + nested lookup combination is specified in a <a href="chapter2.html#sequence-lookup-record" data-linktype="relative-path">SequenceLookupRecord</a>. Examples <a href="#EX7" data-linktype="self-bookmark">7</a>, <a href="#EX8" data-linktype="self-bookmark">8</a>, and <a href="#EX9" data-linktype="self-bookmark">9</a> at the end of this chapter illustrate use of sequence lookup records within the GSUB table.</p>
+<p>While the subtable formats are common between the GSUB and GPOS tables, the lookups referenced by sequence lookup records within the GSUB table are referenced by index into the GSUB LookupList table. In this way, actions specified by a GSUB contextual lookup can only be substitutions.</p>
+<p>An input sequence pattern is matched against the current glyph sequence before any substitution actions are performed. The substitutions may change the current glyph sequence, but that has no effect on the initial matching operation. For a given lookup subtable, there may be multiple sequence lookup records, and these are processed in the specified order. Each substitution action on the glyph sequence applies to the results from the preceding sequence lookup records. Note in particular that the sequence position index in each sequence lookup record is relative to the glyph sequence as modified by the actions of preceding SequenceLookupRecords.</p>
+<p>For example, consider a contextual lookup specifying an input glyph sequence of four glyphs. Suppose that no substitution is performed on the first glyph, but that the middle two glyphs will be replaced with a ligature, and a single glyph will replace the fourth glyph. Suppose also that the actions are listed in that order.</p>
+<ul>
+<li>The first glyph is at sequence position 0. No SequenceLookupRecord is specified for sequence index 0.</li>
+<li>The first SequenceLookupRecord specifies sequence position 1 and gives a LookupList index referencing a ligature substitution lookup. The first glyph specified in the nested lookup will be the glyph at sequence position 1; the second glyph specified in the nested lookup will be the glyph at sequence position 2. After the nested substitution has been performed, there will be three glyphs in the sequence context, not four.</li>
+<li>The last SequenceLookupRecord is defined in terms of the modified sequence context, specifying sequence position 2, not position 3. The nested single-substitution lookup will specify the glyph at position 2 as its input glyph.</li>
+</ul>
+<p><a id="CSF1"></a></p>
+<p><strong>Contextual substitution format 1: simple glyph contexts</strong></p>
+<p>Format 1 defines the context for a glyph substitution as a particular sequence of glyphs. For example, a context could be &lt;xyz&gt;, &lt;holiday&gt;, &lt;!?*#@&gt;, or any other glyph sequence.</p>
+<p>For example, suppose the glyph string &lt;abc&gt; is to be replaced with its reverse glyph string &lt;cba&gt;. The input context would be defined as the glyph sequence, &lt;abc&gt;. Two single-substitution actions can be specified: the “a” at sequence position 0 is substituted by “c”, and the “c” at sequence position 2 is substituted by “a”.</p>
+<p>Format 1 contextual substitutions are implemented using a SequenceContextFormat1 table. See <a href="chapter2.html#seqctxt1" data-linktype="relative-path">Sequence context format 1: simple glyph contexts</a> in the OpenType Layout Common Table Formats chapter for complete details.</p>
+<p><a href="#EX7" data-linktype="self-bookmark">Example 7</a> at the end of the chapter uses a SequenceContextFormat1 table to replace a sequence of three glyphs with a sequence preferred for the French language system.</p>
+<p><a id="CSF2"></a></p>
+<p><strong>Contextual substitution format 2: class-based glyph contexts</strong></p>
+<p>Format 2 defines contexts for glyph substitutions as input sequence patterns, with patterns expressed in terms of glyph classes. The glyph classes are defined using a <a href="chapter2.html#class-definition-table" data-linktype="relative-path">Class Definition table</a>. Several sequence patterns may be specified, with each pattern specifying a class of glyphs for each input sequence position.</p>
+<p>For example, suppose that a swash capital glyph should replace each uppercase letter glyph that is preceded by a space glyph and followed by a lowercase letter glyph (a glyph sequence of space - uppercase - lowercase). The set of uppercase glyphs would constitute one glyph class (class 1), the set of lowercase glyphs would constitute a second class (class 2), and the space glyph would constitute a third class (class 3). The input context might be specified as a pattern of one glyph from class 3, followed by one glyph from class 1, followed by one glyph from class 2.</p>
+<p>Format 2 contextual substitutions are implemented using a SequenceContextFormat2 table. See <a href="chapter2.html#seqctxt2" data-linktype="relative-path">Sequence context format 2: class-based glyph contexts</a> in the OpenType Layout Common Table Formats chapter for complete details.</p>
+<p><a href="#EX8" data-linktype="self-bookmark">Example 8</a> at the end of this chapter uses a SequenceContextFormat2 table to substitute Arabic mark glyphs for base glyphs of different heights.</p>
+<p><a id="CSF3"></a></p>
+<p><strong>Contextual substitution format 3: coverage-based glyph contexts</strong></p>
+<p>Format 3 defines a context for glyph substitutions as an input sequence pattern, with the pattern expressed in terms of Coverage tables. A different Coverage table is defined for each sequence position.</p>
+<p>Format 3 is like format 2 in that patterns are defined using sets of glyphs. However, with the glyph classes used in format 2, each glyph is in exactly one class. With format 3, any glyph can occur in multiple Coverage tables.</p>
+<p>Unlike Formats 1 and 2, however, this format can define only one context.</p>
+<p>For example, consider an input context that contains a lowercase glyph (position 0), followed by an uppercase glyph (position 1), either a lowercase or numeral glyph (position 2), and then either a lowercase or uppercase vowel (position 3). This context requires four Coverage tables, one for each position:</p>
+<ul>
+<li>For position 0, the Coverage table lists the set of lowercase glyphs.</li>
+<li>For position 1, the Coverage table lists the set of uppercase glyphs.</li>
+<li>For position 2, the Coverage table lists the set of lowercase and numeral glyphs, a superset of the glyphs defined in the Coverage table for position 0.</li>
+<li>For position 3, the Coverage table lists the set of lowercase and uppercase vowels, a subset of the glyphs defined in the Coverage tables for both positions 0 and 1.</li>
+</ul>
+<p>Format 3 contextual substitutions are implemented using a SequenceContextFormat3 table. See <a href="chapter2.html#seqctxt3" data-linktype="relative-path">Sequence context format 3: coverage-based glyph contexts</a> in the OpenType Layout Common Table Formats chapter for complete details.</p>
+<p><a href="#example-9-contextual-substitution-format-3" data-linktype="self-bookmark">Example 9</a> at the end of this chapter uses SequenceContextFormat3 to substitute swash glyphs for two out of three glyphs in a sequence.</p>
+<p><a id="CC"></a></p>
+<h3 id="lookup-type-6-subtable-chained-contexts-substitution">Lookup type 6 subtable: chained contexts substitution</h3>
+<p>A chained contexts substitution subtable describes glyph substitutions in context with an ability to look back and/or look ahead in the sequence of glyphs. The design of the chained contexts substitution subtable is parallel to that of the contextual substitution subtable, including the availability of three formats. Each format can describe one or more chained backtrack, input, and lookahead sequence combinations, and one or more substitutions for glyphs in each input sequence.</p>
+<blockquote>
+<p><em>Note:</em> Substitutions can be specified only for the input sequence context, not for backtrack and lookahead sequences.</p>
+</blockquote>
+<p>See the introduction to the <a href="#CS" data-linktype="self-bookmark">Contextual substitution</a> section for general remarks regarding contextual substitutions, which also apply to chained contexts substitutions.</p>
+<p>Note that backtrack sequences are specified in reverse logical order. See the <a href="chapter2.html#chseqctxt1" data-linktype="relative-path">Chained sequence context format 1</a> section in the OpenType Layout Common Table Formats chapter for details regarding chained backtrack, input, and lookahead sequences.</p>
+<p><a id="CCF1"></a></p>
+<p><strong>Chained contexts substitution format 1: simple glyph contexts</strong></p>
+<p>Format 1 defines the context for a glyph substitution as a particular sequence of glyphs. For example, a context could be &lt;xyz&gt;, &lt;holiday&gt;, &lt;!?*#@&gt;, or any other glyph sequence. Specific glyph sequences are used for input, backtrack or lookahead contexts.</p>
+<p>Format 1 chained context substitutions are implemented using a ChainedSequenceContextFormat1 table. See <a href="chapter2.html#chseqctxt1" data-linktype="relative-path">Chained sequence context format 1: simple glyph contexts</a> in the OpenType Layout Common Table Formats chapter for complete details.</p>
+<p><a id="CCF2"></a></p>
+<p><strong>Chained contexts substitution format 2: class-based glyph contexts</strong></p>
+<p>Format 2 defines contexts for glyph substitutions as patterns expressed in terms of glyph classes. The glyph classes are defined using a <a href="chapter2.html#class-definition-table" data-linktype="relative-path">Class Definition table</a>. Several sequence patterns may be specified, with each pattern specifying a class of glyphs for each sequence position.</p>
+<p>To chain contexts, three separate Class Definition tables are used for the backtrack sequence, input sequence, and lookahead sequence.</p>
+<p>Format 2 contextual substitutions are implemented using a ChainedSequenceContextFormat2 table. See <a href="chapter2.html#chseqctxt2" data-linktype="relative-path">Chained sequence context format 2: class-based glyph contexts</a> in the OpenType Layout Common Table Formats chapter for complete details.</p>
+<p><a id="CCF3"></a></p>
+<p><strong>Chained contexts substitution format 3: coverage-based glyph contexts</strong></p>
+<p>Format 3 defines contexts for glyph substitutions as patterns expressed in terms of Coverage tables. A different Coverage table is defined for each position in a sequence. To chain contexts, three separate sets of Coverage tables are used for the backtrack sequence, input sequence, and lookahead sequence.</p>
+<p>Format 3 is like format 2 in that patterns are defined using sets of glyphs. However, with the glyph classes used in format 2, each glyph is in exactly one class. With format 3, any glyph can occur in multiple Coverage tables.</p>
+<p>Format 3 contextual substitutions are implemented using a ChainedSequenceContextFormat3 table. See <a href="chapter2.html#chseqctxt3" data-linktype="relative-path">Chained sequence context format 3: coverage-based glyph contexts</a> in the OpenType Layout Common Table Formats chapter for complete details.</p>
+<p><a id="ES"></a></p>
+<h3 id="lookup-type-7-subtable-substitution-subtable-extension">Lookup type 7 subtable: substitution subtable extension</h3>
+<p>This lookup type provides a way to access lookup subtables within the GSUB table using 32-bit offsets. This is needed if the total size of the subtables exceeds the 16-bit limits of the various other offsets in the GSUB table. In this specification, the subtable stored at the 32-bit offset location is termed the “extension” subtable.</p>
+<p>This subtable type uses one format.</p>
+<p><a id="ESF1"></a></p>
+<p><strong>Substitution extension format 1</strong></p>
+<p><a id="extensionSubst_1"></a></p>
+<p><em>SubstExtensionFormat1 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="substFormat_es1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier. Set to 1.</td>
+</tr>
+<tr id="extensionLookupType_es1">
+<td>uint16</td>
+<td>extensionLookupType</td>
+<td>Lookup type of subtable referenced by extensionOffset (that is, the extension subtable).</td>
+</tr>
+<tr id="extensionOffset_es1">
+<td>Offset32</td>
+<td>extensionOffset</td>
+<td>Offset to the extension subtable, of lookup type extensionLookupType, relative to the start of the ExtensionSubstFormat1 subtable.</td>
+</tr>
+</tbody>
+</table>
+<p>The extensionLookupType field must be set to any lookup type other than 7. If a lookup table uses extension subtables, then all of the extension subtables must have the same extensionLookupType. All offsets to extension subtables are set in the usual way—that is, relative to start of the ExtensionSubstFormat1 subtable.</p>
+<p>When a layout engine encounters a GSUB type 7 Lookup table, it shall:</p>
+<ul>
+<li>Proceed as though the Lookup table’s lookupType field were set to the extensionLookupType of the subtables.</li>
+<li>Proceed as though each extension subtable referenced by extensionOffset replaced the type 7 subtable that referenced it.</li>
+</ul>
+<p><a id="RCCS"></a></p>
+<h3 id="lookup-type-8-subtable-reverse-chained-contexts-single-substitution">Lookup type 8 subtable: reverse chained contexts single substitution</h3>
+<p>The reverse chaining contextual single substitution subtable (ReverseChainSingleSubst) describes single-glyph substitutions in context with an ability to look back and/or look ahead in the sequence of glyphs. The major difference between this and other lookup types is that processing of input glyph sequence goes from end to start.</p>
+<p>Compared to chained contexts substitution (lookup subtable type 6), this format is restricted to only a coverage-based subtable format, input sequences can contain only a single glyph, and only single substitutions are allowed on this glyph. This constraint is integrated into the subtable format.</p>
+<p>This lookup type is designed specifically for Arabic script writing styles like Nastaliq in which the shape of the glyph is determined by the following glyph, beginning at the last glyph of the “joor”, or set of connected glyphs.</p>
+<p>This subtable type uses one format.</p>
+<p><a id="RCCSF1"></a></p>
+<p><strong>Reverse chained contexts single substitution format 1: coverage-based glyph contexts</strong></p>
+<p>Format 1 defines a chaining context rule as a sequence of Coverage tables. Each position in the sequence may define a different Coverage table for the set of glyphs that matches the context pattern. With format 1, the glyph sets defined in the different Coverage tables may intersect.</p>
+<p>Despite reverse order processing, the order of the Coverage tables listed in the Coverage array must be in logical order (follow the writing direction). The backtrack sequence is as illustrated for the <a href="chapter2.html#chseqctxt1" data-linktype="relative-path">Chained sequence context format 1</a> table, in the OpenType Layout Common Table Formats chapter. The input sequence is one glyph located at <em>i</em> in the logical string. The backtrack begins at <em>i</em> - 1 and increases in offset value as one moves toward the logical beginning of the string. The lookahead sequence begins at <em>i</em> + 1 and increases in offset value as one moves toward the logical end of the string. In processing a reverse chaining substitution, <em>i</em> begins at the logical end of the string and moves to the beginning.</p>
+<p>The subtable contains a Coverage table for the input glyph and Coverage table arrays for backtrack and lookahead sequences. It also contains an array of substitute glyph indices (substituteGlyphIDs), which are substitutions for glyphs in the Coverage table, and a count of glyphs in the substituteGlyphIDs array. The substituteGlyphIDs array must contain the same number of glyph indices as the Coverage table. To locate the corresponding output glyph index in the substituteGlyphIDs array, this format uses the Coverage index returned from the Coverage table.</p>
+<p><a href="#EX10" data-linktype="self-bookmark">Example 10</a> at the end of this chapter uses ReverseChainSingleSubstFormat1 to substitute Arabic glyphs with a correct stroke thickness on the left (exit) to match the stroke thickness on the right (entry) of the following glyph (in logical order).</p>
+<p><a id="revChainSingleSubst_1"></a></p>
+<p><em>ReverseChainSingleSubstFormat1 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="substFormat_rcss">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier: format = 1.</td>
+</tr>
+<tr id="coverageOffset_rcss">
+<td>Offset16</td>
+<td>coverageOffset</td>
+<td>Offset to Coverage table, from beginning of substitution subtable.</td>
+</tr>
+<tr id="backtrackGlyphCount_rcss">
+<td>uint16</td>
+<td>backtrackGlyphCount</td>
+<td>Number of glyphs in the backtrack sequence.</td>
+</tr>
+<tr id="backtrackCoverageOffsets_rcss">
+<td>Offset16</td>
+<td>backtrackCoverageOffsets[backtrackGlyphCount]</td>
+<td>Array of offsets to coverage tables in backtrack sequence, in glyph sequence order.</td>
+</tr>
+<tr id="lookaheadGlyphCount_rcss">
+<td>uint16</td>
+<td>lookaheadGlyphCount</td>
+<td>Number of glyphs in lookahead sequence.</td>
+</tr>
+<tr id="lookaheadCoverageOffsets_rcss">
+<td>Offset16</td>
+<td>lookaheadCoverageOffsets[lookaheadGlyphCount]</td>
+<td>Array of offsets to coverage tables in lookahead sequence, in glyph sequence order.</td>
+</tr>
+<tr id="glyphCount_rcss">
+<td>uint16</td>
+<td>glyphCount</td>
+<td>Number of glyph IDs in the substituteGlyphIDs array.</td>
+</tr>
+<tr id="substituteGlyphIDs_rcss">
+<td>uint16</td>
+<td>substituteGlyphIDs[glyphCount]</td>
+<td>Array of substitute glyph IDs — ordered by Coverage index.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="examples"></a></p>
+<h2 id="gsub-structure-examples">GSUB structure examples</h2>
+<p>The rest of this chapter describes and illustrates examples of the various GSUB subtables, including each of the three formats available for contextual substitutions. All the examples reflect unique parameters described below, but the samples provide a useful reference for building subtables specific to other situations.</p>
+<p>All the examples have three columns showing hex data, source, and comments.</p>
+<p><a id="EX1"></a></p>
+<h3 id="example-1-gsub-header">Example 1: GSUB Header</h3>
+<p>Example 1 shows a typical <a href="#header" data-linktype="self-bookmark">GSUB Header table</a> definition.</p>
+<p><em>Example 1</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>GSUBHeader</b><br>
+TheGSUBHeader</td>
+<td>GSUBHeader table definition</td>
+</tr>
+<tr>
+<td>00010000</td>
+<td>0x00010000</td>
+<td>major/minor version</td>
+</tr>
+<tr>
+<td>000A</td>
+<td>TheScriptList</td>
+<td>offset to ScriptList table</td>
+</tr>
+<tr>
+<td>001E</td>
+<td>TheFeatureList</td>
+<td>offset to FeatureList table</td>
+</tr>
+<tr>
+<td>002C</td>
+<td>TheLookupList</td>
+<td>offset to LookupList table</td>
+</tr>
+</tbody>
+</table>
+<p><a id="EX2"></a></p>
+<h3 id="example-2-singlesubstformat1-subtable">Example 2: SingleSubstFormat1 subtable</h3>
+<p>Example 2 illustrates the <a href="#SSF1" data-linktype="self-bookmark">SingleSubstFormat1 subtable</a> , which uses ranges to replace single input glyphs with their corresponding output glyphs. The indices of the output glyphs are calculated by adding a constant delta value to the indices of the input glyphs. In this example, the Coverage table has a format identifier of 2 to indicate the range format, which is used because the input glyph indices are in consecutive order in the font. The Coverage table specifies one range that contains a startGlyphID for the “0” (zero) glyph and an endGlyphID for the “9” glyph.</p>
+<p><em>Example 2</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>SingleSubstFormat1</b><br>
+LiningNumeralSubtable</td>
+<td>SingleSubst subtable definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: calculated output glyph indices</td>
+</tr>
+<tr>
+<td>0006</td>
+<td>LiningNumeralCoverage</td>
+<td>offset to Coverage table for input glyphs</td>
+</tr>
+<tr>
+<td>00C0</td>
+<td>192</td>
+<td>deltaGlyphID = 192: add to each input glyph index to produce output glyph index
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat2</b><br>
+LiningNumeralCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>coverageFormat: ranges</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>rangeCount</td>
+</tr>
+<tr>
+<td></td>
+<td>rangeRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>004E</td>
+<td>78</td>
+<td>Start glyph ID for numeral zero glyph</td>
+</tr>
+<tr>
+<td>0058</td>
+<td>87</td>
+<td>End glyph ID for numeral nine glyph</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>startCoverageIndex: first CoverageIndex = 0</td>
+</tr>
+</tbody>
+</table>
+<p><a id="EX3"></a></p>
+<h3 id="example-3-singlesubstformat2-subtable">Example 3: SingleSubstFormat2 subtable</h3>
+<p>Example 3 uses the <a href="#SSF2" data-linktype="self-bookmark">SingleSubstFormat2 subtable</a> for lists to substitute punctuation glyphs in Japanese text that is written vertically. Horizontally oriented parentheses and square brackets (the input glyphs) are replaced with vertically oriented parentheses and square brackets (the output glyphs).</p>
+<p>The Coverage table, format 1, identifies each input glyph index. The number of input glyph indices listed in the Coverage table matches the number of output glyph indices listed in the subtable. For correct substitution, the order of the glyph indices in the Coverage table (input glyphs) must match the order in the Substitute array (output glyphs).</p>
+<p><em>Example 3</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>SingleSubstFormat2</b><br>
+VerticalPunctuationSubtable</td>
+<td>SingleSubst subtable definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>format: lists</td>
+</tr>
+<tr>
+<td>000E</td>
+<td>VerticalPunctuationCoverage</td>
+<td>offset to Coverage table</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>4</td>
+<td>glyphCount — equals glyphCount in Coverage table</td>
+</tr>
+<tr>
+<td>0131</td>
+<td>VerticalOpenBracketGlyph</td>
+<td>substituteGlyphIDs[0], ordered by Coverage index</td>
+</tr>
+<tr>
+<td>0135</td>
+<td>VerticalClosedBracketGlyph</td>
+<td>substituteGlyphIDs[1]</td>
+</tr>
+<tr>
+<td>013E</td>
+<td>VerticalOpenParenthesisGlyph</td>
+<td>substituteGlyphIDs[2]</td>
+</tr>
+<tr>
+<td>0143</td>
+<td>VerticalClosedParenthesisGlyph</td>
+<td>substituteGlyphIDs[3]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+VerticalPunctuationCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>coverageFormat: lists</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>4</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>003C</td>
+<td>HorizontalOpenBracketGlyph</td>
+<td>glyphArray[0], ordered by glyph ID</td>
+</tr>
+<tr>
+<td>0040</td>
+<td>HorizontalClosedBracketGlyph</td>
+<td>glyphArray[1]</td>
+</tr>
+<tr>
+<td>004B</td>
+<td>HorizontalOpenParenthesisGlyph</td>
+<td>glyphArray[2]</td>
+</tr>
+<tr>
+<td>004F</td>
+<td>HorizontalClosedParenthesisGlyph</td>
+<td>glyphArray[3]</td>
+</tr>
+</tbody>
+</table>
+<p><a id="EX4"></a></p>
+<h3 id="example-4-multiplesubstformat1-subtable">Example 4: MultipleSubstFormat1 subtable</h3>
+<p>Example 4 uses a <a href="#MSF1" data-linktype="self-bookmark">MultipleSubstFormat1 subtable</a> to replace a single “ffi” ligature with three individual glyphs that form the string &lt;ffi&gt;. The subtable defines a format identifier of 1, an offset to a Coverage table that specifies the glyph index of the “ffi” ligature (the input glyph), an offset to a Sequence table that specifies the sequence of glyph indices for the &lt;ffi&gt; string in its substitute array (the output glyph sequence), and a count of Sequence table offsets.</p>
+<p><em>Example 4</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>MultipleSubstFormat1</b><br>
+FfiDecompSubtable</td>
+<td>MultipleSubst subtable definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format</td>
+</tr>
+<tr>
+<td>0008</td>
+<td>FfiDecompCoverage</td>
+<td>offset to Coverage table</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>sequenceCount — equals glyphCount in Coverage table</td>
+</tr>
+<tr>
+<td>000E</td>
+<td>FfiDecompSequence</td>
+<td>sequenceOffsets[0] (offset to Sequence table 0)
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+FfiDecompCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>coverageFormat: lists</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>00F1</td>
+<td>ffiGlyphID</td>
+<td>ligature glyph
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>Sequence</b><br>
+FfiDecompSequence</td>
+<td>Sequence table definition</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>001A</td>
+<td>fGlyphID</td>
+<td>first glyph in sequence order</td>
+</tr>
+<tr>
+<td>001A</td>
+<td>fGlyphID</td>
+<td>second glyph</td>
+</tr>
+<tr>
+<td>001D</td>
+<td>iGlyphID</td>
+<td>third glyph</td>
+</tr>
+</tbody>
+</table>
+<p><a id="EX5"></a></p>
+<h3 id="example-5-alternatesubstformat-1-subtable">Example 5: AlternateSubstFormat 1 subtable</h3>
+<p>Example 5 uses the <a href="#ASF1" data-linktype="self-bookmark">AlternateSubstFormat1 subtable</a> to replace the default ampersand glyph (input glyph) with one of two alternative ampersand glyphs (output glyph).</p>
+<p>In this case, the Coverage table specifies the index of a single glyph, the default ampersand, because it is the only glyph covered by this lookup. The AlternateSet table for this covered glyph identifies the alternative glyphs: AltAmpersand1GlyphID and AltAmpersand2GlyphID.</p>
+<p>In Example 5, the index position of the AlternateSet table offset in the AlternateSet array is zero (0), which correlates with the index position (also zero) of the default ampersand glyph in the Coverage table.</p>
+<p><em>Example 5</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>AlternateSubstFormat1</b><br>
+AltAmpersandSubtable</td>
+<td>AlternateSubstFormat1 subtable definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format</td>
+</tr>
+<tr>
+<td>0008</td>
+<td>AltAmpersandCoverage</td>
+<td>offset to Coverage table</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>alternateSetCount — equals glyphCount in Coverage table</td>
+</tr>
+<tr>
+<td>000E</td>
+<td>AltAmpersandSet</td>
+<td>alternateSetOffsets[0] (offset to AlternateSet table 0)
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+AltAmpersandCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>coverageFormat: lists</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>003A</td>
+<td>DefaultAmpersandGlyphID</td>
+<td>glyphArray[0]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>AlternateSet</b><br>
+AltAmpersandSet</td>
+<td>AlternateSet table definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>00C9</td>
+<td>AltAmpersand1GlyphID</td>
+<td>alternateGlyphIDs[0] — glyphs in arbitrary order</td>
+</tr>
+<tr>
+<td>00CA</td>
+<td>AltAmpersand2GlyphID</td>
+<td>alternateGlyphIDs[1]</td>
+</tr>
+</tbody>
+</table>
+<p><a id="EX6"></a></p>
+<h3 id="example-6-ligaturesubstformat1-subtable">Example 6: LigatureSubstFormat1 subtable</h3>
+<p>Example 6 shows a <a href="#LSF1" data-linktype="self-bookmark">LigatureSubstFormat1 subtable</a> that defines data to replace a string of glyphs with a single ligature glyph. Because a LigatureSubstFormat1 subtable can specify glyph substitutions for more than one ligature, this subtable defines three ligatures: “etc”, “ffi”, and “fi.”</p>
+<p>The sample subtable contains a format identifier (4) and an offset to a Coverage table. The Coverage table, which lists an index for each first glyph in the ligatures, lists indices for the “e” and “f” glyphs. The Coverage table range format is used here because the “e” and “f” glyph indices are numbered consecutively.</p>
+<p>In the LigatureSubst subtable, ligatureSetCount specifies two LigatureSet tables, one for each covered glyph, and the ligatureSetOffsets array stores offsets to them. In this array, the “e” LigatureSet precedes the “f” LigatureSet, matching the order of the corresponding first-glyph components in the Coverage table.</p>
+<p>Each LigatureSet table identifies all ligatures that begin with a covered glyph. The sample LigatureSet table defined for the “e” glyph contains only one ligature, “etc.” A LigatureSet table defined for the “f” glyph contains two ligatures, “ffi” and “fi.”</p>
+<p>The sample FLigaturesSet table has offsets to two Ligature tables, one for “ffi” and one for “fi.” The ligatureOffsets array lists the “ffi” Ligature table first to indicate that the “ffi” ligature is preferred to the “fi” ligature.</p>
+<p><em>Example 6</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>LigatureSubstFormat1</b><br>
+LigaturesSubtable</td>
+<td>LigatureSubstFormat1 subtable definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format</td>
+</tr>
+<tr>
+<td>000A</td>
+<td>LigaturesCoverage</td>
+<td>offset to Coverage table</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>ligatureSetCount</td>
+</tr>
+<tr>
+<td>0014</td>
+<td>ELigaturesSet</td>
+<td>ligatureSetOffsets[0] (offset to LigatureSet table 0) — LigatureSet tables in Coverage index order</td>
+</tr>
+<tr>
+<td>0020</td>
+<td>FLigaturesSet</td>
+<td>ligatureSetOffsets[1]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat2</b><br>
+LigaturesCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>coverageFormat: ranges</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>rangeCount</td>
+</tr>
+<tr>
+<td></td>
+<td>rangeRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>0019</td>
+<td>eGlyphID</td>
+<td>Start, first glyph ID</td>
+</tr>
+<tr>
+<td>001A</td>
+<td>fGlyphID</td>
+<td>End, last glyph ID in range</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>startCoverageIndex: coverage index of start glyph ID = 0
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>LigatureSet</b><br>
+ELigaturesSet</td>
+<td>LigatureSet table definition — all ligatures that start with e</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>ligatureCount</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>etcLigature</td>
+<td>ligatureOffsets[0] (offset to Ligature table 0)
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>Ligature</b><br>
+etcLigature</td>
+<td>Ligature table definition</td>
+</tr>
+<tr>
+<td>015B</td>
+<td>etcGlyphID</td>
+<td>ligatureGlyph — output glyph ID</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>componentCount</td>
+</tr>
+<tr>
+<td>0028</td>
+<td>tGlyphID</td>
+<td>componentGlyphIDs[0] — second component in ligature</td>
+</tr>
+<tr>
+<td>0017</td>
+<td>cGlyphID</td>
+<td>componentGlyphIDs[1] — third component in ligature
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>LigatureSet</b><br>
+FLigaturesSet</td>
+<td>LigatureSet table definition all ligatures start with f</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>ligatureCount</td>
+</tr>
+<tr>
+<td>0006</td>
+<td>ffiLigature</td>
+<td>ligatureOffsets[0] — listed first because ffi ligature is preferred to fi ligature</td>
+</tr>
+<tr>
+<td>000E</td>
+<td>fiLigature</td>
+<td>ligatureOffsets[1]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>Ligature</b><br>
+ffiLigature</td>
+<td>Ligature table definition
+</td>
+</tr>
+<tr>
+<td>00F1</td>
+<td>ffiGlyphID</td>
+<td>ligatureGlyph — output glyph ID</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>componentCount</td>
+</tr>
+<tr>
+<td>001A</td>
+<td>fGlyphID</td>
+<td>componentGlyphIDs[0] — second component in ligature</td>
+</tr>
+<tr>
+<td>001D</td>
+<td>iGlyphID</td>
+<td>componentGlyphIDs[1] — third component in ligature
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>Ligature</b><br>
+fiLigature</td>
+<td>Ligature table definition</td>
+</tr>
+<tr>
+<td>00F0</td>
+<td>fiGlyphID</td>
+<td>ligatureGlyph — output glyph ID</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>componentCount</td>
+</tr>
+<tr>
+<td>001D</td>
+<td>iGlyphID</td>
+<td>componentGlyphIDs[0] — second component in ligature</td>
+</tr>
+</tbody>
+</table>
+<p><a id="EX7"></a></p>
+<h3 id="example-7-contextual-substitution-format-1">Example 7: Contextual substitution format 1</h3>
+<p>Example 7 illustrates <a href="#CSF1" data-linktype="self-bookmark">format 1 contextual substitution</a>, using a <a href="chapter2.html#seqctxt1" data-linktype="relative-path">SequenceContextFormat1</a> subtable to replace a string of three glyphs with another string. For the French language system, the subtable defines a contextual substitution that replaces the input sequence, space-dash-space, with the output sequence, thin space-dash-thin space.</p>
+<p>The contextual substitution, called Dash Lookup in this example, contains one SequenceContextFormat1 subtable called the DashSubtable. The subtable specifies two contexts: a SpaceGlyph followed by a DashGlyph, and a DashGlyph followed by a SpaceGlyph. In each sequence, a single substitution replaces the SpaceGlyph with a ThinSpaceGlyph.</p>
+<p>The Coverage table, labeled DashCoverage, lists two glyph IDs for the first glyphs in the SpaceGlyph and DashGlyph sequences. One SequenceRuleSet table is defined for each covered glyph.</p>
+<p>SpaceAndDashSubRuleSet lists all the contexts that begin with a SpaceGlyph. It contains an offset to one SequenceRule table (SpaceAndDashSubRule), which specifies two glyphs in the context sequence, the second of which is a DashGlyph. The SequenceRule table contains a SequenceLookupRecord that lists the position in the sequence where the glyph substitution should occur (position 0) and the index of the SpaceToThinSpaceLookup applied there to replace the SpaceGlyph with a ThinSpaceGlyph. DashAndSpaceSubRuleSet lists all the contexts that begin with a DashGlyph. An offset points to a SequenceRule table (DashAndSpaceSubRule), which specifies two glyphs in the context sequence, and the second one is a SpaceGlyph. The SequenceRule table contains a SequenceLookupRecord that lists the position in the sequence where the glyph substitution should occur, and an index to the same lookup used in the SpaceAndDashSubRule. The lookup replaces the SpaceGlyph with a ThinSpaceGlyph.</p>
+<p><em>Example 7</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>SequenceContextFormat1</b><br>
+DashSubtable</td>
+<td>SequenceContextFormat1 subtable definition for Lookup[0], DashLookup</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format</td>
+</tr>
+<tr>
+<td>000A</td>
+<td>DashCoverage</td>
+<td>offset to Coverage table</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>seqRuleSetCount</td>
+</tr>
+<tr>
+<td>0012</td>
+<td>SpaceAndDashSubRuleSet</td>
+<td>seqRuleSetOffsets[0] (offset to SequenceRuleSet table 0) — SequenceRuleSets ordered by Coverage index</td>
+</tr>
+<tr>
+<td>0020</td>
+<td>DashAndSpaceSubRuleSet</td>
+<td>seqRuleSetOffsets[1]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+DashCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>coverageFormat: lists</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0028</td>
+<td>SpaceGlyph</td>
+<td>glyphArray[0] — glyphs in numeric order</td>
+</tr>
+<tr>
+<td>005D</td>
+<td>DashGlyph</td>
+<td>glyphArray[1], dash glyph ID
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>SequenceRuleSet</b><br>
+SpaceAndDashSubRuleSet</td>
+<td>SequenceRuleSet[0] table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>seqRuleCount</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>SpaceAndDashSubRule</td>
+<td>seqRuleOffsets[0] (offset to SequenceRule table 0) — SequenceRule tables ordered by preference
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>SequenceRule</b><br>
+SpaceAndDashSubRule</td>
+<td>SequenceRule[0] table definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>glyphCount — number in input sequence</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>seqLookupCount</td>
+</tr>
+<tr>
+<td>005D</td>
+<td>DashGlyph</td>
+<td>inputSequence[0], starting with second glyph — SpaceGlyph, in Coverage table, is first glyph</td>
+</tr>
+<tr>
+<td></td>
+<td>seqLookupRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>sequenceIndex — substitution at first glyph position (0)</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>lookupListIndex — index for SpaceToThinSpaceLookup in LookupList
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>SequenceRuleSet</b><br>
+DashAndSpaceSubRuleSet</td>
+<td>SequenceRuleSet[1] table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>seqRuleCount</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>DashAndSpaceSubRule</td>
+<td>seqRuleOffsets[0] (offset to SequenceRule table 0) — SequenceRule tables ordered by preference
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>SequenceRule</b><br>
+DashAndSpaceSubRule</td>
+<td>SequenceRule[0] table definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>glyphCount — number in the input glyph sequence</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>seqLookupCount</td>
+</tr>
+<tr>
+<td>0028</td>
+<td>SpaceGlyph</td>
+<td>inputSequence[0] — starting with second glyph</td>
+</tr>
+<tr>
+<td></td>
+<td>seqLookupRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>sequenceIndex — substitution at second glyph position (glyph sequence index = 1)</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>lookupListIndex — index for SpaceToThinSpaceLookup</td>
+</tr>
+</tbody>
+</table>
+<p><a id="EX8"></a></p>
+<h3 id="example-8-contextual-substitution-format-2">Example 8: Contextual substitution format 2</h3>
+<p>Example 8 illustrates a <a href="#CSF2" data-linktype="self-bookmark">format 2 contextual substitution</a> using a <a href="chapter2.html#seqctxt2" data-linktype="relative-path">SequenceContextFormat2</a> subtable with glyph classes to replace default mark glyphs with their alternative forms. Glyph alternatives are selected depending upon the height of the base glyph that they combine with; that is, the mark glyph used above a high base glyph differs from the mark glyph above a very high base glyph.</p>
+<p>In the example, SetMarksHighSubtable contains a Class Definition table that defines four glyph classes: default mark glyphs (class 1), high base glyphs (class 2), very high base glyphs (class 3), and all remaining glyphs, including medium-height base glyphs. The subtable also contains a Coverage table that lists each base glyph that functions as a first component in a context, ordered by glyph index.</p>
+<p>Two ClassSequenceRuleSet tables are defined, one for substituting high marks and one for very high marks. No ClassSequenceRuleSets are specified for class 0 and class 1 glyphs because no contexts begin with glyphs from these classes. The classSeqRuleSetOffsets lists offsets to the ClassSequenceRuleSet tables in class value order, so the offset for ClassSequenceRuleSet for class 2 precedes that for class 3.</p>
+<p>Within each ClassSequenceRuleSet, a ClassSequencRule is defined. In SetMarksHighSubClassSet2, corresponding to contexts that begin with a glyph in class 2, the ClassSequenceRule table specifies an input sequence with two glyphs: the first glyph in class 2 (a high glyph), and the second in class 1 (a mark glyph). The SequenceLookupRecord specifies applying SubstituteHighMarkLookup at the second position in the sequence—that is, a high mark glyph will replace the default mark glyph.</p>
+<p>In SetMarksVeryHighSubClassSet3, corresponding to contexts that begin with a glyph in class 3, the ClassSequencRule specifies an input sequence with two glyphs: the first in class 3 (a very high glyph), and the second in class 1 (a mark glyph). The SequenceLookupRecord specifies applying SubstituteVeryHighMarkLookup at the second position in the sequence—that is, a very high mark glyph will replace the default mark glyph.</p>
+<p><em>Example 8</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>SequenceContextFormat2</b><br>
+SetMarksHighSubtable</td>
+<td>SequenceContextFormat2 subtable definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>format</td>
+</tr>
+<tr>
+<td>0010</td>
+<td>SetMarksHighCoverage</td>
+<td>offset to Coverage table</td>
+</tr>
+<tr>
+<td>001C</td>
+<td>SetMarksHighClassDef</td>
+<td>offset to Class Def table</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>4</td>
+<td>classSeqRuleSetCount</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>NULL</td>
+<td>classSeqRuleSetOffsets[0] — NULL: no contexts that begin with Class 0 glyphs are defined</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>NULL</td>
+<td>classSeqRuleSetOffsets[1] — no contexts that begin with Class 1 glyphs are defined</td>
+</tr>
+<tr>
+<td>0032</td>
+<td>SetMarksHighSubClassSet2</td>
+<td>classSeqRuleSetOffsets[2] — offset to ClassSequencRuleSet table for contexts that begin with Class 2 glyphs (high base glyphs)</td>
+</tr>
+<tr>
+<td>0040</td>
+<td>SetMarksVeryHighSubClassSet3</td>
+<td>classSeqRuleSetOffsets[3] — offset to ClassSequencRuleSet table for contexts that begin with Class 3 glyphs (very high base glyphs)
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+SetMarksHighCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>coverageFormat: lists</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>4</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0030</td>
+<td>tahGlyphID</td>
+<td>glyphArray[0], high base glyph</td>
+</tr>
+<tr>
+<td>0031</td>
+<td>dhahGlyphID</td>
+<td>glyphArray[1], high base glyph</td>
+</tr>
+<tr>
+<td>0040</td>
+<td>cafGlyphID</td>
+<td>glyphArray[2], very high base glyph</td>
+</tr>
+<tr>
+<td>0041</td>
+<td>gafGlyphID</td>
+<td>glyphArray[3], very high base glyph
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>ClassDefFormat2</b><br>
+SetMarksHighClassDef</td>
+<td>Class table definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>classFormat: ranges</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>classRangeCount</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[0]</td>
+<td>ClassRangeRecords ordered by startGlyphID; record for Class 2, high base glyphs</td>
+</tr>
+<tr>
+<td>0030</td>
+<td>tahGlyphID</td>
+<td>Start, first Glyph ID in range</td>
+</tr>
+<tr>
+<td>0031</td>
+<td>dhahGlyphID</td>
+<td>End, last Glyph ID in range</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>class: 2</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[1]</td>
+<td>ClassRangeRecord for Class 3, very high base glyphs</td>
+</tr>
+<tr>
+<td>0040</td>
+<td>cafGlyphID</td>
+<td>Start, first Glyph ID in the range</td>
+</tr>
+<tr>
+<td>0041</td>
+<td>gafGlyphID</td>
+<td>End, last Glyph ID in the range</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>class: 3<br>
+ClassRange[2] for Class 1, mark gyphs</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[2]</td>
+<td>ClassRangeRecord for Class 1, mark glyphs</td>
+</tr>
+<tr>
+<td>00D2</td>
+<td>fathatanDefaultGlyphID</td>
+<td>Start, first Glyph ID in range default fathatan mark</td>
+</tr>
+<tr>
+<td>00D3</td>
+<td>dammatanDefaultGlyphID</td>
+<td>End, last Glyph ID in the range default dammatan mark</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>class: 1
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>ClassSequencRuleSet</b><br>
+SetMarksHighSubClassSet2</td>
+<td>ClassSequencRuleSet[2] table definition—
+all contexts that begin with Class 2 glyphs</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>classSeqRuleCount</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>SetMarksHighSubClassRule2</td>
+<td>classSeqRuleOffsets[0] (offset to ClassSequenceRule table 0) — ClassSequenceRule tables ordered by preference
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>ClassSequenceRule</b><br>
+SetMarksHighSubClassRule2</td>
+<td>ClassSequenceRule[0] table definition, Class 2 glyph (high base) glyph followed by a Class 1 glyph (mark)</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>seqLookupCount</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>inputSequence[0] — input sequence beginning with the second Class in the input context sequence; Class 1, mark glyphs</td>
+</tr>
+<tr>
+<td></td>
+<td>seqLookupRecords[0]</td>
+<td>seqLookupRecords array in design order</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>sequenceIndex — apply substitution to position 2, a mark</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>lookupListIndex
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>ClassSequencRuleSet</b><br>
+SetMarksVeryHighSubClassSet3</td>
+<td>ClassSequencRuleSet[3] table definition — all contexts that begin with Class 3 glyphs</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>classSeqRuleCount</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>SetMarksVeryHighSubClassRule3</td>
+<td>classSeqRuleOffsets[0]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>ClassSequenceRule</b><br>
+SetMarksVeryHighSubClassRule3</td>
+<td>ClassSequenceRule[0] table definition — Class 3 glyph (very high base glyph) followed by a Class 1 glyph (mark)</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>seqLookupCount</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>inputSequence[0] — input sequence beginning with the second Class in the input context sequence; Class 1, mark glyphs</td>
+</tr>
+<tr>
+<td></td>
+<td>seqLookupRecords[0]</td>
+<td>seqLookupRecords array in design order</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>sequenceIndex — apply substitution to position 2, second glyph class (mark)</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>lookupListIndex</td>
+</tr>
+</tbody>
+</table>
+<p><a id="EX9"></a></p>
+<h3 id="example-9-contextual-substitution-format-3">Example 9: Contextual substitution format 3</h3>
+<p>Example 9 illustrates a <a href="#CSF3" data-linktype="self-bookmark">format 3 contextual substitution</a>, using a <a href="chapter2.html#seqctxt3" data-linktype="relative-path">SequenceContextFormat3</a> subtable with Coverage tables to describe a context sequence of three lowercase glyphs in the pattern: any ascender or descender glyph in position 0 (zero), any x-height glyph in position 1, and any descender glyph in position 2. The overlapping sets of covered glyphs for positions 0 and 2 make Format 3 better for this context than the class-based Format 2.</p>
+<p>In positions 0 and 2, swash versions of the glyphs replace the default glyphs. The contextual-substitution lookup is SwashLookup (LookupList index = 0), and its subtable is SwashSubtable. The SwashSubtable defines three Coverage tables: AscenderDescenderCoverage, XheightCoverage, and DescenderCoverage-one for each glyph position in the context sequence, respectively.</p>
+<p>The SwashSubtable also defines two SequenceLookupRecords: one that applies to position 0, and one for position 2. (No substitutions are applied to position 1.) The record for position 0 uses a single substitution lookup called AscDescSwashLookup to replace the current ascender or descender glyph with a swash ascender or descender glyph. The record for position 2 uses a single substitution lookup called DescSwashLookup to replace the current descender glyph with a swash descender glyph.</p>
+<p><em>Example 9</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>SequenceContextFormat3</b><br>
+SwashSubtable</td>
+<td>SequenceContextFormat3 subtable definition</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>format</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>glyphCount — number in input glyph sequence</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>seqLookupCount</td>
+</tr>
+<tr>
+<td>0014</td>
+<td>AscenderDescenderCoverage</td>
+<td>coverageOffsets[0] — offsets to Coverage tables, in context sequence order</td>
+</tr>
+<tr>
+<td>0030</td>
+<td>XheightCoverage</td>
+<td>coverageOffsets[1]</td>
+</tr>
+<tr>
+<td>0052</td>
+<td>DescenderCoverage</td>
+<td>coverageOffsets[2]</td>
+</tr>
+<tr>
+<td></td>
+<td>seqLookupRecords[0]</td>
+<td>SequenceLookupRecords in glyph position order</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>sequenceIndex</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>lookupListIndex — single substitution to output ascender or descender swash</td>
+</tr>
+<tr>
+<td></td>
+<td>seqLookupRecords[1]</td>
+<td></td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>sequenceIndex</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>lookupListIndex — single substitution to output descender swash
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+AscenderDescenderCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>coverageFormat: lists</td>
+</tr>
+<tr>
+<td>000C</td>
+<td>12</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0033</td>
+<td>bGlyphID</td>
+<td>glyphArray[0] — glyphs in glyph ID order</td>
+</tr>
+<tr>
+<td>0035</td>
+<td>dGlyphID</td>
+<td>glyphArray[1]</td>
+</tr>
+<tr>
+<td>0037</td>
+<td>fGlyphID</td>
+<td>glyphArray[2]</td>
+</tr>
+<tr>
+<td>0038</td>
+<td>gGlyphID</td>
+<td>glyphArray[3]</td>
+</tr>
+<tr>
+<td>0039</td>
+<td>hGlyphID</td>
+<td>glyphArray[4]</td>
+</tr>
+<tr>
+<td>003B</td>
+<td>jGlyphID</td>
+<td>glyphArray[5]</td>
+</tr>
+<tr>
+<td>003C</td>
+<td>kGlyphID</td>
+<td>glyphArray[6]</td>
+</tr>
+<tr>
+<td>003D</td>
+<td>lGlyphID</td>
+<td>glyphArray[7]</td>
+</tr>
+<tr>
+<td>0041</td>
+<td>pGlyphID</td>
+<td>glyphArray[8]</td>
+</tr>
+<tr>
+<td>0042</td>
+<td>qGlyphID</td>
+<td>glyphArray[9]</td>
+</tr>
+<tr>
+<td>0045</td>
+<td>tGlyphID</td>
+<td>glyphArray[10]</td>
+</tr>
+<tr>
+<td>004A</td>
+<td>yGlyphID</td>
+<td>glyphArray[11]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+XheightCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>coverageFormat: lists</td>
+</tr>
+<tr>
+<td>000F</td>
+<td>15</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0032</td>
+<td>aGlyphID</td>
+<td>glyphArray[0]</td>
+</tr>
+<tr>
+<td>0034</td>
+<td>cGlyphID</td>
+<td>glyphArray[1]</td>
+</tr>
+<tr>
+<td>0036</td>
+<td>eGlyphID</td>
+<td>glyphArray[2]</td>
+</tr>
+<tr>
+<td>003A</td>
+<td>iGlyphID</td>
+<td>glyphArray[3]</td>
+</tr>
+<tr>
+<td>003E</td>
+<td>mGlyphID</td>
+<td>glyphArray[4]</td>
+</tr>
+<tr>
+<td>003F</td>
+<td>nGlyphID</td>
+<td>glyphArray[5]</td>
+</tr>
+<tr>
+<td>0040</td>
+<td>oGlyphID</td>
+<td>glyphArray[6]</td>
+</tr>
+<tr>
+<td>0043</td>
+<td>rGlyphID</td>
+<td>glyphArray[7]</td>
+</tr>
+<tr>
+<td>0044</td>
+<td>sGlyphID</td>
+<td>glyphArray[8]</td>
+</tr>
+<tr>
+<td>0045</td>
+<td>tGlyphID</td>
+<td>glyphArray[9]</td>
+</tr>
+<tr>
+<td>0046</td>
+<td>uGlyphID</td>
+<td>glyphArray[10]</td>
+</tr>
+<tr>
+<td>0047</td>
+<td>vGlyphID</td>
+<td>glyphArray[11]</td>
+</tr>
+<tr>
+<td>0048</td>
+<td>wGlyphID</td>
+<td>glyphArray[12]</td>
+</tr>
+<tr>
+<td>0049</td>
+<td>xGlyphID</td>
+<td>glyphArray[13]</td>
+</tr>
+<tr>
+<td>004B</td>
+<td>zGlyphID</td>
+<td>GlyphArray[14]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+DescenderCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>coverageFormat: lists</td>
+</tr>
+<tr>
+<td>0005</td>
+<td>5</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0038</td>
+<td>gGlyphID</td>
+<td>glyphArray[0]</td>
+</tr>
+<tr>
+<td>003B</td>
+<td>jGlyphID</td>
+<td>glyphArray[1]</td>
+</tr>
+<tr>
+<td>0041</td>
+<td>pGlyphID</td>
+<td>glyphArray[2]</td>
+</tr>
+<tr>
+<td>0042</td>
+<td>qGlyphID</td>
+<td>glyphArray[3]</td>
+</tr>
+<tr>
+<td>004A</td>
+<td>yGlyphID</td>
+<td>glyphArray[4]</td>
+</tr>
+</tbody>
+</table>
+<p><a id="EX10"></a></p>
+<h3 id="example-10-reversechainsinglesubstformat1-subtable">Example 10: ReverseChainSingleSubstFormat1 subtable</h3>
+<p>Example 10 uses a <a href="#RCCSF1" data-linktype="self-bookmark">ReverseChainSingleSubstFormat1 subtable</a> to substitute glyphs with a form that has a thick connection to the left (thick exit). This allows the glyph to correctly connect to the letter form to the left of it.</p>
+<p>The ThickExitCoverage table is the listing of glyphs to be matched for substitution.</p>
+<p>The LookaheadCoverage table, labeled ThickEntryCoverage, lists four glyph IDs for the glyph following a substitution coverage glyph. This lookahead coverage attempts to match the context that will cause the substitution to take place.</p>
+<p>The substituteGlyphIDs array provides the glyphs to replace glyphs that correspond in order in the ThickExitCoverage table.</p>
+<p><em>Example 10</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>ReverseChainSingleSubstFormat1</b><br>
+ThickConnect</td>
+<td>ReverseChainSingleSubstFormat1 subtable definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format</td>
+</tr>
+<tr>
+<td>0068</td>
+<td>ThickExitCoverage</td>
+<td>offset to Coverage table</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>backtrackGlyphCount</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>null - not used</td>
+<td>backtrackCoverageOffsets[0]</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>lookaheadGlyphCount</td>
+</tr>
+<tr>
+<td>0026</td>
+<td>ThickEntryCoverage</td>
+<td>lookaheadCoverageOffsets[0]</td>
+</tr>
+<tr>
+<td>000C</td>
+<td>12</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>00A7</td>
+<td>BEm2</td>
+<td>substituteGlyphIDs[0] — substitute glyphs ordered by Coverage index</td>
+</tr>
+<tr>
+<td>00B9</td>
+<td>BEi3</td>
+<td>substituteGlyphIDs[1]</td>
+</tr>
+<tr>
+<td>00C5</td>
+<td>JIMm3</td>
+<td>substituteGlyphIDs[2]</td>
+</tr>
+<tr>
+<td>00D4</td>
+<td>JIMi2</td>
+<td>substituteGlyphIDs[3]</td>
+</tr>
+<tr>
+<td>00EA</td>
+<td>SINm2</td>
+<td>substituteGlyphIDs[4]</td>
+</tr>
+<tr>
+<td>00F2</td>
+<td>SINi2</td>
+<td>substituteGlyphIDs[5]</td>
+</tr>
+<tr>
+<td>00FD</td>
+<td>SADm2</td>
+<td>substituteGlyphIDs[6]</td>
+</tr>
+<tr>
+<td>010D</td>
+<td>SADi2</td>
+<td>substituteGlyphIDs[7]</td>
+</tr>
+<tr>
+<td>011B</td>
+<td>TOEm3</td>
+<td>substituteGlyphIDs[8]</td>
+</tr>
+<tr>
+<td>012B</td>
+<td>TOEi3</td>
+<td>substituteGlyphIDs[9]</td>
+</tr>
+<tr>
+<td>013B</td>
+<td>AINm2</td>
+<td>substituteGlyphIDs[10]</td>
+</tr>
+<tr>
+<td>0141</td>
+<td>AINi2</td>
+<td>substituteGlyphIDs[11]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+ThickEntryCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>coverageFormat: lists</td>
+</tr>
+<tr>
+<td>001F</td>
+<td>31</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>00A5</td>
+<td>ALEFf1</td>
+<td>glyphArray[0] — glyphs in glyph ID order</td>
+</tr>
+<tr>
+<td>00A9</td>
+<td>BEm4</td>
+<td>glyphArray[1]</td>
+</tr>
+<tr>
+<td>00AA</td>
+<td>BEm5</td>
+<td>glyphArray[2]</td>
+</tr>
+<tr>
+<td>00E2</td>
+<td>DALf1</td>
+<td>glyphArray[3]</td>
+</tr>
+<tr>
+<td>0167</td>
+<td>KAFf1</td>
+<td>glyphArray[4]</td>
+</tr>
+<tr>
+<td>0168</td>
+<td>KAFfs1</td>
+<td>glyphArray[5]</td>
+</tr>
+<tr>
+<td>0169</td>
+<td>KAFm1</td>
+<td>glyphArray[6]</td>
+</tr>
+<tr>
+<td>016D</td>
+<td>KAFm5</td>
+<td>glyphArray[7]</td>
+</tr>
+<tr>
+<td>016E</td>
+<td>KAFm6</td>
+<td>glyphArray[8]</td>
+</tr>
+<tr>
+<td>0170</td>
+<td>KAFm8</td>
+<td>glyphArray[9]</td>
+</tr>
+<tr>
+<td>0183</td>
+<td>GAFf1</td>
+<td>glyphArray[10]</td>
+</tr>
+<tr>
+<td>0184</td>
+<td>GAFfs1</td>
+<td>glyphArray[11]</td>
+</tr>
+<tr>
+<td>0185</td>
+<td>GAFm1</td>
+<td>glyphArray[12]</td>
+</tr>
+<tr>
+<td>0189</td>
+<td>GAFm5</td>
+<td>glyphArray[13]</td>
+</tr>
+<tr>
+<td>018A</td>
+<td>GAFm6</td>
+<td>glyphArray[14]</td>
+</tr>
+<tr>
+<td>018C</td>
+<td>GAFm8</td>
+<td>glyphArray[15]</td>
+</tr>
+<tr>
+<td>019F</td>
+<td>LAMf1</td>
+<td>glyphArray[16]</td>
+</tr>
+<tr>
+<td>01A0</td>
+<td>LAMm1</td>
+<td>glyphArray[17]</td>
+</tr>
+<tr>
+<td>01A1</td>
+<td>LAMm2</td>
+<td>glyphArray[18]</td>
+</tr>
+<tr>
+<td>01A2</td>
+<td>LAMm3</td>
+<td>glyphArray[19]</td>
+</tr>
+<tr>
+<td>01A3</td>
+<td>LAMm4</td>
+<td>glyphArray[20]</td>
+</tr>
+<tr>
+<td>01A4</td>
+<td>LAMm5</td>
+<td>glyphArray[21]</td>
+</tr>
+<tr>
+<td>01A5</td>
+<td>LAMm6</td>
+<td>glyphArray[22]</td>
+</tr>
+<tr>
+<td>01A6</td>
+<td>LAMm7</td>
+<td>glyphArray[23]</td>
+</tr>
+<tr>
+<td>01A7</td>
+<td>LAMm8</td>
+<td>glyphArray[24]</td>
+</tr>
+<tr>
+<td>01A8</td>
+<td>LAMm9</td>
+<td>glyphArray[25]</td>
+</tr>
+<tr>
+<td>01A9</td>
+<td>LAMm10</td>
+<td>glyphArray[26]</td>
+</tr>
+<tr>
+<td>01AA</td>
+<td>LAMm11</td>
+<td>glyphArray[27]</td>
+</tr>
+<tr>
+<td>01AB</td>
+<td>LAMm12</td>
+<td>glyphArray[28]</td>
+</tr>
+<tr>
+<td>01AC</td>
+<td>LAMm13</td>
+<td>glyphArray[29]</td>
+</tr>
+<tr>
+<td>01EC</td>
+<td>HAYf2</td>
+<td>glyphArray[30]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+ThickExitCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>coverageFormat: lists</td>
+</tr>
+<tr>
+<td>000C</td>
+<td>12</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>00A6</td>
+<td>BEm1</td>
+<td>glyphArray[0]</td>
+</tr>
+<tr>
+<td>00B7</td>
+<td>BEi1</td>
+<td>glyphArray[1]</td>
+</tr>
+<tr>
+<td>00C3</td>
+<td>JIMm1</td>
+<td>glyphArray[2]</td>
+</tr>
+<tr>
+<td>00D2</td>
+<td>JIMi1</td>
+<td>glyphArray[3]</td>
+</tr>
+<tr>
+<td>00E9</td>
+<td>SINm1</td>
+<td>glyphArray[4]</td>
+</tr>
+<tr>
+<td>00F1</td>
+<td>SINi1</td>
+<td>glyphArray[5]</td>
+</tr>
+<tr>
+<td>00FC</td>
+<td>SADm1</td>
+<td>glyphArray[6]</td>
+</tr>
+<tr>
+<td>010C</td>
+<td>SADi1</td>
+<td>glyphArray[7]</td>
+</tr>
+<tr>
+<td>0119</td>
+<td>TOEm1</td>
+<td>glyphArray[8]</td>
+</tr>
+<tr>
+<td>0129</td>
+<td>TOEi1</td>
+<td>glyphArray[9]</td>
+</tr>
+<tr>
+<td>013A</td>
+<td>AINm1</td>
+<td>glyphArray[10]</td>
+</tr>
+<tr>
+<td>0140</td>
+<td>AINi1</td>
+<td>glyphArray[11]</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

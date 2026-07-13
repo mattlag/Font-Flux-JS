@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>kern — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/kern">https://learn.microsoft.com/en-us/typography/opentype/spec/kern</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="kern--kerning">kern — Kerning</h1>
+<p>The kerning table contains values that control inter-character spacing for the glyphs in a font. Fonts containing CFF outlines are not supported by the 'kern' table and require use of the GPOS table to provide kerning.</p>
+<blockquote>
+<p><em>Note:</em> Apple specifications define a version of the 'kern' table with additional functionality. Those extensions are not supported in OpenType.</p>
+</blockquote>
+<p>A 'kern' table has one or more subtables. Each subtable varies in format and can contain information for vertical or horizontal text. A subtable can contain kerning values or minimum values. Kerning values are used to adjust inter-character spacing, and minimum values are used to limit the amount of adjustment that the scaler applies by the combination of kerning and tracking. Because the adjustments are additive, the order of the subtables containing kerning values is not important. However, tables containing minimum values should usually be placed last, so that they can be used to limit the total effect of other subtables.</p>
+<p>The kerning table has a header that contains the format number and the number of subtables present.</p>
+<p><a id="kernHeader"></a></p>
+<p><em>KernHeader</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>uint16</td>
+<td>version</td>
+<td>Table version number—set to 0.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>nTables</td>
+<td>Number of subtables in the kerning table.</td>
+</tr>
+</tbody>
+</table>
+<p>The kerning subtables follow immediately after the KernHeader. There are different subtable formats that share the same header. The subtable header is used to identify the format of the subtable and the kind of information it contains:</p>
+<p><a id="kernSubtable"></a></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>uint16</td>
+<td>version</td>
+<td>Kern subtable version number—set to 0.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>length</td>
+<td>Length of the subtable, in bytes (including this header).</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>coverage</td>
+<td>What type of information is contained in this table.</td>
+</tr>
+</tbody>
+</table>
+<p>The coverage field is divided into the following sub-fields, with sizes given in bits:</p>
+<p><a id="coverage"></a></p>
+<table>
+<tbody>
+<tr>
+<th>Sub-field</th>
+<th>Bit(s)</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>horizontal</td>
+<td>0</td>
+<td>1 if table has horizontal data, 0 if vertical.</td>
+</tr>
+<tr>
+<td>minimum</td>
+<td>1</td>
+<td>If this bit is set to 1, the table has minimum values. If set to 0, the table has kerning values.</td>
+</tr>
+<tr>
+<td>cross-stream</td>
+<td>2</td>
+<td>If set to 1, kerning is perpendicular to the flow of the text.
+<br><br>
+If the text is normally written horizontally, kerning will be done in the up and down directions. If kerning values are positive, the text will be kerned upwards; if they are negative, the text will be kerned downwards.
+<br><br>
+If the text is normally written vertically, kerning will be done in the left and right directions. If kerning values are positive, the text will be kerned to the right; if they are negative, the text will be kerned to the left.
+<br><br>
+The value 0x8000 in the kerning data resets the cross-stream kerning back to 0.</td>
+</tr>
+<tr>
+<td>override</td>
+<td>3</td>
+<td>If this bit is set to 1 the value in this table should replace the value currently being accumulated.</td>
+</tr>
+<tr>
+<td>reserved1</td>
+<td>4-7</td>
+<td>Reserved—set to zero.</td>
+</tr>
+<tr>
+<td>format</td>
+<td>8-15</td>
+<td>Format of the subtable. Only formats 0 and 2 have been defined. Formats 1 and 3 through 255 are reserved for future use.</td>
+</tr>
+</tbody>
+</table>
+<p>Remaining subtable data follows the subtable header according to the format specified in the coverage field. The length field in the subtable header indicates the total length of the subtable, including the header and the format-specific data that follows it.</p>
+<p><a id="format0"></a></p>
+<h2 id="format-0">Format 0</h2>
+<p>Format 0 is the only subtable format supported by Windows.</p>
+<p>This subtable is a sorted list of kerning pairs and values. The list is preceded by information which makes it possible to make an efficient binary search of the list:</p>
+<p><em>KernSubtableFormat0</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>uint16</td>
+<td>nPairs</td>
+<td>This gives the number of kerning pairs in the table.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>searchRange</td>
+<td>The largest power of two less than or equal to the value of nPairs, multiplied by the size in bytes of an entry in the table.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>entrySelector</td>
+<td>This is calculated as log2 of the largest power of two less than or equal to the value of nPairs. This value indicates how many iterations of the search loop will have to be made. (For example, in a list of eight items, there would have to be three iterations of the loop).</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>rangeShift</td>
+<td>The value of nPairs minus the largest power of two less than or equal to nPairs, and then multiplied by the size in bytes of an entry in the table.</td>
+</tr>
+<tr>
+<td>KernPair</td>
+<td>kernPairs[nPairs]</td>
+<td>Array of KernPair records.</td>
+</tr>
+</tbody>
+</table>
+<p>The kernPairs array provides a list of kerning pairs and values. Each KernPair record has the following format:</p>
+<p><em>KernPair record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>uint16</td>
+<td>left</td>
+<td>The glyph index for the left-hand glyph in the kerning pair.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>right</td>
+<td>The glyph index for the right-hand glyph in the kerning pair.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>value</td>
+<td>The kerning value for the above pair, in font design units. If this value is greater than zero, the characters will be moved apart. If this value is less than zero, the character will be moved closer together.</td>
+</tr>
+</tbody>
+</table>
+<p>The KernPair records must be ordered by combining the left and right values to form an unsigned 32-bit integer (left as the high-order word), then ordering records numerically using these combined values.</p>
+<p>A binary search is most efficiently coded if the search range is a power of two. The search range can be reduced by half by shifting instead of dividing. In general, the number of kerning pairs, nPairs, will not be a power of two. The value of the search range, searchRange, should be the largest power of two less than or equal to nPairs. The number of pairs not covered by searchRange (that is, nPairs - searchRange) is the value rangeShift.</p>
+<p><a id="format2"></a></p>
+<h2 id="format-2">Format 2</h2>
+<p>This subtable is a two-dimensional array of kerning values. The glyphs are mapped to classes, using a different mapping for left- and right-hand glyphs. This allows glyphs that have similar right- or left-side shapes to be handled together. Each similar right- or left-hand shape is said to be single class.</p>
+<p>Each row in the kerning array represents one left-hand glyph class, each column represents one right-hand glyph class, and each cell contains a kerning value. Row and column 0 always represent glyphs that do not kern and contain all zeros.</p>
+<p>The values in the right class table are stored pre-multiplied by the number of bytes in a single kerning value, and the values in the left class table are stored pre-multiplied by the number of bytes in one row. This eliminates a need to multiply the row and column values together to determine the location of the kerning value. The array can be indexed by doing the right- and left-hand class mappings, adding the class values to the address of the array, and fetching the kerning value to which the new address points.</p>
+<p>The header for the simple array has the following format:</p>
+<p><em>KernSubtableFormat2</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>uint16</td>
+<td>rowWidth</td>
+<td>The width, in bytes, of a row in the table.</td>
+</tr>
+<tr>
+<td>Offset16</td>
+<td>leftClassOffset</td>
+<td>Offset from beginning of this subtable to left-hand class table.</td>
+</tr>
+<tr>
+<td>Offset16</td>
+<td>rightClassOffset</td>
+<td>Offset from beginning of this subtable to right-hand class table.</td>
+</tr>
+<tr>
+<td>Offset16</td>
+<td>kerningArrayOffset</td>
+<td>Offset from beginning of this subtable to the start of the kerning array.</td>
+</tr>
+</tbody>
+</table>
+<p>Each class table has the following header:</p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Field</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>uint16</td>
+<td>firstGlyph</td>
+<td>First glyph in class range.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>nGlyphs</td>
+<td>Number of glyph in class range.</td>
+</tr>
+</tbody>
+</table>
+<p>This header is followed by nGlyphs number of class values, which are in uint16 format. Entries for glyphs that don’t participate in kerning should point to the row or column at position zero.</p>
+<p>The array itself is a left by right array of kerning values, which are FWORDs, where left is the number of left-hand classes and R is the number of right-hand classes. The array is stored by row.</p>
+<blockquote>
+<p><em>Note:</em> This format is the quickest to process since each lookup requires only a few index operations. The table can be quite large since it will contain the number of cells equal to the product of the number of right-hand classes and the number of left-hand classes, even though many of these classes do not kern with each other.</p>
+</blockquote>
+
+</body>
+</html>

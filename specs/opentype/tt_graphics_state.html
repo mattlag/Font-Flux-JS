@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tt_graphics_state — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/tt_graphics_state">https://learn.microsoft.com/en-us/typography/opentype/spec/tt_graphics_state</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="graphics-state-summary">Graphics State Summary</h1>
+<p>The following tables summarize the variables that make up the Graphics State. Nearly all of the Graphics State variables have a default value as shown below. That value is reestablished for every glyph in a font. Instructions are available for resetting the value of all Graphics State variables. Some state variables can be reset in the CVT Program. In such cases the value set becomes the new default and will be reestablished for each glyph. When value of a state variable is changed by instructions associated with a particular glyph, it will hold only for that glyph.</p>
+<p>The setting of the Graphics State variables will affect the actions of certain instructions. Affected instructions are listed for each variable.</p>
+<table>
+<thead>
+<tr>
+<th><b>Graphics State Variable</b></th>
+<th><b>Default</b></th>
+<th><b>Set With</b></th>
+<th><b>Affects</b></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>auto_flip</td>
+<td>TRUE</td>
+<td>FLIPOFF<br>FLIPON</td>
+<td>MIAP<br> MIRP</td>
+</tr>
+<tr>
+<td>control_value_cut_in</td>
+<td>17/16 pixels</td>
+<td>SCVTCI</td>
+<td>MIAP<br>MIRP</td>
+</tr>
+<tr>
+<td>delta_base</td>
+<td>9</td>
+<td>SDB</td>
+<td>DELTAP1<br>DELTAP2<br>DELTAP3<br>DELTAC1<br>DELTAC2<br>DELTAC3</td>
+</tr>
+<tr>
+<td>delta_shift</td>
+<td>3</td>
+<td>SDS</td>
+<td>DELTAP1<br>DELTAP2<br>DELTAP3<br>DELTAC1<br>DELTAC2<br>DELTAC3</td>
+</tr>
+<tr>
+<td>dual_projection_vectors</td>
+<td>—</td>
+<td>SDPVTL</td>
+<td>IP<br>GC<br>MD<br>MDRP<br>MIRP</td>
+</tr>
+<tr>
+<td>freedom_vector</td>
+<td>x-axis</td>
+<td>SFVTCA<br>SFVTL<br>SFTPV<br>SVTCA<br>SFVFS</td>
+<td>GFV</td>
+</tr>
+<tr>
+<td>zp0</td>
+<td>1</td>
+<td>SZP0<br>SZPS</td>
+<td>AA<br>ALIGNPTS<br>ALIGNRP<br>DELTAP1<br>DELTAP2<br>DELTAP3<br>IP<br>ISECT<br>MD<br>MDAP<br>MIAP<br>MIRP<br>MSIRP<br>SHC<br>SHZ<br>SHP<br>UTP</td>
+</tr>
+<tr>
+<td>zp1</td>
+<td>1</td>
+<td>SZP1<br>SZPS</td>
+<td>AA<br>ALIGNPTS<br>ALIGNRP<br>IP<br>MD<br>MDRP<br>MIRP<br>MSIRP<br>SHC<br>SHZ<br>SHP<br>SFVTL<br>SPVTL</td>
+</tr>
+<tr>
+<td>zp2</td>
+<td>1</td>
+<td>SZP2<br>SZPS</td>
+<td>ISECT<br>IUP<br>GC<br>SHC<br>SHP<br>SFVTL<br>SHPIX<br>SPVTL<br>SC</td>
+</tr>
+<tr>
+<td>instruct_Control</td>
+<td>0</td>
+<td>INSTCTRL</td>
+<td>all instructions</td>
+</tr>
+<tr>
+<td>loop</td>
+<td>1</td>
+<td>SLOOP</td>
+<td>ALIGNRP<br>FLIPPT<br>IP<br>SHP<br>SHPIX</td>
+</tr>
+<tr>
+<td>minimum_distance</td>
+<td>1 pixel</td>
+<td>LMD</td>
+<td>MDRP<br>MIRP</td>
+</tr>
+<tr>
+<td>projection_vector</td>
+<td>x-axis</td>
+<td>SPVTCA<br>SPVTL<br>SVTCA<br>SPVFS</td>
+<td>GPV</td>
+</tr>
+<tr>
+<td>round_state</td>
+<td>1</td>
+<td>RDTG<br>ROFF<br>RTDG<br>RTG<br>RTHG<br>RUTG<br>SROUND<br>S45ROUND</td>
+<td>MDAP<br>MIAP<br>MDRP<br>MIRP<br>ROUND</td>
+</tr>
+<tr>
+<td>rp0</td>
+<td>0</td>
+<td>SRP0</td>
+<td>IP<br>MDAP<br>MIAP<br>MIRP<br>MSIRP<br>SHC<br>SHZ<br>SHP</td>
+</tr>
+<tr>
+<td>rp1</td>
+<td>0</td>
+<td>SRP1</td>
+<td>IP<br>MDAP<br>MDRP<br>MIAP<br>MSIRP<br>SHC<br>SHZ<br>SHP</td>
+</tr>
+<tr>
+<td>rp2</td>
+<td>0</td>
+<td>SRP2</td>
+<td>IP<br>MDRP<br>MIRP<br>MSIRP<br>SHC<br>SHZ<br>SHP</td>
+</tr>
+<tr>
+<td>scan_control</td>
+<td>FALSE</td>
+<td>SCANCTRL<br>SCANTYPE</td>
+<td></td>
+</tr>
+<tr>
+<td>singe_width_cut_in</td>
+<td>0 pixels</td>
+<td>SSWCI</td>
+<td>MDRP<br>MIRP</td>
+</tr>
+<tr>
+<td>single_width_value</td>
+<td>0 pixels</td>
+<td>SSW*</td>
+<td>MDRP<br>MIRP</td>
+</tr>
+</tbody>
+</table>
+<p>* The SSW argument is expressed in FUnits. The interpreter will convert this to pixels (F26Dot6).</p>
+
+</body>
+</html>

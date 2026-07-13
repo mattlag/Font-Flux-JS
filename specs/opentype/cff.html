@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cff — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/cff">https://learn.microsoft.com/en-us/typography/opentype/spec/cff</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="cff--compact-font-format-version-1">CFF — Compact Font Format (Version 1)</h1>
+<!-- NOTE: There is no actual table in the original article. -->
+<p>This table contains a Compact Font Format (CFF) font representation and is structured according to <a href="http://partners.adobe.com/public/developer/en/font/5176.CFF.pdf" data-linktype="external">Adobe Technical Note #5176: “The Compact Font Format Specification,”</a> and <a href="http://partners.adobe.com/public/developer/en/font/5177.Type2.pdf" data-linktype="external">Adobe Technical Note #5177: “Type 2 Charstring Format.”</a></p>
+<blockquote>
+<p><em>Note:</em> See Adobe Technical Note #5176 for details regarding the CFF INDEX, DICT and FontSet structures mentioned below.</p>
+</blockquote>
+<p>The CFF font format existed as an independent font format prior to the development of OpenType. When incorporated into the OpenType format, certain essential font information continued to be represented using mechanisms defined in the CFF format, duplicating other data representations available within OpenType for use in fonts with TrueType outlines. For example, CFF incorporates glyph widths into glyph outline descriptions, though these could otherwise be provided in the <a href="hmtx.html" data-linktype="relative-path">'hmtx' table</a>. OpenType fonts with TrueType outlines use a glyph index in conjunction with offsets in the <a href="loca.html" data-linktype="relative-path">'loca' table</a> to access glyph data within the 'glyf' table. This concept is retained in OpenType CFF fonts, except that glyph data is accessed through a <em>CharStrings INDEX</em> structure within the 'CFF ' table.</p>
+<p>See <a href="glyphformatcomparison.html" data-linktype="relative-path">Comparison of 'glyf', 'CFF ' and CFF2 tables</a> for a summary of significant differences between the 'glyf', 'CFF ' and CFF2 tables.</p>
+<p>The Name INDEX in the 'CFF ' table must contain only one entry; that is, there must be only one font in the CFF FontSet. It is not a requirement that this name be the same as name ID 6 entries in the <a href="name.html" data-linktype="relative-path">'name' table</a>. Note that, in an OpenType font collection file, a single 'CFF ' table can be shared across multiple fonts; names used by applications must be those provided in the 'name' table, not the Name INDEX entry.</p>
+<p>The CFF Top DICT must specify a CharstringType value of 2.</p>
+<p>The numGlyphs field in the <a href="maxp.html" data-linktype="relative-path">'maxp' table</a> must be the same as the number of entries in the CFF’s CharStrings INDEX. The OpenType font glyph index is the same as the CFF glyph index for all glyphs in the font.</p>
+
+</body>
+</html>

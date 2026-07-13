@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hhea — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/hhea">https://learn.microsoft.com/en-us/typography/opentype/spec/hhea</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="hhea--horizontal-header-table">hhea — Horizontal Header Table</h1>
+<p><a id="hheaHeader"></a></p>
+<p>This table contains information for horizontal layout. The values in the minRightSidebearing, minLeftSideBearing and xMaxExtent should be computed using <em>only</em> glyphs that have contours. Glyphs with no contours should be ignored for the purposes of these calculations. All reserved areas must be set to 0.</p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version number of the horizontal header table — set to 1.</td>
+</tr>
+<tr id="minorVersion">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version number of the horizontal header table — set to 0.</td>
+</tr>
+<tr id="ascender">
+<td>FWORD</td>
+<td>ascender</td>
+<td>Typographic ascent—see remarks below.</td>
+</tr>
+<tr id="descender">
+<td>FWORD</td>
+<td>descender</td>
+<td>Typographic descent—see remarks below.</td>
+</tr>
+<tr id="lineGap">
+<td>FWORD</td>
+<td>lineGap</td>
+<td>Typographic line gap.<br>Negative lineGap values are treated as zero in some legacy platform implementations.</td>
+</tr>
+<tr id="advanceWidthMax">
+<td>UFWORD</td>
+<td>advanceWidthMax</td>
+<td>Maximum advance width value in 'hmtx' table.</td>
+</tr>
+<tr id="minLeftSideBearing">
+<td>FWORD</td>
+<td>minLeftSideBearing</td>
+<td>Minimum left sidebearing value in 'hmtx' table for glyphs with contours (empty glyphs should be ignored).</td>
+</tr>
+<tr id="minRightSideBearing">
+<td>FWORD</td>
+<td>minRightSideBearing</td>
+<td>Minimum right sidebearing value; calculated as min(aw - (lsb + xMax - xMin)) for glyphs with contours (empty glyphs should be ignored).</td>
+</tr>
+<tr id="xMaxExtent">
+<td>FWORD</td>
+<td>xMaxExtent</td>
+<td>Max(lsb + (xMax - xMin)).</td>
+</tr>
+<tr id="caretSlopeRise">
+<td>int16</td>
+<td>caretSlopeRise</td>
+<td>Used to calculate the slope of the cursor (rise/run); 1 for vertical.</td>
+</tr>
+<tr id="caretSlopeRun">
+<td>int16</td>
+<td>caretSlopeRun</td>
+<td>0 for vertical.</td>
+</tr>
+<tr id="caretOffset">
+<td>int16</td>
+<td>caretOffset</td>
+<td>The amount by which a slanted highlight on a glyph needs to be shifted to produce the best appearance. Set to 0 for non-slanted fonts</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>(reserved)</td>
+<td>set to 0</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>(reserved)</td>
+<td>set to 0</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>(reserved)</td>
+<td>set to 0</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>(reserved)</td>
+<td>set to 0</td>
+</tr>
+<tr id="metricDataFormat">
+<td>int16</td>
+<td>metricDataFormat</td>
+<td>0 for current format.</td>
+</tr>
+<tr id="numberOfHMetrics">
+<td>uint16</td>
+<td>numberOfHMetrics</td>
+<td>Number of hMetric entries in 'hmtx' table</td>
+</tr>
+</tbody>
+</table>
+<p>The ascender, descender and linegap values in this table are Apple specific; see <a href="http://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6hhea.html" data-linktype="external">Apple's specification</a> for details regarding Apple platforms. The <a href="os2.html#stypoascender" data-linktype="relative-path">sTypoAscender</a>, <a href="os2.html#stypodescender" data-linktype="relative-path">sTypoDescender</a> and <a href="os2.html#stypolinegap" data-linktype="relative-path">sTypoLineGap</a> fields in the OS/2 table are used on the Windows platform, and are recommended for new text-layout implementations. Font developers should evaluate behavior in target applications that may use fields in this table or in the OS/2 table to ensure consistent layout. See the descriptions of the OS/2 fields for additional details.</p>
+<p><a id="fontvar"></a></p>
+<h2 id="hhea-table-and-opentype-font-variations">'hhea' Table and OpenType Font Variations</h2>
+<p>In a variable font, various font-metric values within the horizontal header table may need to be adjusted for different variation instances. Variation data for 'hhea' entries can be provided in the <a href="mvar.html" data-linktype="relative-path">metrics variations (MVAR)</a> table. Different 'hhea' entries are associated with particular variation data in the MVAR table using value tags, as follows:</p>
+<table>
+<tbody>
+<tr>
+<th>'hhea' entry</th>
+<th>Tag</th>
+</tr>
+<tr id="hcof">
+<td>caretOffset</td>
+<td>'hcof'</td>
+</tr>
+<tr id="hcrs">
+<td>caretSlopeRise</td>
+<td>'hcrs'</td>
+</tr>
+<tr id="hcrn">
+<td>caretSlopeRun</td>
+<td>'hcrn'</td>
+</tr>
+</tbody>
+</table>
+<p>For general information on OpenType Font Variations, see the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+
+</body>
+</html>

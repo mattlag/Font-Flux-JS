@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vdmx — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/vdmx">https://learn.microsoft.com/en-us/typography/opentype/spec/vdmx</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="vdmx--vertical-device-metrics">VDMX — Vertical Device Metrics</h1>
+<p>The VDMX table can be used in fonts with TrueType outlines. Under Windows, the usWinAscent and usWinDescent values from the OS/2 table will be used to determine the maximum black height for a font at any given size. Windows calls this distance the Font Height. Because TrueType instructions can lead to Font Heights that differ from the actual scaled and rounded values, basing the Font Height strictly on the yMax and yMin can result in “lost pixels.” Windows will clip any pixels that extend above the yMax or below the yMin. In order to avoid grid fitting the entire font to determine the correct height, the VDMX table has been defined.</p>
+<p>The VDMX table consists of a header followed by groupings of VDMX records.</p>
+<p><a id="vdmxHeader"></a></p>
+<p><em>VdmxHeader</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>uint16</td>
+<td>version</td>
+<td>Version number (0 or 1).</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>numRecs</td>
+<td>Number of VDMX groups present</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>numRatios</td>
+<td>Number of aspect ratio groupings</td>
+</tr>
+<tr>
+<td>RatioRange</td>
+<td>ratRange[numRatios]</td>
+<td>Ratio record array.</td>
+</tr>
+<tr>
+<td>Offset16</td>
+<td>vdmxGroupOffsets[numRatios]</td>
+<td>Offsets from start of this table to the VDMXGroup table for a corresponding RatioRange record.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="ratioRangeRec"></a></p>
+<p><em>RatioRange record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>uint8</td>
+<td>bCharSet</td>
+<td>Character set (see below).</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>xRatio</td>
+<td>Value to use for x-Ratio</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>yStartRatio</td>
+<td>Starting y-Ratio value.</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>yEndRatio</td>
+<td>Ending y-Ratio value.</td>
+</tr>
+</tbody>
+</table>
+<p>Ratios are set up as follows:</p>
+<table>
+<tbody>
+<tr>
+<td>For a 1:1 aspect ratio</td>
+<td>Ratios.xRatio = 1;<br>Ratios.yStartRatio = 1;<br>Ratios.yEndRatio = 1;</td>
+</tr>
+<tr>
+<td>For 1:1 through 2:1 ratio</td>
+<td>Ratios.xRatio = 2;<br>Ratios.yStartRatio = 1;<br>Ratios.yEndRatio = 2;</td>
+</tr>
+<tr>
+<td>For 1.33:1 ratio</td>
+<td>Ratios.xRatio = 4;<br>Ratios.yStartRatio = 3;<br>Ratios.yEndRatio = 3;</td>
+</tr>
+<tr>
+<td>For <em>all</em> aspect ratios</td>
+<td>Ratio.xRatio = 0;<br>Ratio.yStartRatio = 0;<br>Ratio.yEndRatio = 0;</td>
+</tr>
+</tbody>
+</table>
+<p>All values set to zero signal the default grouping to use; if present, this must be the <em>last</em> Ratio group in the table. Ratios of 2:2 are the same as 1:1.</p>
+<p>Aspect ratios are matched against the target device by normalizing the entire ratio range record based on the current X resolution and performing a range check of Y resolutions for each record after normalization. Once a match is found, the search stops. If the 0,0,0 group is encountered during the search, it is used (therefore if this group is not at the end of the ratio groupings, no group that follows it will be used). If there is not a match and there is no 0,0,0 record, then there is no VDMX data for that aspect ratio.</p>
+<p>Range checks are conceptually performed as follows:</p>
+<pre><code>(deviceXRatio == Ratio.xRatio) &amp;&amp; (deviceYRatio &gt;= Ratio.yStartRatio) &amp;&amp; (deviceYRatio &lt;= Ratio.yEndRatio)
+</code></pre>
+<p>Each ratio grouping refers to a specific VDMX record group; there must be at least 1 VDMX group in the table.</p>
+<p>The bCharSet value is used to denote cases where the VDMX group was computed based on a subset of the glyphs present in the font file. The semantics of bCharSet is different based on the version of the VDMX table. <strong>It is recommended that VDMX version 1 be used.</strong> The currently defined values for character set are:</p>
+<p><a id="charSetValues_0"></a></p>
+<p><em>Character Set Values, Version 0</em></p>
+<table>
+<tbody>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>0</td>
+<td>No subset; the VDMX group applies to all glyphs in the font. This is used for symbol or dingbat fonts.</td>
+</tr>
+<tr>
+<td>1</td>
+<td>Windows ANSI subset; the VDMX group was computed using only the glyphs required to complete the Windows ANSI character set. Windows will ignore any VDMX entries that are not for the ANSI subset (i.e. ANSI_CHARSET).</td>
+</tr>
+</tbody>
+</table>
+<p><a id="charSetValues_1"></a></p>
+<p><em>Character Set Values, Version 1</em></p>
+<table>
+<tbody>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>0</td>
+<td>No subset; the VDMX group applies to all glyphs in the font. If adding new character sets to existing font, add this flag and the groups necessary to support it. This should only be used in conjunction with ANSI_CHARSET.</td>
+</tr>
+<tr>
+<td>1</td>
+<td>No subset; the VDMX group applies to all glyphs in the font. Used when creating a new font for Windows. No need to support SYMBOL_CHARSET.</td>
+</tr>
+</tbody>
+</table>
+<p>VDMX groups immediately follow the table header. Each set of records (there need only be one set) has the following layout:</p>
+<p><a id="vdmxGroup"></a></p>
+<p><em>VDMXGroup table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>uint16</td>
+<td>recs</td>
+<td>Number of height records in this group</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>startsz</td>
+<td>Starting yPelHeight</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>endsz</td>
+<td>Ending yPelHeight</td>
+</tr>
+<tr>
+<td>vTable</td>
+<td>entry[recs]</td>
+<td>The VDMX records</td>
+</tr>
+</tbody>
+</table>
+<p><a id="vTableRec"></a></p>
+<p><em>vTable record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>uint16</td>
+<td>yPelHeight</td>
+<td>yPelHeight to which values apply.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>yMax</td>
+<td>Maximum value (in pels) for this yPelHeight.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>yMin</td>
+<td>Minimum value (in pels) for this yPelHeight.</td>
+</tr>
+</tbody>
+</table>
+<p>This table must appear in sorted order (sorted by yPelHeight), but need not be continuous. It should have an entry for every pel height where the yMax and yMin do not scale linearly, where linearly scaled heights are defined as:</p>
+<p>Hinted yMax and yMin are identical to scaled/rounded yMax and yMin.</p>
+<p>It is assumed that once yPelHeight reaches 255, all heights will be linear, or at least close enough to linear that it no longer matters. Please note that while the Ratios structure can only support ppem sizes up to 255, the vTable structure can support much larger pel heights (up to 65535). The choice of int16 and uint16 for the vTable record is dictated by the requirement that yMax and yMin be signed values (and 127 to -128 is too small a range) and the desire to word-align the vTable elements.</p>
+
+</body>
+</html>

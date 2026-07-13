@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cblc — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/cblc">https://learn.microsoft.com/en-us/typography/opentype/spec/cblc</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="cblc--color-bitmap-location-table">CBLC — Color Bitmap Location Table</h1>
+<p>The CBLC table provides embedded bitmap locators. It is used together with the <a href="cbdt.html" data-linktype="relative-path">CBDT</a> table, which provides embedded, color bitmap glyph data. The formats of these two tables are downward compatible extensions of the <a href="ebdt.html" data-linktype="relative-path">EBDT</a> and <a href="eblc.html" data-linktype="relative-path">EBLC</a> tables used for embedded monochrome and grayscale bitmaps.</p>
+<p>The CBLC table begins with a header containing the table version and number of strikes. An OpenType font may have one or more strikes embedded in the 'CBDT' table.</p>
+<p><em>CblcHeader</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version of the CBLC table, = 3.</td>
+</tr>
+<tr id="minorVersion">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version of the CBLC table, = 0.</td>
+</tr>
+<tr id="numSizes">
+<td>uint32</td>
+<td>numSizes</td>
+<td>Number of BitmapSize records.</td>
+</tr>
+<tr>
+<td>BitmapSize</td>
+<td>bitmapSizes[numSizes]</td>
+<td>BitmapSize records array.</td>
+</tr>
+</tbody>
+</table>
+<p>Note that the first version of the CBLC table is 3.0.</p>
+<p><a id="bitmapsize-record"></a></p>
+<p>Each strike is defined by a BitmapSize record.</p>
+<p><em>BitmapSize record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="indexSubTableArrayOffset">
+<td>Offset32</td>
+<td>indexSubtableListOffset</td>
+<td>Offset to index subtable from beginning of CBLC.</td>
+</tr>
+<tr id="indexTablesSize">
+<td>uint32</td>
+<td>indexSubtableListSize</td>
+<td>Number of bytes in corresponding index subtables and array.</td>
+</tr>
+<tr id="numberofIndexSubTables">
+<td>uint32</td>
+<td>numberOfIndexSubtables</td>
+<td>There is an index subtable for each range or format change.</td>
+</tr>
+<tr id="colorRef">
+<td>uint32</td>
+<td>colorRef</td>
+<td>Not used; set to 0.</td>
+</tr>
+<tr id="Hori">
+<td>SbitLineMetrics</td>
+<td>hori</td>
+<td>Line metrics for text rendered horizontally.</td>
+</tr>
+<tr id="Vert">
+<td>SbitLineMetrics</td>
+<td>vert</td>
+<td>Line metrics for text rendered vertically.</td>
+</tr>
+<tr id="startGlyphIndex">
+<td>uint16</td>
+<td>startGlyphIndex</td>
+<td>Lowest glyph index for this size.</td>
+</tr>
+<tr id="endGlyphIndex">
+<td>uint16</td>
+<td>endGlyphIndex</td>
+<td>Highest glyph index for this size.</td>
+</tr>
+<tr id="ppemX">
+<td>uint8</td>
+<td>ppemX</td>
+<td>Horizontal pixels per em.</td>
+</tr>
+<tr id="ppemY">
+<td>uint8</td>
+<td>ppemY</td>
+<td>Vertical pixels per em.</td>
+</tr>
+<tr id="bitDepth">
+<td>uint8</td>
+<td>bitDepth</td>
+<td>In addition to already defined bitDepth values 1, 2, 4, and 8 used for monochrome and grayscale bitmaps, the value of 32 is used to identify color bitmaps with 8 bit per channel BGRA pixel data.</td>
+</tr>
+<tr id="flags">
+<td>int8</td>
+<td>flags</td>
+<td>Vertical or horizontal (see the <a href="eblc.html#bitmapFlags" data-linktype="relative-path">Bitmap flags</a> section of the EBLC table chapter).</td>
+</tr>
+</tbody>
+</table>
+<p>The indexSubtableListOffset is the offset from the beginning of the CBLC table to an <a href="eblc.html#indexsubtablelist" data-linktype="relative-path">IndexSubtableList</a>. The indexSubtableListSize is the total size in bytes of the IndexSubtableList data, including the array of IndexSubtables. Each strike has an IndexSubtableList to support various formats and discontiguous ranges of bitmaps. Each IndexSubtable provides the locations of the bitmap data for one or more glyphs within the CBDT table, and may optionally provide glyph metrics to use for that set of glyphs.</p>
+<p>Remaining details regarding the structure of the CBDT table are identical to those  defined for the <a href="eblc.html" data-linktype="relative-path">EBLC</a> table.</p>
+
+</body>
+</html>

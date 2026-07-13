@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vhea — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/vhea">https://learn.microsoft.com/en-us/typography/opentype/spec/vhea</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="vhea--vertical-header-table">vhea — Vertical Header Table</h1>
+<h2 id="overview">Overview</h2>
+<p>The vertical header table contains information needed for vertical layout of Chinese, Japanese, Korean (CJK) and other ideographic scripts. In vertical layout, these scripts are written either top to bottom or bottom to top. This table contains information that is general to the font as a whole. Information that pertains to specific glyphs is given in the <a href="vmtx.html" data-linktype="relative-path">vertical metrics ('vmtx') table</a>. The formats of these tables are similar to those for horizontal metrics, <a href="hhea.html" data-linktype="relative-path">'hhea'</a> and <a href="hmtx.html" data-linktype="relative-path">'hmtx'</a>.</p>
+<p>Data in the vertical header table must be consistent with data that appears in the vertical metrics table. The advance height and top sidebearing values in the vertical metrics table must correspond with the maximum advance height and minimum bottom sidebearing values in the vertical header table.</p>
+<p>See the section <a href="recom.html#cjk" data-linktype="relative-path">OpenType CJK Font Guidelines</a> for more information about constructing CJK (Chinese, Japanese, and Korean) fonts.</p>
+<h2 id="table-formats">Table formats</h2>
+<p>There are two versions of the 'vhea' table, 1.0 and 1.1. The difference between version 1.0 and version 1.1 is the name and definition of the following fields:</p>
+<ul>
+<li>ascender becomes vertTypoAscender</li>
+<li>descender becomes vertTypoDescender</li>
+<li>lineGap becomes vertTypoLineGap</li>
+</ul>
+<p>Version 1.0 of the vertical header table format is as follows:</p>
+<p><em>VheaHeader, version 1.0</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Version16Dot16</td>
+<td>version</td>
+<td>Version number of the vertical header table; 0x00010000 for version 1.0</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>ascent</td>
+<td>Distance in font design units from the centerline to the previous line’s descent.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>descent</td>
+<td>Distance in font design units from the centerline to the next line’s ascent.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>lineGap</td>
+<td>Reserved; set to 0</td>
+</tr>
+<tr>
+<td>UFWORD</td>
+<td>advanceHeightMax</td>
+<td>The maximum advance height measurement in font design units found in the font. This value must be consistent with the entries in the vertical metrics table.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>minTop<br>SideBearing</td>
+<td>The minimum top sidebearing measurement found in the font, in font design units. This value must be consistent with the entries in the vertical metrics table.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>minBottom<br>SideBearing</td>
+<td>The minimum bottom sidebearing measurement found in the font, in font design units. This value must be consistent with the entries in the vertical metrics table.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>yMaxExtent</td>
+<td>Defined as yMaxExtent = max(tsb + (yMax - yMin)).</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>caretSlopeRise</td>
+<td>The value of the caretSlopeRise field divided by the value of the caretSlopeRun Field determines the slope of the caret. A value of 0 for the rise and a value of 1 for the run specifies a horizontal caret. A value of 1 for the rise and a value of 0 for the run specifies a vertical caret. Intermediate values are desirable for fonts whose glyphs are oblique or italic. For a vertical font, a horizontal caret is best.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>caretSlopeRun</td>
+<td>See the caretSlopeRise field. Value=1 for nonslanted vertical fonts.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>caretOffset</td>
+<td>The amount by which the highlight on a slanted glyph needs to be shifted away from the glyph in order to produce the best appearance. Set value equal to 0 for nonslanted fonts.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>reserved</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>reserved</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>reserved</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>reserved</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>metricDataFormat</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>numOf<br>LongVerMetrics</td>
+<td>Number of advance heights in the vertical metrics table.</td>
+</tr>
+</tbody>
+</table>
+<p>Version 1.1 of the vertical header table format is as follows:</p>
+<p><em>VheaHeader, version 1.1</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Version16Dot16</td>
+<td>version</td>
+<td>Version number of the vertical header table; 0x00011000 for version 1.1</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>vertTypoAscender</td>
+<td>The vertical typographic ascender for this font. It is the distance in font design units from the vertical center baseline to the right edge of the design space for CJK / ideographic glyphs (or “ideographic em box”).<br><br>It is usually set to (head.unitsPerEm)/2. For example, a font with an em of 1000 design units will set this field to 500. See the Baseline tags section of the OpenType Layout Tag Registry for a description of the <a href="baselinetags#ideoembox" data-linktype="relative-path">ideographic em-box</a>.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>vertTypoDescender</td>
+<td>The vertical typographic descender for this font. It is the distance in font design units from the vertical center baseline to the left edge of the design space for CJK / ideographic glyphs.<br><br>It is usually set to -(head.unitsPerEm/2). For example, a font with an em of 1000 design units will set this field to -500.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>vertTypoLineGap</td>
+<td>The vertical typographic gap for this font. An application can determine the recommended line spacing for single spaced vertical text for an OpenType font by the following expression: ideo embox width + vhea.vertTypoLineGap.</td>
+</tr>
+<tr>
+<td>UFWORD</td>
+<td>advanceHeightMax</td>
+<td>The maximum advance height measurement in font design units found in the font. This value must be consistent with the entries in the vertical metrics table.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>minTop<br>SideBearing</td>
+<td>The minimum top sidebearing measurement found in the font, in font design units. This value must be consistent with the entries in the vertical metrics table.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>minBottom<br>SideBearing</td>
+<td>The minimum bottom sidebearing measurement found in the font, in font design units. This value must be consistent with the entries in the vertical metrics table.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>yMaxExtent</td>
+<td>Defined as yMaxExtent = max(tsb + (yMax - yMin)).</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>caretSlopeRise</td>
+<td>The value of the caretSlopeRise field divided by the value of the caretSlopeRun Field determines the slope of the caret. A value of 0 for the rise and a value of 1 for the run specifies a horizontal caret. A value of 1 for the rise and a value of 0 for the run specifies a vertical caret. Intermediate values are desirable for fonts whose glyphs are oblique or italic. For a vertical font, a horizontal caret is best.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>caretSlopeRun</td>
+<td>See the caretSlopeRise field. Value=1 for nonslanted vertical fonts.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>caretOffset</td>
+<td>The amount by which the highlight on a slanted glyph needs to be shifted away from the glyph in order to produce the best appearance. Set value equal to 0 for nonslanted fonts.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>reserved</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>reserved</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>reserved</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>reserved</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>metricDataFormat</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>numOf<br>LongVerMetrics</td>
+<td>Number of advance heights in the vertical metrics table.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="vhea-table-and-opentype-font-variations">'vhea' table and OpenType Font Variations</h2>
+<p>In a variable font, various font-metric values within the 'vhea' table may need to be adjusted for different variation instances. Variation data for 'vhea' entries can be provided in the <a href="mvar.html" data-linktype="relative-path">metrics variations (MVAR)</a> table. Different 'vhea' entries are associated with particular variation data in the MVAR table using value tags, as follows:</p>
+<table>
+<thead>
+<tr>
+<th>'vhea' entry</th>
+<th>Tag</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ascent, vertTypoAscender</td>
+<td>'vasc'</td>
+</tr>
+<tr>
+<td>caretOffset</td>
+<td>'vcof'</td>
+</tr>
+<tr>
+<td>caretSlopeRun</td>
+<td>'vcrn'</td>
+</tr>
+<tr>
+<td>caretSlopeRise</td>
+<td>'vcrs'</td>
+</tr>
+<tr>
+<td>descent, vertTypoDescender</td>
+<td>'vdsc'</td>
+</tr>
+<tr>
+<td>lineGap, vertTypoLineGap</td>
+<td>'vlgp'</td>
+</tr>
+</tbody>
+</table>
+<p>For general information on OpenType Font Variations, see the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<h2 id="vertical-header-table-example">Vertical header table example</h2>
+<table>
+<thead>
+<tr>
+<th>Offset/length</th>
+<th>Value</th>
+<th>Name</th>
+<th>Comment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0/4</td>
+<td>0x00011000</td>
+<td>version</td>
+<td>Version number of the vertical header table is 1.1.</td>
+</tr>
+<tr>
+<td>4/2</td>
+<td>1024</td>
+<td>vertTypoAscender</td>
+<td>Half the em-square height.</td>
+</tr>
+<tr>
+<td>6/2</td>
+<td>-1024</td>
+<td>vertTypoDescender</td>
+<td>Minus half the em-square height.</td>
+</tr>
+<tr>
+<td>8/2</td>
+<td>0</td>
+<td>vertTypoLineGap</td>
+<td>Typographic line gap is 0 font design units.</td>
+</tr>
+<tr>
+<td>10/2</td>
+<td>2079</td>
+<td>advanceHeightMax</td>
+<td>The maximum advance height measurement found in the font is 2079 font design units.</td>
+</tr>
+<tr>
+<td>12/2</td>
+<td>-342</td>
+<td>minTopSideBearing</td>
+<td>The minimum top sidebearing measurement found in the font is -342 font design units.</td>
+</tr>
+<tr>
+<td>14/2</td>
+<td>-333</td>
+<td>minBottomSideBearing</td>
+<td>The minimum bottom sidebearing measurement found in the font is -333 font design units.</td>
+</tr>
+<tr>
+<td>16/2</td>
+<td>2036</td>
+<td>yMaxExtent</td>
+<td>max(tsb + (yMax - yMin)) = 2036.</td>
+</tr>
+<tr>
+<td>18/2</td>
+<td>0</td>
+<td>caretSlopeRise</td>
+<td>The caret slope rise of 0 and a caret slope run of 1 indicate a horizontal caret for a vertical font.</td>
+</tr>
+<tr>
+<td>20/2</td>
+<td>1</td>
+<td>caretSlopeRun</td>
+<td>The caret slope rise of 0 and a caret slope run of 1 indicate a horizontal caret for a vertical font.</td>
+</tr>
+<tr>
+<td>22/2</td>
+<td>0</td>
+<td>caretOffset</td>
+<td>Value set to 0 for nonslanted fonts.</td>
+</tr>
+<tr>
+<td>24/4</td>
+<td>0</td>
+<td>reserved</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>26/2</td>
+<td>0</td>
+<td>reserved</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>28/2</td>
+<td>0</td>
+<td>reserved</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>30/2</td>
+<td>0</td>
+<td>reserved</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>32/2</td>
+<td>0</td>
+<td>metricDataFormat</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>34/2</td>
+<td>258</td>
+<td>numOfLongVerMetrics</td>
+<td>Number of advance heights in the vertical metrics table is 258.</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

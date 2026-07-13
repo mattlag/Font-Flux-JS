@@ -1,0 +1,927 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>stat — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/stat">https://learn.microsoft.com/en-us/typography/opentype/spec/stat</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="stat--style-attributes-table">STAT — Style Attributes Table</h1>
+<p>The style attributes table describes design attributes that distinguish font-style variants within a font family. It also provides associations between those attributes and name elements that may be used to present font options within application user interfaces. This information is especially important for variable fonts, but also relevant for non-variable fonts.</p>
+<p><a id="Intro"></a></p>
+<h2 id="introduction">Introduction</h2>
+<p>A font family is a set of font faces with key aspects of design that are common to all of the fonts in the family, and that differentiate that family from other font families. The fonts within a family also differ from one another in particular ways: in stroke thicknesses, in contrast, etc.; or combinations of such differences. In this way, the fonts within a family are style variants of the family design.</p>
+<p>A given family will have a particular set of <em>attribute types</em> by which the member fonts differ: the <em>axes of variation</em>. These may be implemented as dynamic variations in a variable font; or they may be implemented in the form of discrete, static instance fonts. For example, <em>weight</em> is a variable axis in the Skia variable font, but is also reflected as an axis of design variation in the Arial family with static instances that include “Arial Regular” and “Arial Bold”.</p>
+<p>The STAT table provides richer information about the axes of variation and individual styles within a family, as well as relationships between the styles. This information may be used for different purposes, including:</p>
+<ul>
+<li>It provides a way to accommodate rich typographic families with many styles in legacy applications that use a more limited understanding of font families. This is especially relevant for variable fonts.</li>
+<li>By providing more information about styles within a family, it can support alternate designs for font-selection user interfaces that may be useful with rich typographic families.</li>
+<li>By providing more information about relationships between styles within a family, it can support application logic for selection of styles in particular application conditions.</li>
+</ul>
+<p>Note that, in regard to the first purpose of bridging between different notions of what is included in a font family, this has been handled in the past using separate family/subfamily name pairs in the <a href="name.html" data-linktype="relative-path">'name'</a> table: name IDs 1 and 2 versus name IDs 16 and 17 versus name IDs 21 and 22. The STAT table provides a way to bridge between different family models without proliferation of additional family/subfamily pairs in the 'name' table.</p>
+<p>The information in the STAT table can characterize a font in relation to the entire family to which it belongs, not just the font in isolation. For example, the face name “Arial Bold” reflects that the Arial family includes weight as an axis of design variation, but not that the family also includes an <em>italic</em> axis of design variation. The STAT table provides a way to indicate in the Arial Bold font that the family includes an italic axis variation, and that this font has a particular value—non-italic—in regard to that axis.</p>
+<p>A style attributes table is required in all variable fonts. For a general overview of OpenType Font Variations, see the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p>The style attributes table is also recommended for all new, non-variable fonts, especially if fonts have style attributes in axes other than weight, width, or slope.</p>
+<p>The information provided in the STAT table includes string labels for specific style attributes. For example, “Bold” and “Condensed” as individual style attribute labels within a “Condensed Bold” font. These may be used in user interfaces but are not intended to supersede subfamily names provided in the <a href="name.html" data-linktype="relative-path">'name'</a> table or in the <a href="fvar.html" data-linktype="relative-path">'fvar'</a> table of variable fonts.</p>
+<h2 id="alternate-font-family-models">Alternate Font Family Models</h2>
+<p>From a design perspective, a typographically rich font family can potentially include a large number of style variants involving many axes of design variation. Some variable fonts, for example, have a dozen or more axes. Modern applications should be designed to accommodate families with such variety.</p>
+<p>Many applications, however, are constrained by legacy assumptions regarding the faces or axes of design variation that can be included within a font family. Some applications use a font family model that allows only weight, width or slope (italic/oblique/slant) as design axes (a “WWS” model). Some applications use an even more limited model that allows for only <em>regular</em>, <em>bold</em>, <em>italic</em>, or <em>bold italic</em> fonts within a family (the “R/B/I/BI” model).</p>
+<p>In applications that use a limited font family model, any style distinctions within a font’s typographic family that do not fit within the application’s family model must be treated as a separate family. For example, if an application uses the R/B/I/BI model, the Calibri Light font must be treated as the “Regular” style in a “Calibri Light” family. Thus, the typographic family and subfamily names need to be projected into the legacy font family model with alternate family and subfamily names.</p>
+<p>In non-variable fonts, alternate family and subfamily names are accommodated using different name ID pairs in the <a href="name.html#name-ids" data-linktype="relative-path">'name'</a> table:</p>
+<ul>
+<li>Name IDs 16 (Typographic Family) and 17 (Typographic Subfamily) support an unrestricted family model.</li>
+<li>Name IDs 1 (Font Family) and 2 (Font Subfamily) support the R/B/I/BI family model.</li>
+<li>Name IDs 21 (WWS Family) and 22 (WWS Subfamily) support the WWS family model.</li>
+</ul>
+<p>So, for example, the Calibri Light font includes “Calibri Light” as name ID 1 (family name), and “Regular” as name ID 2 (subfamily name).</p>
+<p>In variable fonts, however, this is not possible. The font includes strings for name IDs 16 and 17, with the latter used for the default instance; and the <a href="fvar.html#instancerecord" data-linktype="relative-path">'fvar'</a> table provides alternate subfamily strings for named instances that are the equivalents to name ID 17 for each named instance. For legacy font family models, however, the 'fvar' table does not provide named instance strings for name IDs 1 and 2, or for name IDs 21 and 22. Even if a variable font only has a single axis, such as weight, instance names such as “Light” or “Extrabold” must be handled in older applications by some means other than alternate name IDs.</p>
+<p>The STAT table accommodates this through <a href="#axis-value-tables" data-linktype="self-bookmark"><em>axis value</em> tables</a>. An axis value table can provide a string label for a specific axis value on any axis that is relevant for the font or font family. (For special cases, an axis value table can also provide a label for a combination of values from a set of relevant axes.) These labels, together with the typographic family name (name ID 16), can be used to compose alternate names dynamically to fit the requirements of different font family models.</p>
+<p>For example, consider the Sitka font family, and the Sitka Display Bold font. The family has optical size and weight (and also italic) axes of design variation. The optical size axis is not supported in either the WWS or the R/B/I/BI family models. The Sitka Display Bold font can include axis value tables that provide the label “Display” for that value on the optical size axis, the label “Bold” for that value on the weight axis. An application can use these to dynamically compose an alternate family name “Sitka Display” and alternate subfamily name “Bold” to fit the requirements of these alternate font family models.</p>
+<p>In a similar way, a variable font with any number of variation axes can provide a complete set of labels for the axis values that pertain to the font’s named instances. Using these, a compatibility layer can project names for any of the named instances into a legacy font family model, allowing all of the variable font’s named instances to work in older applications.</p>
+<p>The STAT table also provides additional information regarding the axes of design variation. This includes an axis ordering value that can be used to influence the relative ordering of axis value labels when multiple labels need to be combined in a dynamically generated name. See <a href="#axis-records" data-linktype="self-bookmark">Axis Records</a> for more information.</p>
+<p><em>Note:</em> When generating family and subfamily names for compatibility with the R/B/I/BI family model, then any subfamily name elements that are not “Regular”, “Bold”, “Italic” or “Oblique” will be moved into the family name. For example, given a family name “Selawik” and a subfamily name “Condensed Bold”, this will be transformed into the R/B/I/BI model as family name “Selawik Condensed” and subfamily name “Bold”. Similarly, when names are generated for compatibility with the WWS family model, any subfamily name elements that do not represent a weight value, a width value, or italic or oblique will be moved into family names. For this reason, it is recommended that width, weight and italic/oblique labels always be placed last in a subfamily name, to minimize differences in how names will appear in different applications that use different family models.</p>
+<p><a id="StatHeader"></a></p>
+<h2 id="style-attributes-header">Style Attributes Header</h2>
+<p>The style attributes table, version 1.2, is organized as follows:</p>
+<p><em>Style attributes header:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version number of the style attributes table — set to 1.</td>
+</tr>
+<tr id="minorVersion">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version number of the style attributes table — set to 2.</td>
+</tr>
+<tr id="dasize">
+<td>uint16</td>
+<td>designAxisSize</td>
+<td>The size in bytes of each axis record.</td>
+</tr>
+<tr id="dacount">
+<td>uint16</td>
+<td>designAxisCount</td>
+<td>The number of axis records. In a font with an 'fvar' table, this value must be greater than or equal to the axisCount value in the 'fvar' table. In all fonts, must be greater than zero if axisValueCount is greater than zero.</td>
+</tr>
+<tr id="off2da">
+<td>Offset32</td>
+<td>designAxesOffset</td>
+<td>Offset in bytes from the beginning of the STAT table to the start of the design axes array. If designAxisCount is zero, set to zero; if designAxisCount is greater than zero, must be greater than zero.</td>
+</tr>
+<tr id="avcount">
+<td>uint16</td>
+<td>axisValueCount</td>
+<td>The number of axis value tables.</td>
+</tr>
+<tr id="off2avoffs">
+<td>Offset32</td>
+<td>offsetToAxisValueOffsets</td>
+<td>Offset in bytes from the beginning of the STAT table to the start of the design axes value offsets array. If axisValueCount is zero, set to zero; if axisValueCount is greater than zero, must be greater than zero.</td>
+</tr>
+<tr id="efbnid">
+<td>uint16</td>
+<td>elidedFallbackNameID</td>
+<td>Name ID used as fallback when projection of names into a particular font model produces a subfamily name containing only elidable elements.</td>
+</tr>
+</tbody>
+</table>
+<p>In version 1.0 of the STAT table, the elidedFallbackNameId field was not included. Use of version 1.0 is deprecated. Version 1.1 adds the elidedFallbackNameId field. Version 1.2 adds support for the format 4 axis value table; otherwise, version 1.2 and version 1.1 are the same.</p>
+<p>The elidedFallbackNameId field provides a name that can be used when composing a name if all of the axis-value names are elidable. For example, “Normal” weight and “Roman” slant may both be marked as elidable axis-value names, and so a composed name for normal weight and Roman slant may result in an empty string. The elidedFallbackNameId is used to provide an alternative name ID to use in this case, such as “Regular”. In many fonts, this may reference name ID 17 or name ID 2.</p>
+<p>The header is followed by the design axes array, and the axis value offsets array. The offsets to these arrays are provided by offset fields in the header. These arrays may be contiguous in a font; parsers should, nevertheless, use the offset fields to locate each array.</p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="arecs">
+<td>AxisRecord</td>
+<td>designAxes[designAxisCount]</td>
+<td>The design-axes array.</td>
+</tr>
+<tr id="avoffs">
+<td>Offset16</td>
+<td>axisValueOffsets[axisValueCount]</td>
+<td>Array of offsets to axis value tables, in bytes from the start of the axis value offsets array.</td>
+</tr>
+</tbody>
+</table>
+<p>The designAxisSize field indicates the size of each axis record. Future minor-version updates of the STAT table may define compatible extensions to the axis record format with additional fields. Implementations must use the designAxisSize field to determine the start of each record.</p>
+<p><a id="AxisRecords"></a></p>
+<h2 id="axis-records">Axis Records</h2>
+<p>The axis record provides information about a single design axis.</p>
+<p><a id="axisRecord"></a></p>
+<p><em>AxisRecord:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="axisTag">
+<td>Tag</td>
+<td>axisTag</td>
+<td>A tag identifying the axis of design variation.</td>
+</tr>
+<tr id="axisNameID">
+<td>uint16</td>
+<td>axisNameID</td>
+<td>The name ID for entries in the 'name' table that provide a display string for this axis.</td>
+</tr>
+<tr id="axisOrdering">
+<td>uint16</td>
+<td>axisOrdering</td>
+<td>A value that applications can use to determine primary sorting of face names, or for ordering of labels when composing family or face names.</td>
+</tr>
+</tbody>
+</table>
+<p>Each axis record has a tag designating the axis. Tag values must follow the rules for axis tags described in the <a href="dvaraxisreg.html" data-linktype="relative-path">OpenType Design-Variation Axis Tag Registry</a>. No two axis records should have the same axisTag value.</p>
+<p>The axisNameID field provides a name ID that can be used to obtain strings from the 'name' table that can be used to refer to the axis in application user interfaces. A defined name ID can be used if strings for that name ID have the appropriate string for an axis name. Otherwise, name IDs must be greater than 255 and less than 32768.</p>
+<p>In a variable font, there must be an axis record for every axis defined in the <a href="fvar.html" data-linktype="relative-path">'fvar'</a> table, and it must use the same name ID used in the 'fvar' table. The order of axis records in the STAT table is arbitrary and does not need to match the order of records in the 'fvar' table.</p>
+<p>If a variable font is part of a family that has additional axes of design variation but that are not implemented as dynamic-variation axes in the 'fvar' table, records for these other design variation axes should also be included.</p>
+<p>A non-variable font should include axis records for any axes that are relevant for the font or the family of which it is a member, especially if axes other than weight, width and slope are used.</p>
+<p>For every axis declared using an axis record, the axis should be a variation axis defined in an 'fvar' table, or else it should be reflected in the font’s subfamily name (name ID 17 or name ID 2) except in the case that the font’s value on that axis is a “normal” value that is suppressed from the subfamily name.</p>
+<p>The axisOrdering field can be used when constructing alternate family and subfamily names for compatibility with legacy font family models. (See <a href="#alternate-font-family-models" data-linktype="self-bookmark">Alternate Font Family Models</a> above for background information.) If labels pertaining to multiple axes of design variation need to be combined, this field can be used to determine their relative ordering. In this way, a font developer can indicate a preferred order of labels in these alternate names.</p>
+<p>The axisOrdering field can also be used by applications in the design of user interfaces. For example, rather than listing the styles within a family in an arbitrary order, the application could use the axis ordering information to sort the styles or present them in groups in a more organized manner. Using this field, a font developer can indicate a recommendation for how the styles within the family will be presented; for example, whether they are sorted or grouped first by weight, then by width, or vice versa.</p>
+<p>To ensure consistency in how face names are presented to users, the axis ordering given in axis records should be consistent across different fonts within a family, and with the ordering of axis-value labels used in the typographic subfamily (name ID 17). In a variable font, the axis ordering should also be consistent with the ordering of axis-value labels used in the strings referenced by named instances defined in the 'fvar' table.</p>
+<p>Different fonts belonging to the same family should have matching axis records. If a set of fonts for a family are released, and then at some later time the family is extended with additional fonts using new axes of variation, the previously-shipped fonts would not necessarily need to be updated with the additional axis records: because axis records give characteristics for a font family, not just a single font within the family, axis records in the newer fonts could provide axis details for the extended family.</p>
+<p><a id="AxisValueTables"></a></p>
+<h2 id="axis-value-tables">Axis Value Tables</h2>
+<p>Axis value tables provide details regarding a specific style-attribute value on some specific axis of design variation, or a combination of design-variation axis values. They also provide the relationship from those values to labels used as elements in subfamily names. This information can be useful for presenting fonts in application user interfaces. It is also used by platforms to provide compatibility between rich typographic families with a wide range of styles and older applications that use legacy font family models. (See <a href="#alternate-font-family-models" data-linktype="self-bookmark">Alternate Font Family Models</a> above for more information.)</p>
+<p>In a variable font, it is strongly recommended that axis value tables be included for every element of typographic subfamily names for all of the named instances defined in the 'fvar' table.</p>
+<blockquote>
+<p><em>Note:</em> Some applications could rely on these axis value tables to compose subfamily names for named instances. Unexpected user interface behavior could result if a complete set of axis value tables is not included in the font.</p>
+</blockquote>
+<p>Additional axis value tables may be included for name elements that do not appear in any named instances; these may be used by applications in user interfaces or for other purposes, but are not required for compatibility with legacy font family models. Some variable fonts may include axes that are not reflected in subfamily names for any named instances — that is, variants along these axes are selectable only by means of numeric axis values. In such cases, there is no requirement to assign names or to create axis value tables for values on these axes.</p>
+<p>In many cases, a name element will be associated with a particular value on a single axis. For example, “Bold” representing a specific weight-axis value; or “Condensed” representing a specific width value. Such name elements are assumed to be combinable with name elements associated with values on other axes, as in an instance name “Bold Condensed”. Name elements of this type are referred to as <em>analytic names</em>.</p>
+<p>In other cases, a name element could be associated with a particular combination of values on multiple axes, and not be amenable to analysis into simpler, independent elements. For example, a variable font for lettering might use several custom axes to provide different stroke or swash-terminal modifications, and named instances may be defined for certain combinations of values for these axes with non-decomposable names for those combinations; for example, “Florid” for a particular combination of stroke- and termination-axes values. Name elements of this type are referred to as <em>non-analytic</em>. Note that a font with non-analytic names might also use an axis such as weight that uses analytic names, leading to some named instances that combine non-analytic and analytic elements, such as “Florid Bold” and “Florid Semibold”.</p>
+<p>Note that a variable font could have some distinguishing, subfamily attributes that are static, not implemented as a variation, but that are relevant in relation to the complete typographic family. For example, a weight-variation font may have a paired, italic weight-variation font. Axis value tables (as well as axis records) should also be provided for any such distinctions that are relevant within a family.</p>
+<p>Axis value tables are particularly important for variable fonts but can also be used in non-variable fonts. When used in non-variable fonts, axis value tables for any given value should be implemented consistently across fonts in the family. In particular, two different fonts within a family may share certain style attributes in common, and axis value tables for these values should be implemented consistently. For example, Bold Condensed and Bold Semi-Condensed fonts both have the same weight attribute, Bold, and should have matching axis value tables for Bold. If they are not consistent, some applications could exhibit unexpected behavior in font-related operations, such as how the fonts are presented in user interfaces, or how the fonts are chosen in fallback or other font-selection operations.</p>
+<p>Four different axis value table formats are defined. Formats 1, 2 and 3 are appropriate for single-axis values associated with analytic name elements. Format 4 is used specifically for multi-axis value combinations associated with non-analytic name elements. Additional formats may be supported in the future, with a minor-version update of the STAT table.</p>
+<blockquote>
+<p><em>Note:</em> Use of format 1, format 2, or format 3 axis value tables is especially recommended for values on 'wght' and 'wdth' axes, and also for “Italic” (value 1.0 on the 'ital' axis) or “Oblique” (a non-zero value on the 'slnt' axis) variants.</p>
+</blockquote>
+<blockquote>
+<p><em>Note:</em> Use of format 4 axis value tables is especially recommended for non-analytic subfamily names and the corresponding axis-value combinations in static-font families, or for non-analytic subfamily names in variable fonts that also involve 'wght' or 'wdth' axes, or “Italic” or “Oblique” variants.</p>
+</blockquote>
+<p>For any format of axis value table, the first field is read to determine the format. If the format is not recognized, then the axis value table may be ignored.</p>
+<p>Each format includes a valueNameID field, which references a display string to be associated with the numeric axis value or combination of axis values. Defined name IDs, such as name IDs 2, 17 or 22, can be used if those have the appropriate string for an axis value. Otherwise, name IDs must be greater than 255 and less than 32768.</p>
+<p>The different formats all include fields with numeric axis values. These values use the same scale as is used for the given axis in the 'fvar' table.</p>
+<p>In some cases, an attribute using a new design axis could be introduced into a family after other fonts have been released, with the new attribute not anticipated in any way in the initial fonts. For example, a font designer might initially create Regular, Bold and Italic variants of a design, and then later add width variants such as Condensed. In that case, the initial fonts might not have identified that they represent the “Normal” attribute on the width scale. The newer fonts should include axis value tables that describe the earlier fonts in relation to the new design axis. A flag is defined to designate such axis value tables; this is described in detail below.</p>
+<p>No two tables should provide information for the same combination of axis values:</p>
+<ul>
+<li>There should not be a format 1 table with axisIndex and value that match the axisIndex and value of a separate format 3 table.</li>
+<li>There should not be a format 1 table with the same axisIndex as a separate format 2 table if the format 1 value is greater than the rangeMinValue and less than the rangeMaxValue of the format 2 table. The format 1 value may be the same as the minimum or maximum of the format 2 range, but the format 2 nominalValue should be different.</li>
+<li>Since format 2 and format 3 each provide additional and distinct information associated with an axis value, a font may contain a format 2 table and a format 3 table with the same axisIndex where the format 2 nominal value is the same as the format 3 value. The flags and valueNameID of the two tables must be the same.</li>
+<li>A format 4 table may specify an axis value that is also specified in another table, but only if there is some other difference in the combination of axis values specified by those two tables.</li>
+</ul>
+<p>Since use of format 4 tables is recommended only for multi-axis value combinations associated with a non-analytic name element, there should not be cases of a format 4 table with a single axis value that matches the value or nominal value of another axis value table.</p>
+<p><a id="avt1"></a></p>
+<h3 id="axis-value-table-format-1">Axis value table, format 1</h3>
+<p>Axis value table format 1 has the following structure.</p>
+<p><em>AxisValueFormat1:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="format_1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — set to 1.</td>
+</tr>
+<tr id="axisIndex_1">
+<td>uint16</td>
+<td>axisIndex</td>
+<td>Zero-base index into the axis record array identifying the axis of design variation to which the axis value table applies. Must be less than designAxisCount.</td>
+</tr>
+<tr id="flags_1">
+<td>uint16</td>
+<td>flags</td>
+<td>Flags — see below for details.</td>
+</tr>
+<tr id="valueNameID_1">
+<td>uint16</td>
+<td>valueNameID</td>
+<td>The name ID for entries in the 'name' table that provide a display string for this attribute value.</td>
+</tr>
+<tr id="value_1">
+<td>Fixed</td>
+<td>value</td>
+<td>A numeric value for this attribute value.</td>
+</tr>
+</tbody>
+</table>
+<p>A format 1 table is used simply to associate a specific axis value with a name.</p>
+<p><a id="avt2"></a></p>
+<h3 id="axis-value-table-format-2">Axis value table, format 2</h3>
+<p>Axis value table format 2 has the following structure.</p>
+<p><em>AxisValueFormat2</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="format_2">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — set to 2.</td>
+</tr>
+<tr id="axisIndex_2">
+<td>uint16</td>
+<td>axisIndex</td>
+<td>Zero-base index into the axis record array identifying the axis of design variation to which the axis value table applies. Must be less than designAxisCount.</td>
+</tr>
+<tr id="flags_2">
+<td>uint16</td>
+<td>flags</td>
+<td>Flags — see below for details.</td>
+</tr>
+<tr id="valueNameID_2">
+<td>uint16</td>
+<td>valueNameID</td>
+<td>The name ID for entries in the 'name' table that provide a display string for this attribute value.</td>
+</tr>
+<tr id="nomval_2">
+<td>Fixed</td>
+<td>nominalValue</td>
+<td>A nominal numeric value for this attribute value.</td>
+</tr>
+<tr id="rngminval_2">
+<td>Fixed</td>
+<td>rangeMinValue</td>
+<td>The minimum value for a range associated with the specified name ID.</td>
+</tr>
+<tr id="rngmaxval_2">
+<td>Fixed</td>
+<td>rangeMaxValue</td>
+<td>The maximum value for a range associated with the specified name ID.</td>
+</tr>
+</tbody>
+</table>
+<p>A format 2 table can be used if a given name is associated with a particular axis value, but is also associated with a range of values. For example, in a family that supports optical size variations, “Subhead” may be used in relation to a range of sizes. The rangeMinValue and rangeMaxValue fields are used to define that range. In a variable font, a named instance has specific coordinates for each axis. The nominalValue field allows some specific, nominal value to be associated with a name, to align with the named instances defined in the font variations table, while the rangeMinValue and rangeMaxValue fields allow the same name also to be associated with a range of axis values.</p>
+<p>Some design axes may be open ended, having an effective minimum value of negative infinity, or an effective maximum value of positive infinity. To represent an effective minimum of negative infinity, set rangeMinValue to 0x80000000. To represent an effective maximum of positive infinity, set rangeMaxValue to 0x7FFFFFFF.</p>
+<p>The range specification of a format 2 table is inclusive: both the minimum and maximum values are included within the range. Two tables for a given axis may have ranges that touch (the rangeMaxValue of one range is the rangeMinValue of the other), but ranges should not overlap more than that. In the case of two ranges that touch:</p>
+<ul>
+<li>At most one of the ranges should have the nominalValue set to the axis value at which the ranges touch.</li>
+<li>When the requested axis value is the value at which the ranges touch, the higher range must be used unless the nominalValue for the lower range is set to the value at which the ranges touch, and the nominalValue for the higher range is greater than that value.</li>
+</ul>
+<p>Similar behavior is used if the value of a format 1 or format 3 table touches the range of a format 2 table:</p>
+<ul>
+<li>If the value of a format 1 or format 3 table is equal to the rangeMaxValue of a format 2 table, the format 1 or format 3 table is used.</li>
+<li>If the value of a format 1 or format 3 table is equal to the rangeMinValue of a format 2 table, the format 1 or format 3 table is used except if the nominalValue of the format 2 table is also equal to the rangeMinValue.</li>
+</ul>
+<p>If two format 2 tables have ranges for the same axis with non-zero overlap, then the following guidance is recommended for applications:</p>
+<ul>
+<li>If two tables have identical ranges, the application should consistently choose one and ignore the other, by its own criteria.</li>
+<li>Else, if the range of one table is entirely contained within the range of other, then the table with the smaller range should be ignored.</li>
+<li>Else, for axis values within the overlapping range, use the table with the higher range (both rangeMinValue and rangeMaxValue are higher).</li>
+</ul>
+<p><a id="avt3"></a></p>
+<h3 id="axis-value-table-format-3">Axis value table, format 3</h3>
+<p>Axis value table format 3 has the following structure:</p>
+<p><em>AxisValueFormat3:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="format_3">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — set to 3.</td>
+</tr>
+<tr id="axisIndex_3">
+<td>uint16</td>
+<td>axisIndex</td>
+<td>Zero-base index into the axis record array identifying the axis of design variation to which the axis value table applies. Must be less than designAxisCount.</td>
+</tr>
+<tr id="flags_3">
+<td>uint16</td>
+<td>flags</td>
+<td>Flags — see below for details.</td>
+</tr>
+<tr id="valueNameID_3">
+<td>uint16</td>
+<td>valueNameID</td>
+<td>The name ID for entries in the 'name' table that provide a display string for this attribute value.</td>
+</tr>
+<tr id="value_4">
+<td>Fixed</td>
+<td>value</td>
+<td>A numeric value for this attribute value.</td>
+</tr>
+<tr id="linkedValue_4">
+<td>Fixed</td>
+<td>linkedValue</td>
+<td>The numeric value for a style-linked mapping from this value.</td>
+</tr>
+</tbody>
+</table>
+<p>A format 3 table can be used to indicate another value on the same axis that is to be treated as a style-linked counterpart to the current value. This is primarily intended for “bold” style linking on a weight axis. These mappings may be used in applications to determine which style within a family should be selected when a user selects a “Bold” formatting option. A mapping is defined from a “non-bold” value to its “bold” counterpart. It is not necessary to provide a “bold” mapping for every weight value; mappings should be provided for lighter weights, but heavier weights (typically, semibold or above) would already be considered “bold” and would not require a “bold” mapping.</p>
+<blockquote>
+<p><em>Note:</em> Applications are not required to use these style-linked mappings when implementing text formatting user interfaces. This data can be provided in a font for the benefit of applications that choose to do so. If a given application does not apply such style mappings for the given axis, then the linkedValue field is ignored.</p>
+</blockquote>
+<p><a id="avt4"></a></p>
+<h3 id="axis-value-table-format-4">Axis value table, format 4</h3>
+<p>Axis value table format 4 has the following structure:</p>
+<p><em>AxisValueFormat4:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="format_4">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — set to 4.</td>
+</tr>
+<tr id="axisCount_4">
+<td>uint16</td>
+<td>axisCount</td>
+<td>The total number of axes contributing to this axis-values combination.</td>
+</tr>
+<tr id="flags_4">
+<td>uint16</td>
+<td>flags</td>
+<td>Flags — see below for details.</td>
+</tr>
+<tr id="valueNameID_4">
+<td>uint16</td>
+<td>valueNameID</td>
+<td>The name ID for entries in the 'name' table that provide a display string for this combination of axis values.</td>
+</tr>
+<tr id="axisValues_4">
+<td>AxisValue</td>
+<td>axisValues[axisCount]</td>
+<td>Array of AxisValue records that provide the combination of axis values, one for each contributing axis.</td>
+</tr>
+</tbody>
+</table>
+<p>The axisCount value should be greater than 1.</p>
+<p>The axisValues array uses AxisValue records, which have the following format.</p>
+<p><a id="avt4_avrec"></a></p>
+<p><em>AxisValue record:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="axisIndex_avrec">
+<td>uint16</td>
+<td>axisIndex</td>
+<td>Zero-base index into the axis record array identifying the axis to which this value applies. Must be less than designAxisCount.</td>
+</tr>
+<tr id="value_avrec">
+<td>Fixed</td>
+<td>value</td>
+<td>A numeric value for this attribute value.</td>
+</tr>
+</tbody>
+</table>
+<p>Each AxisValue record must have a different axisIndex value. The records can be in any order.</p>
+<p>When searching for an axis value table to match a particular combination of values, if two format 4 tables are found to be a partial match for that combination of values, the table that matches a greater number of values (the most specific match) should be used. If two matching format 4 tables are equally specific—the same number of values for a different set of axes—then the first matching table should be used.</p>
+<p>Similarly, if a format 1, format 2 or format 3 table has a (nominal) value used in a format 4 table that also has values for other axes, the format 4 table, being the more specific match, should be used.</p>
+<p>Because a format 4 table combines values on multiple axes, there can be ambiguity about axis ordering. This could arise when dynamically composing names using the labels provided by axis value tables, or in other situations in which the axisOrdering values of axis records are used. For a format 4 table, the axisOrdering value assumed should be the lowest axisOrdering value for the axes referenced by the format 4 table.</p>
+<p><a id="avt_flags"></a></p>
+<h3 id="flags">Flags</h3>
+<p>The following axis value table flags are defined:</p>
+<table>
+<tbody>
+<tr>
+<th>Mask</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="avt_flags_osfa">
+<td>0x0001</td>
+<td>OLDER_SIBLING_FONT_ATTRIBUTE</td>
+<td>If set, this axis value table provides axis value information that is applicable to other fonts within the same font family. This is used if the other fonts were released earlier and did not include information about values for some axis. If newer versions of the other fonts include the information themselves and are present, then this table is ignored.</td>
+</tr>
+<tr id="avt_flags_eavn">
+<td>0x0002</td>
+<td>ELIDABLE_AXIS_VALUE_NAME</td>
+<td>If set, it indicates that the axis value represents the “normal” value for the axis and may be omitted when composing name strings.</td>
+</tr>
+<tr id="avt_flags_reserved">
+<td>0xFFFC</td>
+<td>Reserved</td>
+<td>Reserved for future use — set to zero.</td>
+</tr>
+</tbody>
+</table>
+<p>When the OLDER_SIBLING_FONT_ATTRIBUTE flag is used, implementations may use the information provided to determine behavior associated with a different font in the same family. If a previously released family is extended with fonts for style variants from a new axis of design variation, then all of them should include a OLDER_SIBLING_FONT_ATTRIBUTE table for the “normal” value of earlier fonts. The values in the different fonts should match; if they do not, application behavior may be unpredictable.</p>
+<blockquote>
+<p><em>Note:</em> When the OLDER_SIBLING_FONT_ATTRIBUTE flag is set, that axis value table is intended to provide default information about other fonts in the same family, but not about the font in which that axis value table is contained. The font should contain different axis value tables that do not use this flag to make declarations about itself.</p>
+</blockquote>
+<p>The ELIDABLE_AXIS_VALUE_NAME flag can be used to designate a “normal” value for an axis that should not normally appear in a face name. For example, the designer may prefer that face names not include “Normal” width or “Regular” weight. If this flag is set, applications are permitted to omit these labels from face names, though they may also include them in certain scenarios.</p>
+<blockquote>
+<p><em>Note:</em> Fonts should provide axis value tables for “normal” axis values even if they should not normally be reflected in face names.</p>
+<p><em>Note:</em> If a font or a variable-font instance is selected for which all axis values have the ELIDABLE_AXIS_VALUE_NAME flag set, then applications may keep the name for the weight axis, if present, to use as a constructed subfamily name, with names for all other axis values omitted.</p>
+</blockquote>
+<p>When the OLDER_SIBLING_FONT_ATTRIBUTE flag is set, this will typically be providing information regarding the “normal” value on some newly introduced axis. In this case, the ELIDABLE_AXIS_VALUE_NAME flag may also be set, as desired. When applied to the earlier fonts, those likely would not have included any labels for the new axis, and so the effects of the ELIDABLE_AXIS_VALUE_NAME flag are implicitly assumed.</p>
+<p>If multiple axis value tables have the same axis index, then one of the following should be true:</p>
+<ul>
+<li>The font is a variable font, and the axis is defined in the font variations table as a variation axis.</li>
+<li>The OLDER_SIBLING_FONT_ATTRIBUTE flag is set in one of the tables.</li>
+</ul>
+<p><a id="Examples"></a></p>
+<h2 id="examples">Examples</h2>
+<p>The following examples illustrate data provided by a style attributes table for various font scenarios. Except where indicated otherwise, axis value data shown could be implemented using AxisValueTable format 1 or, if a linked value is included, format 3.</p>
+<h3 id="example-1-family-with-different-weight-variants-using-non-variable-fonts">Example 1: Family with different weight variants using non-variable fonts</h3>
+<p>Suppose a font family has Regular, Bold and Heavy weight variants. These fonts would have matching axis records:</p>
+<table>
+<tbody>
+<tr>
+<th>Axis tag</th>
+<th>Axis name</th>
+<th>Axis ordering</th>
+</tr>
+<tr>
+<td>'wght'</td>
+<td>Weight</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>The three fonts would have axis value data as follows:</p>
+<table>
+<tbody>
+<tr>
+<th>Font</th>
+<th>Axis tag</th>
+<th>Value</th>
+<th>Name string</th>
+<th>Flag</th>
+<th>Other data</th>
+</tr>
+<tr>
+<td>Font 1</td>
+<td>'wght'</td>
+<td>400</td>
+<td>Regular</td>
+<td>ELIDABLE_AXIS_VALUE_NAME</td>
+<td>linkedValue = 700</td>
+</tr>
+<tr>
+<td>Font 2</td>
+<td>'wght'</td>
+<td>700</td>
+<td>Bold</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Font 3</td>
+<td>'wght'</td>
+<td>900</td>
+<td>Heavy</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="example-2-family-using-non-variable-fonts-for-different-weight-values-plus-italic">Example 2: Family using non-variable fonts for different weight values plus italic</h3>
+<p>Suppose the font family from example 1 also has italic variants. The fonts would have matching axis records reflecting weight and italic axes:</p>
+<table>
+<tbody>
+<tr>
+<th>Axis tag</th>
+<th>Axis name</th>
+<th>Axis ordering</th>
+</tr>
+<tr>
+<td>'wght'</td>
+<td>Weight</td>
+<td>0</td>
+</tr>
+<tr>
+<td>'ital'</td>
+<td>Italic</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>Each of the three non-italic fonts would include an additional axis value table to reflect the non-italic attribute. The six fonts would have data as follows:</p>
+<table>
+<tbody>
+<tr>
+<th>Font</th>
+<th>Axis tag</th>
+<th>Value</th>
+<th>Name string</th>
+<th>Flag</th>
+<th>Other data</th>
+</tr>
+<tr>
+<td>Font 1</td>
+<td>'wght'</td>
+<td>400</td>
+<td>Regular</td>
+<td>ELIDABLE_AXIS_VALUE_NAME</td>
+<td>linkedValue = 700</td>
+</tr>
+<tr>
+<td>Font 1</td>
+<td>'ital'</td>
+<td>0</td>
+<td>Regular</td>
+<td>ELIDABLE_AXIS_VALUE_NAME</td>
+<td>linkedValue = 1</td>
+</tr>
+<tr>
+<td>Font 2</td>
+<td>'wght'</td>
+<td>700</td>
+<td>Bold</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Font 2</td>
+<td>'ital'</td>
+<td>0</td>
+<td>Regular</td>
+<td>ELIDABLE_AXIS_VALUE_NAME</td>
+<td>linkedValue = 1</td>
+</tr>
+<tr>
+<td>Font 3</td>
+<td>'wght'</td>
+<td>900</td>
+<td>Heavy</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Font 3</td>
+<td>'ital'</td>
+<td>0</td>
+<td>Regular</td>
+<td>ELIDABLE_AXIS_VALUE_NAME</td>
+<td>linkedValue = 1</td>
+</tr>
+<tr>
+<td>Font 4</td>
+<td>'wght'</td>
+<td>400</td>
+<td>Regular</td>
+<td>ELIDABLE_AXIS_VALUE_NAME</td>
+<td>linkedValue = 700</td>
+</tr>
+<tr>
+<td>Font 4</td>
+<td>'ital'</td>
+<td>1</td>
+<td>Italic</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Font 5</td>
+<td>'wght'</td>
+<td>700</td>
+<td>Bold</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Font 5</td>
+<td>'ital'</td>
+<td>1</td>
+<td>Italic</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Font 6</td>
+<td>'wght'</td>
+<td>900</td>
+<td>Heavy</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Font 6</td>
+<td>'ital'</td>
+<td>1</td>
+<td>Italic</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="example-3-family-using-non-variable-fonts-with-weight-and-italic-variants-later-extended-to-add-width-variants">Example 3: Family using non-variable fonts with weight and italic variants, later extended to add width variants</h3>
+<p>Suppose the font family from example 2 is later extended with different width variants. The new fonts in the family would include matching axis records reflecting three axes:</p>
+<table>
+<tbody>
+<tr>
+<th>Axis tag</th>
+<th>Axis name</th>
+<th>Axis ordering</th>
+</tr>
+<tr>
+<td>'wdth'</td>
+<td>Width</td>
+<td>0</td>
+</tr>
+<tr>
+<td>'wght'</td>
+<td>Weight</td>
+<td>1</td>
+</tr>
+<tr>
+<td>'ital'</td>
+<td>Italic</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+<p>Newer versions of the fonts would also include the additional axis record. When newer fonts co-exist with the original version of the earlier fonts, the ordering from the more-complete axis records in the newer fonts is used.</p>
+<p>To allow for situations in which one of the newer fonts co-exists with the older fonts, which did not reference the width axis, the newer fonts should each include an axis value table to describe the “Normal” width, which is inferred onto the earlier fonts.</p>
+<table>
+<tbody>
+<tr>
+<th>Axis tag</th>
+<th>Value</th>
+<th>Name string</th>
+<th>Flag</th>
+<th>Other data</th>
+</tr>
+<tr>
+<td>'wdth'</td>
+<td>100</td>
+<td>Normal</td>
+<td>OLDER_SIBLING_FONT_ATTRIBUTE</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="example-4-a-weightwidth-variable-font">Example 4: A weight/width variable font</h3>
+<p>Consider a family comprised of a single variable font with weight and width variations. This font would have axis records for the two variation axes:</p>
+<table>
+<tbody>
+<tr>
+<th>Axis tag</th>
+<th>Axis name</th>
+<th>Axis ordering</th>
+</tr>
+<tr>
+<td>'wght'</td>
+<td>Weight</td>
+<td>0</td>
+</tr>
+<tr>
+<td>'wdth'</td>
+<td>Width</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>Suppose the variable font has 6 named instances that correspond to three different weights for each of two widths. The style attributes table should include axis value tables for at least those three weights and those two widths, but could also include tables for other weight or width values. The font can include the following axis value tables:</p>
+<table>
+<tbody>
+<tr>
+<th>Axis tag</th>
+<th>Value</th>
+<th>Name string</th>
+<th>Flag</th>
+<th>Other data</th>
+</tr>
+<tr>
+<td>'wght'</td>
+<td>300</td>
+<td>Light</td>
+<td></td>
+<td>linkedValue = 600</td>
+</tr>
+<tr>
+<td>'wght'</td>
+<td>400</td>
+<td>Regular</td>
+<td>ELIDABLE_AXIS_VALUE_NAME</td>
+<td>linkedValue = 700</td>
+</tr>
+<tr>
+<td>'wght'</td>
+<td>600</td>
+<td>Semibold</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>'wght'</td>
+<td>700</td>
+<td>Bold</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>'wght'</td>
+<td>900</td>
+<td>Black</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>'wdth'</td>
+<td>62.5</td>
+<td>Extra-Condensed</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>'wdth'</td>
+<td>75</td>
+<td>Condensed</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>'wdth'</td>
+<td>100</td>
+<td>Normal</td>
+<td>ELIDABLE_AXIS_VALUE_NAME</td>
+<td></td>
+</tr>
+<tr>
+<td>'wdth'</td>
+<td>125</td>
+<td>Expanded</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>'wdth'</td>
+<td>150</td>
+<td>Extra-Expanded</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="example-5-a-family-comprised-of-a-non-italic-variable-font-plus-an-italic-variable-font">Example 5: A family comprised of a non-italic variable font plus an italic variable font</h3>
+<p>Consider a family comprised of a non-italic, weight/width variable font plus a corresponding italic, weight/width variable font. Each font would have axis records for three axes:</p>
+<table>
+<tbody>
+<tr>
+<th>Axis tag</th>
+<th>Axis name</th>
+<th>Axis ordering</th>
+</tr>
+<tr>
+<td>'wght'</td>
+<td>Weight</td>
+<td>0</td>
+</tr>
+<tr>
+<td>'wdth'</td>
+<td>Width</td>
+<td>1</td>
+</tr>
+<tr>
+<td>'ital'</td>
+<td>Italic</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+<p>In addition to axis value tables for various weight or width values, the first font would also include an axis value table to reflect the non-italic attribute:</p>
+<table>
+<tbody>
+<tr>
+<th>Axis tag</th>
+<th>Value</th>
+<th>Name string</th>
+<th>Flag</th>
+<th>Other data</th>
+</tr>
+<tr>
+<td>'ital'</td>
+<td>0</td>
+<td>Normal</td>
+<td>ELIDABLE_AXIS_VALUE_NAME</td>
+<td>linkedValue = 1</td>
+</tr>
+</tbody>
+</table>
+<p>The second font would include an axis value table to reflect the italic attribute, in addition to the axis value tables for various weight and width values:</p>
+<table>
+<tbody>
+<tr>
+<th>Axis tag</th>
+<th>Value</th>
+<th>Name string</th>
+<th>Flag</th>
+<th>Other data</th>
+</tr>
+<tr>
+<td>'ital'</td>
+<td>1</td>
+<td>Italic</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>The pattern in this example can be applied to other cases involving a family with style variations implemented using a combination of font variation mechanisms plus static, non-variation designs. The axis records in each font would span both variation and non-variation axes. Axis value tables in each font would include multiple values for variation axes defined in the 'fvar' table, plus single tables for the relevant attribute values of other axes.</p>
+<h3 id="example-6-a-variable-font-with-non-analytic-subfamily-names-associated-with-multiple-axis-values">Example 6: A variable font with non-analytic subfamily names associated with multiple axis values</h3>
+<p>Consider a variable font that uses several custom axes, 'TRM1', 'TRM2', 'STK1', 'STK2', and also the registered 'wght' axis. Suppose that this font has named instances “Florid” and “Jagged” that involve particular combinations of values for the custom axes; and additional named instances that correspond to those two named instances but with other 'wght' values: “Florid Bold”, “Florid Semibold”, etc. The font would have axis value tables for 'wght' values, with data such as the following:</p>
+<table>
+<tbody>
+<tr>
+<th>Axis tag</th>
+<th>Value</th>
+<th>Name string</th>
+<th>Flag</th>
+<th>Other data</th>
+</tr>
+<tr>
+<td>'wght'</td>
+<td>400</td>
+<td>Regular</td>
+<td>ELIDABLE_AXIS_VALUE_NAME</td>
+<td>linkedValue = 700</td>
+</tr>
+<tr>
+<td>'wght'</td>
+<td>700</td>
+<td>Bold</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>'wght'</td>
+<td>900</td>
+<td>Heavy</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>The font would also have format 4 axis value tables corresponding to “Florid” and “Jagged”, with data such as the following:</p>
+<table>
+<tbody>
+<tr>
+<th>Name string</th>
+<th>AxisValue records</th>
+</tr>
+<tr>
+<td>Florid</td>
+<td>'TRM1' = 250<br>
+'TRM2' = 1000<br>
+'STK1' = 550<br>
+'STK2' = 0</td>
+</tr>
+<tr>
+<td>Jagged</td>
+<td>'TRM1' = 900<br>
+'TRM2' = 450<br>
+'STK1' = 0<br>
+'STK2' = 310</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

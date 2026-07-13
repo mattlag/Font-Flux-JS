@@ -1,0 +1,2720 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>colr — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/colr">https://learn.microsoft.com/en-us/typography/opentype/spec/colr</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="colr--color-table">COLR — Color Table</h1>
+<h2 id="overview">Overview</h2>
+<p>The COLR table adds support for multi-colored glyphs in a manner that integrates with the rasterizers of existing text engines and that is designed to be easy to support with current OpenType font files.</p>
+<p>The COLR table defines color presentations for glyphs. The color presentation of a glyph is specified as a graphic composition using other glyphs, such as a layered arrangement of glyphs, each with a different color. The term “color glyph” is used informally to refer to such a graphic composition defined in the COLR table; and the term “base glyph” is used to refer to a glyph for which a color glyph is provided. Processing of the COLR table is done on glyph sequences after text layout processing is completed and prior to final presentation of glyphs. Typically, a base glyph is a glyph that may occur in a sequence that results from the text layout process.</p>
+<p>For example, the Unicode character U+1F600 is the grinning face emoji. Suppose in an emoji font the 'cmap' table maps U+1F600 to glyph ID 718. Assuming no glyph substitutions, glyph ID 718 would be considered the base glyph. Suppose the COLR table has data describing a color presentation for this using a layered arrangement of other glyphs with different colors assigned: that description and its presentation result would be considered the corresponding color glyph.</p>
+<p>Two versions of the COLR table are defined.</p>
+<p>Version 0 allows for a simple composition of colored elements: a linear sequence of glyphs that are stacked vertically as layers in bottom-up z-order. Each layer combines a glyph outline from the 'glyf', 'CFF ' or CFF2 table (referenced by glyph ID) with a solid color fill. These capabilities are sufficient to define color glyphs such as those illustrated in the following figure:</p>
+<figure><img src="media/colr_v0_emoji_sample.png" alt="Three emoji glyphs that use layered shapes with solid color fills." data-linktype="relative-path"></figure>
+<p>Version 1 supports additional graphic capabilities. In addition to solid colors, gradient fills can be used, as well as more complex fills using other graphic operations, including affine transformations and various blending modes. Version 1 capabilities allow for color glyphs such as those illustrated in the following figure:</p>
+<figure><img src="media/colr_v1_emoji_sample.png" alt="Three emoji glyphs that use gradient fills and other effects." data-linktype="relative-path"></figure>
+<p>Version 1 also extends capabilities in variable fonts. A COLR version 0 table can be used in variable fonts with glyph outlines being variable, but no other aspect of the color composition being variable. In version 1, all of the new constructs for which it could be relevant have been designed to be variable; for example, the placement of color stops in a gradient, or the alpha values applied to colors. The graphic capabilities supported in version 0 and in version 1 are described in more detail below.</p>
+<p>The COLR table is used in combination with the <a href="cpal.html" data-linktype="relative-path">CPAL</a> table: all color values are specified as entries in color palettes defined in the CPAL table. If the COLR table is present in a font but no CPAL table exists, then the COLR table is ignored.</p>
+<p>Some applications can simulate italic/oblique or bold appearance if italic or bold formatting is applied to text that is displayed with a non-italic or non-bold font. If text is displayed using color glyphs, such simulations could badly distort the appearance of the color glyphs. Applications should not apply simulations designed for use in non-color glyph rendering when displaying color glyphs.</p>
+<h2 id="graphic-compositions">Graphic compositions</h2>
+<h3 id="introduction-2d-graphic-concepts">Introduction: 2D graphic concepts</h3>
+<p>The graphic compositions in a color glyph definition use a set of 2D graphic concepts and constructs:</p>
+<ul>
+<li>Shapes (or <em>geometries</em>)</li>
+<li>Fills (or <em>shadings</em>)</li>
+<li>Layering—a <em>z-order</em>—of elements</li>
+<li>Composition and blending modes—different ways that the content of a layer is combined with the content of layers above or below it</li>
+<li>Affine transformations</li>
+</ul>
+<p>For both version 0 and version 1, shapes are obtained from glyph outlines in the <a href="glyf.html" data-linktype="relative-path">'glyf'</a>, <a href="cff.html" data-linktype="relative-path">'CFF '</a> or <a href="cff2.html" data-linktype="relative-path">CFF2</a> table, referenced by glyph ID. Colors used in fills are obtained from the <a href="cpal.html" data-linktype="relative-path">CPAL</a> table.</p>
+<p>The simplest color glyphs use just a few of the concepts above: shapes, solid color fills, and layering. This is the set of capabilities provided by version 0 of the COLR table. In version 0, a base glyph record specifies the color glyph for a given base glyph as a sequence of layers. Each layer is specified in a layer record and has a shape (a glyph ID) and a solid color fill (a CPAL palette entry). The filled shapes in the layer stack are composed using only alpha blending.</p>
+<p>The following figure illustrates the version 0 capabilities: three shapes are in a layered stack: a blue square in the bottom layer, an opaque green circle in the next layer, and a red triangle with some transparency in the top layer.</p>
+<figure><img src="media/colr_v0_layering.png" alt="Blue square, partially overlapped by an opaque green circle, both partially overlapped by a translucent red triangle." data-linktype="relative-path"></figure>
+<p>The basic concepts also apply to color glyphs defined using the version 1 formats: shapes have fills and can be arranged in layers. But the additional formats of version 1 support much richer capabilities. In a version 1 color glyph, graphic constructs and capabilities are represented primarily in <em>Paint</em> tables, which are linked together in a <em>directed, acyclic graph</em>. Several different Paint formats are defined, each describing a particular type of graphic operation:</p>
+<ul>
+<li><p>A PaintColrLayers table provides a layering structure used for creating a color glyph from layered elements. A PaintColrLayers table can be used at the root of the graph, providing a base layering structure for the entire color glyph definition. A PaintColrLayers table can also be nested within the graph, providing a set of layers to define some graphic sub-component within the color glyph.</p>
+</li>
+<li><p>The PaintSolid, PaintVarSolid, PaintLinearGradient, PaintVarLinearGradient, PaintRadialGradient, PaintVarRadialGradient, PaintSweepGradient, and PaintVarSweepGradient tables provide basic fills, using color entries from the <a href="cpal.html" data-linktype="relative-path">CPAL</a> table.</p>
+</li>
+<li><p>The PaintGlyph table provides glyph outlines as the basic shapes.</p>
+</li>
+<li><p>The PaintTransform and PaintVarTransform tables are used to apply an affine transformation matrix to a sub-graph of paint tables, and the graphic operations they represent. Several Paint formats are also provided for specific transformation types: translate, scale, rotate, or skew, with additional variants of these formats for variations and other options.</p>
+</li>
+<li><p>The PaintComposite table supports alternate compositing and blending modes for two sub-graphs.</p>
+</li>
+<li><p>The PaintColrGlyph table allows a color glyph definition, referenced by a base glyph ID, to be re-used as a sub-graph within multiple color glyphs.</p>
+</li>
+</ul>
+<blockquote>
+<p><em>Note:</em> Some paint formats come in <em>Paint*</em> and <em>PaintVar*</em> pairs. In these cases, the latter format supports variations in variable fonts, while the former provides a more compact representation for the same graphic capability but without variation capability.</p>
+</blockquote>
+<p>In a simple color glyph description, a PaintGlyph table might be linked to a PaintSolid table, for example, representing a glyph outline filled using a basic solid color fill. But the PaintGlyph table could instead be linked to a much more complex sub-graph of Paint tables, representing a shape that gets filled using the more-complex set of operations described by the sub-graph of Paint tables.</p>
+<p>The graphic capabilities are described in more detail in the following sections. The formats used for these will be specified later in this chapter—see <a href="#colr-table-formats" data-linktype="self-bookmark">COLR table formats</a>.</p>
+<h3 id="colors-and-solid-color-fills">Colors and solid color fills</h3>
+<p>All colors are specified as a base zero index into <a href="cpal.html" data-linktype="relative-path">CPAL</a> palette entries. A font can define alternate palettes in its CPAL table; it is up to the application to determine which palette is used. A palette entry index value of 0xFFFF is a special case indicating that the text foreground color (defined by the application) should be used, and must not be treated as an actual index into the CPAL ColorRecord array.</p>
+<p>The CPAL color data includes alpha information, as well as RGB values. In the COLR version 0 formats, a color reference is made in a LayerRecord as a palette entry index alone. In the formats added for COLR version 1, color references include a palette entry index and a separate alpha value within the COLR structure for a solid color fill or gradient color stop (described below). Separation of alpha from palette entries in version 1 allows use of transparency in a color glyph definition independent of the choice of palette. The alpha value in the COLR structure is multiplied into the alpha value given in the CPAL color entry. If the palette entry index is 0xFFFF, the alpha value in the COLR structure is multiplied into the alpha value of the text foreground color.</p>
+<p>In version 1, a solid color fill is specified using a PaintVarSolid or PaintSolid table, with or without variation support, respectively. See <a href="#formats-2-and-3-paintsolid-paintvarsolid" data-linktype="self-bookmark">Formats 2 and 3: PaintSolid, PaintVarSolid</a> for format details.</p>
+<p>See <a href="#filling-shapes" data-linktype="self-bookmark">Filling shapes</a> for details on how fills are applied to a shape.</p>
+<h3 id="gradients">Gradients</h3>
+<p>COLR version 1 supports three types of gradients: <a href="#linear-gradients" data-linktype="self-bookmark">linear gradients</a>, <a href="#radial-gradients" data-linktype="self-bookmark">radial gradients</a>, and <a href="#sweep-gradients" data-linktype="self-bookmark">sweep gradients</a>. For each type, non-variable and variable formats are defined. Each type of gradient is specified using a <a href="#color-lines" data-linktype="self-bookmark">color line</a>.</p>
+<h4 id="color-lines">Color lines</h4>
+<p>A color line is a function that maps real numbers to color values to define a one-dimensional gradation of colors, to be used in the definition of linear, radial, or sweep gradients. A color line is defined as a set of one or more color stops, each of which maps a particular real number to a specific color.</p>
+<p>On its own, a color line has no positioning, orientation or size within a design grid. The definition of a linear, radial, or sweep gradient will reference a color line and map it onto the design grid by specifying positions in the design grid that correspond to the real values 0 and 1 in the color line. The specifications for linear, radial and sweep gradients also include rules for where to draw interpolated colors of the color line, following from the placement of 0 and 1.</p>
+<p>A color stop is defined by a real number, the <em>stop offset</em>, and a color. Stop offsets are represented using F2DOT14 values, therefore color stops can only be specified within the range [-2, 2). In a variable font, however, stop offsets can be variable, and with the application of deltas can lie outside that range. (See <a href="#color-references-colorstop-and-colorline" data-linktype="self-bookmark">Color references, ColorStop and ColorLine</a> for format details.) A color line requires at least one color stop to paint any color values. If the color line does not have any color stops, then transparent black is used for the entire color line. If only one color stop is specified, that color is used for the entire color line. At least two color stops are needed to create color gradation.</p>
+<p>Color gradation is defined over the interval from the color stop with the minimum offset, through successive color stops, to the color stop with the maximum offset. Between numerically-adjacent color stops, color values are linearly interpolated. See <a href="cpal.html#interpolation-of-colors" data-linktype="relative-path">Interpolation of Colors</a> for requirements on how colors are interpolated.</p>
+<p>Color stops must be used in their <em>stop offset</em> order, which can be different from the order in which they are defined in the font. Also, when processing a selected instance of a variable font, stops must be re-ordered according to offset values after variation deltas are applied. Therefore, the ordering of colors in the color line definition can change between one variation instance and another instance.</p>
+<p>Color values outside the defined interval are determined by the color line’s <em>extend mode</em>, described below. In this way, colors are defined for all stop offset values, from negative infinity to positive infinity.</p>
+<p>For example, a gradient color line could be defined with two color stops at 0.2 and 1.5. Colors for offsets between 0.2 and 1.5 are interpolated. Colors for offsets above 1.5 and below 0.2 are determined by the color line’s extend mode.</p>
+<p>If there are multiple color stops defined for the same stop offset, the first one given in the font must be used for computing color values on the color line below that stop offset, and the last one must be used for computing color values at or above that stop offset. All other color stops for that stop offset must be ignored. In a variable font, if two color stops have different default offset values but vary to have the same offset value for a given variation instance, those stops must be applied to the color line in the order in which they are given in the font, as described above.</p>
+<p>The color patterns outside the defined interval are determined by the color line’s extend mode. Three extend modes are supported:</p>
+<ul>
+<li><p><strong>Pad:</strong> outside the defined interval, the color of the closest color stop is used. Using a sequence of letters as an analogy, given a sequence “ABC”, it is extended to “…<em>AA</em> ABC <em>CC</em>…”.</p>
+</li>
+<li><p><strong>Repeat:</strong> The color line is repeated over repeated multiples of the defined interval. For example, if color stops are specified for a defined interval of [0.2, 1.5], then the pattern is repeated above the defined interval for intervals (1.5, 2.8], (2.8, 4.1], etc.; and also repeated below the defined interval for intervals [-1.1, 0.2), [-2.4, -1.1), etc. In each repeated interval, the first color is that of the farthest defined color stop. By analogy, given a sequence “ABC”, it is extended to “…<em>ABC</em> ABC <em>ABC</em>…”.</p>
+</li>
+<li><p><strong>Reflect:</strong> The color line is repeated over repeated intervals, as for the repeat mode. However, in each repeated interval, the ordering of color stops is the reverse of the adjacent interval. By analogy, given a sequence “ABC”, it is extended to “…<em>ABC CBA</em> ABC <em>CBA ABC</em>…”.</p>
+</li>
+</ul>
+<p>The following figures illustrate the different color line extend modes. The figures show the color line extended over a limited interval, but the extension is unbounded in either direction.</p>
+<figure><img src="media/colr_gradient_extend_pad.png" alt="Yellow-to-red color gradation, extended to the left with yellow and extended to the right with red." data-linktype="relative-path"><figcaption>Color gradation extended using pad mode</figcaption></figure>
+<figure><img src="media/colr_gradient_extend_repeat.png" alt="Yellow-to-red color gradation, extended by repeating the gradation patterns to the left and right." data-linktype="relative-path"><figcaption>Color gradation extended using repeat mode</figcaption></figure>
+<figure><img src="media/colr_gradient_extend_reflect.png" alt="Yellow-to-red color gradation, extended by repeating alternating mirrors of the gradation pattern to the left and right." data-linktype="relative-path"><figcaption>Color gradation extended using reflect mode</figcaption></figure>
+<blockquote>
+<p><em>Note:</em> The extend modes are the same as the <a href="https://www.w3.org/TR/2011/REC-SVG11-20110816/pservers.html#LinearGradientElementSpreadMethodAttribute" data-linktype="external">spreadMethod</a> attribute used for linear and radial gradients in the <a href="https://www.w3.org/TR/SVG11/" data-linktype="external">Scalable Vector Graphics (SVG) 1.1 (Second Edition)</a> specification.</p>
+</blockquote>
+<p>If all color stops have the same offset and the extend mode is pad, the color line has two colors: the first stop is used below that offset, and the last stop is used at and above that offset. However, if the extend mode is repeat or reflect, the color line is ill-formed and nothing must be rendered.</p>
+<p>When combining a color line with the geometry of a particular gradient definition, one might want to achieve a certain number of repetitions of the gradient pattern over a particular geometric range. Assuming that geometric range will correspond to placement of stop offsets 0 and 1, the following steps can be used:</p>
+<ul>
+<li>In order to get a certain number of repetitions of the gradient pattern (without reflection), divide 1 by the number of desired repetitions, use the result as the maximum stop offset for specified color stops, and set the extend mode to <em>repeat</em>.</li>
+<li>In order to get a certain number of repetitions of the reflected gradient pattern, divide 1 by two times the number of desired repetitions, use the result as the maximum stop offset for specified color stops, and set the extend mode to <em>reflect</em>.</li>
+</ul>
+<blockquote>
+<p><em>Note:</em> Given the above specifications for how color lines are defined, and also allowing for the application of variation deltas, the definition of a color line can span an interval greater than, narrower than, or in other ways different from the interval [0, 1]. However, some application platforms that provide an implementation for gradients can require a color line to be defined for exactly the interval [0, 1]. Implementations can work around such constraints by <em>normalizing</em> the offsets of the defined color stops. For example, if constrained to the range [0, 1], map the lowest stop offset to 0, map the largest offset to 1, and linearly interpolate normalized offsets for other stops in between. Then, for correct alignment to the geometry of a gradient definition, interpolate or extrapolate alternate geometric values to align with the normalized 0 and 1 stop offsets. For radial gradients, special geometry considerations can also apply; see <a href="#radial-gradients" data-linktype="self-bookmark">Radial gradients</a> for more information.</p>
+</blockquote>
+<p>Color lines are specified using color line tables, which contain arrays of color stop records. Two color line table and two color stop record formats are defined:</p>
+<ul>
+<li>ColorLine table and ColorStop record</li>
+<li>VarColorLine table and VarColorStop record</li>
+</ul>
+<p>The VarColorLine and VarColorStop formats can be used in variable fonts and allow for stop offsets and color alpha values to be variable. The ColorLine and ColorStop formats provide a more compact representation when variation is not required. See <a href="#color-references-colorstop-and-colorline" data-linktype="self-bookmark">Color references, ColorStop and ColorLine</a> for format details.</p>
+<h4 id="linear-gradients">Linear gradients</h4>
+<p>A linear gradient provides gradation of colors along a straight line. The gradient is defined by three points, p₀, p₁ and p₂, plus a color line. The color line is positioned in the design grid with stop offset 0 aligned to p₀ and stop offset 1.0 aligned to p₁. (The line passing through p₀ and p₁ will be referred to as line p₀p₁.) Colors at each position on line p₀p₁ are interpolated using the color line. For each position along line p₀p₁, the color at that position is projected on either side of the line.</p>
+<p>The additional point, p₂, is used to rotate the gradient orientation in the space on either side of the line p₀p₁. The line passing through points p₀ and p₂ (line p₀p₂) determines the direction in which colors are projected on either side of the color line. That is, for each position on line p₀p₁, the line that passes through that position on line p₀p₁ and that is parallel to line p₀p₂ will have the color for that position on line p₀p₁.</p>
+<blockquote>
+<p><em>Note:</em> For convenience, point p₂ can be referred to as the <em>rotation point</em>, and the vector from p₀ to p₂ can be referred to as the <em>rotation vector</em>. However, neither the magnitude of the vector nor the direction (from p₀ to p₂, versus from p₂ to p₀) has significance.</p>
+</blockquote>
+<p>If either point p₁ or p₂ is the same as point p₀, the gradient is ill-formed and must not be rendered.</p>
+<p>If line p₀p₂ is parallel to line p₀p₁ (or near-parallel for an implementation-determined definition), then the gradient is ill-formed and must not be rendered.</p>
+<blockquote>
+<p><em>Note:</em> An implementation can derive a single vector, from p₀ to a point p₃, by computing the orthogonal projection of the vector from p₀ to p₁ onto a line perpendicular to line p₀p₂ and passing through p₀ to obtain point p₃. The linear gradient defined using p₀, p₁ and p₂ as described above is functionally equivalent to a linear gradient defined by aligning stop offset 0 to p₀ and aligning stop offset 1.0 to p₃, with each color projecting on either side of that line in a perpendicular direction. This specification uses three points, p₀, p₁ and p₂, as that provides greater flexibility in controlling the placement and rotation of the gradient, as well as variations thereof.</p>
+</blockquote>
+<p>The following figures illustrate linear gradients using the three different color line extend modes. Each figure illustrates linear gradients with two different rotation vectors. In each case, three color stops are specified: red at 0.0, yellow at 0.5, and blue at 1.0.</p>
+<figure><img src="media/colr_linear_gradients_pad.png" alt="Linear gradients with different rotations using the pad extend mode." data-linktype="relative-path"><figcaption>Linear gradients with different rotations using the pad extend mode</figcaption></figure>
+<figure><img src="media/colr_linear_gradients_repeat.png" alt="Linear gradients with different rotations using the repeat extend mode." data-linktype="relative-path"><figcaption>Linear gradients with different rotations using the repeat extend mode</figcaption></figure>
+<figure><img src="media/colr_linear_gradients_reflect.png" alt="Linear gradients with different rotations using the reflect extend mode." data-linktype="relative-path"><figcaption>Linear gradients with different rotations using the reflect extend mode</figcaption></figure>
+<blockquote>
+<p><em>Note:</em> When a linear gradient is combined with a transformation (see <a href="#transformations" data-linktype="self-bookmark">Transformations</a>), the appearance will be the same as if the gradient were defined using the transformed positions of points p₀, p₁ and p₂.</p>
+</blockquote>
+<p>Linear gradients are specified using a PaintVarLinearGradient or PaintLinearGradient table, with or without variation support, respectively. See <a href="#formats-4-and-5-paintlineargradient-paintvarlineargradient" data-linktype="self-bookmark">Formats 4 and 5: PaintLinearGradient, PaintVarLinearGradient</a> for format details.</p>
+<p>See <a href="#filling-shapes" data-linktype="self-bookmark">Filling shapes</a> for details on how fills are applied to a shape.</p>
+<p><strong>Note on implementation of linear gradients</strong></p>
+<p>Some application platforms can provide an implementation for linear gradients that requires a color line to be specified for exactly the interval [0, 1]. If an application is using such a platform implementation but the font has a linear gradient with a color line specified over a different interval, the application can work around the platform constraint by normalizing the color line to the interval [0, 1]. This would require deriving alternate geometric points for the linear gradient definition. For the defined points p₀, p₁ and p₂, alternate points p₀′, p₁′ and p₂′ can be derived as follows: if o<sub>min</sub> is the minimum stop offset in the defined color line, o<sub>max</sub> is the maximum offset, and vector <strong>v</strong> = p₁ - p₀, then let</p>
+<ul>
+<li>p₀′ = p₀ + o<sub>min</sub><strong>v</strong></li>
+<li>p₁′ = p₀ + o<sub>max</sub><strong>v</strong></li>
+<li>p₂′ = p₂ + o<sub>min</sub><strong>v</strong></li>
+</ul>
+<p>If an implementation derives a single vector with point p₃, as described above, then alternate points p₀ and p₃ can be derived as follows: with vector <strong>w</strong> = p₃ - p₀, let</p>
+<ul>
+<li>p₀′ = p₀ + o<sub>min</sub><strong>w</strong></li>
+<li>p₃′ = p₀ + o<sub>max</sub><strong>w</strong></li>
+</ul>
+<h4 id="radial-gradients">Radial gradients</h4>
+<p>A radial gradient provides gradation of colors along a cylinder defined by two circles. The gradient is defined by circles with center c₀ and radius r₀, and with center c₁ and radius r₁, plus a color line. The color line aligns with the two circles by associating stop offset 0 with the first circle (with center c₀) and aligning stop offset 1.0 with the second circle (with center c₁).</p>
+<blockquote>
+<p><em>Note:</em> The term “radial gradient” is used in some contexts for more limited capabilities. In some contexts, the type of gradient defined here is referred to as a “two point conical” gradient.</p>
+</blockquote>
+<p>The drawing algorithm for radial gradients follows the <a href="https://html.spec.whatwg.org/multipage/canvas.html#dom-context-2d-createradialgradient" data-linktype="external">HTML WHATWG Canvas specification for createRadialGradient()</a>, but adapted with alternate color line extend modes and more flexibility for color stop offsets. Radial gradients must be rendered with results that match the results produced by the following steps.</p>
+<p>With circle center points c₀ and c₁ defined as c₀ = (x₀, y₀) and c₁ = (x₁, y₁):</p>
+<ol>
+<li>If c₀ = c₁ and r₀ = r₁ then paint nothing and return.</li>
+<li>For real values of ω:<br>
+Let x(ω) = (x₁-x₀)ω + x₀<br>
+Let y(ω) = (y₁-y₀)ω + y₀<br>
+Let r(ω) = (r₁-r₀)ω + r₀<br>
+Let the color at ω be the color at position ω on the color line.</li>
+<li>For all values of ω where r(ω) &gt; 0, starting with the value of ω nearest to positive infinity and ending with the value of ω nearest to negative infinity, draw the circular line with radius r(ω) centered at position (x(ω), y(ω)), with the color at ω, but only painting on the parts of the bitmap that have not yet been painted on in this step of the algorithm for earlier values of ω.</li>
+</ol>
+<p>The algorithm provides results in various cases as follows:</p>
+<ul>
+<li>When the circles are identical, then nothing is painted.</li>
+<li>When both radii are 0 (r₀ = r₁ = 0), then r(ω) is always 0 and nothing is painted.</li>
+<li>If the centers of the circles are distinct, the radii of the circles are different, and neither circle is entirely contained within the radius of the other circle, then the resulting shape resembles a cone that is open to one side. The surface outside the cone is not painted. (See figures below.)</li>
+<li>If the centers of the circles are distinct but the radii are the same, and neither circle is contained within the other, then the result will be a strip, similar to the flattened projection of a circular cylinder. The surface outside the strip is not painted. (See figures below.)</li>
+<li>If the radii of the circles are different but one circle is entirely contained within the radius of the other circle, the gradient will radiate in all directions from the inner circle, and the entire surface will be painted. (See figures below.)</li>
+</ul>
+<p>The following figures illustrate radial gradients using the three different color line extend modes. The color line is defined with stops for the interval [0, 1]: red at 0.0, yellow at 0.5, and blue at 1.0. Note that the circles that define the gradient are not stroked as part of the gradient itself. Stroked circles have been overlaid in the figure to illustrate the color line and the region that is painted in relation to the two circles.</p>
+<figure><img src="media/colr_radial_gradients_pad.png" alt="Radial gradient using pad extend mode." data-linktype="relative-path"><figcaption>Radial gradient using pad extend mode</figcaption></figure>
+<figure><img src="media/colr_radial_gradients_repeat.png" alt="Radial gradient using repeat extend mode." data-linktype="relative-path"><figcaption>Radial gradient using repeat extend mode</figcaption></figure>
+<figure><img src="media/colr_radial_gradients_reflect.png" alt="Radial gradient using reflect extend mode." data-linktype="relative-path"><figcaption>Radial gradient using reflect extend mode</figcaption></figure>
+<p>The following figures illustrate the case in which the circles have distinct centers but the same radii, and neither circle is contained within the other, giving the appearance of a strip. The color stops are as in the previous figures.</p>
+<figure><img src="media/colr_radial_gradients_strip_pad.png" alt="Radial gradient with same-size circles appearing as a strip, using pad extend mode." data-linktype="relative-path"><figcaption>Radial gradient with same-size circles appearing as a strip, using pad extend mode</figcaption></figure>
+<figure><img src="media/colr_radial_gradients_strip_repeat.png" alt="Radial gradient with same-size circles appearing as a strip, using repeat extend mode." data-linktype="relative-path"><figcaption>Radial gradient with same-size circles appearing as a strip, using repeat extend mode</figcaption></figure>
+<figure><img src="media/colr_radial_gradients_strip_reflect.png" alt="Radial gradient with same-size circles appearing as a strip, using reflect extend mode." data-linktype="relative-path"><figcaption>Radial gradient with same-size circles appearing as a strip, using reflect extend mode</figcaption></figure>
+<p>Because the rendering algorithm progresses ω in a particular direction, from positive infinity to negative infinity, and because pixels are not re-painted as ω progresses, the appearance will be affected by which circle is considered circle 0 and which is circle 1. This is illustrated in the following three figures. The gradient in the first figure is the same as was shown above of a radial gradient using the pad extend mode. In this gradient, circle 0 is the small circle, on the left. In the second figure, the start and end circles are reversed: circle 0 is the large circle, on the right. The color line is kept the same, and so the red end starts at circle 0, now on the right. In the third figure, the order of stops in the color line is also reversed to put red on the left. The key difference to notice between the gradients in these figures is the way that colors are painted in the interior: when the two circles are not overlapping, the arcs of constant color bend in the same direction as the near side of circle 1.</p>
+<blockquote>
+<p><em>Note:</em> This difference does not exist if one circle is entirely contained within the other: in that case, the arcs of constant color are complete circles.</p>
+</blockquote>
+<figure><img src="media/colr_radial_gradients_direction_1.png" alt="Cone-shaped radial gradient with circle 0 on the left." data-linktype="relative-path"><figcaption>Cone-shaped radial gradient with circle 0 on the left</figcaption></figure>
+<figure><img src="media/colr_radial_gradients_direction_2.png" alt="Cone-shaped radial gradient with start and end circles swapped." data-linktype="relative-path"><figcaption>Cone-shaped radial gradient with start and end circles swapped</figcaption></figure>
+<figure><img src="media/colr_radial_gradients_direction_3.png" alt="Cone-shaped radial gradient with start and end circles swapped and color line reversed." data-linktype="relative-path"><figcaption>Cone-shaped radial gradient with start and end circles swapped and color line reversed</figcaption></figure>
+<p>When one circle is contained within the other, the extension of the gradient beyond the larger circle will fill the entire surface. Colors in the areas inside the inner circle and outside the outer circle are determined by the extend mode. The following figures illustrate this for the different extend modes.</p>
+<figure><img src="media/colr_radial_gradients_circle_within_circle_pad.png" alt="Radial gradient with one circle contained within the other, pad extend mode." data-linktype="relative-path"><figcaption>Radial gradient with one circle contained within the other, pad extend mode</figcaption></figure>
+<figure><img src="media/colr_radial_gradients_circle_within_circle_repeat.png" alt="Radial gradient with one circle contained within the other, repeat extend mode." data-linktype="relative-path"><figcaption>Radial gradient with one circle contained within the other, repeat extend mode</figcaption></figure>
+<figure><img src="media/colr_radial_gradients_circle_within_circle_reflect.png" alt="Radial gradient with one circle contained within the other, reflect extend mode." data-linktype="relative-path"><figcaption>Radial gradient with one circle contained within the other, reflect extend mode</figcaption></figure>
+<blockquote>
+<p><em>Note:</em> When a radial gradient is combined with a transformation (see <a href="#transformations" data-linktype="self-bookmark">Transformations</a>), the appearance will be the same as if the geometry of the two circles were transformed and step 3 of the algorithm were performed by interpolating the shapes derived from the two transformed circles. For the condition r(ω) &gt; 0, the pre-transformation values of r(ω) can be used.</p>
+</blockquote>
+<blockquote>
+<p><em>Note:</em> A scale transformation can flatten shapes to resemble lines. If a radial gradient is nested in the child sub-graph of a transformation that flattens the circles so that they are nearly lines, the centers could still be separated by some distance. In that case, the radial gradient would appear as a strip, or as a cone filled with a linear gradient.</p>
+</blockquote>
+<p>If a radial gradient is nested in the sub-graph of a transformation that flattens the circles so that they form a single line (or nearly a line, for an implementation-determined definition), with both centers on that line, then the resulting gradient is degenerate and must not be rendered.</p>
+<blockquote>
+<p><em>Note:</em> As seen in the figures above, the gradient fills the space when one circle is contained within the other, but not when neither circle is contained within the other. In a variable font, if the placement or radii of the circles vary, then a sharp transition can occur if the variation results in one circle being contained within the other for some instances but not for other instances. This transition will occur when the inner circle just touches the outer circle (i.e., they have exactly one point in common). In this case, the gradient will fill exactly one half of the space. This is illustrated in the following figure using the pad extend mode.</p>
+</blockquote>
+<figure><img src="media/colr_radial_gradients_inner_circle_touching_outer_pad.png" alt="Radial gradient with inner circle just touching the outer circle, pad extend mode." data-linktype="relative-path"><figcaption>Radial gradient with inner circle just touching the outer circle, pad extend mode</figcaption></figure>
+<p>When the repeat or reflect extend modes are used, having the two circles in very close proximity results in very high spatial-frequency transitions that can lead to Moiré patterns or other display artifacts. This is illustrated in the following figure, which shows the display result, for one particular rendering context, of a radial gradient defined using nearly-identical circles and the reflect extend mode.</p>
+<figure><img src="media/colr_radial_gradients_interference_patterns_reflect.png" alt="Radial gradient defined using nearly-identical circles and reflect extend mode, displaying with interference patterns." data-linktype="relative-path"><figcaption>Radial gradient defined using nearly-identical circles, showing interference patterns</figcaption></figure>
+<p>The artifacts seen can be affected by a combination of several factors, such as image scaling, sub-pixel rendering, display technology, and limitations in software implementation or display capabilities. For this reason, the appearance can be very different in different situations. Font designers should exercise caution if the circles are in close proximity (either in a static design or for some variable font instances), and should not rely on these display artifacts to obtain a particular pattern.</p>
+<p>While the Paint table formats use unsigned values to define the circle radii, application of deltas in variable fonts can result in negative radii values. While a negative radius does not seem to make sense intuitively, negative radii are not a problem for the rendering algorithm described above: given the formula r(ω) = (r₁-r₀)ω + r₀, r(ω) will have positive and negative values for different values of ω when the values of r₀ and r₁ are both positive, but also if either r₀ or r₁, or both, are negative. For example, if r₀ = -1 and r₁ = -2, then r(ω) = ω - 2, and r(ω) ≥ 0 for  ω ≥ 2. There is one notable change, however, in the case of r₀ = r₁ (hence, r(ω) = r₀): if the values are positive, a cylinder is painted (since r₀ &gt; 0), but if the values are negative, then nothing is painted (since r₀ &lt; 0).</p>
+<blockquote>
+<p><em>Note:</em> If r₀ is different from r₁, the geometry defined by the two circles can be understood as a 2D projection of a cone. The cone has a <em>tip</em> where r(ω) = 0, and the cone is painted on the side of the tip for which r(ω) ≥ 0. In the general case,</p>
+<ul>
+<li>ω<sub>tip</sub> = r₀/(r₀ - r₁)</li>
+<li>if r₁ &gt; r₀, r(ω) &gt; 0 for all ω &gt; r₀/(r₀ - r₁)</li>
+<li>if r₁ &lt; r₀, r(ω) &gt; 0 for all ω &lt; r₀/(r₀ - r₁)</li>
+</ul>
+</blockquote>
+<p>Radial gradients are specified using a PaintVarRadialGradient or PaintRadialGradient table, with or without variation support, respectively. See <a href="#formats-6-and-7-paintradialgradient-paintvarradialgradient" data-linktype="self-bookmark">Formats 6 and 7: PaintRadialGradient, PaintVarRadialGradient</a> for format details.</p>
+<p>See <a href="#filling-shapes" data-linktype="self-bookmark">Filling shapes</a> for details on how fills are applied to a shape.</p>
+<p><strong>Note on implementation of radial gradients</strong></p>
+<p>Some application platforms can provide an implementation for radial gradients that require the circle radii to be non-negative. If an application is using such a platform implementation but a variable font instance has a radial gradient with a negative circle radius, the application can work around the platform constraint by deriving an alternate gradient definition that uses only circles with non-negative radii and that produces the same visual appearance. This would also require deriving an alternate color line definition that preserves the same color line extend mode behaviors.</p>
+<p>Similarly, if the platform provides an implementation for radial gradients that requires color stops to be defined for exactly the interval [0, 1] but the font has a radial gradient with a color line specified over a different interval, the application can work around that platform constraint by normalizing the color line to the interval [0, 1]. But the normalized color line would require deriving alternate circle specifications, and a simple normalization can result in a circle with a negative radius.</p>
+<p>Thus, handling of negative circle radii and normalization of the color line need to be considered together. The following observations will be helpful:</p>
+<ul>
+<li>If r₀ and r₁ are positive and r₀ = r₁, a simple normalization of the color line can be used.</li>
+<li>If the color stops that define the color line all have offsets ω such that r(ω) ≥ 0, then a simple normalization of the color line can be used with alternate circles that have non-negative radii.</li>
+<li>For pad extend mode, if some color stops have offsets ω such that r(ω) &lt; 0, the same visual result can be obtained by using a truncated color line definition in which all stops with offsets ω such that r(ω) &lt; 0 are replaced by a single stop for ω<sub>tip</sub> with an interpolated color value. (See <a href="cpal.html#interpolation-of-colors" data-linktype="relative-path">Interpolation of Colors</a> for requirements on how colors are interpolated.)</li>
+<li>For pad and repeat extend modes, the extended color line has a repeating pattern with offset wavelength λ, and any color line definition that is a slice of the color line of length λ will produce the same visual results. Thus, the application can derive an alternate color line definition in which all stops have offsets ω such that r(ω) ≥ 0, normalize those stop offsets to [0, 1], then derive alternate circles that align to the normalized 0 and 1 offsets.</li>
+</ul>
+<h4 id="sweep-gradients">Sweep gradients</h4>
+<p>A sweep gradient provides a gradation of colors that sweep around a center point. For a given color on a color line, that color projects as a ray from the center point in a given direction. This is illustrated in the following figure.</p>
+<blockquote>
+<p><em>Note:</em> The following figures illustrate sweep gradients clipped to a region. Sweep gradients are not bounded, however, and fill the entire space.</p>
+</blockquote>
+<figure><img src="media/colr_conic_gradient.png" alt="A sweep gradient." data-linktype="relative-path"><figcaption>A sweep gradient</figcaption></figure>
+<blockquote>
+<p><em>Note:</em> In some contexts, this type of gradient is referred to as a “conic” gradient, or as an “angular” gradient.</p>
+</blockquote>
+<p>A sweep gradient is defined by a center point, start and end angles, and a color line. The angles are expressed in counter-clockwise degrees from the direction of the positive x-axis on the design grid.</p>
+<p>For sampling and interpolating colors, the color line is aligned to an infinitely spiraling circular arc around the center point, with arbitrary radius. The position 0° on the arc means the direction of the positive x-axis, and 360° means one full counter-clockwise rotation. The color line’s stop offset 0 is aligned with the start angle and stop offset 1 is aligned with the end angle, independent of which angle is larger.</p>
+<p>Outside the defined interval of the color line, the color value of a position on the color line is filled in depending on its extend mode. See <a href="#color-lines" data-linktype="self-bookmark">Color Lines</a> for more details. In effect, this means that the spiraling circular arc can be sampled for colors outside the defined color line interval.</p>
+<p>To draw the sweep gradient, for each position along the circular arc starting from 0° up to but not including 360°, a ray from the center outward is painted with the color of the color line where the ray intersects the circular arc at that particular angle. Angle positions below 0° and equal to or above 360° are not sampled for drawing the rays.</p>
+<p>If the color line's extend mode is reflect or repeat and start and end angle are equal, nothing shall be drawn.</p>
+<p>When the sweep gradient's color line uses the repeat or reflect extend mode and the angular distance between the start and end angles is small, this results in very high spatial-frequency transitions that can lead to Moiré patterns or other display artifacts. (See above where this effect is shown for a similar case involving radial gradients).</p>
+<p>The following figure illustrates a sweep gradient with the drawing direction progressing from 0° to 360°. The gradient is specified with a start angle of 110° and end angle of 230°. The color line is specified with a yellow stop at offset 0 (aligned to the start angle) and a red stop at offset 1 (aligned to the end angle). The pad extend mode is used, hence the color for angles below 110° is yellow, and the color for angles above 150° is red.</p>
+<figure><img src="media/colr_conic_gradient_start_stop_angles.png" alt="A sweep gradient, from yellow to red, with start angle of 110° and an end angle of 230°. The color is solid yellow from 0° to 110°. It transitions from yellow to red from 110° to 230°. Then it is solid red from 230° to 360°." data-linktype="relative-path"><figcaption>A sweep gradient with start angle of 110° and an end angle of 230°, using a color line with color stops 0 and 1 for yellow and red and pad extend mode.</figcaption></figure>
+<blockquote>
+<p><em>Note:</em> If the start angle is less than or equal to the end angle, the color line progresses from smaller to larger offsets in the counter-clockwise direction along the circular arc. If the start angle is larger than the end angle, however, the color line is inverted and progresses in the clockwise direction, as illustrated in the following figure.</p>
+</blockquote>
+<figure><img src="media/colr_conic_gradient_inverted.png" alt="A sweep gradient, from yellow to red, with start angle of 210° and an end angle of 110°. The color is solid yellow from 360° to 210°. It transitions from yellow to red from 210° to 110°. Then it is solid red from 110° to 0°." data-linktype="relative-path"><figcaption>A sweep gradient, from yellow to red, with start angle of 210° and end angle of 110°, showing the inversion of the color line when the start angle is larger than the end angle.</figcaption></figure>
+<p>Not more than one full rotation is drawn and there is no overlap in drawing for angles outside the 0° to 360° range. However, start and end angles may be positioned at angles below 0° or above 360°. Through that, and through how wide the color line interval is defined, color stops can lie outside the 0° to 360° circle. This has an effect on the computation of the gradient colors inside the interval of 0° to 360°, but colors are not sampled from outside this interval. See the following figure for an example: The color line goes from yellow to red with a start angle of 330° and an end angle of 400°. The color for angles lower than 330° is yellow due to the pad extend mode, then the color line transitions from yellow at 330° to red at 400°, but only the color values up until 360° are sampled for drawing.</p>
+<figure><img src="media/colr_conic_gradient_stop_angle_outside.png" alt="A sweep gradient using a color line from yellow to red with start angle at 330° and end angle at 400°. The color is solid yellow from 0° to 330°. It starts to transition from yellow to orange from 330° to 360°." data-linktype="relative-path"><figcaption>A sweep gradient with a start angle of 330° and an end angle of 400°, using a color line with color stops 0 and 1 for yellow and red and extend mode pad.</figcaption></figure>
+<blockquote>
+<p><em>Note:</em> Because the sweep gradient is drawn from 0° to 360° a sharp transition can occur at 0°. This can be mitigated by adjusting the color stops at the 0° and 360° positions on the arc to have the same color. The location of the transition axis can also be shifted by nesting the sweep gradient inside a rotation transformation (see <a href="#transformations" data-linktype="self-bookmark">Transformations</a>).</p>
+</blockquote>
+<blockquote>
+<p><em>Note:</em> When a sweep gradient is combined with a <a href="#transformations" data-linktype="self-bookmark">transformation</a>, the appearance will be the same as if (i) a circle of some non-zero radius was constructed with points on the circle computed from the start and end angles; (ii) the center point, circle and points on the circle were transformed; (iii) the color line was aligned to the transformed circle; and then (iv) a gradient was derived from the result, with rays from the transformed center point passing through the transformed color circle. When aligning the color line to the transformed circle, stop offset 0 would be aligned to the transformed point derived from the start angle, with stop offset 1 aligned to the transformed point derived from the end angle. Thus, a transform can result in the color line progressing in the opposite direction compared to the non-transformed gradient.</p>
+</blockquote>
+<p>Sweep gradients are specified using a PaintVarSweepGradient or PaintSweepGradient table, with or without variation support, respectively. See <a href="#formats-8-and-9-paintsweepgradient-paintvarsweepgradient" data-linktype="self-bookmark">Formats 8 and 9: PaintSweepGradient, PaintVarSweepGradient</a> for format details.</p>
+<p>See <a href="#filling-shapes" data-linktype="self-bookmark">Filling shapes</a> for details on how fills are applied to a shape.</p>
+<h3 id="filling-shapes">Filling shapes</h3>
+<p>All basic shapes used in a color glyph are obtained from glyph outlines, referenced using a glyph ID. In a color glyph description, a <a href="#format-10-paintglyph" data-linktype="self-bookmark">PaintGlyph</a> table is used to represent a basic shape.</p>
+<blockquote>
+<p><em>Note:</em> Shapes can also be derived using PaintGlyph tables in combination with other tables, such as PaintTransform (see <a href="#transformations" data-linktype="self-bookmark">Transformations</a>) or PaintComposite (see <a href="#compositing-and-blending" data-linktype="self-bookmark">Compositing and blending</a>).</p>
+</blockquote>
+<p>The PaintGlyph table has a field for the glyph ID, plus an offset to a child paint table that is used as the fill for the shape. The glyph outline is not rendered; only the fill is rendered.</p>
+<p>Any of the basic fill formats (PaintSolid, PaintVarSolid, PaintLinearGradient, PaintVarLinearGradient, PaintRadialGradient, PaintVarRadialGradient, PaintSweepGradient, PaintVarSweepGradient) can be used as the child paint table. This is illustrated in the following figure: a PaintGlyph table has a glyph ID for an outline in the shape of a triangle, and it links to a child PaintLinearGradient table. The combination is used to represent a triangle filled with the linear gradient.</p>
+<figure><img src="media/colr_shape_gradient.png" alt="PaintGlyph and PaintLinearGradient tables used to fill a shape with a linear gradient." data-linktype="relative-path"><figcaption>PaintGlyph and PaintLinearGradient tables used to fill a shape with a linear gradient</figcaption></figure>
+<p>The child of a PaintGlyph table is not, however, limited to one of the basic fill formats. Rather, the child can be the root of a sub-graph that describes some graphic composition that is used as a fill. Another way to describe the relationship between a PaintGlyph table and its child sub-graph is that the glyph outline specified by the PaintGlyph table defines a bounds, or <em>clip region</em>, that is applied to the fill composition defined by the child sub-graph.</p>
+<p>To illustrate this, the example in the previous figure is extended so that a PaintGlyph table links to a second PaintGlyph that links to a PaintLinearGradient: the parent PaintGlyph will clip the filled shape described by the child sub-graph.</p>
+<figure><img src="media/colr_shape_shape_gradient.png" alt="A PaintGlyph table defines a clip region for the composition defined by its child sub-graph." data-linktype="relative-path"><figcaption>A PaintGlyph table defines a clip region for the composition defined by its child sub-graph</figcaption></figure>
+<p>A PaintGlyph table on its own does not add content: if there is no child paint table, then the graph is not well formed. See <a href="#color-glyphs-as-a-directed-acyclic-graph" data-linktype="self-bookmark">Color glyphs as a directed acyclic graph</a> for details regarding well-formedness and validity of the graph.</p>
+<h3 id="layering">Layering</h3>
+<p>Layering of visual elements was introduced above in <a href="#introduction-2d-graphic-concepts" data-linktype="self-bookmark">Introduction: 2D graphic concepts</a>. Both COLR version 0 and version 1 support the use of multiple layers, though in different ways.</p>
+<p>For version 0, layers are fundamental: they are the sole way in which separate elements are composed into a color glyph. An array of LayerRecords is created, with each LayerRecord specifying a glyph ID and a CPAL entry (a shape and solid color fill). Each color glyph definition is a slice from that array (that is, a contiguous sub-sequence), specified in a BaseGlyphRecord for a particular base glyph. Within a given slice, the first record specifies the content of the bottom layer, and each subsequent record specifies content that overlays the preceding content (increasing z-order). A single array is used for defining all color glyphs. The LayerRecord slices for two base glyphs may overlap, though often will not overlap.</p>
+<p>The following figure illustrates layers using version 0 formats.</p>
+<figure><img src="media/colr_layers_v0.png" alt="Version 0: Color glyphs are defined by slices of a layer records array." data-linktype="relative-path"><figcaption>Version 0: Color glyphs are defined by slices of a layer records array</figcaption></figure>
+<p>When using version 1 formats, use of multiple layers is supported but is optional. For example, a simple glyph description need not use any layering, as illustrated in the following figure:</p>
+<figure><img src="media/colr_color_glyph_without_layers.png" alt="Complete color glyph definition without use of layers." data-linktype="relative-path"><figcaption>Complete color glyph definition without use of layers</figcaption></figure>
+<p>The version 1 formats define a color glyph as a directed, acyclic graph of paint tables, and the concept of layering corresponds roughly to the number of distinct leaf nodes in the graph. (See <a href="#color-glyphs-as-a-directed-acyclic-graph" data-linktype="self-bookmark">Color glyphs as a directed acyclic graph</a>.) The basic fill formats (PaintSolid, PaintVarSolid, PaintLinearGradient, PaintVarLinearGradient, PaintRadialGradient, PaintVarRadialGradient, PaintSweepGradient, PaintVarSweepGradient) do not have child paint tables and so can only be leaf nodes in the graph. Some paint tables, such as the PaintGlyph table, have only a single child, so can be used within a layer but do not provide any means of adding additional layers. Increasing the number of layers requires paint tables that have two or more children, creating a fork in the graph.</p>
+<p>The version 1 formats include two paint formats that have two or more children, and so can increase the number of layers in the graph:</p>
+<ul>
+<li><p>The <a href="#format-32-paintcomposite" data-linktype="self-bookmark">PaintComposite</a> table allows two sub-graphs to be composed together using different compositing or blending modes.</p>
+</li>
+<li><p>The <a href="#format-1-paintcolrlayers" data-linktype="self-bookmark">PaintColrLayers</a> table supports defining a sequence of several layers.</p>
+</li>
+</ul>
+<blockquote>
+<p><em>Note:</em> The PaintColrGlyph table provides a means of incorporating the graph of one color glyph as a sub-graph in the definition of another color glyph. In this way, PaintColrGlyph provides an indirect means of introducing additional layers into a color glyph definition: forks in the resulting graph do not come from the PaintColrGlyph table itself, but can come from PaintColrLayers or PaintComposite tables that are nested in the incorporated sub-graph. See <a href="#re-use-using-paintcolrglyph" data-linktype="self-bookmark">Re-use using PaintColrGlyph</a> for a description of the PaintColrGlyph table.</p>
+</blockquote>
+<p>While the PaintComposite table only combines two sub-graphs, other PaintComposite tables can be nested to provide additional layers. The primary purpose of PaintComposite is to support compositing or blending modes other than simple alpha blending. The PaintComposite table is covered in more detail in <a href="#compositing-and-blending" data-linktype="self-bookmark">Compositing and blending</a>. The remainder of this section will focus on the PaintColrLayers table.</p>
+<p>The PaintColrLayers table is used to define a bottom-up z-order sequence of layers. Similar to version 0, it defines a layer set as a slice in an array, but in this case the array is an array of offsets to paint tables, contained in a LayerList table. Each referenced paint table is the root of a sub-graph of paint tables that specifies a graphic composition to be used as a layer. Within a given slice, the first offset provides the content for the bottom layer, and each subsequent offset provides content that overlays the preceding content. Definition of a layer set—a slice within the layer list—is given in a PaintColrLayers table.</p>
+<p>The following figure illustrates the organizational relationship between PaintColrLayers tables, the LayerList, and referenced paint tables that are roots of sub-graphs.</p>
+<figure><img src="media/colr_layers_v1.png" alt="Version 1: PaintColrLayers tables specify slices within the LayerList, providing a layering of content defined in sub-graphs." data-linktype="relative-path"><figcaption>Version 1: PaintColrLayers tables specify slices within the LayerList, providing a layering of content defined in sub-graphs</figcaption></figure>
+<blockquote>
+<p><em>Note:</em> Paint table offsets in the LayerList table are only used in conjunction with PaintColrLayers tables. If a paint table does not need to be referenced via a PaintColrLayers table, its offset does not need to be included in the LayerList array.</p>
+</blockquote>
+<p>A PaintColrLayers table can be used as the root of a color glyph definition, providing a base layering structure for the color glyph. In this usage, the PaintColrLayers table is referenced by a BaseGlyphPaintRecord, which specifies the root of the graph of a color glyph definition for a given base glyph. This is illustrated in the following figure.</p>
+<figure><img src="media/colr_paintcolrlayers_as_root.png" alt="PaintColrLayers table used as the root of a color glyph definition." data-linktype="relative-path"><figcaption>PaintColrLayers table used as the root of a color glyph definition</figcaption></figure>
+<p>A PaintColrLayers table can also be nested more deeply within the graph, providing a layer structure to define some component within a larger color glyph definition. (See <a href="#re-use-using-paintcolrlayers" data-linktype="self-bookmark">Re-use using PaintColrLayers</a> for more information.) The ability to nest a PaintColrLayers table within a graph creates the potential to introduce a cycle within the graph, which would be invalid (see <a href="#color-glyphs-as-a-directed-acyclic-graph" data-linktype="self-bookmark">Color glyphs as a directed acyclic graph</a>).</p>
+<h3 id="transformations">Transformations</h3>
+<p>A 2 × 3 transformation matrix can be used within a color glyph description to apply an affine transformation to a sub-graph. Affine transformations supported by a matrix can be a combination of scale, skew, mirror, rotate, or translate. The transformation is applied to all nested paints in the child sub-graph.</p>
+<p>A transformation matrix is specified using a PaintVarTransform or PaintTransform table, with or without variation support, respectively. See <a href="#formats-12-and-13-painttransform-paintvartransform" data-linktype="self-bookmark">Formats 12 and 13: PaintTransform, PaintVarTransform</a> for format details.</p>
+<p>The effect of a transformation is illustrated in the following figure: a PaintTransform is used to specify a rotation, and both the glyph outline and gradient in the sub-graph are rotated.</p>
+<figure><img src="media/colr_transform_glyph_gradient.png" alt="A rotation transformation rotates the fill content defined by the child sub-graph." data-linktype="relative-path"><figcaption>A rotation transformation rotates the fill content defined by the child sub-graph</figcaption></figure>
+<p>If the sub-graph of a transformation table contains another nested transformation table, then the second transformation also applies to its child sub-graph. For the sub-sub-graph, the two transformations are combined. To illustrate this, the example in the previous figure is extended by inserting a mirroring transformation between the PaintGlyph and PaintLinearGradient tables: the glyph outline is rotated as before, but the gradient is mirrored in its (pre-rotation) y-axis as well as being rotated. Notice that both visible elements—the shape and the gradient fill—are affected by the rotation, but only the gradient is affected by the mirroring.</p>
+<figure><img src="media/colr_transform_glyph_transform_gradient.png" alt="Combined effects of a transformation nested within the child sub-graph of another transformation." data-linktype="relative-path"><figcaption>Combined effects of a transformation nested within the child sub-graph of another transformation</figcaption></figure>
+<p>While the PaintTransform and PaintVarTransform tables support several types of transforms, additional paint formats are defined to support specific transformations:</p>
+<ul>
+<li><p>PaintTranslate and PaintVarTranslate support translation only, without or with variation support. See <a href="#formats-14-and-15-painttranslate-paintvartranslate" data-linktype="self-bookmark">Formats 14 and 15: PaintTranslate, PaintVarTranslate</a> for format details.</p>
+</li>
+<li><p>PaintScale and PaintVarScale support scaling only, without or with variation support. These two formats scale relative to the origin, and allow for different scale factors in X and Y directions. PaintScaleAroundCenter, PaintVarScaleAroundCenter, PaintScaleUniform, PaintVarScaleUniform, PaintScaleUniformAroundCenter, and PaintVarScaleUniformAroundCenter support scaling relative to a different center, scaling uniformly in both X and Y directions, or both. See <a href="#formats-16-to-23-paintscale-and-variant-scaling-formats" data-linktype="self-bookmark">Formats 16 to 23: PaintScale and variant scaling formats</a> for format details.</p>
+</li>
+<li><p>PaintRotate and PaintVarRotate support rotation only, without or with variation support. These two formats rotate around the origin; the PaintRotateAroundCenter and PaintVarRotateAroundCenter formats support rotation around a different center. See <a href="#formats-24-to-27-paintrotate-paintvarrotate-paintrotatearoundcenter-paintvarrotatearoundcenter" data-linktype="self-bookmark">Formats 24 to 27: PaintRotate, PaintVarRotate, PaintRotateAroundCenter, PaintVarRotateAroundCenter</a> for format details.</p>
+</li>
+<li><p>PaintSkew and PaintVarSkew support skew only, without or with variation support. These two formats skew using the origin as a center for the skew rotation; the PaintSkewAroundCenter and PaintVarSkewAroundCenter formats support skews using a different center. See <a href="#formats-28-to-31-paintskew-paintvarskew-paintskewaroundcenter-paintvarskewaroundcenter" data-linktype="self-bookmark">Formats 28 to 31: PaintSkew, PaintVarSkew, PaintSkewAroundCenter, PaintVarSkewAroundCenter</a> for format details.</p>
+</li>
+</ul>
+<blockquote>
+<p><em>Note:</em> Horizontal mirroring is done by scaling using a scale factor in the x direction of -1. Vertical mirroring is done by scaling with a -1 scale factor in the y direction.</p>
+</blockquote>
+<p>When only one of these specific types of transformation is required, these formats provide a more compact representation than the PaintTransform or PaintVarTransform formats. Another significant difference of the rotation and skew formats is that the rotations and skews are specified as angles, in counter-clockwise degrees.</p>
+<blockquote>
+<p><em>Note:</em> Specifying the rotation or skew as an angle can have a significant benefit in variable fonts if an angle of skew or rotation needs to vary, since it is easier to implement variation of angles when specified directly rather than as matrix elements. This is because the matrix elements for a rotation or skew are the sine, cosine or tangent of the rotation angle, which do not change in linear proportion to the angle. To achieve a linear variation of rotation using matrix elements would require approximating the variation using multiple delta sets.</p>
+</blockquote>
+<p>The rotations and skews specified using PaintRotate, PaintSkew and their variants can also be representated as a matrix using a PaintTransform or PaintVarTransform table. The behavior for the PaintRotate or PaintSkew formats and their variants must be the same as if the rotation or skew were represented using an equivalent matrix or sequence of matrices. See <a href="#formats-24-to-27-paintrotate-paintvarrotate-paintrotatearoundcenter-paintvarrotatearoundcenter" data-linktype="self-bookmark">Formats 24 to 27: PaintRotate, PaintVarRotate, PaintRotateAroundCenter, PaintVarRotateAroundCenter</a> for details regarding the matrix equivalent for a rotation expressed as an angle; and see <a href="#formats-28-to-31-paintskew-paintvarskew-paintskewaroundcenter-paintvarskewaroundcenter" data-linktype="self-bookmark">Formats 28 to 31: PaintSkew, PaintVarSkew, PaintSkewAroundCenter, PaintVarSkewAroundCenter</a> for similar details in relation to skews.</p>
+<h3 id="compositing-and-blending">Compositing and blending</h3>
+<p>When a color glyph has overlapping content in two layers, the pixels in the two layers must be combined in some way. If the content in the top layer has full opacity, then normally the pixels from that layer are shown, occluding overlapping pixels from lower layers. If the top layer has some transparency (some portion has alpha less than 1.0), then blending of colors for overlapping pixels occurs by default. The default interaction between layers uses simple alpha compositing, as described in the W3C specification, <a href="https://www.w3.org/TR/compositing-1/" data-linktype="external">Compositing and Blending Level 1</a>.</p>
+<p>A PaintComposite table can be used to get other compositing or blending effects. The PaintComposite table combines content defined by two sub-graphs: a <em>source</em> sub-graph; and a destination, or <em>backdrop</em>, sub-graph. First, the paint operations for the backdrop sub-graph are executed, then the drawing operations for the source sub-graph are executed and combined with backdrop using a specified compositing or blending mode. Various composition and blending modes are supported. The available modes are given in the CompositionModes enumeration (see <a href="#format-32-paintcomposite" data-linktype="self-bookmark">Format 32: PaintComposite</a>). The effect and processing rule of each mode are specified in <a href="https://www.w3.org/TR/compositing-1/" data-linktype="external">Compositing and Blending Level 1</a>.</p>
+<p>The available modes fall into two general types: compositing modes, also referred to as “Porter-Duff” modes; and blending modes. In rough terms, the Porter-Duff modes determine how much effect pixels from the source and the backdrop each contribute in the result, while blending modes determine how color values for pixels from the source and backdrop are combined. These are illustrated with examples in the following figures: in each case, red and blue rectangles are the source and backdrop content.</p>
+<p>The first figure shows the effect of a Porter-Duff mode, <em>XOR</em>, which has the effect that only non-overlapping pixels contribute to the result.</p>
+<figure><img src="media/colr_porter-duff_xor.png" alt="Two content elements combined using the Porter-Duff XOR mode." data-linktype="relative-path"><figcaption>Two content elements combined using the Porter-Duff XOR mode</figcaption></figure>
+<p>The next figure shows the effect of a <em>lighten</em> blending mode, which has the effect that the R, G, and B color components for each pixel in the result is the greater of the R, G, and B values from corresponding pixels in the source and backdrop.</p>
+<figure><img src="media/colr_blend_lighten.png" alt="Two content elements combined using the *lighten* blending mode." data-linktype="relative-path"><figcaption>Two content elements combined using the *lighten* blending mode</figcaption></figure>
+<p>For complete details on each of the Porter-Duff and blending modes, see the <a href="https://www.w3.org/TR/compositing-1/" data-linktype="external">Compositing and Blending Level 1</a> specification.</p>
+<p>The following figure illustrates how the PaintComposite table is used in combination with content sub-graphs to implement an alternate compositing effect. The source sub-graph defines a green capital A; the backdrop sub-graph defines a black circle. The compositing mode used is <em>Source Out</em>, which has the effect that the source content punches out a hole in the backdrop. (For this mode, the fill color of the source is irrelevant; a black or yellow “A” would have the same effect.) A red rectangle is included as a lower layer to show that the backdrop has been punched out by the source, making that portion of the lower layer visible.</p>
+<figure><img src="media/colr_paintcompositegraph.png" alt="A color glyph using a PaintComposite table to punch out a shape from the fill of a circle." data-linktype="relative-path"><figcaption>A color glyph using a PaintComposite table to punch out a shape from the fill of a circle</figcaption></figure>
+<blockquote>
+<p><em>Note:</em> In the previous figure, the “A” is filled with green to illustrate that the color of the fill has no affect for the <em>Source Out</em> composite mode. Because that is the case, the black or red PaintSolid could have been re-used instead of adding a separate PaintSolid table. See <a href="#re-use-by-referencing-shared-subtables" data-linktype="self-bookmark">Re-use by referencing shared subtables</a> for more information on re-use of paint tables for such situations.</p>
+</blockquote>
+<p><a href="https://www.w3.org/TR/SVG11/" data-linktype="external">Scalable Vector Graphics (SVG)</a> supports alpha channel masking using the &lt;mask&gt; element. The same effects can be implemented in COLR version 1 using a PaintComposite table by setting a pattern of alpha values in the source sub-graph and selecting the <em>Source In</em> composite mode. This is illustrated in the following figure.</p>
+<figure><img src="media/colr_gradient_mask.png" alt="An alpha mask implemented using a PaintComposite table and the *Source In* mode." data-linktype="relative-path"><figcaption>An alpha mask implemented using a PaintComposite table and the *Source In* mode</figcaption></figure>
+<h3 id="re-usable-components">Re-usable components</h3>
+<h4 id="overview-1">Overview</h4>
+<p>Within a color font, many color glyphs might share components in common. For example, in emoji fonts, many different “smilies” or clock faces share a common background. This can be seen in the following figure, which shows color glyphs for three emoji clock faces.</p>
+<figure><img src="media/colr_clocks-12-1-2.png" alt="Emoji clock faces for 12 o’clock, 1 o’clock and 2 o’clock." data-linktype="relative-path"><figcaption>Emoji clock faces for 12 o’clock, 1 o’clock and 2 o’clock</figcaption></figure>
+<p>Several components are shared between these color glyphs: the entire face, with a gradient background and dots at the 3, 6, 9 and 12 positions; the minute hand pointing to the 12 position; and the circles in the center. Also, note that the four dots have the same shape and fill, and differ only in their position. In addition, the hour hands have the same shape and fill, and differ only in their orientation.</p>
+<p>There are several ways in which elements of a color glyph description can be re-used:</p>
+<ul>
+<li>Reference to shared subtables</li>
+<li>Use of a <a href="#format-1-paintcolrlayers" data-linktype="self-bookmark">PaintColrLayers</a> table</li>
+<li>Use of a <a href="#format-11-paintcolrglyph" data-linktype="self-bookmark">PaintColrGlyph</a> table</li>
+</ul>
+<p>The PaintColrLayers and PaintColrGlyph table formats create a potential for introducing cycles within the graph of a color glyph, which would be invalid (see <a href="#color-glyphs-as-a-directed-acyclic-graph" data-linktype="self-bookmark">Color glyphs as a directed acyclic graph</a>).</p>
+<h4 id="re-use-by-referencing-shared-subtables">Re-use by referencing shared subtables</h4>
+<p>Several of the paint table formats link to a child paint table using a forward offset within the file:</p>
+<ul>
+<li>PaintGlyph</li>
+<li>PaintComposite</li>
+<li>PaintTransform, PaintVarTransform</li>
+<li>PaintTranslate, PaintVarTranslate</li>
+<li>PaintScale, PaintVarScale, and the other variant scaling paint formats</li>
+<li>PaintRotate, PaintVarRotate, PaintRotateAroundCenter, PaintVarRotateAroundCenter</li>
+<li>PaintSkew, PaintVarSkew, PaintSkewAroundCenter, PaintVarSkewAroundCenter</li>
+</ul>
+<p>A child subtable can be shared by several tables of these formats. For example, several PaintGlyph tables might link to the same PaintSolid table, or to the same node for a sub-graph describing a more complex fill. The only limitation is that child paint tables are referenced using a forward offset from the start of the referencing table, so a re-used paint table can only occur later in the file than any of the paint tables that use it.</p>
+<p>The clock faces shown in the figure above provide an example of how PaintRotate tables can be combined with re-use of a sub-graph. As noted above, the hour hands have the same shape and fill, but have a different orientation. The glyph outline could point to the 12 position, then in color glyph descriptions for other times, PaintRotate tables could link to the same glyph/fill sub-graph, re-using that component but rotated as needed.</p>
+<p>This is illustrated in the following figures. The first shows a sub-graph defining the hour hand, with upright orientation, using a PaintGlyph and a PaintSolid table. Example file offsets for the tables are indicated.</p>
+<figure><img src="media/colr_hour-hand-component.png" alt="A PaintGlyph and PaintSolid table are used to define the clock hour hand pointing to 12." data-linktype="relative-path"><figcaption>A PaintGlyph and PaintSolid table are used to define the clock hour hand pointing to 12</figcaption></figure>
+<p>The next figure shows this sub-graph of paint tables being re-used, in some cases linked from PaintRotate tables that rotate the hour hand to point to different clock positions as needed. All of the paint tables that reference this sub-graph occur earlier in the file.</p>
+<figure><img src="media/colr_reuse-hour-hand-rotated.png" alt="The sub-graph for the hour hand is re-used with PaintRotate tables to point to different hours." data-linktype="relative-path"><figcaption>The sub-graph for the hour hand is re-used with PaintRotate tables to point to different hours</figcaption></figure>
+<h4 id="re-use-using-paintcolrlayers">Re-use using PaintColrLayers</h4>
+<p>As described above (see <a href="#layering" data-linktype="self-bookmark">Layering</a>), a <a href="#format-1-paintcolrlayers" data-linktype="self-bookmark">PaintColrLayers</a> table defines a set of paint sub-graphs arranged in bottom-up z-order layers, and an example was given of a PaintColrLayers table used as the root of a color glyph definition. A PaintColrLayers table can also be nested more deeply within the graph of a color glyph. One purpose for doing this is to reference a re-usable component defined as a contiguous set of layers in the <a href="#baseglyphlist-layerlist-and-cliplist" data-linktype="self-bookmark">LayerList</a>) table.</p>
+<p>This is readily explained using the clock faces as an example. As described above, each clock face shares several elements in common. Some of these form a contiguous set of layers. Suppose four sub-graphs for shared clock face elements are given in the LayerList as contiguous layers, as shown in the following figure. (For brevity, the visual result for each sub-graph is shown, but not the paint details.)</p>
+<figure><img src="media/colr_clock_common.png" alt="Common clock face elements given as a slice within the LayerList table" data-linktype="relative-path"><figcaption>Common clock face elements given as a slice within the LayerList table</figcaption></figure>
+<p>A PaintColrLayers table can reference any contiguous slice of layers in the LayerList table. Thus, the set of layers shown in the previouis figure can be referenced by PaintColrLayers tables anywhere in the graph of any color glyph. In this way, this set of layers can be re-used in multiple clock face color glyph definitions.</p>
+<p>This is illustrated in the following figure: The color glyph definition for the one o’clock emoji has a PaintColrLayers table as its root, referencing a slice of three layers in the LayerList table. The upper two layers are the hour hand, which is specific to this color glyph; and the cap over the pivot for the minute and hour hands, which is common to other clock emoji but in a layer that is not contiguous with other common layers. The bottom layer of these three layers is the composition for all the remaining common layers. It is represented using a nested PaintColrLayers table that references the slice within the LayerList for the common clock face elements shown in the previous figure.</p>
+<figure><img src="media/colr_reuse_clock-face_paintcolrlayers.png" alt="A PaintColrLayers table is used to reference a set of layers that define a shared clock face composition." data-linktype="relative-path"><figcaption>A PaintColrLayers table is used to reference a set of layers that define a shared clock face composition</figcaption></figure>
+<p>The color glyphs for other clock face emoji could be structured in exactly the same way, using a nested PaintColrLayers table to re-use the layer composition of the common clock face elements.</p>
+<h4 id="re-use-using-paintcolrglyph">Re-use using PaintColrGlyph</h4>
+<p>A third way to re-use components in color glyph definitions is to use a nested <a href="#format-11-paintcolrglyph" data-linktype="self-bookmark">PaintColrGlyph</a> table. This format references a base glyph ID, which is used to access a corresponding <a href="#baseglyphlist-layerlist-and-cliplist" data-linktype="self-bookmark">BaseGlyphPaintRecord</a>. That record will provide the offset of a paint table that is the root of a graph for a color glyph definition. That graph can potentially be used as an independent color glyph, but it can also define a shared composition that gets re-used in multiple color glyphs. Each time the shared composition is to be re-used, it is referenced by its base glyph ID using a PaintColrGlyph table. The graph of the referenced color glyph is thereby incorporated into the graph of the PaintColrGlyph table as its child sub-graph.</p>
+<p>When a PaintColrGlyph table is used, a BaseGlyphPaintRecord with the specified glyph ID is expected. If no BaseGlyphPaintRecord with that glyph ID is found, the color glyph is not well formed. See <a href="#color-glyphs-as-a-directed-acyclic-graph" data-linktype="self-bookmark">Color glyphs as a directed acyclic graph</a> for details regarding well-formedness and validity of the graph.</p>
+<p>The example from the previous section is modified to illustrate use of a PaintColrGlyph table. In the following figure, a PaintColrLayers table references a slice within the LayerList that defines the shared component. Now, however, this PaintColrLayers table is treated as the root of a color glyph definition for base glyph ID 63163. The color glyph for the one o’clock emoji is defined with three layers, as before, but now the bottom layer uses a PaintColrGlyph table that references the color glyph definition for glyph ID 63163.</p>
+<figure><img src="media/colr_reuse_clock-face_paintcolrglyph.png" alt="A PaintColrGlyph table is used to reference the shared clock face composition via a glyph ID." data-linktype="relative-path"><figcaption>A PaintColrGlyph table is used to reference the shared clock face composition via a glyph ID</figcaption></figure>
+<p>While the PaintColrGlyph and PaintColrLayers tables are similar in being able to reference a layer set as a re-usable component, they could be handled differently in implementations. In particular, an implementation could process and cache the result of the color glyph description for a given base glyph ID. In that case, subsequent references to that base glyph ID using a PaintColrGlyph table would not require the corresponding graph of paint tables to be re-processed. As a result, using a PaintColrGlyph for re-used graphic components could provide performance benefits.</p>
+<h3 id="glyph-metrics-and-boundedness">Glyph metrics and boundedness</h3>
+<h4 id="metrics-for-color-glyphs-using-version-0-formats">Metrics for color glyphs using version 0 formats</h4>
+<p>For color glyphs using version 0 formats, the advance width of glyphs used for each layer must be the same as the advance width of the base glyph. If the font has vertical metrics, the glyphs used for each layer must also have the same advance height and vertical Y origin as the base glyph.</p>
+<h4 id="metrics-and-boundedness-of-color-glyphs-using-version-1-formats">Metrics and boundedness of color glyphs using version 1 formats</h4>
+<p>For color glyphs using version 1 formats, the advance width of the base glyph must be used as the advance width for the color glyph. If the font has vertical metrics, the advance height and vertical Y origin of the base glyph must be used for the color glyph. The advance width and height of glyphs referenced by PaintGlyph tables are not required to be the same as that of the base glyph and are ignored.</p>
+<p>A valid color glyph definition must define a bounded region—that is, it must paint within a region for which a finite bounding box could be defined. A clip box can be specified to set overall bounds for a color glyph (see below). Otherwise, boundedness is determined by the graph of paint tables that describe the color glyph content. The different paint formats have different boundedness characteristics:</p>
+<ul>
+<li>PaintGlyph is inherently bounded.</li>
+<li>PaintSolid, PaintVarSolid, PaintLinearGradient, PaintVarLinearGradient, PaintRadialGradient, PaintVarRadialGradient, PaintSweepGradient, and PaintVarSweepGradient are inherently unbounded.</li>
+<li>PaintColrLayers is bounded <em>if and only if</em> all referenced sub-graphs are bounded.</li>
+<li>PaintColrGlyph is bounded <em>if and only if</em> the color glyph definition for the referenced base glyph ID is bounded.</li>
+<li>Paint formats for transformations (PaintTransform, PaintVarTransform, PaintTranslate, PaintScale, etc.) are bounded <em>if and only if</em> the referenced sub-graph is bounded.</li>
+<li>PaintComposite is either bounded or unbounded, according to the composite mode used and the boundedness of the referenced sub-graphs. See <a href="#format-32-paintcomposite" data-linktype="self-bookmark">Format 32: PaintComposite</a> for details.</li>
+</ul>
+<p>A <a href="#baseglyphlist-layerlist-and-cliplist" data-linktype="self-bookmark">ClipBox table</a> may be associated with a color glyph to define an overall bounds for the color glyph. The clip box may vary in a variable font. If a clip box is provided for a color glyph, the color glyph is bounded, and no inspection of the Paint graph is required to determine boundedness. If no clip box is defined for a color glyph, however, applications must confirm that the color glyph definition is bounded, and must not render the color glyph if the defining graph is not bounded.</p>
+<blockquote>
+<p><em>Note:</em> If present, the clip box for a color glyph can be used to allocate a drawing surface without needing to traverse the graph of the color glyph definition.</p>
+</blockquote>
+<blockquote>
+<p><em>Note:</em> If no ClipBox table is present but a bounding box is required by the implementation, it can be computed for a given color glyph by traversing the graph of Paint tables that defines that color glyph.</p>
+</blockquote>
+<p>To ensure that rendering implementations do not clip any part of a color glyph, the clip box needs to be large enough to encompass the entire color glyph composition. In a variable font, glyph outlines can vary, but transformations in a color glyph description can also vary, affecting the portions of the design grid to be painted. For example, a filled rectangle that is wide but not tall for one variation instance can be variably rotated to be tall but not wide for other instances. The clip box either should be large enough to encompass the color glyph for all instances, or should itself vary such that each instance of the clip box encompasses the instance color glyph.</p>
+<h3 id="color-glyphs-as-a-directed-acyclic-graph">Color glyphs as a directed acyclic graph</h3>
+<p>When using version 1 formats, a color glyph is defined by a directed, acyclic graph of linked paint tables. For each <a href="#baseglyphlist-layerlist-and-cliplist" data-linktype="self-bookmark">BaseGlyphPaintRecord</a>, the paint table referenced by that record is the root of a graph defining a color glyph composition.</p>
+<p>The graph for a given color glyph is made up of all paint tables reachable from the BaseGlyphPaintRecord. The BaseGlyphPaintRecord and several paint table formats use direct links; that is, they include a forward offset to a paint subtable. Two paint formats make indirect links:</p>
+<ul>
+<li><p>A <a href="#format-1-paintcolrlayers" data-linktype="self-bookmark">PaintColrLayers</a> table references a slice of offsets within the <a href="#baseglyphlist-layerlist-and-cliplist" data-linktype="self-bookmark">LayerList</a>. The paint tables referenced by those offsets are considered to be linked within the graph as children of the PaintColrLayers table.</p>
+</li>
+<li><p>A <a href="#format-11-paintcolrglyph" data-linktype="self-bookmark">PaintColrGlyph</a> table references a base glyph ID, for which a corresponding BaseGlyphPaintRecord is expected. That record points to the root of a graph that is a complete color glyph definition on its own. But when referenced in this way by a PaintColrGlyph table, that entire graph is considered to be a child sub-graph of the PaintColrGlyph table, and a continuation of the graph of which the PaintColrGlyph table is a part.</p>
+</li>
+</ul>
+<p>The graph for a color glyph is a combination of paint tables using any of the paint table formats. The simplest color glyph definition would consist of a PaintGlyph table linked to a basic fill table (PaintSolid, PaintVarSolid, PaintLinearGradient, PaintVarLinearGradient, PaintRadialGradient, PaintVarRadialGradient, PaintSweepGradient, PaintVarSweepGradient). But the graph can be arbitrarily complex, with an arbitrary depth of paint nodes (to the limits inherent in the formats).</p>
+<p>The graph can define a visual element in a single layer, or many elements in many layers. The concept of layers, as distinct visual elements stacked in a z-order, is not precisely defined in relation to the complexity of the graph. Each separate visual element requires a leaf node, but nodes in the graph, including leaf nodes, can be re-used (see <a href="#re-usable-components" data-linktype="self-bookmark">Re-usable components</a>). Also, each separate visual element requires a fork in the graph, and a separate root-to-leaf path, but not all paths necessarily result in a distinct visual element. For example, a gradient mask effect can be created with a gradient with gradation of alpha values, and then using that as the source of a <a href="#format-32-paintcomposite" data-linktype="self-bookmark">PaintComposite</a> table with the <em>Source In</em> compositing mode. In that case, the leaf has a visual affect but does not result in a distinct visual element. This was illustrated in an earlier figure, repeated here: the PaintLinearGradient is a leaf node in the graph and creates a masking effect but does not add a distinct visual element.</p>
+<figure><img src="media/colr_gradient_mask.png" alt="Graph with a leaf node that isn’t a distinct visual element." data-linktype="relative-path"><figcaption>Graph with a leaf node that isn’t a distinct visual element</figcaption></figure>
+<p>Thus, the generalization that can be made regarding the relationship between the number of layers and the nature of the graph is that the number of distinct root-to-leaf paths will be greater than or equal to the number of layers.</p>
+<p>The following are necessary for the graph to be well-formed and valid:</p>
+<ul>
+<li>All subtable links must satisfy the following criteria:
+<ul>
+<li>Forward offsets are within the COLR table bounds.</li>
+<li>If a PaintColrLayers table is present, then a LayerList is also present, and the referenced slice is within the length of the LayerList.</li>
+<li>If a PaintColrGlyph table is present, there is a BaseGlyphPaintRecord for the referenced base glyph ID.</li>
+</ul>
+</li>
+<li>The graph must be acyclic.</li>
+</ul>
+<blockquote>
+<p><em>Note:</em> These constraints imply that all leaf nodes will be one of PaintSolid, PaintVarSolid, PaintLinearGradient, PaintVarLinearGradient, PaintRadialGradient, PaintVarRadialGradient, PaintSweepGradient, or PaintVarSweepGradient.</p>
+</blockquote>
+<p>For the graph to be acyclic, no paint table may have any child or descendent paint table that is also its parent or ancestor within the graph. In particular, because the PaintColrLayers and PaintColrGlyph tables use indirect child references rather than forward offsets, they provide a possibility for introducing cycles. Applications should track paint tables within a path in the graph, checking whether any paint table was already encountered within that path. The following pseudo-code algorithm can be used:</p>
+<pre><code class="lang-c">    // called initially with the root paint and an empty set pathPaints
+    function paintIsAcyclic(paint, pathPaints)
+        if paint is in pathPaints
+          return false // cycle detected
+        add paint to pathPaints
+        for each childPaint referenced by paint as a child subtable
+          call paintIsAcyclic(childPaint, pathPaints)
+        remove paint from pathPaints
+</code></pre>
+<p>For the graph to be valid, it must also be visually bounded, as described above (see <a href="#metrics-and-boundedness-of-color-glyphs-using-version-1-formats" data-linktype="self-bookmark">Metrics and boundedness of color glyphs using version 1 formats</a>).</p>
+<blockquote>
+<p><em>Note:</em> Implementations can combine testing for cycles and other well-formedness or validity requirements together with other processing for rendering the color glyph.</p>
+</blockquote>
+<p>If the graph contains a cycle or is otherwise not well-formed or valid, the paint table at which the error occurs should be ignored, that sub-graph should not be rendered, and that node in the graph should be considered to be visually bounded. The application should attempt to render the remainder of the graph, if well-formed and valid.</p>
+<p>Future minor version updates of the COLR table could introduce new paint formats. If a paint table with an unrecognized format is encountered, it and its sub-graph should similarly be ignored, the node should be considered to be visually bounded, and the application should attempt to render the remainder of the graph.</p>
+<p>If an application is not able to recover from errors while traversing the graph, it may ignore the color glyph entirely. If the base glyph ID has an outline, that may be rendered as a non-color glyph instead.</p>
+<h2 id="colr-table-formats">COLR table formats</h2>
+<h3 id="overview-2">Overview</h3>
+<p>Various table and record formats are defined for COLR version 0 and version 1.</p>
+<p>Several values contained within the version 1 formats are variable. For items that vary in a variable font, the variation data is contained in an <a href="otvarcommonformats.html#item-variation-store" data-linktype="relative-path">ItemVariationStore table</a>. To associate each variable item with the corresponding variation data, a DeltaSetIndexMap table is used. Within a given table that has variable items, a base/sequence scheme is used to index into the mapping data. See <a href="#colr-table-and-opentype-font-variations" data-linktype="self-bookmark">COLR table and OpenType Font Variations</a> for details.</p>
+<p>Future minor version updates of the COLR table could introduce new formats that extend the capabilities for color glyph descriptions using version 1 formats. Unrecognized formats should be ignored. See <a href="#color-glyphs-as-a-directed-acyclic-graph" data-linktype="self-bookmark">Color glyphs as a directed acyclic graph</a> for more information.</p>
+<h3 id="colr-header">COLR header</h3>
+<p><a name="header"></a></p>
+<p>The COLR table begins with a header. Two versions have been defined.</p>
+<p><a id="colr_v0"></a></p>
+<p><em>COLR version 0:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="version">
+<td>uint16</td>
+<td>version</td>
+<td>Table version number—set to 0.</td>
+</tr>
+<tr id="numBaseGlyphRecs">
+<td>uint16</td>
+<td>numBaseGlyphRecords</td>
+<td>Number of BaseGlyph records.</td>
+</tr>
+<tr id="baseGlyphRecordsOffset">
+<td>Offset32</td>
+<td>baseGlyphRecordsOffset</td>
+<td>Offset to baseGlyphRecords array, from beginning of COLR table.</td>
+</tr>
+<tr id="layerRecordsOffset">
+<td>Offset32</td>
+<td>layerRecordsOffset</td>
+<td>Offset to layerRecords array, from beginning of COLR table.</td>
+</tr>
+<tr id="numLayerRecords">
+<td>uint16</td>
+<td>numLayerRecords</td>
+<td>Number of Layer records.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em> For fonts that use COLR version 0, some early Windows implementations of the COLR table require glyph ID 1 to be the .null glyph.</p>
+</blockquote>
+<p><a id="colr_v1"></a></p>
+<p><em>COLR version 1:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>version</td>
+<td>Table version number—set to 1.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>numBaseGlyphRecords</td>
+<td>Number of BaseGlyph records; may be 0 in a version 1 table.</td>
+</tr>
+<tr>
+<td>Offset32</td>
+<td>baseGlyphRecordsOffset</td>
+<td>Offset to baseGlyphRecords array, from beginning of COLR table (may be NULL).</td>
+</tr>
+<tr>
+<td>Offset32</td>
+<td>layerRecordsOffset</td>
+<td>Offset to layerRecords array, from beginning of COLR table (may be NULL).</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>numLayerRecords</td>
+<td>Number of Layer records; may be 0 in a version 1 table.</td>
+</tr>
+<tr>
+<td>Offset32</td>
+<td>baseGlyphListOffset</td>
+<td>Offset to BaseGlyphList table, from beginning of COLR table.</td>
+</tr>
+<tr>
+<td>Offset32</td>
+<td>layerListOffset</td>
+<td>Offset to LayerList table, from beginning of COLR table (may be NULL).</td>
+</tr>
+<tr>
+<td>Offset32</td>
+<td>clipListOffset</td>
+<td>Offset to ClipList table, from beginning of COLR table (may be NULL).</td>
+</tr>
+<tr>
+<td>Offset32</td>
+<td>varIndexMapOffset</td>
+<td>Offset to DeltaSetIndexMap table, from beginning of COLR table (may be NULL).</td>
+</tr>
+<tr>
+<td>Offset32</td>
+<td>itemVariationStoreOffset</td>
+<td>Offset to ItemVariationStore, from beginning of COLR table (may be NULL).</td>
+</tr>
+</tbody>
+</table>
+<p>The BaseGlyphList and its subtables are only used in COLR version 1.</p>
+<p>The LayerList is only used in conjunction with the BaseGlyphList and, specifically, with <a href="#format-1-paintcolrlayers" data-linktype="self-bookmark">PaintColrLayers</a> tables; it is not required if no color glyphs use a PaintColrLayers table. If not used, set layerListOffset to NULL.</p>
+<p>The ClipList is only used in conjunction with the BaseGlyphList. If not used, set clipListOffset to NULL.</p>
+<p>The <a href="otvarcommonformats.html#item-variation-store" data-linktype="relative-path">ItemVariationStore</a> is used in conjunction with a BaseGlyphList and its subtables, but only in variable fonts. If it is not used, set itemVariationStoreOffset to NULL.</p>
+<p>The DeltaSetIndexMap table is described in the OpenType Variations Common Table Formats chapter—see <a href="otvarcommonformats.html#associating-target-items-to-variation-data" data-linktype="relative-path">Associating Target Items to Variation Data</a>. Within the COLR table, either format 0 or format 1 of the DeltaSetIndexMap can be used. A DeltaSetIndexMap is used in conjunction with the ItemVariationStore in a variable font. The DeltaSetIndexMap is optional: if an ItemVariationStore is present but a DeltaSetIndexMap is not included (varIndexMapOffset is NULL), then an implicit mapping is used. See <a href="#colr-table-and-opentype-font-variations" data-linktype="self-bookmark">COLR table and OpenType Font Variations</a> for details.</p>
+<h4 id="mixing-version-0-and-version-1-formats">Mixing version 0 and version 1 formats</h4>
+<p>A font that uses COLR version 1 and that includes a BaseGlyphList can also include BaseGlyph and Layer records for compatibility with applications that only support COLR version 0.</p>
+<p>Color glyphs that can be implemented in COLR version 0 using BaseGlyph and Layer records can also be implemented using the version 1 BaseGlyphList and subtables. Thus, a font that uses the version 1 formats does not need to use the version 0 BaseGlyph and Layer records. However, a font may use the version 1 structures for some base glyphs and the version 0 structures for other base glyphs. A font may also include a version 1 color glyph definition for a given base glyph ID that is equivalent to a version 0 definition, though this should never be needed.</p>
+<p>A font may define a color glyph for a given base glyph ID using version 0 formats, and also define a different color glyph for the same base glyph ID using version 1 formats. Applications that support COLR version 1 should give preference to the version 1 color glyph.</p>
+<p>For applications that support COLR version 1, the application should search for a base glyph ID first in the BaseGlyphList. Then, if not found, search in the baseGlyphRecords array, if present.</p>
+<p><a name="baseGlyphRecord"></a></p>
+<h3 id="baseglyph-and-layer-records">BaseGlyph and Layer records</h3>
+<p>BaseGlyph and Layer records are required for COLR version 0, but optional for
+version 1. (See <a href="#mixing-version-0-and-version-1-formats" data-linktype="self-bookmark">Mixing version 0 and version 1 formats</a>.)</p>
+<p>A BaseGlyph record is used to map a base glyph to a sequence of layer records that define the corresponding color glyph. The BaseGlyph record includes a base glyph index, an index into the layerRecords array, and the number of layers.</p>
+<p><em>BaseGlyph record:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="gID_bgr">
+<td>uint16</td>
+<td>glyphID</td>
+<td>Glyph ID of the base glyph.</td>
+</tr>
+<tr id="firstLayerIndex">
+<td>uint16</td>
+<td>firstLayerIndex</td>
+<td>Index (base 0) into the layerRecords array.</td>
+</tr>
+<tr id="numLayers">
+<td>uint16</td>
+<td>numLayers</td>
+<td>Number of color layers associated with this glyph.</td>
+</tr>
+</tbody>
+</table>
+<p>The glyph ID must be less than the numGlyphs value in the <a href="maxp.html" data-linktype="relative-path">'maxp'</a> table.</p>
+<p>The BaseGlyph records must be sorted in increasing glyphID order. It is assumed that a binary search can be used to find a matching BaseGlyph record for a specific glyphID.</p>
+<p>The color glyph for a given base glyph is defined by the consecutive records in the layerRecords array for the specified number of layers, starting with the record indicated by firstLayerIndex. The first record in this sequence is the bottom layer in the z-order, and each subsequent layer is stacked on top of the previous layer.</p>
+<p>The layer record sequences for two different base glyphs may overlap, with some layer records used in multiple color glyph definitions.</p>
+<p><a name="layerRecord"></a></p>
+<p>The Layer record specifies the glyph used as the graphic element for a layer and the solid color fill.</p>
+<p><em>Layer record:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="gID_lr">
+<td>uint16</td>
+<td>glyphID</td>
+<td>Glyph ID of the glyph used for a given layer.</td>
+</tr>
+<tr id="paletteIndex">
+<td>uint16</td>
+<td>paletteIndex</td>
+<td>Index (base 0) for a palette entry in the CPAL table.</td>
+</tr>
+</tbody>
+</table>
+<p>The glyphID in a Layer record must be less than the numGlyphs value in the <a href="maxp.html" data-linktype="relative-path">'maxp'</a> table. That is, it must be a valid glyph with outline data in the <a href="glyf.html" data-linktype="relative-path">'glyf'</a>, <a href="cff.html" data-linktype="relative-path">'CFF '</a> or <a href="cff2.html" data-linktype="relative-path">CFF2</a> table. See
+<a href="#metrics-and-boundedness-of-color-glyphs-using-version-1-formats" data-linktype="self-bookmark">Metrics and boundedness of color glyphs using version 1 formats</a> for requirements regarding glyph metrics of referenced glyphs.</p>
+<p>The paletteIndex value must be less than the numPaletteEntries value in the <a href="cpal.html" data-linktype="relative-path">CPAL</a> table. A paletteIndex value of 0xFFFF is a special case, indicating that the text foreground color (as determined by the application) is to be used.</p>
+<h3 id="baseglyphlist-layerlist-and-cliplist">BaseGlyphList, LayerList and ClipList</h3>
+<p>The BaseGlyphList table is, conceptually, similar to the baseGlyphRecords array in COLR version 0, providing records that map a base glyph to a color glyph definition. The color glyph definitions that each refer to are significantly different, however—see <a href="#graphic-compositions" data-linktype="self-bookmark">Graphic Compositions</a>.</p>
+<p><em>BaseGlyphList table:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint32</td>
+<td>numBaseGlyphPaintRecords</td>
+<td></td>
+</tr>
+<tr>
+<td>BaseGlyphPaintRecord</td>
+<td>baseGlyphPaintRecords[numBaseGlyphPaintRecords]</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><em>BaseGlyphPaintRecord:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>glyphID</td>
+<td>Glyph ID of the base glyph.</td>
+</tr>
+<tr>
+<td>Offset32</td>
+<td>paintOffset</td>
+<td>Offset to a Paint table, from beginning of BaseGlyphList table.</td>
+</tr>
+</tbody>
+</table>
+<p>The glyphID value must be less than the numGlyphs value in the <a href="maxp.html" data-linktype="relative-path">'maxp'</a> table.</p>
+<p>The records in the baseGlyphPaintRecords array must be sorted in increasing glyphID order. It is intended that a binary search can be used to find a matching BaseGlyphPaintRecord for a specific glyphID.</p>
+<p>The paint table referenced by the BaseGlyphPaintRecord is the root of the graph for a color glyph definition.</p>
+<blockquote>
+<p><em>Note:</em> Often the paint table that is the root of the graph for the color glyph definition will be a <a href="#format-1-paintcolrlayers" data-linktype="self-bookmark">PaintColrLayers</a> table, though this is not required. See <a href="#color-glyphs-as-a-directed-acyclic-graph" data-linktype="self-bookmark">Color glyphs as a directed acyclic graph</a> for more information regarding the graph of a color glyph, and <a href="#layering" data-linktype="self-bookmark">Layering</a> for background information regarding the PaintColrLayers table.</p>
+</blockquote>
+<p>A LayerList table is used in conjunction with PaintColrLayers tables to represent layer structures. A single LayerList is defined and can be used by multiple PaintColrLayer tables, each of which references a slice of the layer list.</p>
+<p><em>LayerList table:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint32</td>
+<td>numLayers</td>
+<td></td>
+</tr>
+<tr>
+<td>Offset32</td>
+<td>paintOffsets[numLayers]</td>
+<td>Offsets to Paint tables, from beginning of LayerList table.</td>
+</tr>
+</tbody>
+</table>
+<p>The sequence of offsets to paint tables corresponds to a bottom-up z-order layering of the graphic compositions defined by the sub-graph of each referenced paint table graph. For a given slice of the list, the sub-graph of the first paint table defines the element at the bottom of the z-order, and the sub-graph of each subsequent paint table defines an element that is layered on top of the previous element. As each element is a composition defined in a sub-graph, one of these elements may itself be multi-layered. In that case, the layers of this element are stacked above all previous layers, and layers of following elements are stacked above the top layer of this element.</p>
+<p>Offsets for paint tables not referenced by any PaintColrLayers table should not be included in the paintOffsets array.</p>
+<p>A ClipList table is used to provide precomputed clip boxes for color glyphs. It contains an array of Clip records, each of which associates a range of base glyph IDs with a ClipBox table. The ClipBox table provides a precomputed clip box for the associated color glyphs. Clip boxes are optional: a font may provide clip boxes for some color glyphs but not others.</p>
+<p><em>ClipList table:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 1.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>numClips</td>
+<td>Number of Clip records.</td>
+</tr>
+<tr>
+<td>Clip</td>
+<td>clips[numClips]</td>
+<td>Clip records. Sorted by startGlyphID.</td>
+</tr>
+</tbody>
+</table>
+<p><em>Clip record:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>startGlyphID</td>
+<td>First glyph ID in the range.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>endGlyphID</td>
+<td>Last glyph ID in the range.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>clipBoxOffset</td>
+<td>Offset to a ClipBox table, from beginning of ClipList table.</td>
+</tr>
+</tbody>
+</table>
+<p>Within a ClipList table, the glyph ID ranges of Clip records must not overlap.</p>
+<p>Two Clipbox table formats are defined: format 1 for clip boxes without variation, and format 2 allowing for clip boxes that can vary in a variable font.</p>
+<p><em>ClipBoxFormat1 table, static clip box:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 1.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>xMin</td>
+<td>Minimum x of clip box.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>yMin</td>
+<td>Minimum y of clip box.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>xMax</td>
+<td>Maximum x of clip box.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>yMax</td>
+<td>Maximum y of clip box.</td>
+</tr>
+</tbody>
+</table>
+<p><em>ClipBoxFormat2 table, variable clip box:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 2.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>xMin</td>
+<td>Minimum x of clip box. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>yMin</td>
+<td>Minimum y of clip box. For variation, use varIndexBase + 1.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>xMax</td>
+<td>Maximum x of clip box. For variation, use varIndexBase + 2.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>yMax</td>
+<td>Maximum y of clip box. For variation, use varIndexBase + 3.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p>Any content drawn outside the clip box must not render.</p>
+<p>The clip box is not required to be a tight bounding box around the content. As it may be used by implementations to allocate resources, however, it should not be unnecessarily large.</p>
+<blockquote>
+<p><em>Note:</em> At runtime, when computing a variable ClipBox, compute the min/max coordinates using floating-point values and then round to integer values such that the clip box expands. That is, round xMin and yMin towards negative infinity and round xMax and yMax towards positive infinity.</p>
+</blockquote>
+<p>For variable data, a base/sequence scheme is used to index into variation mapping data. See <a href="#colr-table-and-opentype-font-variations" data-linktype="self-bookmark">COLR table and OpenType Font Variations</a> for details.</p>
+<h3 id="color-references-colorstop-and-colorline">Color references, ColorStop and ColorLine</h3>
+<p>Colors are used in solid color fills for graphic elements, or as <em>stops</em> in a color line used to define a gradient. Colors are defined by reference to palette entries in the <a href="cpal.html" data-linktype="relative-path">CPAL</a> table. While CPAL entries include an alpha component, formats for COLR version 1 that reference palette entries also includes a separate alpha specification to allow different graphic elements to use the same color but with different alpha values, and to allow for variation of the alpha in variable fonts.</p>
+<p>A paletteIndex value of 0xFFFF is a special case, indicating that the text foreground color (as determined by the application) is to be used.</p>
+<p>The alpha value is always set explicitly. Values for alpha outside the range [0., 1.] (inclusive) are reserved; values outside this range must be clamped. A value of zero means no opacity (fully transparent); 1.0 means fully opaque (no transparency). The alpha indicated in this record is multiplied with the alpha component of the CPAL entry (converted to float—divide by 255). Note that the resulting alpha value can be combined with and does not supersede alpha or opacity attributes set in higher-level, application-defined contexts.</p>
+<p>See <a href="#colors-and-solid-color-fills" data-linktype="self-bookmark">Colors and solid color fills</a> for more information regarding color references and solid color fills. Solid color fills are defined using a PaintSolid or PaintVarSolid table, described below—see <a href="#formats-2-and-3-paintsolid-paintvarsolid" data-linktype="self-bookmark">Formats 2 and 3: PaintSolid, PaintVarSolid</a>.</p>
+<p>Gradients are defined using a color line. A color line is a mapping of real numbers to color values, defined using color stops. See <a href="#color-lines" data-linktype="self-bookmark">Color line</a>, above, for an overview and additional details.</p>
+<p>Two color-stop record formats are defined: one that allows for variation of stop offset position or of alpha, and one that does not.</p>
+<p><em>ColorStop record:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F2DOT14</td>
+<td>stopOffset</td>
+<td>Position on a color line.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>paletteIndex</td>
+<td>Index for a CPAL palette entry.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>alpha</td>
+<td>Alpha value.</td>
+</tr>
+</tbody>
+</table>
+<p><em>VarColorStop record:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F2DOT14</td>
+<td>stopOffset</td>
+<td>Position on a color line. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>paletteIndex</td>
+<td>Index for a CPAL palette entry.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>alpha</td>
+<td>Alpha value. For variation, use varIndexBase + 1.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p>The VarColorStop format uses a base/sequence scheme to index into mapping data. Also, applying variation deltas to an F2DOT14 value requires special handling. See <a href="#colr-table-and-opentype-font-variations" data-linktype="self-bookmark">COLR table and OpenType Font Variations</a> for details.</p>
+<p>A color line is defined by an array of color stop records plus an extend mode.</p>
+<p>Two color-line table formats are defined: one that allows for variation of color stop offsets positions or of alpha values, and one that does not. Different paint table formats for gradients use one or the other of the color line formats.</p>
+<p><em>ColorLine table:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>extend</td>
+<td>An Extend enum value.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>numStops</td>
+<td>Number of ColorStop records.</td>
+</tr>
+<tr>
+<td>ColorStop</td>
+<td>colorStops[numStops]</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><em>VarColorLine table:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>extend</td>
+<td>An Extend enum value.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>numStops</td>
+<td>Number of ColorStop records.</td>
+</tr>
+<tr>
+<td>VarColorStop</td>
+<td>colorStops[numStops]</td>
+<td>Allows for variations.</td>
+</tr>
+</tbody>
+</table>
+<p>Applications must apply the colorStops entries in increasing stopOffset order. Within a variable font, the stopOffset values can vary, and the relative orderings of color stop records along the color line can change as a result of variation. With a variable font, the colorStops entries must be ordered after the instance values for the stop offsets have been derived.</p>
+<p>A color line defines stops for only certain positions along the line, but the color line extends infinitely in either direction. The extend field is used to indicate how the color line is extended. The same behavior is used for extension in both directions. The extend field uses the following enumeration:</p>
+<p><em>Extend enumeration:</em></p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>EXTEND_PAD</td>
+<td>Use nearest color stop.</td>
+</tr>
+<tr>
+<td>1</td>
+<td>EXTEND_REPEAT</td>
+<td>Repeat from farthest color stop.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>EXTEND_REFLECT</td>
+<td>Mirror color line from nearest end.</td>
+</tr>
+</tbody>
+</table>
+<p>The extend mode behaviors are described in detail above—see <a href="#color-lines" data-linktype="self-bookmark">Color lines</a>. If a ColorLine in a font has an unrecognized extend value, applications should use EXTEND_PAD by default.</p>
+<h3 id="paint-tables">Paint tables</h3>
+<p>Paint tables are used for COLR version 1 color glyph definitions. Thirty-two paint table formats are defined (formats 1 to 32). Some formats come in non-variable and variable pairs, but otherwise, each provides different graphic capability for defining the composition for a color glyph. The graphic capability of each format and the manner in which they are combined to represent a color glyph has been described above—see <a href="#graphic-compositions" data-linktype="self-bookmark">Graphic Compositions</a>.</p>
+<p>Each paint table format has a one-byte format field as the first field. When parsing font data, the format field can be read first to determine the format of the table.</p>
+<h4 id="format-1-paintcolrlayers">Format 1: PaintColrLayers</h4>
+<p>Format 1 is used to define a vector of layers. The layers are a slice of layers from the LayerList table. The first layer is the bottom of the z-order, and subsequent layers are composited on top using the COMPOSITE_SRC_OVER composition mode (see <a href="#format-32-paintcomposite" data-linktype="self-bookmark">Format 32: PaintComposite</a>).</p>
+<p>For general information on the PaintColrLayers table, see <a href="#layering" data-linktype="self-bookmark">Layering</a>. For information about its use for shared, re-usable components, see <a href="#re-use-using-paintcolrlayers" data-linktype="self-bookmark">Re-use using PaintColrLayers</a>.</p>
+<p><em>PaintColrLayers table (format 1):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 1.</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>numLayers</td>
+<td>Number of offsets to paint tables to read from LayerList.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>firstLayerIndex</td>
+<td>Index (base 0) into the LayerList.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em> An 8-bit value is used for numLayers to minimize size for common scenarios. If more than 256 layers are needed, then two or more PaintColrLayers tables can be combined in a tree using a PaintComposite table or another PaintColrLayers table to combine them.</p>
+</blockquote>
+<h4 id="formats-2-and-3-paintsolid-paintvarsolid">Formats 2 and 3: PaintSolid, PaintVarSolid</h4>
+<p>Formats 2 and 3 are used to specify a solid color fill. Format 3 allows for variation of alpha in a variable font; format 2 provides a more compact representation when variation is not required. Format 3 must not be used in non-variable fonts or if the COLR table does not have an ItemVariationStore subtable.</p>
+<p>For general information about specifying color values, see <a href="#colors-and-solid-color-fills" data-linktype="self-bookmark">Colors and solid color fills</a>. For information about applying a fill to a shape, see <a href="#filling-shapes" data-linktype="self-bookmark">Filling shapes</a>.</p>
+<p><em>PaintSolid table (format 2):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 2.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>paletteIndex</td>
+<td>Index for a CPAL palette entry.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>alpha</td>
+<td>Alpha value.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintVarSolid table (format 3):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 3.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>paletteIndex</td>
+<td>Index for a CPAL palette entry.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>alpha</td>
+<td>Alpha value. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p>The PaintVarSolid format uses a base/sequence scheme to index into mapping data. Also, applying variation deltas to an F2DOT14 value requires special handling. See <a href="#colr-table-and-opentype-font-variations" data-linktype="self-bookmark">COLR table and OpenType Font Variations</a> for details.</p>
+<h4 id="formats-4-and-5-paintlineargradient-paintvarlineargradient">Formats 4 and 5: PaintLinearGradient, PaintVarLinearGradient</h4>
+<p>Formats 4 and 5 are used to specify a linear gradient fill. Format 5 allows for variation of color stop positions or of alpha in a variable font; format 4 provides a more compact representation when variation is not required. Format 5 must not be used in non-variable fonts or if the COLR table does not have an ItemVariationStore subtable.</p>
+<p>For general information about linear gradients, see <a href="#linear-gradients" data-linktype="self-bookmark">Linear gradients</a>. For information about applying a fill to a shape, see <a href="#filling-shapes" data-linktype="self-bookmark">Filling shapes</a>.</p>
+<p>The PaintLinearGradient and PaintVarLinearGradient tables have a ColorLine and VarColorLine subtable, respectively. For the ColorLine and VarColorLine table formats, see <a href="#color-references-colorstop-and-colorline" data-linktype="self-bookmark">Color references, ColorStop and ColorLine</a>. For background information on the color line, see <a href="#color-lines" data-linktype="self-bookmark">Color lines</a>.</p>
+<p><em>PaintLinearGradient table (format 4):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 4.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>colorLineOffset</td>
+<td>Offset to ColorLine table, from beginning of PaintLinearGradient table.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>x0</td>
+<td>Start point (p₀) x coordinate.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>y0</td>
+<td>Start point (p₀) y coordinate.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>x1</td>
+<td>End point (p₁) x coordinate.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>y1</td>
+<td>End point (p₁) y coordinate.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>x2</td>
+<td>Rotation point (p₂) x coordinate.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>y2</td>
+<td>Rotation point (p₂) y coordinate.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintVarLinearGradient table (format 5):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 5.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>colorLineOffset</td>
+<td>Offset to VarColorLine table, from beginning of PaintVarLinearGradient table.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>x0</td>
+<td>Start point (p₀) x coordinate. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>y0</td>
+<td>Start point (p₀) y coordinate. For variation, use varIndexBase + 1.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>x1</td>
+<td>End point (p₁) x coordinate. For variation, use varIndexBase + 2.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>y1</td>
+<td>End point (p₁) y coordinate. For variation, use varIndexBase + 3.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>x2</td>
+<td>Rotation point (p₂) x coordinate. For variation, use varIndexBase + 4.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>y2</td>
+<td>Rotation point (p₂) y coordinate. For variation, use varIndexBase + 5.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p>The PaintVarLinearGradient format uses a base/sequence scheme to index into mapping data. See <a href="#colr-table-and-opentype-font-variations" data-linktype="self-bookmark">COLR table and OpenType Font Variations</a> for details.</p>
+<h4 id="formats-6-and-7-paintradialgradient-paintvarradialgradient">Formats 6 and 7: PaintRadialGradient, PaintVarRadialGradient</h4>
+<p>Formats 6 and 7 are used to specify a radial gradient fill. Format 7 allows for variation of color stop positions or of alpha in a variable font; format 6 provides a more compact representation when variation is not required. Format 7 must not be used in non-variable fonts or if the COLR table does not have an ItemVariationStore subtable.</p>
+<p>For general information about radial gradients supported in COLR version 1, see <a href="#radial-gradients" data-linktype="self-bookmark">Radial gradients</a>. For information about applying a fill to a shape, see <a href="#filling-shapes" data-linktype="self-bookmark">Filling shapes</a>.</p>
+<p>The PaintRadialGradient and PaintVarRadialGradient tables have a ColorLine and VarColorLine subtable, respectively. For the ColorLine and VarColorLine table formats, see <a href="#color-references-colorstop-and-colorline" data-linktype="self-bookmark">Color references, ColorStop and ColorLine</a>. For background information on the color line, see <a href="#color-lines" data-linktype="self-bookmark">Color lines</a>.</p>
+<p><em>PaintRadialGradient table (format 6):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 6.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>colorLineOffset</td>
+<td>Offset to ColorLine table, from beginning of PaintRadialGradient table.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>x0</td>
+<td>Start circle center x coordinate.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>y0</td>
+<td>Start circle center y coordinate.</td>
+</tr>
+<tr>
+<td>UFWORD</td>
+<td>radius0</td>
+<td>Start circle radius.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>x1</td>
+<td>End circle center x coordinate.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>y1</td>
+<td>End circle center y coordinate.</td>
+</tr>
+<tr>
+<td>UFWORD</td>
+<td>radius1</td>
+<td>End circle radius.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintVarRadialGradient table (format 7):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 7.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>colorLineOffset</td>
+<td>Offset to VarColorLine table, from beginning of PaintVarRadialGradient table.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>x0</td>
+<td>Start circle center x coordinate. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>y0</td>
+<td>Start circle center y coordinate. For variation, use varIndexBase + 1.</td>
+</tr>
+<tr>
+<td>UFWORD</td>
+<td>radius0</td>
+<td>Start circle radius. For variation, use varIndexBase + 2.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>x1</td>
+<td>End circle center x coordinate. For variation, use varIndexBase + 3.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>y1</td>
+<td>End circle center y coordinate. For variation, use varIndexBase + 4.</td>
+</tr>
+<tr>
+<td>UFWORD</td>
+<td>radius1</td>
+<td>End circle radius. For variation, use varIndexBase + 5.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p>The PaintVarRadialGradient format uses a base/sequence scheme to index into mapping data. See <a href="#colr-table-and-opentype-font-variations" data-linktype="self-bookmark">COLR table and OpenType Font Variations</a> for details.</p>
+<h3 id="formats-8-and-9-paintsweepgradient-paintvarsweepgradient">Formats 8 and 9: PaintSweepGradient, PaintVarSweepGradient</h3>
+<p>Formats 8 and 9 are used to specify a sweep gradient fill. Format 9 allows for variation of color stop positions or of alpha in a variable font; format 8 provides a more compact representation when variation is not required. Format 9 must not be used in non-variable fonts or if the COLR table does not have an ItemVariationStore subtable.</p>
+<p>For general information about sweep gradients, see <a href="#sweep-gradients" data-linktype="self-bookmark">Sweep gradients</a>. For information about applying a fill to a shape, see <a href="#filling-shapes" data-linktype="self-bookmark">Filling shapes</a>.</p>
+<p>The PaintSweepGradient and PaintVarSweepGradient table have a ColorLine and VarColorLine subtable, respectively. For the ColorLine and VarColorLine table formats, see <a href="#color-references-colorstop-and-colorline" data-linktype="self-bookmark">Color references, ColorStop and ColorLine</a>. For background information on the color line, see <a href="#color-lines" data-linktype="self-bookmark">Color lines</a>.</p>
+<p><em>PaintSweepGradient table (format 8):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 8.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>colorLineOffset</td>
+<td>Offset to ColorLine table, from beginning of PaintSweepGradient table.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerX</td>
+<td>Center x coordinate.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerY</td>
+<td>Center y coordinate.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>startAngle</td>
+<td>Start of the angular range of the gradient: add 1.0 and multiply by 180° to retrieve counter-clockwise degrees.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>endAngle</td>
+<td>End of the angular range of the gradient: add 1.0 and multiply by 180° to retrieve counter-clockwise degrees.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintVarSweepGradient table (format 9):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 9.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>colorLineOffset</td>
+<td>Offset to VarColorLine table, from beginning of PaintVarSweepGradient table.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerX</td>
+<td>Center x coordinate. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerY</td>
+<td>Center y coordinate. For variation, use varIndexBase + 1.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>startAngle</td>
+<td>Start of the angular range of the gradient: add 1.0 and multiply by 180° to retrieve counter-clockwise degrees. For variation, use varIndexBase + 2.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>endAngle</td>
+<td>End of the angular range of the gradient: add 1.0 and multiply by 180° to retrieve counter-clockwise degrees. For variation, use varIndexBase + 3.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p>The PaintVarSweepGradient format uses a base/sequence scheme to index into mapping data. Also, applying variation deltas to an F2DOT14 value requires special handling. See <a href="#colr-table-and-opentype-font-variations" data-linktype="self-bookmark">COLR table and OpenType Font Variations</a> for details.</p>
+<p>Angles are expressed in counter-clockwise degrees from the direction of the positive x-axis in the design grid.</p>
+<blockquote>
+<p><em>Note:</em> To allow for a representation of +360°, a bias of 1.0 is used in the representation of start and end angles of sweep gradients. For example, an F2DOT14 value of -2.0 (0x8000) represents -180°; an F2DOT14 value of 0.0 (0x0000) represents +180°; an F2DOT14 value of 0.25 (0x1000) represents +225°; an F2DOT14 value of 1.0 (0x4000) represents +360°. However, a bias is not used for representation of angles in <a href="#formats-24-to-27-paintrotate-paintvarrotate-paintrotatearoundcenter-paintvarrotatearoundcenter" data-linktype="self-bookmark">rotate</a> or <a href="#formats-28-to-31-paintskew-paintvarskew-paintskewaroundcenter-paintvarskewaroundcenter" data-linktype="self-bookmark">skew</a> transforms.</p>
+</blockquote>
+<h4 id="format-10-paintglyph">Format 10: PaintGlyph</h4>
+<p>Format 10 is used to specify a glyph outline to use as a shape to be filled or, equivalently, a clip region. The outline sets a clip region that constrains the content of a separate paint subtable and the sub-graph linked from that subtable.</p>
+<p>For information about applying a fill to a shape, see <a href="#filling-shapes" data-linktype="self-bookmark">Filling shapes</a>.</p>
+<p><em>PaintGlyph table (format 10):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 10.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint table, from beginning of PaintGlyph table.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>glyphID</td>
+<td>Glyph ID for the source outline.</td>
+</tr>
+</tbody>
+</table>
+<p>The glyphID value must be less than the numGlyphs value in the <a href="maxp.html" data-linktype="relative-path">'maxp'</a> table. That is, it must be a valid glyph with outline data in the <a href="glyf.html" data-linktype="relative-path">'glyf'</a>, <a href="cff.html" data-linktype="relative-path">'CFF '</a> or <a href="cff2.html" data-linktype="relative-path">CFF2</a> table. Only that outline data is used. In particular, if this glyph ID has a description in the COLR table (glyphID appears in a COLR BaseGlyph record or the BaseGlyphList), that COLR data is not relevant for purposes of the PaintGlyph table.</p>
+<h4 id="format-11-paintcolrglyph">Format 11: PaintColrGlyph</h4>
+<p>Format 11 is used to allow a color glyph definition from the BaseGlyphList to be a re-usable component that can be incorporated into multiple color glyph definitions. See <a href="#re-use-using-paintcolrglyph" data-linktype="self-bookmark">Re-use using PaintColrGlyph</a> for more information.</p>
+<p><em>PaintColrGlyph table (format 11):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 11.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>glyphID</td>
+<td>Glyph ID for a BaseGlyphList base glyph.</td>
+</tr>
+</tbody>
+</table>
+<p>The glyphID value must be a glyphID found in a BaseGlyphPaintRecord within the BaseGlyphList. The BaseGlyphPaintRecord provides an offset to a paint table; that paint table and the graph linked from it are incorporated as a child sub-graph of the PaintColrGlyph table within the current color glyph definition.</p>
+<h4 id="formats-12-and-13-painttransform-paintvartransform">Formats 12 and 13: PaintTransform, PaintVarTransform</h4>
+<p>Formats 12 and 13 are used to apply an affine transformation to a sub-graph. The paint table that is the root of the sub-graph is linked as a child.</p>
+<p>Format 13 allows for variation of the transformation in a variable font; format 12 provides a more compact representation when variation is not required. Format 13 must not be used in non-variable fonts or if the COLR table does not have an ItemVariationStore subtable.</p>
+<p>For general information regarding transformations in a color glyph definition, see <a href="#transformations" data-linktype="self-bookmark">Transformations</a>.</p>
+<p><em>PaintTransform table (format 12):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 12.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintTransform table.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>transformOffset</td>
+<td>Offset to an Affine2x3 table, from beginning of PaintTransform table.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintVarTransform table (format 13):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 13.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintVarTransform table.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>transformOffset</td>
+<td>Offset to a VarAffine2x3 table, from beginning of PaintVarTransform table.</td>
+</tr>
+</tbody>
+</table>
+<p>The affine transformation is defined by a 2×3 matrix, specified in an Affine2x3 or VarAffine2x3 table. The 2×3 matrix supports scale, skew, reflection, rotation, and translation transformations. The VarAffine2x3 table supports mapping into variation data, allowing the transform definition to be variable in a variable font.</p>
+<p><em>Affine2x3 table:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fixed</td>
+<td>xx</td>
+<td>x-component of transformed x-basis vector.</td>
+</tr>
+<tr>
+<td>Fixed</td>
+<td>yx</td>
+<td>y-component of transformed x-basis vector.</td>
+</tr>
+<tr>
+<td>Fixed</td>
+<td>xy</td>
+<td>x-component of transformed y-basis vector.</td>
+</tr>
+<tr>
+<td>Fixed</td>
+<td>yy</td>
+<td>y-component of transformed y-basis vector.</td>
+</tr>
+<tr>
+<td>Fixed</td>
+<td>dx</td>
+<td>Translation in x direction.</td>
+</tr>
+<tr>
+<td>Fixed</td>
+<td>dy</td>
+<td>Translation in y direction.</td>
+</tr>
+</tbody>
+</table>
+<p><em>VarAffine2x3 table:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fixed</td>
+<td>xx</td>
+<td>x-component of transformed x-basis vector. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>Fixed</td>
+<td>yx</td>
+<td>y-component of transformed x-basis vector. For variation, use varIndexBase + 1.</td>
+</tr>
+<tr>
+<td>Fixed</td>
+<td>xy</td>
+<td>x-component of transformed y-basis vector. For variation, use varIndexBase + 2.</td>
+</tr>
+<tr>
+<td>Fixed</td>
+<td>yy</td>
+<td>y-component of transformed y-basis vector. For variation, use varIndexBase + 3.</td>
+</tr>
+<tr>
+<td>Fixed</td>
+<td>dx</td>
+<td>Translation in x direction. For variation, use varIndexBase + 4.</td>
+</tr>
+<tr>
+<td>Fixed</td>
+<td>dy</td>
+<td>Translation in y direction. For variation, use varIndexBase + 5.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p>The VarAffine2x3 format uses a base/sequence scheme to index into mapping data. Also, applying variation deltas to a Fixed value requires special handling. See <a href="#colr-table-and-opentype-font-variations" data-linktype="self-bookmark">COLR table and OpenType Font Variations</a> for details.</p>
+<p>For a pre-transformation position <em>(x, y)</em>, the post-transformation position <em>(x′, y′)</em> is calculated as follows:</p>
+<p><em>x′</em> = <em>xx * x + xy * y + dx</em><br>
+<em>y′</em> = <em>yx * x + yy * y + dy</em></p>
+<blockquote>
+<p><em>Note:</em> It is helpful to understand linear transformations by their effect on <em>x-</em> and <em>y-basis</em> vectors <em>î = (1, 0)</em> and <em>ĵ = (0, 1)</em>. The transform described by the Affine2x3 or VarAffine2x3 table maps the basis vectors to <em>î′ = (xx, yx)</em> and <em>ĵ′ = (xy, yy)</em>, and translates the origin to <em>(dx, dy)</em>.</p>
+</blockquote>
+<p>When the transformed composition from the referenced paint table (and its sub-graph) is composed into the destination (represented by the parent of this table), the source design grid origin is aligned to the destination design grid origin. The transform can translate the source such that a pre-transform position (0,0) is moved elsewhere. The <em>post-transform</em> origin, (0,0), is aligned to the destination origin.</p>
+<h4 id="formats-14-and-15-painttranslate-paintvartranslate">Formats 14 and 15: PaintTranslate, PaintVarTranslate</h4>
+<p>Formats 14 and 15 are used to apply a translation to a sub-graph. The paint table that is the root of the sub-graph is linked as a child.</p>
+<p>Format 15 allows for variation of the translation in a variable font; format 14 provides a more compact representation when variation is not required. Format 15 must not be used in non-variable fonts or if the COLR table does not have an ItemVariationStore subtable.</p>
+<p>These tables use reduced precision for compactness. Where higher precision is required use PaintTransform/PaintVarTransform.</p>
+<p>For general information regarding transformations in a color glyph definition, see <a href="#transformations" data-linktype="self-bookmark">Transformations</a>.</p>
+<p><em>PaintTranslate table (format 14):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 14.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintTranslate table.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>dx</td>
+<td>Translation in x direction.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>dy</td>
+<td>Translation in y direction.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintVarTranslate table (format 15):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 15.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintVarTranslate table.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>dx</td>
+<td>Translation in x direction. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>dy</td>
+<td>Translation in y direction. For variation, use varIndexBase + 1.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p>The PaintVarTranslate format uses a base/sequence scheme to index into mapping data. See <a href="#colr-table-and-opentype-font-variations" data-linktype="self-bookmark">COLR table and OpenType Font Variations</a> for details.</p>
+<blockquote>
+<p><em>Note:</em> Pure translation can also be represented using the PaintTransform or PaintVarTransform table by setting <em>xx</em> = 1, <em>yy</em> = 1, <em>xy</em> and <em>yx</em> = 0, and setting <em>dx</em> and <em>dy</em> to the translation values. The PaintTranslate or PaintVarTranslate table provides a more compact representation when only translation is required.</p>
+</blockquote>
+<p>The translation will result in the pre-transform position (0,0) being moved elsewhere. See <a href="#formats-12-and-13-painttransform-paintvartransform" data-linktype="self-bookmark">Formats 12 and 13: PaintTransform, PaintVarTransform</a> regarding alignment of the transformed content with the destination.</p>
+<h4 id="formats-16-to-23-paintscale-and-variant-scaling-formats">Formats 16 to 23: PaintScale and variant scaling formats</h4>
+<p>Formats 16 to 23 are used to scale a sub-graph. The paint table that is the root of the sub-graph is linked as a child. Several variant formats are provided:</p>
+<ul>
+<li><p>Formats 16 and 17: scale in x or y directions relative to the origin. Format 17 allows for variation of the x and y scale factors in a variable font; format 16 provides a more compact representation when variation is not required.</p>
+</li>
+<li><p>Formats 18 and 19: scale in x or y directions relative to a specified center. Format 19 allows for variation of the x and y scale factors or of the center position; format 18 provides a more compact representation when variation is not required.</p>
+</li>
+<li><p>Formats 20 and 21: scale uniformly in x and y directions relative to the origin. Format 21 allows for variation of the scale factor in a variable font; format 20 provides a more compact representation when variation is not required.</p>
+</li>
+<li><p>Formats 22 and 23: scale uniformly in x and y directions relative to a specified center. Format 23 allows for variation of the scale factor or of the center position; format 22 provides a more compact representation when variation is not required.</p>
+</li>
+</ul>
+<p>Formats 17, 19, 21 and 23 must not be used in non-variable fonts or if the COLR table does not have an ItemVariationStore subtable.</p>
+<p>These tables use reduced precision for compactness. Where higher precision is required use PaintTransform/PaintVarTransform.</p>
+<p>For general information regarding transformations in a color glyph definition, see <a href="#transformations" data-linktype="self-bookmark">Transformations</a>.</p>
+<p><em>PaintScale table (format 16):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 16.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintScale table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>scaleX</td>
+<td>Scale factor in x direction.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>scaleY</td>
+<td>Scale factor in y direction.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintVarScale table (format 17):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 17.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintVarScale table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>scaleX</td>
+<td>Scale factor in x direction. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>scaleY</td>
+<td>Scale factor in y direction. For variation, use varIndexBase + 1.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintScaleAroundCenter table (format 18):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 18.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintScaleAroundCenter table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>scaleX</td>
+<td>Scale factor in x direction.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>scaleY</td>
+<td>Scale factor in y direction.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerX</td>
+<td>x coordinate for the center of scaling.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerY</td>
+<td>y coordinate for the center of scaling.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintVarScaleAroundCenter table (format 19):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 19.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintVarScaleAroundCenter table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>scaleX</td>
+<td>Scale factor in x direction. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>scaleY</td>
+<td>Scale factor in y direction. For variation, use varIndexBase + 1.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerX</td>
+<td>x coordinate for the center of scaling. For variation, use varIndexBase + 2.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerY</td>
+<td>y coordinate for the center of scaling. For variation, use varIndexBase + 3.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintScaleUniform table (format 20):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 20.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintScaleUniform table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>scale</td>
+<td>Scale factor in x and y directions.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintVarScaleUniform table (format 21):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 21.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintVarScaleUniform table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>scale</td>
+<td>Scale factor in x and y directions. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintScaleUniformAroundCenter table (format 22):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 22.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintScaleUniformAroundCenter table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>scale</td>
+<td>Scale factor in x and y directions.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerX</td>
+<td>x coordinate for the center of scaling.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerY</td>
+<td>y coordinate for the center of scaling.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintVarScaleUniformAroundCenter table (format 23):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 23.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintVarScaleUniformAroundCenter table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>scale</td>
+<td>Scale factor in x and y directions. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerX</td>
+<td>x coordinate for the center of scaling. For variation, use varIndexBase + 1.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerY</td>
+<td>y coordinate for the center of scaling. For variation, use varIndexBase + 2.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p>The PaintVarScale, PaintVarScaleAroundCenter, PaintVarScaleUniform, and PaintVarScaleUniformAroundCenter formats use a base/sequence scheme to index into mapping data. Also, applying variation deltas to an F2DOT14 value requires special handling. See <a href="#colr-table-and-opentype-font-variations" data-linktype="self-bookmark">COLR table and OpenType Font Variations</a> for details.</p>
+<blockquote>
+<p><em>Note:</em> Pure scaling can also be represented using the PaintTransform or PaintVarTransform table. For scaling about the origin, this could be done by setting xx and yy to x and y scale factors, and setting xy, yx, dx and dy = 0. The PaintScale table and variants provide more compact representation when only scaling is required.</p>
+</blockquote>
+<h4 id="formats-24-to-27-paintrotate-paintvarrotate-paintrotatearoundcenter-paintvarrotatearoundcenter">Formats 24 to 27: PaintRotate, PaintVarRotate, PaintRotateAroundCenter, PaintVarRotateAroundCenter</h4>
+<p>Formats 24 to 27 are used to apply a rotation to a sub-graph. The paint table that is the root of the sub-graph is linked as a child. The amount of rotation is expressed directly as an angle, using a floating-point value where 1.0 represents an angle of 180°.</p>
+<p>Formats 24 and 25 apply rotations using the origin as the center of rotation. Format 25 allows for variation of the rotation in a variable font; format 24 provides a more compact representation when variation is not required.</p>
+<p>Formats 26 and 27 apply rotations around a specified center of rotation. Format 27 allows for variation of the rotation or of the position of the center of rotation in a variable font; format 26 provides a more compact representation when variation is not required.</p>
+<p>Formats 25 and 27 must not be used in non-variable fonts or if the COLR table does not have an ItemVariationStore subtable.</p>
+<p>These tables use reduced precision for compactness. Where higher precision is required use PaintTransform/PaintVarTransform.</p>
+<p>For general information regarding transformations in a color glyph definition, see <a href="#transformations" data-linktype="self-bookmark">Transformations</a>.</p>
+<p><em>PaintRotate table (format 24):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 24.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintRotate table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>angle</td>
+<td>Rotation angle, 180° in counter-clockwise degrees per 1.0 of value.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintVarRotate table (format 25):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 25.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintVarRotate table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>angle</td>
+<td>Rotation angle, 180° in counter-clockwise degrees per 1.0 of value. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintRotateAroundCenter table (format 26):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 26.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintRotateAroundCenter table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>angle</td>
+<td>Rotation angle, 180° in counter-clockwise degrees per 1.0 of value.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerX</td>
+<td>x coordinate for the center of rotation.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerY</td>
+<td>y coordinate for the center of rotation.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintVarRotateAroundCenter table (format 27):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 27.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintVarRotateAroundCenter table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>angle</td>
+<td>Rotation angle, 180° in counter-clockwise degrees per 1.0 of value. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerX</td>
+<td>x coordinate for the center of rotation. For variation, use varIndexBase + 1.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerY</td>
+<td>y coordinate for the center of rotation. For variation, use varIndexBase + 2.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p>The PaintVarRotate and PaintVarRotateAroundCenter formats use a base/sequence scheme to index into mapping data. Also, applying variation deltas to an F2DOT14 value requires special handling. See <a href="#colr-table-and-opentype-font-variations" data-linktype="self-bookmark">COLR table and OpenType Font Variations</a> for details.</p>
+<blockquote>
+<p><em>Note:</em> Pure rotation about a point can also be represented using the PaintTransform or PaintVarTransform table. For rotation about the origin, this could be done by setting matrix values as follows for angle θ:</p>
+<ul>
+<li><em>xx</em> = cos(θ)</li>
+<li><em>yx</em> = sin(θ)</li>
+<li><em>xy</em> = -sin(θ)</li>
+<li><em>yy</em> = cos(θ)</li>
+<li><em>dx</em> = <em>dy</em> = 0</li>
+</ul>
+</blockquote>
+<p>The important distinction of the PaintRotate table and its variants is in allowing an angle to be specified directly in degrees, rather than as changes to basis vectors. In variable fonts, if a rotation angle needs to vary, it is easier to get smooth variation if an angle is specified directly than when using trigonometric functions to derive matrix elements.</p>
+<blockquote>
+<p><em>Note:</em> The rotation angle is represented using an F2DOT14 value, which supports values in the range [-2, 2). Since each 1.0 unit represents a change of 180°, rotation angles of [-360, 360) can be represented directly. Variations of the rotation angle are not limited to that range, however.</p>
+</blockquote>
+<blockquote>
+<p><em>Note:</em> If representation of rotation directly as an angle is preferred but higher precision is required to specify a center of rotation, a chained sequence of transforms can be used. For example, a PaintTransform can be used to align the origin to the desired center of rotation, then PaintRotate can be used for the desired rotation, and a second PaintTransform can be used to reset the origin.</p>
+</blockquote>
+<p>When combining the transform effect of a PaintRotate table (or variants) with other transforms, the result must be the same as if the rotation were represented using an equivalent matrix or sequence of matrices.</p>
+<p>A rotation can result in the pre-transform position (0, 0) being moved elsewhere. See <a href="#formats-12-and-13-painttransform-paintvartransform" data-linktype="self-bookmark">Formats 12 and 13: PaintTransform, PaintVarTransform</a> regarding alignment of the transformed content with the destination.</p>
+<h4 id="formats-28-to-31-paintskew-paintvarskew-paintskewaroundcenter-paintvarskewaroundcenter">Formats 28 to 31: PaintSkew, PaintVarSkew, PaintSkewAroundCenter, PaintVarSkewAroundCenter</h4>
+<p>Formats 28 to 31 are used to apply a skew to a sub-graph. The paint table that is the root of the sub-graph is linked as a child. The amounts of skew in the x or y direction are expressed directly as angles, using floating-point values where 1.0 represents an angle of 180°.</p>
+<p>Formats 28 and 29 apply skews using the origin as the center of rotation for the skew. Format 29 allows for variation of the rotation in a variable font; format 28 provides a more compact representation when variation is not required.</p>
+<p>Formats 30 and 31 apply skews around a specified center of rotation. Format 31 allows for variation of the rotation or of the position of the center of rotation in a variable font; format 30 provides a more compact representation when variation is not required.</p>
+<p>Formats 29 and 31 must not be used in non-variable fonts or if the COLR table does not have an ItemVariationStore subtable.</p>
+<p>These tables use reduced precision for compactness. Where higher precision is required use PaintTransform/PaintVarTransform.</p>
+<p>For general information regarding transformations in a color glyph definition, see <a href="#transformations" data-linktype="self-bookmark">Transformations</a>.</p>
+<p><em>PaintSkew table (format 28):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 28.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintSkew table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>xSkewAngle</td>
+<td>Angle of skew in the direction of the x-axis, 180° in counter-clockwise degrees per 1.0 of value.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>ySkewAngle</td>
+<td>Angle of skew in the direction of the y-axis, 180° in counter-clockwise degrees per 1.0 of value.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintVarSkew table (format 29):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 29.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintVarSkew table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>xSkewAngle</td>
+<td>Angle of skew in the direction of the x-axis, 180° in counter-clockwise degrees per 1.0 of value. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>ySkewAngle</td>
+<td>Angle of skew in the direction of the y-axis, 180° in counter-clockwise degrees per 1.0 of value. For variation, use varIndexBase + 1.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintSkewAroundCenter table (format 30):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 30.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintSkewAroundCenter table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>xSkewAngle</td>
+<td>Angle of skew in the direction of the x-axis, 180° in counter-clockwise degrees per 1.0 of value.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>ySkewAngle</td>
+<td>Angle of skew in the direction of the y-axis, 180° in counter-clockwise degrees per 1.0 of value.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerX</td>
+<td>x coordinate for the center of rotation.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerY</td>
+<td>y coordinate for the center of rotation.</td>
+</tr>
+</tbody>
+</table>
+<p><em>PaintVarSkewAroundCenter table (format 31):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 31.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>paintOffset</td>
+<td>Offset to a Paint subtable, from beginning of PaintVarSkewAroundCenter table.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>xSkewAngle</td>
+<td>Angle of skew in the direction of the x-axis, 180° in counter-clockwise degrees per 1.0 of value. For variation, use varIndexBase + 0.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>ySkewAngle</td>
+<td>Angle of skew in the direction of the y-axis, 180° in counter-clockwise degrees per 1.0 of value. For variation, use varIndexBase + 1.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerX</td>
+<td>x coordinate for the center of rotation. For variation, use varIndexBase + 2.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>centerY</td>
+<td>y coordinate for the center of rotation. For variation, use varIndexBase + 3.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>varIndexBase</td>
+<td>Base index into DeltaSetIndexMap.</td>
+</tr>
+</tbody>
+</table>
+<p>The PaintVarSkew and PaintVarSkewAroundCenter formats use a base/sequence scheme to index into mapping data. Also, applying variation deltas to an F2DOT14 value requires special handling. See <a href="#colr-table-and-opentype-font-variations" data-linktype="self-bookmark">COLR table and OpenType Font Variations</a> for details.</p>
+<blockquote>
+<p><em>Note:</em> Pure skews about a point can also be represented using the PaintTransform or PaintVarTransform table. For skews about the origin, this could be done by setting matrix values as follows for <em>x</em> skew angle φ and <em>y</em> skew angle ψ:</p>
+<ul>
+<li><em>xx</em> = <em>yy</em> = 1</li>
+<li><em>yx</em> = tan(ψ)</li>
+<li><em>xy</em> = -tan(φ)</li>
+<li><em>dx</em> = <em>dy</em> = 0</li>
+</ul>
+</blockquote>
+<p>The important distinction of the PaintSkew table and its variants is in being able to specify skew as an angle, rather than as changes to basis vectors. In variable fonts, if a skew angle needs to vary, it is easier to get smooth variation if an angle is specified directly than when using trigonometric functions to derive matrix elements.</p>
+<blockquote>
+<p><em>Note:</em> The skew angles are represented using F2DOT14 values, which support values in the range [-2, 2). Since each 1.0 unit represents a change of 180°, skew angles of [-360, 360) can be represented directly. Variations of the skew angle are not limited to that range, however.</p>
+</blockquote>
+<blockquote>
+<p><em>Note:</em> If representation of skew directly as an angle is preferred but higher precision is required to specify a center of rotation, a chained sequence of transforms can be used. For example, a PaintTransform can be used to align the origin to the desired center of rotation, then PaintSkew can be used for the desired skew rotation, and a second PaintTransform can be used to reset the origin.</p>
+</blockquote>
+<p>When combining the transform effect of a PaintSkew table (or variants) with other transforms, the result must be the same as if the skew were represented using an equivalent matrix or sequence of matrices.</p>
+<p>A skew can result in the pre-transform position (0, 0) being moved elsewhere. See <a href="#formats-12-and-13-painttransform-paintvartransform" data-linktype="self-bookmark">Formats 12 and 13: PaintTransform, PaintVarTransform</a> regarding alignment of the transformed content with the destination.</p>
+<h4 id="format-32-paintcomposite">Format 32: PaintComposite</h4>
+<p>Format 32 is used to combine two layered compositions, referred to as <em>source</em> and <em>backdrop</em>, using different compositing or blending modes. The available compositing and blending modes are defined in an enumeration. For general information and examples, see <a href="#compositing-and-blending" data-linktype="self-bookmark">Compositing and blending</a>.</p>
+<blockquote>
+<p><em>Note:</em> The backdrop is also referred to as the “destination”.</p>
+</blockquote>
+<p><em>PaintComposite table (format 32):</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 32.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>sourcePaintOffset</td>
+<td>Offset to a source Paint table, from beginning of PaintComposite table.</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>compositeMode</td>
+<td>A CompositeMode enumeration value.</td>
+</tr>
+<tr>
+<td>Offset24</td>
+<td>backdropPaintOffset</td>
+<td>Offset to a backdrop Paint table, from beginning of PaintComposite table.</td>
+</tr>
+</tbody>
+</table>
+<p>The compositeMode value must be one of the values defined in the CompositeMode enumeration, which are taken from the W3C <a href="https://www.w3.org/TR/compositing-1/" data-linktype="external">Compositing and Blending Level 1</a> specification. Details on each mode, including specifications of the required calculations using pixel color and alpha values, are provided in that specification. If an unrecognized value is encountered, COMPOSITE_CLEAR must be used.</p>
+<p><em>CompositeMode enumeration:</em></p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td><em>Porter-Duff modes</em></td>
+<td></td>
+</tr>
+<tr>
+<td>0</td>
+<td>COMPOSITE_CLEAR</td>
+<td>Clear</td>
+</tr>
+<tr>
+<td>1</td>
+<td>COMPOSITE_SRC</td>
+<td>Source (“Copy” in Composition &amp; Blending Level 1)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>COMPOSITE_DEST</td>
+<td>Destination</td>
+</tr>
+<tr>
+<td>3</td>
+<td>COMPOSITE_SRC_OVER</td>
+<td>Source Over</td>
+</tr>
+<tr>
+<td>4</td>
+<td>COMPOSITE_DEST_OVER</td>
+<td>Destination Over</td>
+</tr>
+<tr>
+<td>5</td>
+<td>COMPOSITE_SRC_IN</td>
+<td>Source In</td>
+</tr>
+<tr>
+<td>6</td>
+<td>COMPOSITE_DEST_IN</td>
+<td>Destination In</td>
+</tr>
+<tr>
+<td>7</td>
+<td>COMPOSITE_SRC_OUT</td>
+<td>Source Out</td>
+</tr>
+<tr>
+<td>8</td>
+<td>COMPOSITE_DEST_OUT</td>
+<td>Destination Out</td>
+</tr>
+<tr>
+<td>9</td>
+<td>COMPOSITE_SRC_ATOP</td>
+<td>Source Atop</td>
+</tr>
+<tr>
+<td>10</td>
+<td>COMPOSITE_DEST_ATOP</td>
+<td>Destination Atop</td>
+</tr>
+<tr>
+<td>11</td>
+<td>COMPOSITE_XOR</td>
+<td>XOR</td>
+</tr>
+<tr>
+<td>12</td>
+<td>COMPOSITE_PLUS</td>
+<td>Plus (“Lighter” in Composition &amp; Blending Level 1)</td>
+</tr>
+<tr>
+<td></td>
+<td><em>Separable color blend modes:</em></td>
+<td></td>
+</tr>
+<tr>
+<td>13</td>
+<td>COMPOSITE_SCREEN</td>
+<td>screen</td>
+</tr>
+<tr>
+<td>14</td>
+<td>COMPOSITE_OVERLAY</td>
+<td>overlay</td>
+</tr>
+<tr>
+<td>15</td>
+<td>COMPOSITE_DARKEN</td>
+<td>darken</td>
+</tr>
+<tr>
+<td>16</td>
+<td>COMPOSITE_LIGHTEN</td>
+<td>lighten</td>
+</tr>
+<tr>
+<td>17</td>
+<td>COMPOSITE_COLOR_DODGE</td>
+<td>color-dodge</td>
+</tr>
+<tr>
+<td>18</td>
+<td>COMPOSITE_COLOR_BURN</td>
+<td>color-burn</td>
+</tr>
+<tr>
+<td>19</td>
+<td>COMPOSITE_HARD_LIGHT</td>
+<td>hard-light</td>
+</tr>
+<tr>
+<td>20</td>
+<td>COMPOSITE_SOFT_LIGHT</td>
+<td>soft-light</td>
+</tr>
+<tr>
+<td>21</td>
+<td>COMPOSITE_DIFFERENCE</td>
+<td>difference</td>
+</tr>
+<tr>
+<td>22</td>
+<td>COMPOSITE_EXCLUSION</td>
+<td>exclusion</td>
+</tr>
+<tr>
+<td>23</td>
+<td>COMPOSITE_MULTIPLY</td>
+<td>multiply</td>
+</tr>
+<tr>
+<td></td>
+<td><em>Non-separable color blend modes:</em></td>
+<td></td>
+</tr>
+<tr>
+<td>24</td>
+<td>COMPOSITE_HSL_HUE</td>
+<td>hue</td>
+</tr>
+<tr>
+<td>25</td>
+<td>COMPOSITE_HSL_SATURATION</td>
+<td>saturation</td>
+</tr>
+<tr>
+<td>26</td>
+<td>COMPOSITE_HSL_COLOR</td>
+<td>color</td>
+</tr>
+<tr>
+<td>27</td>
+<td>COMPOSITE_HSL_LUMINOSITY</td>
+<td>luminosity</td>
+</tr>
+</tbody>
+</table>
+<p>The graphic compositions are defined by the source and backdrop paint tables and their respective sub-graphs. Conceptually, they are rendered into bitmaps, and the source is composited or blended into the backdrop using the specified composite mode.</p>
+<p>While color values obtained from the CPAL table are represented in sRGB using the non-linear transfer function defined in the sRGB specification, the compositing and blending calculations are done after applying the inverse transfer function to derive linear-light RGB values. For more information regarding the non-linear and linear-light representations for sRGB, see <a href="cpal.html#interpolation-of-colors" data-linktype="relative-path">Interpolation of Colors</a> in the CPAL table chapter.</p>
+<p>As mentioned above (see <a href="#metrics-and-boundedness-of-color-glyphs-using-version-1-formats" data-linktype="self-bookmark">Metrics and boundedness of color glyphs using version 1 formats</a>), a color glyph definition must be bounded. A sub-graph that has PaintComposite as its root is either bounded or unbounded, depending on the mode used and the boundedness of the source and backdrop sub-graphs. For each mode, boundedness is determined by the boundedness of the source and backdrop as follows:</p>
+<ul>
+<li>Always bounded:
+<ul>
+<li>COMPOSITE_CLEAR</li>
+</ul>
+</li>
+<li>Bounded <em>if and only if</em> the source is bounded:
+<ul>
+<li>COMPOSITE_SRC</li>
+<li>COMPOSITE_SRC_OUT</li>
+</ul>
+</li>
+<li>Bounded <em>if and only if</em> the backdrop is bounded:
+<ul>
+<li>COMPOSITE_DEST</li>
+<li>COMPOSITE_DEST_OUT</li>
+</ul>
+</li>
+<li>Bounded <em>if and only if</em> either the source <em>or</em> backdrop is bounded:
+<ul>
+<li>COMPOSITE_SRC_IN</li>
+<li>COMPOSITE_DEST_IN</li>
+</ul>
+</li>
+<li>Bounded <em>if and only if</em> both the source <em>and</em> backdrop are bounded:
+<ul>
+<li>All other modes</li>
+</ul>
+</li>
+</ul>
+<h2 id="colr-version-1-rendering-algorithm">COLR version 1 rendering algorithm</h2>
+<p>The various graphic concepts represented by COLR version 1 formats were individually described in the <a href="#graphic-compositions" data-linktype="self-bookmark">Graphic Compositions</a> section, and the various formats were described in the <a href="#colr-table-formats" data-linktype="self-bookmark">COLR table formats</a> section. Together, these provide most of the necessary details regarding how a color glyph is rendered. The following provides a comprehensive description of the rendering process, considering the graph as a whole.</p>
+<p>The following algorithm can be used to render color glyphs defined using version 1 formats. Applications are not required to implement rendering using this algorithm, but must produce equivalent results.</p>
+<blockquote>
+<p><em>Note:</em> Checks for well-formedness and validity, as described in the <a href="#color-glyphs-as-a-directed-acyclic-graph" data-linktype="self-bookmark">Color glyphs as a directed acyclic graph</a> section, are not repeated here. Actual implementations can integrate such checks with rendering processing.</p>
+</blockquote>
+<ol>
+<li>Start with an initial drawing surface. As mentioned above (see <a href="#metrics-and-boundedness-of-color-glyphs-using-version-1-formats" data-linktype="self-bookmark">Metrics and boundedness of color glyphs using version 1 formats</a>), if a clip box is provided, it can be used to determine the size. Otherwise, the graph can be traversed to compute a required size.</li>
+<li>Traverse the graph of a color glyph definition, starting with the root paint table referenced by a BaseGlyphPaintRecord, using the following pseudo-code function.</li>
+</ol>
+<pre><code>// render a paint table and its sub-graph
+function renderPaint(paint)
+
+    if format 1: // PaintColrLayers
+        for each referenced child paint table, in bottom-up z-order:
+            // for ordering, see Layering; Format 1: PaintColrLayers
+            call renderPaint() passing the child paint table
+
+            compose the returned graphic onto the surface using simple
+            alpha blending
+
+    if format 2 or 3: // PaintSolid, PaintVarSolid
+        paint the specified color onto the surface
+
+    if format 4, 5, 6, 7, 8 or 9:
+        // PaintLinearGradient, PaintVarLinearGradient
+        // PaintRadialGradient, PaintVarRadialGradient
+        // PaintSweepGradient, PaintVarSweepGradient
+        paint the gradient onto the surface following the gradient
+        algorithm
+
+    if format 10: // PaintGlyph
+        apply the outline of the referenced glyph to the clip region
+            // take the intersection of clip regions—see Filling shapes
+
+        call renderPaint() passing the child paint table
+
+        restore the previous clip region
+
+    if format 11: // PaintColrGlyph
+        call renderPaint() passing the paint table referenced by the base
+        glyph ID
+
+    if format 12 to 31:
+        // PaintTransform, PaintVarTransform
+        // PaintTranslate, PaintVarTranslate
+        // PaintScale*, PaintVarScale*
+        // PaintRotate*, PaintVarRotate*
+        // PaintSkew*, PaintVarSkew*
+        apply the specified transform
+            // compose the transform with the current transform state—see
+            // Transformations
+        
+        call renderPaint() passing the child paint table
+        
+        restore the previous transform state
+
+    if format 32: // PaintComposite
+
+        // render backdrop sub-graph
+        call renderPaint() passing the backdrop child paint table and save
+        the result
+
+        // render source sub-graph
+        call renderPaint() passing the source child paint table and save
+        the result
+
+        // compose source and backdrop
+        compose the source and backdrop using the specified composite mode
+
+        // compose final result
+        compose the result of the above composition onto the surface using
+        simple alpha blending
+</code></pre>
+<h2 id="colr-table-and-opentype-font-variations">COLR table and OpenType Font Variations</h2>
+<p>The COLR table can be used in variable fonts. For color glyphs defined using version 0 formats, the glyph outlines can be variable, but no other aspect of the color glyph is variable. For color glyphs defined using version 1 formats, items that can be variable include the glyph outlines plus other aspects of the color glyph definition:</p>
+<ul>
+<li>Alpha values</li>
+<li>Color stop offsets in gradient color lines</li>
+<li>Placement of gradients onto the design grid</li>
+<li>The arguments of transformations (matrix elements, angles, etc.)</li>
+</ul>
+<p>Variation data is provided in an <a href="otvarcommonformats.html#item-variation-store" data-linktype="relative-path">ItemVariationStore</a> table contained within the COLR table.</p>
+<p>In a variable font, each value within the COLR version 1 formats that is variable needs to be associated with corresponding variation data (delta sets) in the item variation store. This is done using a DeltaSetIndexMap table (see <a href="otvarcommonformats.html#associating-target-items-to-variation-data" data-linktype="relative-path">Associating target items to variation data</a>). The delta-set index mapping table contains an array of entries that provide indices mapping into sets of delta data in the item variation store. Each variable item in the COLR table is given an index (base 0) into the mapping data. For example, if a variable item in the COLR table is given an index value of 5, the sixth entry in the mapping data is used to index into the item variation store.</p>
+<p>The indices for variable items in the COLR table are indicated using a base/sequence scheme. Each table or record that contains variable items will use a contiguous sequence of entries in the mapping array, and will include a <em>varIndexBase</em> field that indicates the first entry in the mapping array to be used. The variable fields within that table or record use entries in the mapping array, starting with the <em>varIndexBase</em> entry, in the order the fields occur in the table or record.</p>
+<p>For example, the <a href="#formats-12-and-13-painttransform-paintvartransform" data-linktype="self-bookmark">VarAffine2x3 table</a> has six variable fields followed by the varIndexBase field. For the first variable field (<em>xx</em>), <em>varIndexBase + 0</em> is used as the index into the mapping array; for the second variable field (<em>yx</em>), <em>varIndexBase + 1</em> is used as the index into the mapping array; and so on.</p>
+<p>If the index for a variable item is greater than or equal to the number of entries in the mapping array, the last mapping array entry must be used.</p>
+<p>The sequence of indices derived from a <em>varIndexBase</em> value do not wrap on overflow and must not exceed 0xFFFFFFFF. A <em>varIndexBase</em> value of 0xFFFFFFFF is assigned a special meaning indicating that the variable fields in the given table or record do not have variation data.</p>
+<p>Similarly, a delta-set index mapping entry with values 0xFFFF/0xFFFF can be used to indicate that an item has no variation data. (See the <a href="otvarcommonformats.html#variation-data" data-linktype="relative-path">Variation Data</a> section of the OpenType Font Variations Common Table Formats chapter.)</p>
+<p>If the COLR table does not contain an ItemVariationStore subtable, the <em>varIndexBase</em> field of variation tables or records must be ignored by applications and should be set to zero.</p>
+<p>If the COLR table contains an item variation store but does not contain a mapping table (varIndexMapOffset in the COLR header is NULL), then an implicit identity mapping is used: the sequence of values beginning with <em>varIndexBase</em> are treated directly as delta-set indices with 16-bit sub-fields for <em>outer</em> (high word) and <em>inner</em> (low word) index values. (See the <a href="otvarcommonformats.html#variation-data" data-linktype="relative-path">Variation Data</a> section of the OpenType Font Variations Common Table Formats chapter for more information regarding delta set indices.)</p>
+<p>For variable fonts that use COLR version 1 formats, special considerations apply to the effect of variation on the bounding box. See <a href="#metrics-and-boundedness-of-color-glyphs-using-version-1-formats" data-linktype="self-bookmark">Metrics and boundedness of color glyphs using version 1 formats</a> for details. Also, special considerations apply for color lines and for radial gradients. See <a href="#color-lines" data-linktype="self-bookmark">Color lines</a> and <a href="#radial-gradients" data-linktype="self-bookmark">Radial gradients</a> for details.</p>
+<p>Some COLR version 1 formats allow for variation deltas to be applied to F2DOT14 or Fixed values. While the F2DOT14 and Fixed types have fractional components, variation deltas are integer values. Applying deltas to F2DOT14 or Fixed values requires special handling in which these values are treated like integers. See the <a href="otvarcommonformats.html#item-variation-store-header-and-item-variation-data-subtables" data-linktype="relative-path">Item Variation Store Header and Item Variation Data Subtables</a> section of the OpenType Font Variations Common Table Formats chapter for details.</p>
+<p>For general information on OpenType font variations, see <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+
+</body>
+</html>

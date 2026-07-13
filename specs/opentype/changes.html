@@ -1,0 +1,3440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>changes — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/changes">https://learn.microsoft.com/en-us/typography/opentype/spec/changes</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="opentype-specification-change-log">OpenType Specification Change Log</h1>
+<p><a id="v1.9.1"></a></p>
+<h2 id="version-191">Version 1.9.1</h2>
+<p>Released May 2024</p>
+<p>Structure or field names were revised in <a href="base.html" data-linktype="relative-path">base</a>, <a href="chapter2.html" data-linktype="relative-path">chapter2</a>, <a href="cff2.html" data-linktype="relative-path">cff2</a>, <a href="cmap.html" data-linktype="relative-path">cmap</a>, <a href="eblc.html" data-linktype="relative-path">eblc</a>, <a href="gdef.html" data-linktype="relative-path">gdef</a>, <a href="gpos.html" data-linktype="relative-path">gpos</a>, <a href="hmtx.html" data-linktype="relative-path">hmtx</a>, and <a href="jstf.html" data-linktype="relative-path">jstf</a> chapters; see below for details.</p>
+<p>Minor editorial changes (not detailed below) were made in the following chapters: <a href="avar.html" data-linktype="relative-path">avar</a>, <a href="base.html" data-linktype="relative-path">base</a>, <a href="baselinetags" data-linktype="relative-path">baselinetags</a>, <a href="cbdt.html" data-linktype="relative-path">cbdt</a>, <a href="cblc.html" data-linktype="relative-path">cblc</a>, <a href="cff.html" data-linktype="relative-path">cff</a>, <a href="chapter2.html" data-linktype="relative-path">chapter2</a>, <a href="cmap.html" data-linktype="relative-path">cmap</a>, <a href="colr.html" data-linktype="relative-path">colr</a>, <a href="cpal.html" data-linktype="relative-path">cpal</a>, <a href="cvt.html" data-linktype="relative-path">cvt</a>, <a href="dsig.html" data-linktype="relative-path">dsig</a>, <a href="dvaraxisreg.html" data-linktype="relative-path">dvaraxisreg</a>, <a href="ebdt.html" data-linktype="relative-path">ebdt</a>, <a href="eblc.html" data-linktype="relative-path">eblc</a>, <a href="ebsc.html" data-linktype="relative-path">ebsc</a>, <a href="featurelist" data-linktype="relative-path">featurelist</a>, <a href="features_ae" data-linktype="relative-path">features_ae</a>, <a href="features_fj" data-linktype="relative-path">features_fj</a>, <a href="features_ko" data-linktype="relative-path">features_ko</a>, <a href="features_pt" data-linktype="relative-path">features_pt</a>, <a href="features_uz" data-linktype="relative-path">features_uz</a>, <a href="featuretags" data-linktype="relative-path">featuretags</a>, <a href="fpgm.html" data-linktype="relative-path">fpgm</a>, <a href="fvar.html" data-linktype="relative-path">fvar</a>, <a href="gasp.html" data-linktype="relative-path">gasp</a>, <a href="gdef.html" data-linktype="relative-path">gdef</a>, <a href="glyf.html" data-linktype="relative-path">glyf</a>, <a href="gpos.html" data-linktype="relative-path">gpos</a>, <a href="gsub.html" data-linktype="relative-path">gsub</a>, <a href="gvar.html" data-linktype="relative-path">gvar</a>, <a href="hdmx.html" data-linktype="relative-path">hdmx</a>, <a href="head.html" data-linktype="relative-path">head</a>, <a href="hhea.html" data-linktype="relative-path">hhea</a>, <a href="hvar.html" data-linktype="relative-path">hvar</a>, <a href="ibmfc" data-linktype="relative-path">ibmfc</a>, <a href="jstf.html" data-linktype="relative-path">jstf</a>, <a href="kern.html" data-linktype="relative-path">kern</a>, <a href="languagetags" data-linktype="relative-path">languagetags</a>, <a href="loca.html" data-linktype="relative-path">loca</a>, <a href="ltsh.html" data-linktype="relative-path">ltsh</a>, <a href="math.html" data-linktype="relative-path">math</a>, <a href="merg.html" data-linktype="relative-path">merg</a>, <a href="meta.html" data-linktype="relative-path">meta</a>, <a href="mvar.html" data-linktype="relative-path">mvar</a>, <a href="name.html" data-linktype="relative-path">name</a>, <a href="os2.html" data-linktype="relative-path">os2</a>, <a href="otff.html" data-linktype="relative-path">otff</a>, <a href="otvarcommonformats.html" data-linktype="relative-path">otvarcommonformats</a>, <a href="otvaroverview.html" data-linktype="relative-path">otvaroverview</a>, <a href="overview.html" data-linktype="relative-path">overview</a>, <a href="pclt.html" data-linktype="relative-path">pclt</a>, <a href="post.html" data-linktype="relative-path">post</a>, <a href="prep.html" data-linktype="relative-path">prep</a>, <a href="recom.html" data-linktype="relative-path">recom</a>, <a href="sbix.html" data-linktype="relative-path">sbix</a>, <a href="scripttags" data-linktype="relative-path">scripttags</a>, <a href="stat.html" data-linktype="relative-path">stat</a>, <a href="svg.html" data-linktype="relative-path">svg</a>, <a href="tt_instructing_glyphs.html" data-linktype="relative-path">tt_instructing_glyphs</a>, <a href="tt_instructions.html" data-linktype="relative-path">tt_instructions</a>, <a href="ttch01.html" data-linktype="relative-path">ttch01</a>, <a href="ttochap1.html" data-linktype="relative-path">ttochap1</a>, <a href="ttoreg.html" data-linktype="relative-path">ttoreg</a>, <a href="vdmx.html" data-linktype="relative-path">vdmx</a>, <a href="vmtx.html" data-linktype="relative-path">vmtx</a>, <a href="vorg.html" data-linktype="relative-path">vorg</a>, <a href="vvar.html" data-linktype="relative-path">vvar</a>.</p>
+<p><em>Summary of changes:</em></p>
+<ul>
+<li><p><a href="base.html" data-linktype="relative-path">base</a></p>
+<ul>
+<li>Changed structure names:
+<ul>
+<li>“FeatMinMaxRecord” to “FeatMinMax”</li>
+<li>“BaseLangSysRecord” to “BaseLangSys”</li>
+</ul>
+</li>
+<li>Changed field names:
+<ul>
+<li>FeatMinMax record: “featureTableTag” to “featureTag”</li>
+<li>BaseCoord tables: “baseCoordFormat” to “format”</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><a href="cblc.html" data-linktype="relative-path">cblc</a></p>
+<ul>
+<li>Changed field names:
+<ul>
+<li>BitmapSize record: “indexSubTableArrayOffset” to “indexSubtableListOffset”</li>
+<li>BitmapSize record: “indexTablesSize” to “indexSubtableListSize”</li>
+<li>BitmapSize record: “numberOfIndexSubTables” to “numberOfIndexSubtables”</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><a href="cff2.html" data-linktype="relative-path">cff2</a></p>
+<ul>
+<li>This chapter underwent significant editorial revision.</li>
+<li>Changed structure, field and operator names:
+<ul>
+<li>“FDArray” to “FontDICTINDEX”</li>
+<li>“FDSelect” to “FontDICTSelect”</li>
+<li>“Variation Store” to “VariationStore”</li>
+<li>“Top DICT” to “TopDICT”</li>
+<li>“TopDictLength” to “TopDICTLength”</li>
+<li>“Font DICT” to “FontDICT”</li>
+<li>“Private DICT” to “PrivateDICT”</li>
+<li>“Global Subr INDEX” to “GlobalSubrINDEX”</li>
+<li>“CharString INDEX” to “CharStringINDEX”</li>
+<li>“delta” to “deltaArray”</li>
+<li>“vstore” to “VariationStoreOffset”</li>
+<li>INDEX “offSize” to “offsetSize”</li>
+<li>INDEX “offset” array to “offsets”</li>
+<li>FontDICTSelect: “fds” to “fontDictIDs”</li>
+<li>FontDICTSelect format 3: “range3” array to “ranges”</li>
+<li>FontDICTSelect formats 3, 4: “nRanges” to “numRanges”</li>
+<li>FontDICTSelect format 4: “range4” array to “ranges”</li>
+<li>Range3, Range4: “fd” to “fontDictID”</li>
+</ul>
+</li>
+<li>Changed type of INDEX <em>offsetSize</em> field to uint8.</li>
+<li>Changed the types used for INDEX offsets to <em>Offset8</em>, <em>Offset16</em>, etc.</li>
+<li>Changed stack notation conventions.</li>
+<li>Added PrivateDICT hinting operator descriptions (based on Adobe Type 1 Font Format).</li>
+<li>Added section describing dependencies on other font tables.</li>
+<li>Differences between CFF and CFF2 moved to a new appendix (<a href="glyphformatcomparison.html" data-linktype="relative-path">glyphformatcomparison</a>).</li>
+<li>Incorporated the content of CFF2 Charstrings chapter into this chapter.</li>
+<li>Clarified interaction between blending and stem or edge hint encoding using <strong>hstemhm</strong> and similar operators; and between blending and stem width values specified using <strong>StdHW</strong> and similar operators.</li>
+<li>Corrected the note describing blending of <strong>StemSnapH</strong> and <strong>StemSnapV</strong> operands, and also the description of blended stem and edge hints and the relationsip between the encoded order of stems and <strong>cntrmask</strong> and <strong>hintmask</strong> bitflags (post-release erratum).</li>
+</ul>
+</li>
+<li><p>cff2charstr</p>
+<ul>
+<li>Content of this chapter was incorporated into the CFF chapter, and this appendex was deleted.</li>
+</ul>
+</li>
+<li><p><a href="chapter2.html" data-linktype="relative-path">chapter2</a></p>
+<ul>
+<li>Changed structure and field names:
+<ul>
+<li>ClassDefFormat1: “classValueArray” to “classValues”</li>
+<li>“ClassRangeRecord” to “ClassRange”</li>
+<li>“SequenceLookupRecord” to “SequenceLookup”</li>
+<li>Coverage tables: “coverageFormat” to “format”</li>
+<li>ClassDef tables: “classFormat” to “format”</li>
+</ul>
+</li>
+<li>Changed lookup flag name “MARK_ATTACHMENT_TYPE_MASK” to “MARK_ATTACHMENT_CLASS_FILTER”.</li>
+<li>Clarified processing of a Lookup table with multiple subtables.</li>
+<li>SequenceRuleSet table: corrected reference to field for the size of the seqRuleOffsets[] array (post-release erratum).</li>
+</ul>
+</li>
+<li><p><a href="cmap.html" data-linktype="relative-path">cmap</a></p>
+<ul>
+<li>Clarify the modulo arithmetic for idDelta in Format 2 and Format 4.</li>
+<li>For Format 4, correct the description of the entrySelector field.</li>
+<li>For Format 4, revert array name to idRangeOffset.</li>
+<li>For Format 4, correct the entrySelector value in the second example.</li>
+</ul>
+</li>
+<li><p><a href="colr.html" data-linktype="relative-path">colr</a></p>
+<ul>
+<li>Removed obsoleted references to ColorIndex and VarColorIndex records (proposed in preliminary design but not used in final design).</li>
+<li>Clarified handling of alpha with palette entries that reference text foreground color.</li>
+<li>Added clarifications regarding color stop ordering, and provided possible implementation workaround for platforms that limit the range of color stop offsets.</li>
+<li>Clarified behavior for different extend modes when all stops have the same offset.</li>
+<li>Clarified radial gradient behavior when variation deltas result in a circle with negative radius, and provided possible implementation workaround for platforms that require non-negative radii.</li>
+<li>Revised description of sweep gradients and the interpretation of their data representation.</li>
+<li>Added clarifications about applying variation deltas to F2DOT14 or Fixed values.</li>
+<li>Replaced the generic description of offset reference for subtable offsets with specific details in description of each structure containing subtable offsets.</li>
+</ul>
+</li>
+<li><p><a href="dvaraxisreg.html" data-linktype="relative-path">dvaraxisreg</a></p>
+<ul>
+<li>Use title case for axis names.</li>
+</ul>
+</li>
+<li><p><a href="dvaraxistag_opsz" data-linktype="relative-path">dvaraxistag_opsz</a></p>
+<ul>
+<li>Use title case for axis names.</li>
+</ul>
+</li>
+<li><p><a href="eblc.html" data-linktype="relative-path">eblc</a></p>
+<ul>
+<li>Changed structure and field names:
+<ul>
+<li>BitmapSize record: “indexSubTableArrayOffset” to “indexSubtableListOffset”</li>
+<li>BitmapSize record: “indexTablesSize” to “indexSubtableListSize”</li>
+<li>BitmapSize record: “numberOfIndexSubTables” to “numberOfIndexSubtables”</li>
+<li>“IndexSubTableArray” to “IndexSubtableList”</li>
+<li>“IndexSubTable1” to “IndexSubtableFormat1”</li>
+<li>“IndexSubTable2” to “IndexSubtableFormat2”</li>
+<li>“IndexSubTable3” to “IndexSubtableFormat3”</li>
+<li>“IndexSubTable4” to “IndexSubtableFormat4”</li>
+<li>“IndexSubTable5” to “IndexSubtableFormat5”</li>
+</ul>
+</li>
+<li>Provided a formal description for the IndexSubtableList (renamed from IndexSubtableArray).</li>
+<li>Clarified ordering requirements for indexSubtableRecords array.</li>
+</ul>
+</li>
+<li><p><a href="ebsc.html" data-linktype="relative-path">ebsc</a></p>
+<ul>
+<li>Description of the formats is revised to be consistent with other parts of the spec (array of fixed-size structures without offsets described as records).</li>
+</ul>
+</li>
+<li><p><a href="features_ae" data-linktype="relative-path">features_ae</a></p>
+<ul>
+<li>Added feature 'apkn'.</li>
+<li>Revised the descriptions for the 'aalt', 'chws', 'clig', 'cswh', 'cv01' – 'cv99', 'dlig' and 'expt' features.</li>
+</ul>
+</li>
+<li><p><a href="features_fj" data-linktype="relative-path">features_fj</a></p>
+<ul>
+<li>Corrected name for 'flac' feature.</li>
+<li>Revised the descriptions for the 'falt', 'fina', 'flac', 'fwid', 'halt', 'hkna', 'hngl', 'hwid', 'init', 'isol', 'jalt', 'jp78', 'jp83' and 'jp90' features.</li>
+</ul>
+</li>
+<li><p><a href="features_ko" data-linktype="relative-path">features_ko</a></p>
+<ul>
+<li>Revised the descriptions for the 'kern', 'liga', 'ljmo', 'lnum', 'locl', 'medi', 'mgrk', 'mset', 'numr' and 'ordn' features.</li>
+</ul>
+</li>
+<li><p><a href="features_pt" data-linktype="relative-path">features_pt</a></p>
+<ul>
+<li>Revised the descriptions for the 'palt', 'pcap', 'pkna', 'pwid', 'qwid', 'rclt', 'rvrn', 'size', 'smpl', 'ss01' – 'ss20', 'ssty', 'subs', 'sups', 'tjmo', 'tnam', 'trad' and 'twid' features.</li>
+<li>Clarified that stylistic set features may be used in the GPOS table, and may be used in combination with one another.</li>
+</ul>
+</li>
+<li><p><a href="features_uz" data-linktype="relative-path">features_uz</a></p>
+<ul>
+<li>Added feature 'vapk'.</li>
+<li>Revised the descriptions for the 'unic', 'valt', 'vchw', 'vert', 'vhal', 'vjmo', 'vkna', 'vkrn', 'vpal', 'vrt2', 'vrtr' and 'zero' features.</li>
+</ul>
+</li>
+<li><p><a href="fvar.html" data-linktype="relative-path">fvar</a></p>
+<ul>
+<li>Revised recommendation for instance record name IDs for the default instance.</li>
+<li>In the example 'fvar' table, corrected the axisSize field name.</li>
+</ul>
+</li>
+<li><p><a href="gdef.html" data-linktype="relative-path">gdef</a></p>
+<ul>
+<li>Change field names:
+<ul>
+<li>In CaretValue tables: “caretValueFormat” to “format”</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><a href="glyf.html" data-linktype="relative-path">glyf</a></p>
+<ul>
+<li>Clarified that a simple glyph with zero contours can have instructions but need not have any glyph data.</li>
+<li>Revised description of OVERLAP_SIMPLE to cover a broader range of implementations.</li>
+<li>A missing bracket was added in the pseudo code for processing component glyph records.</li>
+<li>Added details for the WE_HAVE_INSTRUCTIONS component flag.</li>
+</ul>
+</li>
+<li><p><a href="glyphformatcomparison.html" data-linktype="relative-path">glyphformatcomparison</a></p>
+<ul>
+<li>Added page.</li>
+</ul>
+</li>
+<li><p><a href="gpos.html" data-linktype="relative-path">gpos</a></p>
+<ul>
+<li>Changed structure and field names:
+<ul>
+<li>“PairValueRecord” to “PairValue”</li>
+<li>“Class1Record” to “Class1”</li>
+<li>“Class2Record” to “Class2”</li>
+<li>“EntryExitRecord” to “EntryExit”</li>
+<li>“Mark2Record” to “Mark2”</li>
+<li>“ExtensionPosFormat1” to “PosExtensionFormat1”</li>
+<li>multiple structures: “posFormat” to “format”</li>
+<li>CursivePosFormat1: “entryExitRecord” to “entryExitRecords”</li>
+<li>Anchor tables: “anchorFormat” to “format”</li>
+</ul>
+</li>
+<li>For Type 3, format 1, clarified that no adjustment is made if either entry or exit Anchor offset is NULL.</li>
+</ul>
+</li>
+<li><p><a href="gsub.html" data-linktype="relative-path">gsub</a></p>
+<ul>
+<li>Changed structure and field names:
+<ul>
+<li>“ExtensionSubstFormat1” to “SubstExtensionFormat1”</li>
+<li>multiple structures: “substFormat” to “format”</li>
+</ul>
+</li>
+<li>Clarified the modulo arithmetic for deltaGlyphID in SingleSubstFormat1.</li>
+</ul>
+</li>
+<li><p><a href="gvar.html" data-linktype="relative-path">gvar</a></p>
+<ul>
+<li>Corrected example for processing composite glyphs.</li>
+</ul>
+</li>
+<li><p><a href="head.html" data-linktype="relative-path">head</a></p>
+<ul>
+<li>Added clarification regarding flags bit 1.</li>
+</ul>
+</li>
+<li><p><a href="hmtx.html" data-linktype="relative-path">hmtx</a></p>
+<ul>
+<li>Change data types for font unit values to FWORD, UFWORD.</li>
+<li>Corrected casing of record name to LongHorMetrics.</li>
+</ul>
+</li>
+<li><p><a href="jstf.html" data-linktype="relative-path">jstf</a></p>
+<ul>
+<li>Consolidated JstfGSUBModList and JstfGPOSModList table formats into a common JstfModList table.</li>
+<li>Corrected field name in JstfModList table: “gsubLookupIndices” to “lookupIndices” (post-release erratum)</li>
+</ul>
+</li>
+<li><p><a href="kern.html" data-linktype="relative-path">kern</a></p>
+<ul>
+<li>Removed obsolete platform-specific details.</li>
+</ul>
+</li>
+<li><p><a href="languagetags" data-linktype="relative-path">languagetags</a></p>
+<ul>
+<li>Added 'AAQ ', 'ACY ', 'ATS ', 'BDC ', 'CAY ', 'CBG ', 'CMI ', 'COO ', 'CTO ', 'EMP ', 'HUR ', 'JDT ', 'KBC ', 'KJJ ', 'LIV ', 'MEV ', 'ONE ', 'ONO ', 'PLG0', 'SEE ', 'SJA ', 'STR ', 'TAQ ', 'TDC ', 'THP ', 'THV ', 'THZ ', 'TLY ', 'TTQ ', 'TUS ', 'UDI ', 'UPPH', 'WBL ', 'WDT ', 'WYN ', 'YUF '.</li>
+<li>Revised descriptions for 'BEL ', 'IRT ', 'SGA ', 'TMH '.</li>
+<li>Added BCP 47 info for APPH, IPPH, UPPH (post-release update).</li>
+<li>Updated BCP 47 info for CPP (post-release update).</li>
+<li>Added 'KGF ', 'KMG ', 'KSU ', 'KVQ ', 'LUT ', 'NOP ', 'NUK ', 'SJE ' , 'SJU ', 'TBV ' (post-release update).</li>
+</ul>
+</li>
+<li><p><a href="loca.html" data-linktype="relative-path">loca</a></p>
+<ul>
+<li>Removed recommendation that offsets be two-byte aligned.</li>
+</ul>
+</li>
+<li><p><a href="math.html" data-linktype="relative-path">math</a></p>
+<ul>
+<li>Changed structure and field names:
+<ul>
+<li>MathGlyphConstruction: “mathGlyphVariantRecord” to “mathGlyphVariantRecords”.</li>
+<li>“GlyphPartRecord” to “GlyphPart”.</li>
+</ul>
+</li>
+<li>Corrected description of spaceAfterScript.</li>
+<li>Corrected description of radicalDegreeBottomRaisePercent.</li>
+</ul>
+</li>
+<li><p><a href="meta.html" data-linktype="relative-path">meta</a></p>
+<ul>
+<li>Added clarifications regarding intended use of 'dlng' and 'slng'.</li>
+<li>Relaxed ScriptLangTag syntax to allow (but strongly discourage) a language subtag without a script subtag.</li>
+</ul>
+</li>
+<li><p><a href="name.html" data-linktype="relative-path">name</a></p>
+<ul>
+<li>Added clarifications regarding name ID 2 and interaction with OS/2.fsSelection style bits.</li>
+<li>Revised description of name ID 13.</li>
+<li>Corrected details regarding non-Unicode encoding IDs for platform 3.</li>
+<li>Replaced list of Macintosh language IDs with reference to Apple documentation.</li>
+<li>Replaced list of Windows language IDs with reference to external Microsoft documentation on language IDs.</li>
+</ul>
+</li>
+<li><p><a href="os2.html" data-linktype="relative-path">os2</a></p>
+<ul>
+<li>Change data types for font unit values to FWORD, UFWORD.</li>
+<li>Added note regarding some CJK fonts having unexpected xAvgCharWidth values.</li>
+<li>Added details related to use of int16 for ySubscriptXSize, ySubscriptYSize, ySuperscriptXSize, ySuperscriptYSize, yStrikeoutSize.</li>
+<li>Added clarifications for fsSelection bits, including relation between bit 8 and the STAT table.</li>
+</ul>
+</li>
+<li><p><a href="otff.html" data-linktype="relative-path">otff</a></p>
+<ul>
+<li>Corrected casing of TableRecord in TableDirectory.</li>
+<li>Added Offset8 in table of data types.</li>
+</ul>
+</li>
+<li><p><a href="otvaroverview.html" data-linktype="relative-path">otvaroverview</a></p>
+<ul>
+<li>Added clarification regarding rounding of calculated values.</li>
+<li>Clarified that supplemental deltas for corners of a design space are optional.</li>
+</ul>
+</li>
+<li><p><a href="otvarcommonformats.html" data-linktype="relative-path">otvarcommonformats</a></p>
+<ul>
+<li>Corrected calculation of size for delta-set index mapping entries.</li>
+<li>Clarify when variations of F2DOT14 values may need to be clamped.</li>
+</ul>
+</li>
+<li><p><a href="post.html" data-linktype="relative-path">post</a></p>
+<ul>
+<li>Clarified description of underlinePosition and its difference from the PostScript UnderlinePosition FontInfo key.</li>
+</ul>
+</li>
+<li><p><a href="prep.html" data-linktype="relative-path">prep</a></p>
+<ul>
+<li>Corrected details regarding when the CV program is executed.</li>
+</ul>
+</li>
+<li><p><a href="sbix.html" data-linktype="relative-path">sbix</a></p>
+<ul>
+<li>Clarified requirements related to graphicType = 'dupe' (“must”, not “should”).</li>
+</ul>
+</li>
+<li><p><a href="scripttags" data-linktype="relative-path">scripttags</a></p>
+<ul>
+<li>Added script tags for new scripts in Unicode 15.0 and Unicode 16.0.</li>
+<li>Clarified usage of the 'math' script tag.</li>
+<li>Added script tags for new scripts in Unicode 17.0 (post-release update).</li>
+</ul>
+</li>
+<li><p><a href="tt_instructions.html" data-linktype="relative-path">tt_instructions</a></p>
+<ul>
+<li>Corrected description of INSTCTRL.</li>
+</ul>
+</li>
+<li><p><a href="ttch01.html" data-linktype="relative-path">ttch01</a></p>
+<ul>
+<li>Added clarification on x-axis placement of design grid in relation to pen position.</li>
+</ul>
+</li>
+<li><p><a href="vhea.html" data-linktype="relative-path">vhea</a></p>
+<ul>
+<li>Change data type for advanceHeightMax to unsigned.</li>
+<li>Change data types for font unit values to FWORD, UFWORD.</li>
+</ul>
+</li>
+<li><p><a href="vorg.html" data-linktype="relative-path">vorg</a></p>
+<ul>
+<li>Clarified that VORG may be used with CFF2.</li>
+</ul>
+</li>
+<li><p><a href="vmtx.html" data-linktype="relative-path">vmtx</a></p>
+<ul>
+<li>Change data types for font unit values to FWORD, UFWORD.</li>
+</ul>
+</li>
+</ul>
+<p><a id="v1.9"></a></p>
+<h2 id="version-19">Version 1.9</h2>
+<p>Released December 2021</p>
+<p>Structure names were revised in <a href="../otspec190/chapter2" data-linktype="relative-path">chapter2</a> and <a href="../otspec190/fvar" data-linktype="relative-path">fvar</a> chapters; see below for details.</p>
+<p>Minor editorial changes (not detailed below) were made in the following chapters: <a href="../otspec190/chapter2" data-linktype="relative-path">chapter2</a>, <a href="../otspec190/cmap" data-linktype="relative-path">cmap</a>, <a href="../otspec190/dvaraxisreg" data-linktype="relative-path">dvaraxisreg</a>, <a href="../otspec190/featurelist" data-linktype="relative-path">featurelist</a>, <a href="../otspec190/features_ae" data-linktype="relative-path">features_ae</a>, <a href="../otspec190/glyf" data-linktype="relative-path">glyf</a>, <a href="../otspec190/gpos" data-linktype="relative-path">gpos</a>, <a href="../otspec190/gsub" data-linktype="relative-path">gsub</a>, <a href="../otspec190/gvar" data-linktype="relative-path">gvar</a>, <a href="../otspec190/hvar" data-linktype="relative-path">hvar</a>, <a href="../otspec190/" data-linktype="relative-path">index</a>, <a href="../otspec190/kern" data-linktype="relative-path">kern</a>, <a href="../otspec190/languagetags" data-linktype="relative-path">languagetags</a>, <a href="../otspec190/name" data-linktype="relative-path">name</a>, <a href="../otspec190/otvarcommonformats" data-linktype="relative-path">otvarcommonformats</a>, <a href="../otspec190/otvaroverview" data-linktype="relative-path">otvaroverview</a>, <a href="../otspec190/prep" data-linktype="relative-path">prep</a>, <a href="../otspec190/recom" data-linktype="relative-path">recom</a>, <a href="../otspec190/tt_instructions" data-linktype="relative-path">tt_instructions</a>, <a href="../otspec190/ttch01" data-linktype="relative-path">ttch01</a>.</p>
+<p><em>Summary of changes:</em></p>
+<ul>
+<li><p><a href="../otspec190/chapter2" data-linktype="relative-path">chapter2</a></p>
+<ul>
+<li>Changed spellings of field names of ConditionFormat1 table.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/cmap" data-linktype="relative-path">cmap</a></p>
+<ul>
+<li>For platform ID 0, encoding ID 3, removed suggestion of using format 0 subtable.</li>
+<li>Clarified requirements for UVSes in a format 14 subtable and entries in other 'cmap' Unicode subtables.</li>
+<li>Corrected description of the entrySelector field (post-release erratum).</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/colr" data-linktype="relative-path">colr</a></p>
+<ul>
+<li>Added version 1 header and related structures.</li>
+<li>Revised introductory sections and other editorial changes.</li>
+<li>Added recommendation against using bold or italic simulations.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/cpal" data-linktype="relative-path">cpal</a></p>
+<ul>
+<li>Added reference to CSS Color Module Level 4.</li>
+<li>Added section on interpolation of colors.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/features_ae" data-linktype="relative-path">features_ae</a></p>
+<ul>
+<li>Modified 'cv<em>XX</em>' description.</li>
+<li>Corrected use of non-preferred region / language / script name (post-release erratum).</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/features_fj" data-linktype="relative-path">features_fj</a></p>
+<ul>
+<li>Modified 'frac' feature description.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/features_ko" data-linktype="relative-path">features_ko</a></p>
+<ul>
+<li>Modified 'lfbd' feature description.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/features_pt" data-linktype="relative-path">features_pt</a></p>
+<ul>
+<li>Modified 'rtbd' feature description.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/fvar" data-linktype="relative-path">fvar</a></p>
+<ul>
+<li>Changed record name “Tuple” to “UserTuple”.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/glyf" data-linktype="relative-path">glyf</a></p>
+<ul>
+<li>Added remarks regarding glyph bounding rectangles in variable fonts.</li>
+<li>Clarified interpretation of X_SHORT_VECTOR and Y_SHORT_VECTOR flags.</li>
+<li>Clarified interpretation of the ARGS_ARE_XY_VALUES and ROUND_XY_TO_GRID component flags, and other aspects of composite glyph descriptions.</li>
+<li>Changed FWord and F2Dot14 to FWORD and F2DOT14.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/gpos" data-linktype="relative-path">gpos</a></p>
+<ul>
+<li>Clarified consistency requirement for extension subtables within a given Lookup table.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/gsub" data-linktype="relative-path">gsub</a></p>
+<ul>
+<li>Clarified consistency requirement for extension subtables within a given Lookup table.</li>
+<li>Corrected use of non-preferred region / language / script name (post-release erratum).</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/gvar" data-linktype="relative-path">gvar</a></p>
+<ul>
+<li>Corrected type in sharedTuples array to Tuple.</li>
+<li>Corrected spelling of GlyphVariationData and TupleVariationHeader.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/head" data-linktype="relative-path">head</a></p>
+<ul>
+<li>Clarified meaning of unitsPerEm, xMin, yMin, xMax and yMax values.</li>
+<li>Added remarks regarding glyph bounding rectangles in variable fonts.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/hvar" data-linktype="relative-path">hvar</a></p>
+<ul>
+<li>Moved description of the DeltaSetIndexMap to the OpenType Font Variations Common Table Formats chapter.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/languagetags" data-linktype="relative-path">languagetags</a></p>
+<ul>
+<li>Added information on how to request new language system tags.</li>
+<li>Added 'MONT', 'TJL '.</li>
+<li>Added 'INUK' (post-release update).</li>
+<li>Corrected entries for 'TUL ', 'TUM ' (post-release erratum).</li>
+<li>Corrected use of non-preferred region / language / script name (post-release erratum).</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/maxp" data-linktype="relative-path">maxp</a></p>
+<ul>
+<li>Added CFF2 as requiring version 0.5.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/meta" data-linktype="relative-path">meta</a></p>
+<ul>
+<li>Clarified that 'slng' value should be superset of 'dlng'.</li>
+<li>Fixed URL for BCP 47 (post-release erratum).</li>
+<li>Corrected use of non-preferred region / language / script name (post-release erratum).</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/name" data-linktype="relative-path">name</a></p>
+<ul>
+<li>Clarified encoding scheme for platform 0 strings.</li>
+<li>Added note regarding platform 3 and non-conforming legacy CJK fonts.</li>
+<li>Corrected use of non-preferred region / language / script name (post-release erratum).</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/os2" data-linktype="relative-path">os2</a></p>
+<ul>
+<li>Include details for legacy calculation of xAvgCharWidth in OS/2 versions 0 to 2 that were omitted since version 1.8.3.</li>
+<li>Corrected use of non-preferred region / language / script name (post-release erratum).</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/otff" data-linktype="relative-path">otff</a></p>
+<ul>
+<li>Added Offset24 type.</li>
+<li>Added clarifications regarding NULL subtable offsets.</li>
+<li>Added recommendation against duplicate tables.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/otvarcommonformats" data-linktype="relative-path">otvarcommonformats</a></p>
+<ul>
+<li>Added COLR as a table using variation data.</li>
+<li>Moved description of DeltaSetIndexMap from the HVAR chapter to this chapter. Sub-divided the <em>entryFormat</em> field into separate <em>format</em> and <em>entryFormat</em> fields, and added a format 1 DeltaSetIndexMap.</li>
+<li>Described application of deltas to F2DOT14, Fixed.</li>
+<li>Revised ItemVariationData subtable adding support for 32-bit deltas. Also changed field name “shortDeltaCount” to “wordDeltaCount”.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/otvaroverview" data-linktype="relative-path">otvaroverview</a></p>
+<ul>
+<li>Clarified that any aspect of appearance can vary in a variable font.</li>
+<li>Added details regarding integer bit depth in the algorithm for interpolation of instance values.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/post" data-linktype="relative-path">post</a></p>
+<ul>
+<li>Changed FWord to FWORD.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/recom" data-linktype="relative-path">recom</a></p>
+<ul>
+<li>Revised guidance for baseline-to-baseline distance.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/scripttags" data-linktype="relative-path">scripttags</a></p>
+<ul>
+<li>Added script tags for new scripts in Unicode 14.0.</li>
+<li>Added remarks regarding 'jamo' and 'mymr'.</li>
+<li>Corrected use of non-preferred region / language / script name (post-release erratum).</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/stat" data-linktype="relative-path">stat</a></p>
+<ul>
+<li>Emphasized recommendation to include axis value tables covering all named instances of a variable font.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/tt_graphics_state" data-linktype="relative-path">tt_graphics_state</a></p>
+<ul>
+<li>Fix incorrect names of instructions and zone pointers.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/tt_instructing_glyphs" data-linktype="relative-path">tt_instructing_glyphs</a></p>
+<ul>
+<li>Added clarification regarding unused distance type 3.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/tt_instructions" data-linktype="relative-path">tt_instructions</a>
+Clarified that FDEF and IDEF must not be invoked in glyph programs.</p>
+</li>
+<li><p><a href="../otspec190/ttch01" data-linktype="relative-path">ttch01</a></p>
+<ul>
+<li>Clarified when the interpreter stack is cleared.</li>
+<li>Clarified where functions and instructions can or cannot be defined or redefined, and the persistence of definitions.</li>
+<li>Clarified when the control value program is run and the relationship between the control value program, Control Value Table, and the 'cvt ' table.</li>
+<li>Clarified interaction between the control value program and Graphics State variables.</li>
+<li>Clarified interactions between zone 0 and the control value and glyph programs.</li>
+<li>Clarified use of the storage area by font, control value and glyph programs.</li>
+<li>Added section discussing persistence of storage or CVT values set in a glyph program and interaction with glyph caches.</li>
+<li>Clarified control of the scan converter mode using SCANCTRL.</li>
+</ul>
+</li>
+<li><p><a href="../otspec190/vvar" data-linktype="relative-path">vvar</a></p>
+<ul>
+<li>For description of the DeltaSetIndexMap, changed the cross-reference from the HVAR chapter to the OpenType Font Variations Common Table Formats chapter.</li>
+</ul>
+</li>
+</ul>
+<p><a id="v1.8.4"></a></p>
+<h2 id="version-184">Version 1.8.4</h2>
+<p>Released November 2020</p>
+<p>Names of tables, fields or flags in the following chapters were revised to conform to conventions used across this specification:</p>
+<ul>
+<li><a href="../otspec184/base" data-linktype="relative-path">base.htm</a>, <a href="../otspec184/chapter2" data-linktype="relative-path">chapter2.htm</a>, <a href="../otspec184/cmap" data-linktype="relative-path">cmap.htm</a>, <a href="../otspec184/colr" data-linktype="relative-path">colr.htm</a>, <a href="../otspec184/cpal" data-linktype="relative-path">cpal.htm</a>, <a href="../otspec184/dsig" data-linktype="relative-path">dsig.htm</a>, <a href="../otspec184/eblc" data-linktype="relative-path">eblc.htm</a>, <a href="../otspec184/gdef" data-linktype="relative-path">gdef.htm</a>, <a href="../otspec184/gpos" data-linktype="relative-path">gpos.htm</a>, <a href="../otspec184/gsub" data-linktype="relative-path">gsub.htm</a>, <a href="../otspec184/head" data-linktype="relative-path">head.htm</a>, <a href="../otspec184/jstf" data-linktype="relative-path">jstf.htm</a>, <a href="../otspec184/kern" data-linktype="relative-path">kern.htm</a>, <a href="../otspec184/math" data-linktype="relative-path">math.htm</a>, <a href="../otspec184/name" data-linktype="relative-path">name.htm</a>, <a href="../otspec184/otff" data-linktype="relative-path">otff.htm</a>, <a href="../otspec184/otvarcommonformats" data-linktype="relative-path">otvarcommonformats.htm</a>, <a href="../otspec184/svg" data-linktype="relative-path">svg.htm</a>, <a href="../otspec184/vdmx" data-linktype="relative-path">vdmx.htm</a>.</li>
+</ul>
+<p>These name changes are enumerated in detail below.</p>
+<p>References to “TrueType”, when this specification is intended, have been removed, changed to “OpenType”, or otherwise clarified in the following chapters: <a href="../otspec184/chapter2" data-linktype="relative-path">chapter2.htm</a>, <a href="../otspec184/dsig" data-linktype="relative-path">dsig.htm</a>, <a href="../otspec184/hvar" data-linktype="relative-path">hvar.htm</a>, <a href="../otspec184/otff" data-linktype="relative-path">otff.htm</a>, <a href="../otspec184/post" data-linktype="relative-path">post.htm</a>, <a href="../otspec184/recom" data-linktype="relative-path">recom.htm</a>, <a href="../otspec184/ttch01" data-linktype="relative-path">ttch01.htm</a>, <a href="../otspec184/vmtx" data-linktype="relative-path">vmtx.htm</a>, <a href="../otspec184/vorg" data-linktype="relative-path">vorg.htm</a>.</p>
+<p>Minor editorial changes (not detailed below) were made in the following chapters: <a href="../otspec184/avar" data-linktype="relative-path">avar.htm</a>, <a href="../otspec184/base" data-linktype="relative-path">base.htm</a>, <a href="../otspec184/baselinetags" data-linktype="relative-path">baselinetags.htm</a>, <a href="../otspec184/cff" data-linktype="relative-path">cff.htm</a>, <a href="../otspec184/cff2charstr" data-linktype="relative-path">cff2charstr.htm</a>, <a href="../otspec184/chapter2" data-linktype="relative-path">chapter2.htm</a>, <a href="../otspec184/cmap" data-linktype="relative-path">cmap.htm</a>, <a href="../otspec184/colr" data-linktype="relative-path">colr.htm</a>, <a href="../otspec184/cpal" data-linktype="relative-path">cpal.htm</a>, <a href="../otspec184/dsig" data-linktype="relative-path">dsig.htm</a>, <a href="../otspec184/dvaraxistag_ital" data-linktype="relative-path">dvaraxistag_ital.htm</a>, <a href="../otspec184/dvaraxistag_opsz" data-linktype="relative-path">dvaraxistag_opsz.htm</a>, <a href="../otspec184/dvaraxistag_slnt" data-linktype="relative-path">dvaraxistag_slnt.htm</a>, <a href="../otspec184/dvaraxistag_wdth" data-linktype="relative-path">dvaraxistag_wdth.htm</a>, <a href="../otspec184/dvaraxistag_wght" data-linktype="relative-path">dvaraxistag_wght.htm</a>, <a href="../otspec184/eblc" data-linktype="relative-path">eblc.htm</a>, <a href="../otspec184/featurelist" data-linktype="relative-path">featurelist.htm</a>, <a href="../otspec184/features_ae" data-linktype="relative-path">features_ae.htm</a>, <a href="../otspec184/features_fj" data-linktype="relative-path">features_fj.htm</a>, <a href="../otspec184/features_ko" data-linktype="relative-path">features_ko.htm</a>, <a href="../otspec184/features_pt" data-linktype="relative-path">features_pt.htm</a>, <a href="../otspec184/features_uz" data-linktype="relative-path">features_uz.htm</a>, <a href="../otspec184/featuretags" data-linktype="relative-path">featuretags.htm</a>, <a href="../otspec184/gdef" data-linktype="relative-path">gdef.htm</a>, <a href="../otspec184/gpos" data-linktype="relative-path">gpos.htm</a>, <a href="../otspec184/gsub" data-linktype="relative-path">gsub.htm</a>, <a href="../otspec184/gvar" data-linktype="relative-path">gvar.htm</a>, <a href="../otspec184/hdmx" data-linktype="relative-path">hdmx.htm</a>, <a href="../otspec184/head" data-linktype="relative-path">head.htm</a>, <a href="../otspec184/hvar" data-linktype="relative-path">hvar.htm</a>, <a href="../otspec184/" data-linktype="relative-path">index.htm</a>, <a href="../otspec184/languagetags" data-linktype="relative-path">languagetags.htm</a>, <a href="../otspec184/ltsh" data-linktype="relative-path">ltsh.htm</a>, <a href="../otspec184/math" data-linktype="relative-path">math.htm</a>, <a href="../otspec184/meta" data-linktype="relative-path">meta.htm</a>, <a href="../otspec184/otff" data-linktype="relative-path">otff.htm</a>, <a href="../otspec184/otvarcommonformats" data-linktype="relative-path">otvarcommonformats.htm</a>, <a href="../otspec184/post" data-linktype="relative-path">post.htm</a>, <a href="../otspec184/scripttags" data-linktype="relative-path">scripttags.htm</a>, <a href="../otspec184/stat" data-linktype="relative-path">stat.htm</a>, <a href="../otspec184/svg" data-linktype="relative-path">svg.htm</a>, <a href="../otspec184/tt_instructing_glyphs" data-linktype="relative-path">tt_instructing_glyphs.htm</a>, <a href="../otspec184/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>, <a href="../otspec184/ttch01" data-linktype="relative-path">ttch01.htm</a>, <a href="../otspec184/ttochap1" data-linktype="relative-path">ttochap1.htm</a>, <a href="../otspec184/ttoreg" data-linktype="relative-path">ttoreg.htm</a>, <a href="../otspec184/vhea" data-linktype="relative-path">vhea.htm</a>, <a href="../otspec184/vmtx" data-linktype="relative-path">vmtx.htm</a>, <a href="../otspec184/vorg" data-linktype="relative-path">vorg.htm</a>, <a href="../otspec184/vvar" data-linktype="relative-path">vvar.htm</a>.</p>
+<p><em>Summary of changes:</em></p>
+<ul>
+<li><p><a href="../otspec184/avar" data-linktype="relative-path">avar.htm</a></p>
+<ul>
+<li>Moved description of normalization process and example into <a href="../otspec184/otvaroverview" data-linktype="relative-path">otvaroverview.htm</a>.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/base" data-linktype="relative-path">base.htm</a></p>
+<ul>
+<li>Changed field names:
+<ul>
+<li>BaseValues table: “baseCoords” to “baseCoordOffsets”</li>
+<li>MinMax and FeatMinMax tables: “minCoord” to “minCoordOffset”</li>
+<li>MinMax and FeatMinMax tables: “maxCoord” to “maxCoordOffset”</li>
+<li>BaseCoordFormat3: “deviceTable” to “deviceOffset”</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/cbdt" data-linktype="relative-path">cbdt.htm</a></p>
+<ul>
+<li>Added descriptions of fields for BigGlyphMetrics, SmallGlyphMetrics.</li>
+<li>Changed characterization of BitmapSize from table to record.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/cblc" data-linktype="relative-path">cblc.htm</a></p>
+<ul>
+<li>Changed characterization of BitmapSize from table to record.</li>
+<li>Revised description of CBLC header to incorporate BitmapSize records array.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/cff2" data-linktype="relative-path">cff2.htm</a></p>
+<ul>
+<li>Added note to description of FDSelect Format 3 regarding the maximum glyph ID of 65534.</li>
+</ul>
+</li>
+<li><p>cffspec.htm</p>
+<ul>
+<li>Page removed. (The page only provided an external link, already in cff.htm.)</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/chapter2" data-linktype="relative-path">chapter2.htm</a></p>
+<ul>
+<li>Changed table name: “ConditionTableFormat1” to “ConditionFormat1” (table).</li>
+<li>Changed field names:
+<ul>
+<li>Script table: “defaultLangSys” to “defaultLangSysOffset”</li>
+<li>LangSys table: “lookupOrder” to “lookupOrderOffset”</li>
+<li>Feature table: “featureParams” to “featureParamsOffset”</li>
+<li>LookupList table: “lookups” to “lookupOffsets”</li>
+<li>ConditionSet Table: “conditions” to “conditionOffsets”</li>
+<li>FeatureTableSubstitutionRecord: “alternateFeatureTable” to “alternateFeatureOffset”</li>
+</ul>
+</li>
+<li>Changed LookupFlag names:
+<ul>
+<li>“rightToLeft” to “RIGHT_TO_LEFT”</li>
+<li>“ignoreBaseGlyphs” to “IGNORE_BASE_GLYPHS”</li>
+<li>“ignoreLigatures” to “IGNORE_LIGATURES”</li>
+<li>“ignoreMarks” to “IGNORE_MARKS”</li>
+<li>“useMarkFilteringSet” to “USE_MARK_FILTERING_SET”</li>
+<li>“markAttachmentType” to “MARK_ATTACHMENT_TYPE_MASK”</li>
+</ul>
+</li>
+<li>Added common formats for use in the GSUB and GPOS tables, replacing formats in GSUB and GPOS chapters that were identical but with different names:
+<ul>
+<li>SequenceContextFormat1, SequenceContextFormat2, SequenceContextFormat3, and associated subtables (replacing ContextSubstFormat1/ContextPosFormat1, etc.)</li>
+<li>ChainedSequenceContextFormat1, ChainedSequenceContextFormat2, ChainedSequenceContextFormat3, and associated subtables (replacing ChainContextSubstFormat1/ChainContextPosFormat1, etc.)</li>
+<li>SequenceLookupRecord (replacing SubstLookupRecord/PosLookupRecord)</li>
+</ul>
+</li>
+<li>Replaced Figure 2b with a clearer illustration of language system differences.</li>
+<li>Clarified optionality of features not referenced by the requiredFeatureIndex field of the LangSys table.</li>
+<li>Added note regarding GSUB features being processed by applications in stages.</li>
+<li>Added clarification regarding FeatureParams tables.</li>
+<li>Added clarification regarding general lookup processing, and regarding filtering lookup flags in relation to the first glyph in input sequences.</li>
+<li>In relation to contextual lookup types, added clarification regarding lookup flags in the main lookup table and in nested lookup tables.</li>
+<li>Corrected reference to GPOS type 8 lookups (post-release erratum).</li>
+<li>Corrected errors in data for Example 3.</li>
+</ul>
+</li>
+<li><p>charstr2.htm</p>
+<ul>
+<li>Page removed. (The page only provided an external link, already in cff.htm.)</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/cmap" data-linktype="relative-path">cmap.htm</a></p>
+<ul>
+<li>Changed field names:
+<ul>
+<li>EncodingRecord: “offset” to “subtableOffset”</li>
+<li>Format 2 subtable: “glyphIndexArray” to “glyphIdArray”</li>
+<li>Format 4 subtable: “idRangeOffset” to “idRangeOffsets”</li>
+<li>Format 10 subtable: “glyphs” to “glyphIdArray”</li>
+</ul>
+</li>
+<li>Added clarification regarding use of different formats.</li>
+<li>Added clarification regarding subtables being used exclusively.</li>
+<li>Changed guidance regarding the Macinthosh platform.</li>
+<li>Added details regarding the Unicode and ISO platforms (moved from the 'name' chapter).</li>
+<li>Revised description of encodings for the Windows platform.</li>
+<li>Revised description of the “Custom” platform (ID 4).</li>
+<li>Revised descriptions for formats 0, 2, 4, 6, 8, 10, 12, 14.</li>
+<li>In description of format 4, provided details regarding purpose of searchRange, entrySelector and rangeShift fields as well as recommendations for fonts and parsing. Also corrected glyph mapping example.</li>
+<li>Corrected description of the entrySelector field (post-release erratum, correction back-ported from version 1.9).</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/colr" data-linktype="relative-path">colr.htm</a></p>
+<ul>
+<li>In BaseGlyphRecord and LayerRecord, changed field names “gID” to “glyphId”.</li>
+<li>Changed general requirement regarding glyph ID 1 to a compatibility note.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/cpal" data-linktype="relative-path">cpal.htm</a></p>
+<ul>
+<li>Changed field names:
+<ul>
+<li>“offsetFirstColorRecord” to “colorRecordsArrayOffset”</li>
+<li>“offsetPaletteTypeArray” to “paletteTypesArrayOffset”</li>
+<li>“offsetPaletteLabelArray” to “paletteLabelsArrayOffset”</li>
+<li>“offsetPaletteEntryLabelArray” to “paletteEntryLabelsArrayOffset”</li>
+</ul>
+</li>
+<li>Clarified use of sRGB.</li>
+<li>Clarified meaning of alpha values.</li>
+<li>In the section on SVG and CPAL, replaced “context-fill” and “context-fill-opacity” with “currentColor”.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/dsig" data-linktype="relative-path">dsig.htm</a></p>
+<ul>
+<li>In SignatureRecord, changed field name “offset” to “signatureBlockOffset”.</li>
+<li>Corrected references for PKCS #7, PKCS #9.</li>
+<li>Corrected the steps for creating a DSIG table, and clarified steps for creating a DSIG table for a TTC.</li>
+<li>Removed erroneous reference to DSIG checksum field.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/dvaraxistag_opsz" data-linktype="relative-path">dvaraxistag_opsz.htm</a></p>
+<ul>
+<li>Revised description for the Optical size axis.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/ebdt" data-linktype="relative-path">ebdt.htm</a></p>
+<ul>
+<li>Added descriptions of fields for BigGlyphMetrics, SmallGlyphMetrics.</li>
+<li>Changed characterization of BitmapSize from table to record.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/eblc" data-linktype="relative-path">eblc.htm</a></p>
+<ul>
+<li>Changed field names:
+<ul>
+<li>IndexSubtable1 and IndexSubtable3: “offsetArray” to “sbitOffsets”</li>
+<li>GlyphIDOffsetPair record: “offset” to “sbitOffset”</li>
+</ul>
+</li>
+<li>Changed characterization of BitmapSize from table to record.</li>
+<li>Revised description of EBLC header to incorporate BitmapSize records array.</li>
+<li>Added descriptions of fields for BigGlyphMetrics, SmallGlyphMetrics.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/ebsc" data-linktype="relative-path">ebsc.htm</a></p>
+<ul>
+<li>Changed characterization of BitmapSize from table to record.</li>
+</ul>
+</li>
+<li><p>euro.htm</p>
+<ul>
+<li>Removed file. (Content not part of the font format specification, available elsewhere.)</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/featurelist" data-linktype="relative-path">featurelist.htm</a></p>
+<ul>
+<li>Added features 'chws', 'vchw'.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/features_ae" data-linktype="relative-path">features_ae.htm</a></p>
+<ul>
+<li>Added 'chws' feature description.</li>
+<li>Modified feature descriptions: 'aalt', 'abvf', 'abvm', 'abvs', 'afrc', 'akhn', 'blwf', 'blwm', 'blws', 'calt', 'case', 'ccmp', 'cfar', 'cjct', 'clig', 'cpct', 'cpsp', 'cswh', 'curs', 'cv01' – 'cv99', 'c2pc', 'c2sc', 'dist', 'dlig', 'dnom', 'dtls', 'expt'.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/features_fj" data-linktype="relative-path">features_fj.htm</a></p>
+<ul>
+<li>Modified feature descriptions: 'falt', 'fin2', 'fin3', 'fina', 'flac', 'frac', 'fwid', 'half', 'haln', 'halt', 'hist', 'hkna', 'hlig', 'hngl', 'hoji', 'hwid', 'init', 'isol', 'ital', 'jalt', 'jp78', 'jp83', 'jp90', 'jp04'.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/features_ko" data-linktype="relative-path">features_ko.htm</a></p>
+<ul>
+<li>Deprecated 'opbd' feature.</li>
+<li>Modified feature descriptions: 'kern', 'lfbd', 'liga', 'ljmo', 'lnum', 'locl', 'ltra', 'ltrm', 'mark', 'med2', 'medi', 'mgrk', 'mkmk', 'mset', 'nalt', 'nlck', 'nukt', 'numr', 'onum', 'opbd', 'ordn', 'ornm'.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/features_pt" data-linktype="relative-path">features_pt.htm</a></p>
+<ul>
+<li>Modified feature descriptions: 'palt', 'pcap', 'pkna', 'pnum', 'pref', 'pres', 'pstf', 'psts', 'pwid', 'qwid', 'rand', 'rclt', 'rkrf', 'rlig', 'rphf', 'rtbd', 'rtla', 'rtlm', 'ruby', 'rvrn', 'salt', 'sinf', 'smcp', 'smpl', 'ss01' – 'ss20', 'ssty', 'stch', 'subs', 'sups', 'swsh', 'titl', 'tjmo', 'tnam', 'tnum', 'trad', 'twid'</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/features_uz" data-linktype="relative-path">features_uz.htm</a></p>
+<ul>
+<li>Added 'vchw' feature description.</li>
+<li>Modified feature descriptions: 'unic', 'valt', 'vatu', 'vert', 'vhal', 'vjmo', 'vkna', 'vkrn', 'vpal', 'vrt2', 'vrtr', 'zero'.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/fvar" data-linktype="relative-path">fvar.htm</a></p>
+<ul>
+<li>Moved recommendation regarding postScriptNameID to Recommendations.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/gasp" data-linktype="relative-path">gasp.htm</a></p>
+<ul>
+<li>Clarified version 0 versus version 1.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/gdef" data-linktype="relative-path">gdef.htm</a></p>
+<ul>
+<li>Changed table name: “MarkGlyphSetsTable” to “MarkGlyphSets” (table).</li>
+<li>Changed field name in MarkGlyphSets table: “markGlyphSetsTableFormat” to “format”.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/glyf" data-linktype="relative-path">glyf.htm</a></p>
+<ul>
+<li>Added clarification regarding the number of points in a simple glyph description.</li>
+<li>Clarified descriptions of xMin, yMin, xMax, yMax.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/gpos" data-linktype="relative-path">gpos.htm</a></p>
+<ul>
+<li>In BaseRecord, changed field name “baseAnchorOffset” to “baseAnchorOffsets”.</li>
+<li>Removed GPOS-specific formats that were identical to formats in GSUB but with different names, replaced by common formats shared between GSUB and GPOS, described in <a href="../otspec184/chapter2" data-linktype="relative-path">chapter2.htm</a>:
+<ul>
+<li>ContextPosFormat1, ContextPosFormat2, ContextPosFormat3, and associated subtables (replaced by SequenceContextFormat1, etc.)</li>
+<li>ChainContextPosFormat1, ChainContextPosFormat2, ChainContextPosFormat3, and associated subtables (replaced by ChainedSequenceContextFormat1, etc.)</li>
+<li>PosLookupRecord (replaced by SequenceLookupRecord)</li>
+</ul>
+</li>
+<li>In section on position lookup records, added note regarding lookup flags in a main lookup table and in nested lookup tables.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/gpos" data-linktype="relative-path">gsub.htm</a></p>
+<ul>
+<li>Removed GSUB-specific formats that were identical to formats in GPOS but with different names, replaced by common formats shared between GSUB and GPOS, described in <a href="../otspec184/chapter2" data-linktype="relative-path">chapter2.htm</a>:
+<ul>
+<li>ContextSubstFormat1, ContextSubstFormat2, ContextSubstFormat3, and associated subtables (replaced by SequenceContextFormat1, etc.)</li>
+<li>ChainContextSubstFormat1, ChainContextSubstFormat2, ChainContextSubstFormat3, and associated subtables (replaced by ChainedSequenceContextFormat1, etc.)</li>
+<li>SubstLookupRecord (replaced by SequenceLookupRecord)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/hdmx" data-linktype="relative-path">hdmx.htm</a></p>
+<ul>
+<li>Changed data types for numRecords, sizeDeviceRecord to unsigned types.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/head" data-linktype="relative-path">head.htm</a></p>
+<ul>
+<li>Changed field name: “checkSumAdjustment” to “checksumAdjustment”.</li>
+<li>Added recommendation regarding flags bit 3 in hinted fonts.</li>
+<li>Clarified descriptions for xMin, yMin, xMax, yMax.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/hhea" data-linktype="relative-path">hhea.htm</a></p>
+<ul>
+<li>Clarified descriptions for minLeftSideBearing, minRightSideBearing.</li>
+<li>Revised note regarding the ascender, descender and linegap fields.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/hmtx" data-linktype="relative-path">hmtx.htm</a></p>
+<ul>
+<li>Clarified wording regarding the hMetrics and leftSideBearings arrays.</li>
+<li>Clarified the left side bearing value that should be specified for empty glyphs.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/" data-linktype="relative-path">index.htm</a></p>
+<ul>
+<li>Updated version number and reference to ISO/IEC 14496-22.</li>
+<li>Removed reference to the WGL4.0 character set.</li>
+<li>Incorporated links to ttch01.htm, tt_instructing_glyphs.htm, tt_instructions.htm, tt_graphics_state.htm.</li>
+<li>Changed links for Adobe Technical Notes #5176, #5177 to be direct, external links, not to cffspec, charstr2 pages.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/jstf" data-linktype="relative-path">jstf.htm</a></p>
+<ul>
+<li>Changed field names in JstfPriority table:
+<ul>
+<li>“shrinkageEnableGSUB” to “gsubShrinkageEnableOffset”</li>
+<li>“shrinkageDisableGSUB” to “gsubShrinkageDisableOffset”</li>
+<li>“shrinkageEnableGPOS” to “gposShrinkageEnableOffset”</li>
+<li>“shrinkageDisableGPOS” to “gposShrinkageDisableOffset”</li>
+<li>“shrinkageJstfMax” to “shrinkageJstfMaxOffset”</li>
+<li>“extensionEnableGSUB” to “gsubExtensionEnableOffset”</li>
+<li>“extensionDisableGSUB” to “gsubExtensionDisableOffset”</li>
+<li>“extensionEnableGPOS” to “gposExtensionEnableOffset”</li>
+<li>“extensionDisableGPOS” to “gposExtensionDisableOffset”</li>
+<li>“extensionJstfMax” to “extensionJstfMaxOffset”</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/kern" data-linktype="relative-path">kern.htm</a></p>
+<ul>
+<li>In Format 2, changed field names:
+<ul>
+<li>“leftClassTable” to “leftClassOffset”</li>
+<li>“rightClassTable” to “rightClassOffset”</li>
+<li>“array” to “kerningArrayOffset”</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/languagetags" data-linktype="relative-path">languagetags.htm</a></p>
+<ul>
+<li>Added note clarifying ISO 639 identifiers that may be listed for a given language system tag.</li>
+<li>Added note about permanent reservation of 'dflt', 'DFLT'.</li>
+<li>Revised details regarding ISO 639 mappings for language system tags 'AKA ', 'ATH ', 'BAD0', 'BER ', 'BML ', 'CPP ', 'FNE ', 'HAL ', 'IJO ', 'KOH ', 'KRN ', 'MYN ', 'NAH ', 'QIN ', 'SLA ', 'SRB ', 'TMH ', 'TNE ', 'TWI ', 'YCR '.</li>
+<li>Corrections to show full tags 'HO  ', 'WA  '.</li>
+<li>Revised descriptions for 'DGO ', 'DGR ', 'ZHH ', 'ZHTM'.</li>
+<li>Added: 'AKB ', 'BTD ', 'BTK ', 'BTM ', 'BTX ', 'BTZ ', ZHTM.</li>
+<li>Added 'DAG ' (post-release update).</li>
+<li>Added 'AVN ', 'KAW ', 'LEF ', 'WCI ' (post-release update).</li>
+<li>Added 'CTT ', 'HAI0', 'HEI ', 'HMD ', 'HMZ ', 'IRU ', 'KWK ', 'LPO ', 'RHG ', 'SFM ', 'TLI ', 'XUB ', 'XUJ ', 'YGP ', 'YNA ', 'YWQ ' (post-release update).</li>
+<li>Revised ISO 639 mapping details for 'SXT ' (post-release update.)</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/loca" data-linktype="relative-path">loca.htm</a></p>
+<ul>
+<li>Revised recommended for local offsets to be word aligned.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/math" data-linktype="relative-path">math.htm</a></p>
+<ul>
+<li>Changed field name in MathValueRecord: “deviceTableOffset” to “deviceOffset”.</li>
+<li>Changed flag name “fExtender” to “EXTENDER_FLAG”.</li>
+<li>For fields that are values in design grid units, changed data types from int16 to FWORD, and from uint16 to UFWORD.</li>
+<li>Clarified meaning of “shift” in MathConstants fields.</li>
+<li>Clarified default rule thickness.</li>
+<li>Added clarification of suggested value for spaceAfterScript.</li>
+<li>Added suggested value for radicalKernAfterDegree.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/maxp" data-linktype="relative-path">maxp.htm</a></p>
+<ul>
+<li>Changed type for the version field from Fixed to Version16Dot16.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/meta" data-linktype="relative-path">meta.htm</a></p>
+<ul>
+<li>Corrected description of example Hant-HK.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/name" data-linktype="relative-path">name.htm</a></p>
+<ul>
+<li>Changed field names:
+<ul>
+<li>Header: “format” to “version”</li>
+<li>Version 0 and version 1 headers: “stringOffset” to “storageOffset”</li>
+<li>LangTagRecord: “offset” to “langTagOffset”</li>
+<li>NameRecord: “offset” to “stringOffset”</li>
+</ul>
+</li>
+<li>Re-organized content to move tables of platform, encoding and language IDs to the end of the chapter. Also removed details relevant only to the 'cmap' table.</li>
+<li>Updated language and region strings for Windows language ID 042F.</li>
+<li>Changed the language name for Windows language ID 081D to “Swedish”.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/os2" data-linktype="relative-path">os2.htm</a></p>
+<ul>
+<li>Corrected details for Unicode range fields regarding bit 92 and versions 3, 4.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/otff" data-linktype="relative-path">otff.htm</a></p>
+<ul>
+<li>Changed field names:
+<ul>
+<li>In TableRecord: “checkSum” to “checksum”.</li>
+<li>In TTC Header version 1.0 and version 2.0: “offsetTable” to “tableDirectoryOffsets”.</li>
+</ul>
+</li>
+<li>Clarified that LONGDATETIME values are in UTC time.</li>
+<li>Defined a Version16Dot16 type (replacing Fixed used for table version).</li>
+<li>Clarified use of “record” and “table” in describing defined structures.</li>
+<li>Clarifed statement regarding file extensions.</li>
+<li>Removed historic reference to Multiple Master support being discontinued. (Details are retained in the change log.)</li>
+<li>Revised terminology, removing use of “offset table” and making consistent use of “table directory”.</li>
+<li>Re-organized description of TableDirectory and TableRecord array, adding tableRecords[] as a member in TableDirectory.</li>
+<li>Provided details regarding purpose of searchRange, entrySelector and rangeShift fields as well as recommendations for fonts and parsing.</li>
+<li>Moved statement of the requirement for four-byte table offsets to follow description of table records.</li>
+<li>Clarified checksum calculation for tables with length not a multiple of four.</li>
+<li>Clarified calculation of the 'head' table checksum and checksumAdjustment, and checksums in collection files.</li>
+<li>Clarified location of DSIG table within a TTC file.</li>
+<li>Added clarifications regarding custom, vendor-defined tags.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/otvarcommonformats" data-linktype="relative-path">otvarcommonformats.htm</a></p>
+<ul>
+<li>Changed field name in DeltaSet record: “DeltaData” to “deltaData”.</li>
+<li>Added text defining special meaning of delta-set outer- and inner-level indices 0xFFFF/0xFFFF as an indication of no variation data.</li>
+<li>Added constraint on VariationRegionList.regionCount to be less than 32,768 (high bit reserved).</li>
+<li>Added note regarding NULL offsets in the itemVariationDataOffsets array.</li>
+<li>In DeltaSet record, revised description of deltaSet array to indicate number of elements in array, not byte length.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/otvaroverview" data-linktype="relative-path">otvaroverview.htm</a></p>
+<ul>
+<li>Moved description of normalization process and example from <a href="../otspec184/avar" data-linktype="relative-path">avar.htm</a> into this chapter.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/overview" data-linktype="relative-path">overview.htm</a></p>
+<ul>
+<li>Complete re-write of the overview content.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/pclt" data-linktype="relative-path">pclt.htm</a></p>
+<ul>
+<li>Revised member names to use camel case.</li>
+<li>Clarified note on discouraged usage.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/post" data-linktype="relative-path">post.htm</a></p>
+<ul>
+<li>Changed type for the version field from Fixed to Version16Dot16.</li>
+<li>Clarified the description of version 2.0; this includes changing the type and field name for the string data.</li>
+<li>Clarified encoding of name strings and moved requirements from Recommendations to here.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/recom" data-linktype="relative-path">recom.htm</a></p>
+<ul>
+<li>Removed byte ordering and 'OS/2' sections.</li>
+<li>Revised the table alignment section.</li>
+<li>Revised the 'cmap' recommendations.</li>
+<li>Added 'fvar' section with recommendation regarding postScriptNameID.</li>
+<li>'name' section: Revised guidance regarding names for the Macintosh platform.</li>
+<li>'post' section: Moved name string requirements to 'post' table chapter. Removed redundant and obsolete recommendations.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/sbix" data-linktype="relative-path">sbix.htm</a></p>
+<ul>
+<li>Revised descriptions of originOffsetX, originOffsetY, and provided clarification regarding positioning of the bitmap graphic.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/scripttags" data-linktype="relative-path">scripttags.htm</a></p>
+<ul>
+<li>Added script tags for new scripts in Unicode 12 and Unicode 13.</li>
+<li>Corrected script tag for Yi. (Post-release erratum.)</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/stat" data-linktype="relative-path">stat.htm</a></p>
+<ul>
+<li>Relaxed constraint on name IDs used for AxisRecord.axisNameID.</li>
+<li>Revised constraints and recommendations regarding separate axis value tables having the same information.</li>
+<li>For AxisValueFormat2, clarified details regarding touching and overlapping ranges.</li>
+<li>For AxisValueFormat4, clarified precedence when two tables are partial matches, and clarified the axis ordering to be assumed .</li>
+<li>Adopted consistent spelling for flag names: OLDER_SIBLING_FONT_ATTRIBUTE and ELIDABLE_AXIS_VALUE_NAME.</li>
+<li>Revised chapter for greater clarity.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/svg" data-linktype="relative-path">svg.htm</a></p>
+<ul>
+<li>Changed field name “offsetToSVGDocumentList” to “svgDocumentListOffset”.</li>
+<li>Clarified note regarding glyph advances not changing due to animations.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/tt_graphics_state" data-linktype="relative-path">tt_graphics_state.htm</a></p>
+<ul>
+<li>Corrected the list of instructions affected by single_width_cut_in and single_width_value, and clarified the units for single_width_value.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/tt_instructing_glyphs" data-linktype="relative-path">tt_instructing_glyphs.htm</a></p>
+<ul>
+<li>Removed incorrect statement regarding single_width_cut_in applying to indirect instructions.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a></p>
+<ul>
+<li>Corrected figures illustrating stack operations for JROF.</li>
+<li>Correction in details for SDPVTL.</li>
+<li>Corrected figures for SFVFS, SZP1, SMD, ALIGNRP, GC.</li>
+<li>Clarified ISECT and corrected figure.</li>
+<li>Clarified units for SSW.</li>
+</ul>
+</li>
+<li><p>ttinst.htm</p>
+<ul>
+<li>Removed file: links to child pages incorporated into index.htm; introductory paragraph incorporated into ttch01.htm.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/ttochap1" data-linktype="relative-path">ttochap1.htm</a></p>
+<ul>
+<li>Replaced Figure 1h with a clearer illustration of language system differences.</li>
+<li>Consolidated “TrueType versus OpenType Layout” section into the “OpenType Layout at a glance” section.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/vdmx" data-linktype="relative-path">vdmx.htm</a></p>
+<ul>
+<li>In VDMX header, changed field name “offset” to “vdmxGroupOffsets”.</li>
+</ul>
+</li>
+<li><p><a href="../otspec184/vhea" data-linktype="relative-path">vhea.htm</a></p>
+<ul>
+<li>Clarified scope of usage for the table.</li>
+<li>Changed type for the version field from Fixed to Version16Dot16.</li>
+<li>Revised descriptions of vertTypoAscender, vertTypoDescender.</li>
+</ul>
+</li>
+<li><p>wgl4.htm, wgl4b.htm, wgl4c.htm, wgl4d.htm, wgl4e.htm</p>
+<ul>
+<li>Removed files. (Content was not part of the font format specification; it remains available elsewhere.)</li>
+</ul>
+</li>
+</ul>
+<p><a id="v1.8.3"></a></p>
+<h2 id="version-183">Version 1.8.3</h2>
+<p>Released August 2018</p>
+<p>Minor editorial changes were made in the following chapters: <a href="../otspec183/base" data-linktype="relative-path">base.htm</a>, <a href="../otspec183/baselinetags" data-linktype="relative-path">baselinetags.htm</a>, <a href="../otspec183/cbdt" data-linktype="relative-path">cbdt.htm</a>, <a href="../otspec183/cblc" data-linktype="relative-path">cblc.htm</a>, <a href="../otspec183/cff" data-linktype="relative-path">cff.htm</a>, <a href="../otspec183/cff2" data-linktype="relative-path">cff2.htm</a>, <a href="../otspec183/cff2charstr" data-linktype="relative-path">cff2charstr.htm</a>, <a href="../otspec183/changes" data-linktype="relative-path">changes.htm</a>, <a href="../otspec183/chapter2" data-linktype="relative-path">chapter2.htm</a>, <a href="../otspec183/cmap" data-linktype="relative-path">cmap.htm</a>, <a href="../otspec183/colr" data-linktype="relative-path">colr.htm</a>, <a href="../otspec183/cpal" data-linktype="relative-path">cpal.htm</a>, <a href="../otspec183/cvar" data-linktype="relative-path">cvar.htm</a>, <a href="../otspec183/dsig" data-linktype="relative-path">dsig.htm</a>, <a href="../otspec183/dvaraxisreg" data-linktype="relative-path">dvaraxisreg.htm</a>, <a href="../otspec183/dvaraxistag_ital" data-linktype="relative-path">dvaraxistag_ital.htm</a>, <a href="../otspec183/dvaraxistag_opsz" data-linktype="relative-path">dvaraxistag_opsz.htm</a>, <a href="../otspec183/dvaraxistag_slnt" data-linktype="relative-path">dvaraxistag_slnt.htm</a>, <a href="../otspec183/dvaraxistag_wdth" data-linktype="relative-path">dvaraxistag_wdth.htm</a>, <a href="../otspec183/dvaraxistag_wght" data-linktype="relative-path">dvaraxistag_wght.htm</a>, <a href="../otspec183/ebdt" data-linktype="relative-path">ebdt.htm</a>, <a href="../otspec183/eblc" data-linktype="relative-path">eblc.htm</a>, <a href="../otspec183/ebsc" data-linktype="relative-path">ebsc.htm</a>, <a href="../otspec183/featurelist" data-linktype="relative-path">featurelist.htm</a>, <a href="../otspec183/features_ae" data-linktype="relative-path">features_ae.htm</a>, <a href="../otspec183/features_fj" data-linktype="relative-path">features_fj.htm</a>, <a href="../otspec183/features_ko" data-linktype="relative-path">features_ko.htm</a>, <a href="../otspec183/features_pt" data-linktype="relative-path">features_pt.htm</a>, <a href="../otspec183/features_uz" data-linktype="relative-path">features_uz.htm</a>, <a href="../otspec183/featuretags" data-linktype="relative-path">featuretags.htm</a>, <a href="../otspec183/fvar" data-linktype="relative-path">fvar.htm</a>, <a href="../otspec183/gasp" data-linktype="relative-path">gasp.htm</a>, <a href="../otspec183/gdef" data-linktype="relative-path">gdef.htm</a>, <a href="../otspec183/glyf" data-linktype="relative-path">glyf.htm</a>, <a href="../otspec183/gpos" data-linktype="relative-path">gpos.htm</a>, <a href="../otspec183/gsub" data-linktype="relative-path">gsub.htm</a>, <a href="../otspec183/gvar" data-linktype="relative-path">gvar.htm</a>, <a href="../otspec183/hdmx" data-linktype="relative-path">hdmx.htm</a>, <a href="../otspec183/head" data-linktype="relative-path">head.htm</a>, <a href="../otspec183/hhea" data-linktype="relative-path">hhea.htm</a>, <a href="../otspec183/hmtx" data-linktype="relative-path">hmtx.htm</a>, <a href="../otspec183/hvar" data-linktype="relative-path">hvar.htm</a>, <a href="../otspec183/" data-linktype="relative-path">index.htm</a>, <a href="../otspec183/jstf" data-linktype="relative-path">jstf.htm</a>, <a href="../otspec183/kern" data-linktype="relative-path">kern.htm</a>, <a href="../otspec183/languagetags" data-linktype="relative-path">languagetags.htm</a>, <a href="../otspec183/ltsh" data-linktype="relative-path">ltsh.htm</a>, <a href="../otspec183/math" data-linktype="relative-path">math.htm</a>, <a href="../otspec183/merg" data-linktype="relative-path">merg.htm</a>, <a href="../otspec183/meta" data-linktype="relative-path">meta.htm</a>, <a href="../otspec183/mvar" data-linktype="relative-path">mvar.htm</a>, <a href="../otspec183/name" data-linktype="relative-path">name.htm</a>, <a href="../otspec183/namesmp" data-linktype="relative-path">namesmp.htm</a>, <a href="../otspec183/os2" data-linktype="relative-path">os2.htm</a>, <a href="../otspec183/otff" data-linktype="relative-path">otff.htm</a>, <a href="../otspec183/otvarcommonformats" data-linktype="relative-path">otvarcommonformats.htm</a>, <a href="../otspec183/otvaroverview" data-linktype="relative-path">otvaroverview.htm</a>, <a href="../otspec183/pclt" data-linktype="relative-path">pclt.htm</a>, <a href="../otspec183/post" data-linktype="relative-path">post.htm</a>, <a href="../otspec183/recom" data-linktype="relative-path">recom.htm</a>, <a href="../otspec183/sbix" data-linktype="relative-path">sbix.htm</a>, <a href="../otspec183/scripttags" data-linktype="relative-path">scripttags.htm</a>, <a href="../otspec183/stat" data-linktype="relative-path">stat.htm</a>, <a href="../otspec183/svg" data-linktype="relative-path">svg.htm</a>, <a href="../otspec183/ttch01" data-linktype="relative-path">ttch01.htm</a>, <a href="../otspec183/ttochap1" data-linktype="relative-path">ttochap1.htm</a>, <a href="../otspec183/ttoreg" data-linktype="relative-path">ttoreg.htm</a>, <a href="../otspec183/vdmx" data-linktype="relative-path">vdmx.htm</a>, <a href="../otspec183/vhea" data-linktype="relative-path">vhea.htm</a>, <a href="../otspec183/vmtx" data-linktype="relative-path">vmtx.htm</a>, <a href="../otspec183/vorg" data-linktype="relative-path">vorg.htm</a>, <a href="../otspec183/vvar" data-linktype="relative-path">vvar.htm</a>.</p>
+<p>The editorial changes include applying a convention for tag values: single, straight quotation marks are used for lowercase tags; they are not used for uppercase tags except when extra clarification is required, such as when a tag has trailing spaces; and marks are not when a tag is used like an object name, as in “head.macStyle”, or when used like a function name, as in “cmap(j)”.</p>
+<p>In the summary of changes below, details given above are not repeated.</p>
+<p><em>Summary of Changes:</em></p>
+<ul>
+<li><a href="../otspec183/base" data-linktype="relative-path">base.htm</a>
+<ul>
+<li>Corrected figure 5c.</li>
+</ul>
+</li>
+<li><a href="../otspec183/cmap" data-linktype="relative-path">cmap.htm</a>
+<ul>
+<li>Corrected field names for format 4.</li>
+<li>Eliminated outdated references to “UCS-2” and “UCS-4”.</li>
+<li>Added comments regarding use of formats 8, 10.</li>
+<li>Corrected typo in glyphId index value equation from “startCount” to “startCode”.</li>
+</ul>
+</li>
+<li><a href="../otspec183/cff2" data-linktype="relative-path">cff2.htm</a>
+<ul>
+<li>Revised name of operand for blend operator.</li>
+<li>Corrected max number of glyphs supported by FDSelect Format 3 from 65536 to 65536. (Post-release erratum.)</li>
+</ul>
+</li>
+<li><a href="../otspec183/changes" data-linktype="relative-path">changes.htm</a>
+<ul>
+<li>Re-organized how systemic and minor editorial changes are recorded for Version 1.8.1.</li>
+<li>Removed reference to proposals.htm (this legacy page was a companion to this specification but not part of it).</li>
+<li>Replaced references to default.htm (no longer used) with index.htm.</li>
+<li>Added missing change to ttinst1.doc in OpenType 1.5. (Post-release erratum.)</li>
+</ul>
+</li>
+<li><a href="../otspec183/chapter2" data-linktype="relative-path">chapter2.htm</a>
+<ul>
+<li>Corrected the number of GSUB lookup types (eight).</li>
+<li>Clarifed description of Coverage Indexes for Coverage Format 2.</li>
+</ul>
+</li>
+<li><a href="../otspec183/dsig" data-linktype="relative-path">dsig.htm</a>
+<ul>
+<li>Revised statments regarding anticipated use of signatures.</li>
+</ul>
+</li>
+<li><a href="../otspec183/ebdt" data-linktype="relative-path">ebdt.htm</a>
+<ul>
+<li>Corrected text typo from “EDBT” to “EBDT” in the Header.</li>
+</ul>
+</li>
+<li><a href="../otspec183/eblc" data-linktype="relative-path">eblc.htm</a>
+<ul>
+<li>Corrected text typo from “EDBT” to “EBDT” in the first paragraph.</li>
+<li>Corrected text from “16-bit alignment” to “32-bit alignment”.</li>
+</ul>
+</li>
+<li><a href="../otspec183/ebsc" data-linktype="relative-path">ebsc.htm</a>
+<ul>
+<li>Corrected text typo from “EBLC” to “EBSC” in “EBSC Header”.</li>
+</ul>
+</li>
+<li><a href="../otspec183/features_ko" data-linktype="relative-path">features_ko.htm</a>
+<ul>
+<li>Corrected description for 'med2'.</li>
+</ul>
+</li>
+<li><a href="../otspec183/features_pt" data-linktype="relative-path">features_pt.htm</a>
+<ul>
+<li>Corrected example for 'ssty'. (Post-release erratum.)</li>
+<li>Corrected Tag: 'ssty'. (Post-release erratum.)</li>
+</ul>
+</li>
+<li><a href="../otspec183/featuretags" data-linktype="relative-path">featuretags.htm</a>
+<ul>
+<li>Revised comments on implementation of 'init' feature for Arabic text for consistency with description of the 'init' feature.</li>
+</ul>
+</li>
+<li><a href="../otspec183/gdef" data-linktype="relative-path">gdef.htm</a>
+<ul>
+<li>Revised field names in MarkGlyphSetsTable format to conform to conventions.</li>
+</ul>
+</li>
+<li><a href="../otspec183/glyf" data-linktype="relative-path">glyf.htm</a>
+<ul>
+<li>Clarified the description of simple glyph flags.</li>
+<li>Added the OVERLAP_SIMPLE flag.</li>
+<li>Corrected statement regarding numberOfContours for simple glyph descriptions. (Post-release erratum.)</li>
+</ul>
+</li>
+<li><a href="../otspec183/gpos" data-linktype="relative-path">gpos.htm</a>
+<ul>
+<li>Corrected description of the offset to Device / VariationIndex tables within ValueRecord.</li>
+<li>Clarified placement and advance effects of lookup types 1 – 6.</li>
+</ul>
+</li>
+<li>grstate.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec183/tt_graphics_state" data-linktype="relative-path">tt_graphics_state.htm</a>.</li>
+</ul>
+</li>
+<li><a href="../otspec183/gsub" data-linktype="relative-path">gsub.htm</a>
+<ul>
+<li>For Single Substitition Format 1, indicated that addition is modulo 65536.</li>
+<li>Corrected error in example 7: DashAndSpaceSubRuleSet is at offset SubRuleSet[1].</li>
+</ul>
+</li>
+<li><a href="../otspec183/hhea" data-linktype="relative-path">hhea.htm</a>
+<ul>
+<li>Removed references to historic platforms.</li>
+</ul>
+</li>
+<li><a href="../otspec183/" data-linktype="relative-path">index.htm</a>
+<ul>
+<li>Updated version number and reference to ISO/IEC 14496-22.</li>
+<li>Removed mention of Microsoft Word documents.</li>
+</ul>
+</li>
+<li>instgly.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec183/tt_instructing_glyphs" data-linktype="relative-path">tt_instructing_glyphs.htm</a>.</li>
+</ul>
+</li>
+<li><a href="../otspec183/jstf" data-linktype="relative-path">jstf.htm</a>
+<ul>
+<li>Revised field name, jsftLangSysOffset, to follow conventions.</li>
+</ul>
+</li>
+<li><a href="../otspec183/kern" data-linktype="relative-path">kern.htm</a>
+<ul>
+<li>Removed references to historic platforms.</li>
+</ul>
+</li>
+<li><a href="../otspec183/languagetags" data-linktype="relative-path">languagetags.htm</a>
+<ul>
+<li>Added 'KJZ ', 'MFA ', 'TSJ ', 'XKF '.</li>
+<li>Added additional ISO 639 mappings.</li>
+</ul>
+</li>
+<li><a href="../otspec183/math" data-linktype="relative-path">math.htm</a>
+<ul>
+<li>Revised descriptions for better clarity.</li>
+<li>Re-ordered content in section on MathKernInfo table for better clarity.</li>
+<li>In description of formats for MathItalicsCorrectionInfo, MathTopAccentAttachment, MathKernInfo and MathVariants, clarified that the count fields must be the same as the number of glyph IDs referenced in the Coverage tables.</li>
+<li>Revised structure and field names to follow conventions.</li>
+</ul>
+</li>
+<li><a href="../otspec183/maxp" data-linktype="relative-path">maxp.htm</a>
+<ul>
+<li>Clarified maxStackElements.</li>
+</ul>
+</li>
+<li><a href="../otspec183/name" data-linktype="relative-path">name.htm</a>
+<ul>
+<li>Replaced obsolete recommendation to have Macintosh strings for legacy version-control implementations with advisory that apps might display incorrect strings.</li>
+<li>Added link to BCP 47.</li>
+<li>Eliminated outdated references to “UCS-2” and “UCS-4”.</li>
+<li>Corrected Macintosh platform language ID for Inuktitut; corrected typos (Quechua, Tagalog).</li>
+<li>In the table for the Platform ID enumeration, corrected the description for language IDs for Platform ID 0 (error introduced in version 1.5).</li>
+<li>Revised descriptions for name IDs 1 and 2.</li>
+</ul>
+</li>
+<li><a href="../otspec183/os2" data-linktype="relative-path">os2.htm</a>
+<ul>
+<li>Incorporated relevant information regarding OS/2 versions 0 to 4. (Separate pages removed.)</li>
+<li>Added note regarding truncated version 0 definition in Apple’s TrueType Reference Manual.</li>
+<li>Corrected units for xAvgCharWidth.</li>
+<li>fsType: Clarified “embedding”; revised presentation of flags; noted that bit 0 is <em>permanently</em> reserved.</li>
+<li>yStrikeoutSize, yStrikeoutPosition: Removed legacy statements intended for bitmap fonts; added reference to post.underlineThickness.</li>
+<li>panose: Clarified the contingent meaning of bytes other than the first byte.</li>
+<li>ulUnicodeRange: Eliminated outdated references to “UCS-2” and “UCS-4”; added note that available bits are exhausted, and reference to 'dlng' and 'slng' tags in the 'meta' table; clarified some issues for early OS/2 versions.</li>
+<li>achVendID: Revised description.</li>
+<li>sTypoAscender, sTypoDescender, sTypoLineGap: Revised descriptions; clarified the <em>non-</em>requirement that sTypoAscender - sTypoDescender equal unitsPerEm.</li>
+<li>usWinAscent, usWinDescent: Revised description; clarified clipping behavior in Windows GDI, and added note regarding interaction with VDMX.</li>
+<li>Added more information about setting default line metric values in variable fonts, and varying line metric values in variable fonts.</li>
+<li>Added more information about setting usLowerOpticalPointSize and usUpperOpticalPointSize values in variable fonts.</li>
+</ul>
+</li>
+<li>os2ver0.htm, os2ver1.htm, os2ver2.htm, os2ver3.htm, os2ver4.htm
+<ul>
+<li>Pages removed; relevant content integrated into os2.htm.</li>
+</ul>
+</li>
+<li><a href="../otspec183/otff" data-linktype="relative-path">otff.htm</a>
+<ul>
+<li>Added .TTC and .OTC to cited filename extensions, and removed recommendation details, which are already provided in the Recommendations chapter.</li>
+<li>Added table and design-variation axis to items identified using Tag.</li>
+<li>Moved the specification for valid Tag values from the Table Record description into the data types section.</li>
+<li>Made clarifications regarding representations of version numbers</li>
+<li>Changed the data type for the first member of the Table Record to Tag, and changed the member name and description.</li>
+<li>For underlineThickness, added reference to OS/2.strikeoutSize.</li>
+</ul>
+</li>
+<li><a href="../otspec183/otvaroverview" data-linktype="relative-path">otvaroverview.htm</a>
+<ul>
+<li>Corrected the arithmetic details in the last part of the example in the Interpolation Example section.</li>
+<li>Corrected typo “wiht” to “with” in “Coordinate Scales and Normalization”.</li>
+</ul>
+</li>
+<li><a href="../otspec183/recom" data-linktype="relative-path">recom.htm</a>
+<ul>
+<li>Added filename recommendation related to CFF and revised wording related to font collections.</li>
+<li>Eliminated outdated references to “UCS-2”,  “UCS-4” and legacy products in 'cmap' section.</li>
+<li>Removed obsolete guidance for use of 'vrt2' feature in CJK fonts.</li>
+</ul>
+</li>
+<li><a href="../otspec183/stat" data-linktype="relative-path">stat.htm</a>
+<ul>
+<li>Revised the introduction to Axis Value Tables for better clarity.</li>
+<li>Corrected typo changing “appliations” to “applications”.</li>
+</ul>
+</li>
+<li><a href="../otspec183/svg" data-linktype="relative-path">svg.htm</a>
+<ul>
+<li>Revised organization and descriptive text for better clarity.</li>
+<li>Revised structure names to follow conventions.</li>
+<li>Prohibited use of “HTML dialect” SVG documents.</li>
+<li>Restricted usage of XML namespace declarations.</li>
+<li>Limited capabilities to SVG 1.1. Deprecated use of context-* properties from SVG2 (support was required in earlier versions).</li>
+<li>Added section detailing SVG 1.1 capability requirements and restrictions. (Several capabilities not clearly discussed in earlier versions are now discouraged or not supported.)</li>
+<li>Clarified use of CSS custom properties and integration of CPAL, including interpretation of CPAL alpha values.</li>
+<li>Added use of currentColor (supersedes use of context-fill, context-stroke).</li>
+<li>Clarified relationship of coordinate system and viewport to glyph design grid, and also viewport clip behavior.</li>
+<li>Removed references to “user agent style sheets”.</li>
+<li>Removed section on security considerations and glyph rendering restrictions (superseded by the added section on SVG 1.1 capability requirements and restrictions).</li>
+<li>Added Example 1.</li>
+<li>Revised Example 5, replacing context-fill with currentColor.</li>
+</ul>
+</li>
+<li><a href="../otspec183/ttinst" data-linktype="relative-path">ttinst.htm</a>
+<ul>
+<li>Revised links to refer to content ported from Microsoft Word files to Web pages. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>ttinst1.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec183/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>ttinst2.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec183/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec183/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>
+<ul>
+<li>Corrected MIRP Code range to 0xE0 - 0xFF.</li>
+<li>Corrected errors introducted when porting from Word documents (some changes from earlier versions were not retained). (Post-release erratum.)</li>
+<li>Changed “NPUSHB” to “NPUSHW” in GETVARIATION. (Post-release erratum.)</li>
+<li>Corrected error in “FLIPRGOFF” regarding on-curve versus off-curve points. (Post-release erratum.)</li>
+<li>Removed extra, incorrect uses from “IUP”. (Post-release erratum.)</li>
+<li>Corrected text in GETVARIATION[] normalized coordinates. (Post-release erratum.)</li>
+<li>Corrected error in code range of MIRP inadvertently introduced when porting from Word documents. (Post-release erratum.)</li>
+<li>Corrected error in description of “logical OR” inadvertently added when porting from Word documents. (Post-release erratum.)</li>
+<li>Removed incorrect text inadvertently added to description of Round to Half Grid (RTHG) when porting from Word documents. (Post-release erratum.)</li>
+</ul>
+</li>
+<li><a href="../otspec183/ttochap1" data-linktype="relative-path">ttochap1.htm</a>
+<ul>
+<li>Fixed typo in image (fig1i.gif).</li>
+</ul>
+</li>
+<li><a href="../otspec183/vhea" data-linktype="relative-path">vhea.htm</a>
+<ul>
+<li>Made corrections to the description for vertTypoDescender.</li>
+</ul>
+</li>
+</ul>
+<p><a id="v1.8.2"></a></p>
+<h2 id="version-182">Version 1.8.2</h2>
+<p>Released July 2017.</p>
+<p>Many editorial changes have been made, including revision of structure and field names in several chapters to conform to conventions used across this specification. Such changes were made in the following chapters:</p>
+<ul>
+<li>Revision of structure or field names: <a href="../otspec182/base" data-linktype="relative-path">base.htm</a>, <a href="../otspec182/cff2" data-linktype="relative-path">cff2.htm</a>, <a href="../otspec182/chapter2" data-linktype="relative-path">chapter2.htm</a>, <a href="../otspec182/colr" data-linktype="relative-path">colr.htm</a>, <a href="../otspec182/cvar" data-linktype="relative-path">cvar.htm</a>, <a href="../otspec182/ebdt" data-linktype="relative-path">ebdt.htm</a>, <a href="../otspec182/eblc" data-linktype="relative-path">eblc.htm</a>, <a href="../otspec182/ebsc" data-linktype="relative-path">ebsc.htm</a>, <a href="../otspec182/fvar" data-linktype="relative-path">fvar.htm</a>, <a href="../otspec182/gasp" data-linktype="relative-path">gasp.htm</a>, <a href="../otspec182/gdef" data-linktype="relative-path">gdef.htm</a>, <a href="../otspec182/gpos" data-linktype="relative-path">gpos.htm</a>, <a href="../otspec182/gsub" data-linktype="relative-path">gsub.htm</a>, <a href="../otspec182/gvar" data-linktype="relative-path">gvar.htm</a>, <a href="../otspec182/hvar" data-linktype="relative-path">hvar.htm</a>, <a href="../otspec182/jstf" data-linktype="relative-path">jstf.htm</a>, <a href="../otspec182/merg" data-linktype="relative-path">merg.htm</a>, <a href="../otspec182/mvar" data-linktype="relative-path">mvar.htm</a>, <a href="../otspec182/otvarcommonformats" data-linktype="relative-path">otvarcommonformats.htm</a>, <a href="../otspec182/sbix" data-linktype="relative-path">sbix.htm</a>, <a href="../otspec182/stat" data-linktype="relative-path">stat.htm</a>, <a href="../otspec182/svg" data-linktype="relative-path">svg.htm</a>, <a href="../otspec182/vvar" data-linktype="relative-path">vvar.htm</a>.</li>
+</ul>
+<p>A significant editorial change pertains to documentation of design-variation axes and axis tags: previously, these were documented within the <a href="../otspec182/fvar" data-linktype="relative-path">'fvar'</a> table chapter. The axis tags are also used in other tables, however, and may be relevant for non-variable fonts. Also, the set of registered axes may grow over time. Hence, documentation of axes and axis tags has been moved to a separate section, <a href="../otspec182/dvaraxisreg" data-linktype="relative-path">OpenType Design-Variation Axis Tag Registry</a>.</p>
+<p>Minor editorial changes were made in the following chapters: <a href="../otspec182/avar" data-linktype="relative-path">avar.htm</a>, <a href="../otspec182/base" data-linktype="relative-path">base.htm</a>, <a href="../otspec182/cbdt" data-linktype="relative-path">cbdt.htm</a>, <a href="../otspec182/cblc" data-linktype="relative-path">cblc.htm</a>, <a href="../otspec182/cff" data-linktype="relative-path">cff.htm</a>, <a href="../otspec182/cff2" data-linktype="relative-path">cff2.htm</a>, <a href="../otspec182/cff2charstr" data-linktype="relative-path">cff2charstr.htm</a>, <a href="../otspec182/chapter2" data-linktype="relative-path">chapter2.htm</a>, <a href="../otspec182/cmap" data-linktype="relative-path">cmap.htm</a>, <a href="../otspec182/colr" data-linktype="relative-path">colr.htm</a>, <a href="../otspec182/cpal" data-linktype="relative-path">cpal.htm</a>, <a href="../otspec182/cvar" data-linktype="relative-path">cvar.htm</a>, <a href="../otspec182/dsig" data-linktype="relative-path">dsig.htm</a>, <a href="../otspec182/ebdt" data-linktype="relative-path">ebdt.htm</a>, <a href="../otspec182/eblc" data-linktype="relative-path">eblc.htm</a>, <a href="../otspec182/ebsc" data-linktype="relative-path">ebsc.htm</a>, <a href="../otspec182/features_fj" data-linktype="relative-path">features_fj.htm</a>, <a href="../otspec182/fvar" data-linktype="relative-path">fvar.htm</a>, <a href="../otspec182/gasp" data-linktype="relative-path">gasp.htm</a>, <a href="../otspec182/gdef" data-linktype="relative-path">gdef.htm</a>, <a href="../otspec182/glyf" data-linktype="relative-path">glyf.htm</a>, <a href="../otspec182/gpos" data-linktype="relative-path">gpos.htm</a>, <a href="../otspec182/gsub" data-linktype="relative-path">gsub.htm</a>, <a href="../otspec182/gvar" data-linktype="relative-path">gvar.htm</a>, <a href="../otspec182/hdmx" data-linktype="relative-path">hdmx.htm</a>, <a href="../otspec182/head" data-linktype="relative-path">head.htm</a>, <a href="../otspec182/hhea" data-linktype="relative-path">hhea.htm</a>, <a href="../otspec182/hmtx" data-linktype="relative-path">hmtx.htm</a>, <a href="../otspec182/hvar" data-linktype="relative-path">hvar.htm</a>, <a href="../otspec182/jstf" data-linktype="relative-path">jstf.htm</a>, <a href="../otspec182/math" data-linktype="relative-path">math.htm</a>, <a href="../otspec182/maxp" data-linktype="relative-path">maxp.htm</a>, <a href="../otspec182/merg" data-linktype="relative-path">merg.htm</a>, <a href="../otspec182/mvar" data-linktype="relative-path">mvar.htm</a>, <a href="../otspec182/os2" data-linktype="relative-path">os2.htm</a>, <a href="../otspec182/otff" data-linktype="relative-path">otff.htm</a>, <a href="../otspec182/otvarcommonformats" data-linktype="relative-path">otvarcommonformats.htm</a>, <a href="../otspec182/otvaroverview" data-linktype="relative-path">otvaroverview.htm</a>, <a href="../otspec182/post" data-linktype="relative-path">post.htm</a>, <a href="../otspec182/sbix" data-linktype="relative-path">sbix.htm</a>, <a href="../otspec182/scripttags" data-linktype="relative-path">scripttags.htm</a>, <a href="../otspec182/stat" data-linktype="relative-path">stat.htm</a>, <a href="../otspec182/vvar" data-linktype="relative-path">vvar.htm</a>, <a href="../otspec182/wgl4b" data-linktype="relative-path">wgl4b.htm</a>.</p>
+<p>In the summary of changes below, details given above are not repeated.</p>
+<p><em>Summary of Changes:</em></p>
+<ul>
+<li><a href="../otspec182/avar" data-linktype="relative-path">avar.htm</a>
+<ul>
+<li>Clarified requirements on AxisValueMap records within a SegmentMap.</li>
+</ul>
+</li>
+<li><a href="../otspec182/cff" data-linktype="relative-path">cff.htm</a>
+<ul>
+<li>Added note about Name INDEX entry, name ID 6 and collections.</li>
+</ul>
+</li>
+<li><a href="../otspec182/cff2" data-linktype="relative-path">cff2.htm</a>
+<ul>
+<li>In Top DICT (section 7), indicated that FontMatrix operator is required only if head.unitsPerEm does not equal 1000, and limited the FontMatrix operand array values. Also deprecated use of FontMatrix operator in Font DICTs (section 10 and Appendix C).</li>
+<li>Corrected description of blend and vsindex operators (section 8).</li>
+<li>Corrected description of operands for the Private operator (section 10).</li>
+<li>Corrected error in numeric range of reserved two-byte DICT operators (Appendix C).</li>
+<li>Removed the maxstack operator.</li>
+</ul>
+</li>
+<li><a href="../otspec182/cff2charstr" data-linktype="relative-path">cff2charstr.htm</a>
+<ul>
+<li>In 3.2, CharString Number Encoding, corrected the described range of values represented for byte values 251 to 254.</li>
+<li>Revised argument stack limit in Appendix B to 513, and removed reference to maxstack operator.</li>
+</ul>
+</li>
+<li><a href="../otspec182/chapter2" data-linktype="relative-path">chapter2.htm</a>
+<ul>
+<li>Relaxed constraint on DFLT script table and LangSysCount.</li>
+</ul>
+</li>
+<li><a href="../otspec182/cmap" data-linktype="relative-path">cmap.htm</a>
+<ul>
+<li>Clarified description for defaultUVSOffset and nonDefaultUVSOffset.</li>
+<li>Re-organized introductory paragraphs and details on platform/encoding IDs.</li>
+</ul>
+</li>
+<li><a href="../otspec182/dvaraxisreg" data-linktype="relative-path">dvaraxisreg.htm</a>
+<ul>
+<li>Created new page.</li>
+</ul>
+</li>
+<li><a href="../otspec182/dvaraxistag_ital" data-linktype="relative-path">dvaraxistag_ital.htm</a>
+<ul>
+<li>Created new page.</li>
+</ul>
+</li>
+<li><a href="../otspec182/dvaraxistag_opsz" data-linktype="relative-path">dvaraxistag_opsz.htm</a>
+<ul>
+<li>Created new page.</li>
+</ul>
+</li>
+<li><a href="../otspec182/dvaraxistag_slnt" data-linktype="relative-path">dvaraxistag_slnt.htm</a>
+<ul>
+<li>Created new page.</li>
+</ul>
+</li>
+<li><a href="../otspec182/dvaraxistag_wdth" data-linktype="relative-path">dvaraxistag_wdth.htm</a>
+<ul>
+<li>Created new page.</li>
+</ul>
+</li>
+<li><a href="../otspec182/dvaraxistag_wght" data-linktype="relative-path">dvaraxistag_wght.htm</a>
+<ul>
+<li>Created new page.</li>
+</ul>
+</li>
+<li><a href="../otspec182/features_ae" data-linktype="relative-path">features_ae.htm</a>
+<ul>
+<li>Revised 'ccmp' feature description.</li>
+</ul>
+</li>
+<li><a href="../otspec182/features_ko" data-linktype="relative-path">features_ko.htm</a>
+<ul>
+<li>Corrected the friendly name for the 'med2' feature.</li>
+</ul>
+</li>
+<li><a href="../otspec182/fvar" data-linktype="relative-path">fvar.htm</a>
+<ul>
+<li>Added a new flag definition for VariationAxisRecord.</li>
+<li>Removed Variation Axis Tags section and made reference instead to OpenType Design-Variation Axis Tag Registry page.</li>
+</ul>
+</li>
+<li><a href="../otspec182/gasp" data-linktype="relative-path">gasp.htm</a>
+<ul>
+<li>Revised documentation of behavior flags, and indicated that reserved bits must be set to zero.</li>
+</ul>
+</li>
+<li><a href="../otspec182/glyf" data-linktype="relative-path">glyf.htm</a>
+<ul>
+<li>Added clarifying information about table organization, side bearings, point numbers, scale for coordinate values, packed representation of flags and coordinates in simple glyph descriptions, and the SCALED_COMPONENT_OFFSET and UNSCALED_COMPONENT_OFFSET composite glyph flags.</li>
+<li>Clarified use of negative numberOfContours values to indicate composite glyphs, and the recommendation that -1 be used.</li>
+<li>Revised documentation of flags, and indicated that reserved bits must be set to zero.</li>
+</ul>
+</li>
+<li>grstate.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec182/tt_graphics_state" data-linktype="relative-path">tt_graphics_state.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec182/gvar" data-linktype="relative-path">gvar.htm</a>
+<ul>
+<li>Amend the algorithm for inferring deltas of un-referenced points to avoid division by zero and to completely cover possible cases.</li>
+</ul>
+</li>
+<li><a href="../otspec182/hmtx" data-linktype="relative-path">hmtx.htm</a>
+<ul>
+<li>Revise errors in the informative description.</li>
+</ul>
+</li>
+<li><a href="../otspec182/" data-linktype="relative-path">index.htm</a>
+<ul>
+<li>Version update.</li>
+<li>Added link to OpenType Design-Variation Axis Tag Registry page.</li>
+<li>Removed mention of Microsoft Word documents. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>instgly.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec182/tt_instructing_glyphs" data-linktype="relative-path">tt_instructing_glyphs.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec182/languagetags" data-linktype="relative-path">languagetags.htm</a>
+<ul>
+<li>Added CCHN.</li>
+</ul>
+</li>
+<li><a href="../otspec182/meta" data-linktype="relative-path">meta.htm</a>
+<ul>
+<li>Corrected the format of the table version (post-release erratum).</li>
+</ul>
+</li>
+<li><a href="../otspec182/mvar" data-linktype="relative-path">mvar.htm</a>
+<ul>
+<li>Changed reference for variation axis tags from 'fvar' chapter to OpenType Design-Variation Axis Tag Registry page.</li>
+</ul>
+</li>
+<li><a href="../otspec182/name" data-linktype="relative-path">name.htm</a>
+<ul>
+<li>Clarified that the string data referenced by 3/1 or 3/0 name records must be encoded in UTF-16BE.</li>
+<li>Revised descriptions for name IDs 1, 2 and 4, and also the paragraph describing key names for Microsoft platforms.</li>
+</ul>
+</li>
+<li><a href="../otspec182/os2" data-linktype="relative-path">os2.htm</a>
+<ul>
+<li>Changed reference for variation axis tags from 'fvar' chapter to OpenType Design-Variation Axis Tag Registry page.</li>
+<li>Corrected link to PANOSE specification (post-release erratum).</li>
+</ul>
+</li>
+<li>os2ver0.htm
+<ul>
+<li>Corrected link to PANOSE specification (post-release erratum).</li>
+</ul>
+</li>
+<li>os2ver1.htm
+<ul>
+<li>Corrected link to PANOSE specification (post-release erratum).</li>
+</ul>
+</li>
+<li>os2ver2.htm
+<ul>
+<li>Corrected link to PANOSE specification (post-release erratum).</li>
+</ul>
+</li>
+<li>os2ver3.htm
+<ul>
+<li>Corrected link to PANOSE specification (post-release erratum).</li>
+</ul>
+</li>
+<li>os2ver4.htm
+<ul>
+<li>Corrected link to PANOSE specification (post-release erratum).</li>
+</ul>
+</li>
+<li><a href="../otspec182/otff" data-linktype="relative-path">otff.htm</a>
+<ul>
+<li>Clarify that table lengths measure a contiguous byte range encompassing the data for the table.</li>
+</ul>
+</li>
+<li><a href="../otspec182/pclt" data-linktype="relative-path">pclt.htm</a>
+<ul>
+<li>Corrected the data type of the MajorVersion field (post-release erratum).</li>
+<li>Corrected the description for SerifStyle (post-release erratum).</li>
+</ul>
+</li>
+<li><a href="../otspec182/post" data-linktype="relative-path">post.htm</a>
+<ul>
+<li>Changed reference for variation axis tags from 'fvar' chapter to OpenType Design-Variation Axis Tag Registry page.</li>
+<li>Corrected link to Adobe glyph naming guide (post-release erratum).</li>
+</ul>
+</li>
+<li><a href="../otspec182/recom" data-linktype="relative-path">recom.htm</a>
+<ul>
+<li>Clarified that the string data referenced by 3/0 name records must be encoded in UTF-16BE.</li>
+<li>For optical size variants, clarified representation within a STAT axis value table for an upper text size of effective infinity.</li>
+<li>Corrected link to Adobe glyph naming guide (post-release erratum).</li>
+<li>Corrected link to PANOSE specification (post-release erratum).</li>
+</ul>
+</li>
+<li><a href="../otspec182/scripttags" data-linktype="relative-path">scripttags.htm</a>
+<ul>
+<li>Removed details on processing of script tags, and replaced with link to details in the OpenType Layout Common Table Formats (post-release erratum).</li>
+<li>Added tags for additional scripts in Unicode 10, Unicode 11 (post-release update).</li>
+</ul>
+</li>
+<li><a href="../otspec182/stat" data-linktype="relative-path">stat.htm</a>
+<ul>
+<li>Added axis value table format 4.</li>
+<li>Revised Introduction to clarify purpose and use of the table as a whole; and revised introduction in the Axis Value Tables section to clarify purpose and use of axis value tables.</li>
+<li>Added clarifications regarding axes, mapping to legacy font-family models, and serialized representation of document text-formatting properties.</li>
+<li>Clarified representation of effective infinity and negative infinity in range min/max fields of format 2 axis value tables.</li>
+<li>Added note regarding use of OlderSiblingFontAttribute.</li>
+<li>Changed reference for tag requirements from 'fvar' table to the Opentype Design Variation Tag Registry.</li>
+<li>Revised the axis ordering in example 3 to reflect recommendation given in Axis Value Tables section.</li>
+</ul>
+</li>
+<li><a href="../otspec182/ttinst" data-linktype="relative-path">ttinst.htm</a>
+<ul>
+<li>Revised links to refer to content ported from Microsoft Word files to Web pages. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>ttinst1.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec182/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>ttinst2.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec182/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec182/ttochap1" data-linktype="relative-path">ttochap1.htm</a>
+<ul>
+<li>Added hyperlink to OpenType Mirroring Pairs List file (ompl.txt).</li>
+</ul>
+</li>
+<li><a href="../otspec182/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>
+<ul>
+<li>Corrected errors introduced when porting from Word documents (some changes from earlier versions were not retained). (Post-release erratum.)</li>
+<li>Corrected error in description of “logical OR” inadvertently added when porting from Word documents. (Post-release erratum.)</li>
+<li>Removed incorrect text inadvertently added to description of Round to Half Grid (RTHG) when porting from Word documents. (Post-release erratum.)</li>
+<li>Corrected error in code range of MIRP inadvertently introduced when porting from Word documents. (Post-release erratum.)</li>
+</ul>
+</li>
+<li><a href="../otspec182/vhea" data-linktype="relative-path">vhea.htm</a>
+<ul>
+<li>Corrected the calculation given in the description of yMaxExtent (post-release erratum).</li>
+</ul>
+</li>
+<li><a href="../otspec182/wgl4" data-linktype="relative-path">wgl4.htm</a>
+<ul>
+<li>Corrected link to Adobe glyph naming guide (post-release erratum).</li>
+</ul>
+</li>
+<li><a href="../otspec182/wgl4b" data-linktype="relative-path">wgl4b.htm</a>
+<ul>
+<li>Corrected link to Adobe glyph naming guide (post-release erratum).</li>
+</ul>
+</li>
+<li><a href="../otspec182/wgl4c" data-linktype="relative-path">wgl4c.htm</a>
+<ul>
+<li>Corrected link to Adobe glyph naming guide (post-release erratum).</li>
+</ul>
+</li>
+<li><a href="../otspec182/wgl4d" data-linktype="relative-path">wgl4d.htm</a>
+<ul>
+<li>Corrected link to Adobe glyph naming guide (post-release erratum).</li>
+</ul>
+</li>
+<li><a href="../otspec182/wgl4e" data-linktype="relative-path">wgl4e.htm</a>
+<ul>
+<li>Corrected link to Adobe glyph naming guide (post-release erratum).</li>
+</ul>
+</li>
+</ul>
+<p><a id="v1.8.1"></a></p>
+<h2 id="version-181">Version 1.8.1</h2>
+<p>Released January 2017.</p>
+<p>Many editorial changes have been made, including global changes to the names of data types used. Some technical corrections were made that do not affect structure definitions. One structure change was introduced: a field was added in the STAT table.</p>
+<p>Changes to names of data types were made in various chapters, as follows:</p>
+<ul>
+<li><p>A single Fixed version field changed to uint16 major/minor version fields: <a href="../otspec181/cbdt" data-linktype="relative-path">cbdt.htm</a>, <a href="../otspec181/cblc" data-linktype="relative-path">cblc.htm</a>, <a href="../otspec181/ebdt" data-linktype="relative-path">ebdt.htm</a>, <a href="../otspec181/eblc" data-linktype="relative-path">eblc.htm</a>, <a href="../otspec181/ebsc" data-linktype="relative-path">ebsc.htm</a>, <a href="../otspec181/math" data-linktype="relative-path">math.htm</a>, <a href="../otspec181/otff" data-linktype="relative-path">otff.htm</a>, <a href="../otspec181/pclt" data-linktype="relative-path">pclt.htm</a>.</p>
+</li>
+<li><p>Instances of “GlyphID” as a type changed to uint16: <a href="../otspec181/chapter2" data-linktype="relative-path">chapter2.htm</a>, <a href="../otspec181/gpos" data-linktype="relative-path">gpos.htm</a>, <a href="../otspec181/gsub" data-linktype="relative-path">gsub.htm</a>, <a href="../otspec181/jstf" data-linktype="relative-path">jstf.htm</a>, <a href="../otspec181/math" data-linktype="relative-path">math.htm</a>.</p>
+</li>
+<li><p>“2-byte signed short” changed to int16: <a href="../otspec181/ibmfc" data-linktype="relative-path">ibmfc.htm</a>.</p>
+</li>
+<li><p>BYTE to uint8: <a href="../otspec181/cbdt" data-linktype="relative-path">cbdt.htm</a>, <a href="../otspec181/cblc" data-linktype="relative-path">cblc.htm</a>, <a href="../otspec181/cmap" data-linktype="relative-path">cmap.htm</a>, <a href="../otspec181/cpal" data-linktype="relative-path">cpal.htm</a>, <a href="../otspec181/dsig" data-linktype="relative-path">dsig.htm</a>, <a href="../otspec181/ebdt" data-linktype="relative-path">ebdt.htm</a>, <a href="../otspec181/eblc" data-linktype="relative-path">eblc.htm</a>, <a href="../otspec181/ebsc" data-linktype="relative-path">ebsc.htm</a>, <a href="../otspec181/fpgm" data-linktype="relative-path">fpgm.htm</a>, <a href="../otspec181/glyf" data-linktype="relative-path">glyf.htm</a>, <a href="../otspec181/hdmx" data-linktype="relative-path">hdmx.htm</a>, <a href="../otspec181/hvar" data-linktype="relative-path">hvar.htm</a>, <a href="../otspec181/ltsh" data-linktype="relative-path">ltsh.htm</a>, <a href="../otspec181/merg" data-linktype="relative-path">merg.htm</a>, <a href="../otspec181/os2" data-linktype="relative-path">os2.htm</a>, os2ver0.htm, os2ver1.htm, os2ver2.htm, os2ver3.htm, os2ver4.htm, <a href="../otspec181/otff" data-linktype="relative-path">otff.htm</a>, <a href="../otspec181/otvarcommonformats" data-linktype="relative-path">otvarcommonformats.htm</a>, <a href="../otspec181/pclt" data-linktype="relative-path">pclt.htm</a>, <a href="../otspec181/recom" data-linktype="relative-path">recom.htm</a>, <a href="../otspec181/sbix" data-linktype="relative-path">sbix.htm</a>, <a href="../otspec181/vdmx" data-linktype="relative-path">vdmx.htm</a>.</p>
+</li>
+<li><p>Card8, Card16 and Card32 to uint8, uint16 and uint32: <a href="../otspec181/cff2" data-linktype="relative-path">cff2.htm</a>.</p>
+</li>
+<li><p>CHAR to Tag: <a href="../otspec181/os2" data-linktype="relative-path">os2.htm</a>, os2ver0.htm, os2ver1.htm, os2ver2.htm, os2ver3.htm, os2ver4.htm.</p>
+</li>
+<li><p>CHAR to int8: <a href="../otspec181/cbdt" data-linktype="relative-path">cbdt.htm</a>, <a href="../otspec181/cblc" data-linktype="relative-path">cblc.htm</a>, <a href="../otspec181/ebdt" data-linktype="relative-path">ebdt.htm</a>, <a href="../otspec181/eblc" data-linktype="relative-path">eblc.htm</a>, <a href="../otspec181/otff" data-linktype="relative-path">otff.htm</a>, <a href="../otspec181/otvarcommonformats" data-linktype="relative-path">otvarcommonformats.htm</a>, <a href="../otspec181/pclt" data-linktype="relative-path">pclt.htm</a>, <a href="../otspec181/post" data-linktype="relative-path">post.htm</a>.</p>
+</li>
+<li><p>LONG to int32: <a href="../otspec181/hdmx" data-linktype="relative-path">hdmx.htm</a>, <a href="../otspec181/otff" data-linktype="relative-path">otff.htm</a>, <a href="../otspec181/tt_instructions" data-linktype="relative-path">ttinst1.docx</a>, <a href="../otspec181/tt_instructions" data-linktype="relative-path">ttinst2.docx</a>.</p>
+</li>
+<li><p>Offset to Offset16: <a href="../otspec181/base" data-linktype="relative-path">base.htm</a>, <a href="../otspec181/chapter2" data-linktype="relative-path">chapter2.htm</a>, <a href="../otspec181/gdef" data-linktype="relative-path">gdef.htm</a>, <a href="../otspec181/gpos" data-linktype="relative-path">gpos.htm</a>, <a href="../otspec181/gsub" data-linktype="relative-path">gsub.htm</a>, <a href="../otspec181/jstf" data-linktype="relative-path">jstf.htm</a>, <a href="../otspec181/math" data-linktype="relative-path">math.htm</a>, <a href="../otspec181/merg" data-linktype="relative-path">merg.htm</a>, <a href="../otspec181/mvar" data-linktype="relative-path">mvar.htm</a>, <a href="../otspec181/otff" data-linktype="relative-path">otff.htm</a>.</p>
+</li>
+<li><p>SHORT to int16: <a href="../otspec181/cmap" data-linktype="relative-path">cmap.htm</a> ,<a href="../otspec181/gdef" data-linktype="relative-path">gdef.htm</a>, <a href="../otspec181/glyf" data-linktype="relative-path">glyf.htm</a>, <a href="../otspec181/gpos" data-linktype="relative-path">gpos.htm</a>, <a href="../otspec181/gsub" data-linktype="relative-path">gsub.htm</a>, <a href="../otspec181/hdmx" data-linktype="relative-path">hdmx.htm</a>, <a href="../otspec181/head" data-linktype="relative-path">head.htm</a>, <a href="../otspec181/hhea" data-linktype="relative-path">hhea.htm</a>, <a href="../otspec181/hmtx" data-linktype="relative-path">hmtx.htm</a>, <a href="../otspec181/math" data-linktype="relative-path">math.htm</a>, <a href="../otspec181/os2" data-linktype="relative-path">os2.htm</a>, os2ver0.htm, os2ver1.htm, os2ver2.htm, os2ver3.htm, os2ver4.htm, <a href="../otspec181/otff" data-linktype="relative-path">otff.htm</a>, <a href="../otspec181/otvarcommonformats" data-linktype="relative-path">otvarcommonformats.htm</a>, <a href="../otspec181/sbix" data-linktype="relative-path">sbix.htm</a>, <a href="../otspec181/tt_instructions" data-linktype="relative-path">ttinst1.docx</a>, <a href="../otspec181/vdmx" data-linktype="relative-path">vdmx.htm</a>, <a href="../otspec181/vhea" data-linktype="relative-path">vhea.hdm</a>, <a href="../otspec181/vmtx" data-linktype="relative-path">vmtx.htm</a>, <a href="../otspec181/vorg" data-linktype="relative-path">vorg.htm</a>.</p>
+</li>
+<li><p>UINT24 to uint24: <a href="../otspec181/cmap" data-linktype="relative-path">cmap.htm</a> ,<a href="../otspec181/features_ae" data-linktype="relative-path">features_ae.htm</a>, <a href="../otspec181/otff" data-linktype="relative-path">otff.htm</a>.</p>
+</li>
+<li><p>ULONG used as a long offset changed to Offset32: <a href="../otspec181/base" data-linktype="relative-path">base.htm</a>, <a href="../otspec181/cblc" data-linktype="relative-path">cblc.htm</a>, <a href="../otspec181/chapter2" data-linktype="relative-path">chapter2.htm</a>, <a href="../otspec181/cmap" data-linktype="relative-path">cmap.htm</a>, <a href="../otspec181/colr" data-linktype="relative-path">colr.htm</a>, <a href="../otspec181/cpal" data-linktype="relative-path">cpal.htm</a>, <a href="../otspec181/dsig" data-linktype="relative-path">dsig.htm</a>, <a href="../otspec181/eblc" data-linktype="relative-path">eblc.htm</a>, <a href="../otspec181/gdef" data-linktype="relative-path">gdef.htm</a>, <a href="../otspec181/gpos" data-linktype="relative-path">gpos.htm</a>, <a href="../otspec181/gsub" data-linktype="relative-path">gsub.htm</a>, <a href="../otspec181/gvar" data-linktype="relative-path">gvar.htm</a>, <a href="../otspec181/hvar" data-linktype="relative-path">hvar.htm</a>, <a href="../otspec181/loca" data-linktype="relative-path">loca.htm</a>, <a href="../otspec181/meta" data-linktype="relative-path">meta.htm</a>, <a href="../otspec181/otff" data-linktype="relative-path">otff.htm</a>, <a href="../otspec181/otvarcommonformats" data-linktype="relative-path">otvarcommonformats.htm</a>, <a href="../otspec181/sbix" data-linktype="relative-path">sbix.htm</a>, <a href="../otspec181/stat" data-linktype="relative-path">stat.htm</a>, <a href="../otspec181/svg" data-linktype="relative-path">svg.htm</a>, <a href="../otspec181/vvar" data-linktype="relative-path">vvar.htm</a>.</p>
+</li>
+<li><p>ULONG not used as an offset changed to uint32: <a href="../otspec181/cbdt" data-linktype="relative-path">cbdt.htm</a>, <a href="../otspec181/cblc" data-linktype="relative-path">cblc.htm</a>, <a href="../otspec181/cff2" data-linktype="relative-path">cff2.htm</a>, <a href="../otspec181/chapter2" data-linktype="relative-path">chapter2.htm</a>, <a href="../otspec181/cmap" data-linktype="relative-path">cmap.htm</a>, <a href="../otspec181/cpal" data-linktype="relative-path">cpal.htm</a>, <a href="../otspec181/dsig" data-linktype="relative-path">dsig.htm</a>, <a href="../otspec181/eblc" data-linktype="relative-path">eblc.htm</a>, <a href="../otspec181/ebsc" data-linktype="relative-path">ebsc.htm</a>, <a href="../otspec181/head" data-linktype="relative-path">head.htm</a>, <a href="../otspec181/meta" data-linktype="relative-path">meta.htm</a>, <a href="../otspec181/os2" data-linktype="relative-path">os2.htm</a>, os2ver0.htm, os2ver1.htm, os2ver2.htm, os2ver3.htm, os2ver4.htm, <a href="../otspec181/otff" data-linktype="relative-path">otff.htm</a>, <a href="../otspec181/pclt" data-linktype="relative-path">pclt.htm</a>, <a href="../otspec181/post" data-linktype="relative-path">post.htm</a>, <a href="../otspec181/sbix" data-linktype="relative-path">sbix.htm</a>, <a href="../otspec181/svg" data-linktype="relative-path">svg.htm</a>, <a href="../otspec181/tt_instructions" data-linktype="relative-path">ttinst1.docx</a>, <a href="../otspec181/tt_instructions" data-linktype="relative-path">ttinst2.docx</a>.</p>
+</li>
+<li><p>USHORT used as an offset changed to Offset16: <a href="../otspec181/cvar" data-linktype="relative-path">cvar.htm</a>, <a href="../otspec181/eblc" data-linktype="relative-path">eblc.htm</a>, <a href="../otspec181/fvar" data-linktype="relative-path">fvar.htm</a>, <a href="../otspec181/gvar" data-linktype="relative-path">gvar.htm</a>, <a href="../otspec181/kern" data-linktype="relative-path">kern.htm</a>, <a href="../otspec181/loca" data-linktype="relative-path">loca.htm</a>, <a href="../otspec181/merg" data-linktype="relative-path">merg.htm</a>, <a href="../otspec181/name" data-linktype="relative-path">name.htm</a>, <a href="../otspec181/otvarcommonformats" data-linktype="relative-path">otvarcommonformats.htm</a>, <a href="../otspec181/stat" data-linktype="relative-path">stat.htm</a>, <a href="../otspec181/vdmx" data-linktype="relative-path">vdmx.htm</a>, <a href="../otspec181/vorg" data-linktype="relative-path">vorg.htm</a>.</p>
+</li>
+<li><p>USHORT not used as an offset changed to uint16: <a href="../otspec181/avar" data-linktype="relative-path">avar.htm</a>, <a href="../otspec181/base" data-linktype="relative-path">base.htm</a>, <a href="../otspec181/cblc" data-linktype="relative-path">cblc.htm</a>, <a href="../otspec181/cmap" data-linktype="relative-path">cmap.htm</a>, <a href="../otspec181/chapter2" data-linktype="relative-path">chapter2.htm</a>, <a href="../otspec181/colr" data-linktype="relative-path">colr.htm</a>, <a href="../otspec181/cpal" data-linktype="relative-path">cpal.htm</a>, <a href="../otspec181/cvar" data-linktype="relative-path">cvar.htm</a>, <a href="../otspec181/dsig" data-linktype="relative-path">dsig.htm</a>, <a href="../otspec181/ebdt" data-linktype="relative-path">ebdt.htm</a>, <a href="../otspec181/eblc" data-linktype="relative-path">eblc.htm</a>, <a href="../otspec181/features_ae" data-linktype="relative-path">features_ae.htm</a>, <a href="../otspec181/features_pt" data-linktype="relative-path">features_pt.htm</a>, <a href="../otspec181/fvar" data-linktype="relative-path">fvar.htm</a>, <a href="../otspec181/gasp" data-linktype="relative-path">gasp.htm</a>, <a href="../otspec181/gdef" data-linktype="relative-path">gdef.htm</a>, <a href="../otspec181/glyf" data-linktype="relative-path">glyf.htm</a>, <a href="../otspec181/gpos" data-linktype="relative-path">gpos.htm</a>, <a href="../otspec181/gsub" data-linktype="relative-path">gsub.htm</a>, <a href="../otspec181/gvar" data-linktype="relative-path">gvar.htm</a>, <a href="../otspec181/hdmx" data-linktype="relative-path">hdmx.htm</a>, <a href="../otspec181/head" data-linktype="relative-path">head.htm</a>, <a href="../otspec181/hhea" data-linktype="relative-path">hhea.htm</a>, <a href="../otspec181/hmtx" data-linktype="relative-path">hmtx.htm</a>, <a href="../otspec181/hvar" data-linktype="relative-path">hvar.htm</a>, <a href="../otspec181/jstf" data-linktype="relative-path">jstf.htm</a>, <a href="../otspec181/kern" data-linktype="relative-path">kern.htm</a>, <a href="../otspec181/ltsh" data-linktype="relative-path">ltsh.htm</a>, <a href="../otspec181/math" data-linktype="relative-path">math.htm</a>, <a href="../otspec181/maxp" data-linktype="relative-path">maxp.htm</a>, <a href="../otspec181/merg" data-linktype="relative-path">merg.htm</a>, <a href="../otspec181/meta" data-linktype="relative-path">meta.htm</a>, <a href="../otspec181/mvar" data-linktype="relative-path">mvar.htm</a>, <a href="../otspec181/name" data-linktype="relative-path">name.htm</a>, <a href="../otspec181/os2" data-linktype="relative-path">os2.htm</a>, os2ver0.htm, os2ver1.htm, os2ver2.htm, os2ver3.htm, os2ver4.htm, <a href="../otspec181/otff" data-linktype="relative-path">otff.htm</a>, <a href="../otspec181/otvarcommonformats" data-linktype="relative-path">otvarcommonformats.htm</a>, <a href="../otspec181/pclt" data-linktype="relative-path">pclt.htm</a>, <a href="../otspec181/post" data-linktype="relative-path">post.htm</a>, <a href="../otspec181/sbix" data-linktype="relative-path">sbix.htm</a>, <a href="../otspec181/stat" data-linktype="relative-path">stat.htm</a>, <a href="../otspec181/svg" data-linktype="relative-path">svg.htm</a>, <a href="tt_instructions.html" data-linktype="relative-path">ttinst1.docx</a>, <a href="../otspec181/tt_instructions" data-linktype="relative-path">ttinst2.docx</a>, <a href="../otspec181/vdmx" data-linktype="relative-path">vdmx.htm</a>, <a href="../otspec181/vhea" data-linktype="relative-path">vhea.htm</a>, <a href="../otspec181/vmtx" data-linktype="relative-path">vmtx.htm</a>, <a href="../otspec181/vorg" data-linktype="relative-path">vorg.htm</a>, <a href="../otspec181/vvar" data-linktype="relative-path">vvar.htm</a>.</p>
+</li>
+</ul>
+<p>Minor editorial changes were made in the following chapters: <a href="../otspec181/base" data-linktype="relative-path">base.htm</a>, <a href="../otspec181/cbdt" data-linktype="relative-path">cbdt.htm</a>, <a href="../otspec181/cblc" data-linktype="relative-path">cblc.htm</a>, <a href="../otspec181/cff2" data-linktype="relative-path">cff2.htm</a>, <a href="../otspec181/cff2charstr" data-linktype="relative-path">cff2charstr.htm</a>, <a href="../otspec181/chapter2" data-linktype="relative-path">chapter2.htm</a>, <a href="../otspec181/colr" data-linktype="relative-path">colr.htm</a>, <a href="../otspec181/cvar" data-linktype="relative-path">cvar.htm</a>, <a href="../otspec181/ebdt" data-linktype="relative-path">ebdt.htm</a>, <a href="../otspec181/eblc" data-linktype="relative-path">eblc.htm</a>, <a href="../otspec181/ebsc" data-linktype="relative-path">ebsc.htm</a>, <a href="../otspec181/fvar" data-linktype="relative-path">fvar.htm</a>, <a href="../otspec181/gpos" data-linktype="relative-path">gpos.htm</a>, <a href="../otspec181/gsub" data-linktype="relative-path">gsub.htm</a>, <a href="../otspec181/gvar" data-linktype="relative-path">gvar.htm</a>, <a href="../otspec181/hdmx" data-linktype="relative-path">hdmx.htm</a>, <a href="../otspec181/hmtx" data-linktype="relative-path">hmtx.htm</a>, <a href="../otspec181/hvar" data-linktype="relative-path">hvar.htm</a>, <a href="../otspec181/" data-linktype="relative-path">index.htm</a>, <a href="../otspec181/jstf" data-linktype="relative-path">jstf.htm</a>, <a href="../otspec181/languagetags" data-linktype="relative-path">languagetags.htm</a>, <a href="../otspec181/loca" data-linktype="relative-path">loca.htm</a>, <a href="../otspec181/math" data-linktype="relative-path">math.htm</a>, <a href="../otspec181/otff" data-linktype="relative-path">otff.htm</a>, <a href="../otspec181/otvarcommonformats" data-linktype="relative-path">otvarcommonformats.htm</a>, <a href="../otspec181/otvaroverview" data-linktype="relative-path">otvaroverview.htm</a>, <a href="../otspec181/post" data-linktype="relative-path">post.htm</a>, <a href="../otspec181/stat" data-linktype="relative-path">stat.htm</a>, <a href="../otspec181/vdmx" data-linktype="relative-path">vdmx.htm</a>.</p>
+<p>In the summary of changes below, details given above are not repeated.</p>
+<p><em>Summary of Changes:</em></p>
+<ul>
+<li><a href="../otspec181/avar" data-linktype="relative-path">avar.htm</a>
+<ul>
+<li>Corrected header definition, adding missing reserved field (post-release erratum).</li>
+<li>Corrected SegmentMaps record definition, showing axisValueMaps as an array (post-release erratum).</li>
+</ul>
+</li>
+<li><a href="../otspec181/cff2" data-linktype="relative-path">cff2.htm</a>
+<ul>
+<li>Revised Table 1, CFF Data Layout.</li>
+<li>Revised description of operands in section 4, DICT Data, including removal of the boolean operand type from Table 6.</li>
+<li>Revised description of Top DICT data (section 7).</li>
+<li>Deleted section 8, Glyph Organization</li>
+<li>Revised description of CharString INDEX (now section 8).</li>
+<li>Revised description of local and global subr indices (now section 9).</li>
+<li>Revised description of Font DICT INDEX, Font DICTs and FDSelect (now section 10).</li>
+<li>Revised description of Private DICT Data (now section 11).</li>
+<li>Revised description of extensions for Font Variations (now section 12).</li>
+<li>Added example CFF2 table in Appendix A.</li>
+<li>Revised description of differences from CFF 1 (sections D1 to D4 of Appendix D).</li>
+<li>Deleted sections D5 and D6 from Appendix D.</li>
+</ul>
+</li>
+<li><a href="../otspec181/cff2charstr" data-linktype="relative-path">cff2charstr.htm</a>
+<ul>
+<li>Revised description of subroutines (section 2.3).</li>
+<li>Revised description of CFF2 CharString organization (section 3.1), and CharString number encoding (section 3.2).</li>
+<li>Correction in Table 1, “CFF2 CharString Encoding Values” for byte values 251 – 254.</li>
+<li>Revised description of CharString operators (section 4).</li>
+<li>Revised description of path construction operators (section 4.1). Note that changes to the individual operator descriptions are editorial only.</li>
+<li>Revised description of finishing a CharString outline definition (section 4.2).</li>
+<li>Revised description of subroutine operators (section 4.4).</li>
+<li>Revised description of variation data operators (section 4.5).</li>
+<li>Revised summaries of one- and two-byte operators in Appendix A.</li>
+<li>In Appendix B, revised description of argument stack limits, and removed TransientArray elements from the list of limits.</li>
+<li>Deleted Appendix C, “Compatibility and Deprecated Operators”.</li>
+</ul>
+</li>
+<li><a href="../otspec181/chapter2" data-linktype="relative-path">chapter2.htm</a>
+<ul>
+<li>Correction of type of MarkFilteringSet index in Lookup table from “unit16” (sic) to uint16.</li>
+<li>Removed erroneous reference to ConditionSet version.</li>
+<li>Renamed FeatureVariationRecordsCount in FeatureVariations table to FeatureVariationRecordCount</li>
+<li>Renamed AlternateFeatureTableOffset field in FeatureTableSubstitutionRecord to AlternateFeatureTable.</li>
+</ul>
+</li>
+<li><a href="../otspec181/cmap" data-linktype="relative-path">cmap.htm</a>
+<ul>
+<li>Revised presentation of formats to give names to records and to integrate record arrays into the presentation of the format for the parent structure containing the array.</li>
+</ul>
+</li>
+<li><a href="../otspec181/dsig" data-linktype="relative-path">dsig.htm</a>
+<ul>
+<li>Changed field names away from Hungarian notation (“ulVersion” to “version”, etc.).</li>
+</ul>
+</li>
+<li><a href="../otspec181/features_pt" data-linktype="relative-path">features_pt.htm</a>
+<ul>
+<li>Added note for the 'size' feature regarding the STAT table.</li>
+</ul>
+</li>
+<li><a href="../otspec181/fvar" data-linktype="relative-path">fvar.htm</a>
+<ul>
+<li>Changed the countSizePairs field to permanently reserved, and removed note about this field.</li>
+<li>Clarified usage of the axisSize and instanceSize fields.</li>
+<li>Clarified expected behavior if axisCount is zero or if instanceCount is zero.</li>
+</ul>
+</li>
+<li><a href="../otspec181/glyf" data-linktype="relative-path">glyf.htm</a>
+<ul>
+<li>Clarified types for items with variable types depending on flags.</li>
+</ul>
+</li>
+<li>grstate.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec181/tt_graphics_state" data-linktype="relative-path">tt_graphics_state.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec181/gvar" data-linktype="relative-path">gvar.htm</a>
+<ul>
+<li>Corrected definition of flags field (post-release erratum).</li>
+</ul>
+</li>
+<li><a href="../otspec181/hmtx" data-linktype="relative-path">hmtx.htm</a>
+<ul>
+<li>Re-ordered columns in table for the hmtx format to match the convention in other chapters. Also presented the format of the longHorMetric record using the same table conventions.</li>
+<li>Added explanatory text for better clarity.</li>
+</ul>
+</li>
+<li><a href="../otspec181/" data-linktype="relative-path">index.htm</a>
+<ul>
+<li>Updated version number.</li>
+<li>Removed mention of Microsoft Word documents. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li>instgly.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec181/tt_instructing_glyphs" data-linktype="relative-path">tt_instructing_glyphs.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec181/languagetags" data-linktype="relative-path">languagetags.htm</a>
+<ul>
+<li>Added tags: 'CJA ', 'CJM '</li>
+</ul>
+</li>
+<li><a href="../otspec181/mvar" data-linktype="relative-path">mvar.htm</a>
+<ul>
+<li>Changed the axisCount field to reserved/not used. (The item variation store already contains the axis count.)</li>
+<li>Renamed offsetToItemVariationStore field to itemVariationStore.</li>
+<li>Clarified usage of valueRecordSize field.</li>
+<li>Added validation details for header fields.</li>
+</ul>
+</li>
+<li><a href="../otspec181/os2" data-linktype="relative-path">os2.htm</a>
+<ul>
+<li>Added a comment regarding PANOSE values in variable fonts.</li>
+<li>Added comments for usLowerOpticalPointSize and usUpperOpticalPointSize regarding the STAT table.</li>
+</ul>
+</li>
+<li><a href="../otspec181/os2ver0" data-linktype="relative-path">os2ver0.htm</a>
+<ul>
+<li>Renamed ulCharRange array to ulUnicodeRange, and revised description.</li>
+</ul>
+</li>
+<li><a href="../otspec181/otff" data-linktype="relative-path">otff.htm</a>
+<ul>
+<li>Added type Offset32.</li>
+<li>Removed FUNIT, GlyphID as types.</li>
+<li>Revised description of version numbers, including clarification of requirement for unrecognized major version changes.</li>
+<li>Minor revisions to TTC header field names.</li>
+<li>In the “Font Tables” section, changed the recommendation that tables be 4-byte aligned to be a requirement — this is stated as a requirement earlier in the discussion of checksum calculation.</li>
+<li>Clarified that 'cvt ', 'fpgm' and 'prep' tables are all optional.</li>
+</ul>
+</li>
+<li><a href="../otspec181/otvarcommonformats" data-linktype="relative-path">otvarcommonformats.htm</a>
+<ul>
+<li>Renamed regionCount and regionIndices field names in ItemVariationData subtable to regionIndexCount and regionIndexes.</li>
+</ul>
+</li>
+<li><a href="../otspec181/recom" data-linktype="relative-path">recom.htm</a>
+<ul>
+<li>In 'kern' table section, added a comment about kerning in variable fonts.</li>
+<li>In 'maxp' table section, revised comment about CFF to include CFF2.</li>
+<li>In OS/2 table section, added a comment regarding PANOSE values in variable fonts.</li>
+<li>Removed “Device Resolutions” section.</li>
+<li>Added section on families with optical size variants, and related comment in OS/2 section.</li>
+<li>Corrected link to PANOSE specification. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec181/stat" data-linktype="relative-path">stat.htm</a>
+<ul>
+<li>Added elidableFallbackNameID.</li>
+<li>Clarified usage of designAxisSize field.</li>
+<li>Added validation details for header fields.</li>
+<li>Clarified usage of axisOrdering values.</li>
+<li>Clarified behaviour of AxisValueFormat2 tables if two tables have overlapping ranges on the same axis.</li>
+</ul>
+</li>
+<li><a href="../otspec181/ttinst" data-linktype="relative-path">ttinst.htm</a>
+<ul>
+<li>Revised links to refer to content ported from Microsoft Word files to Web pages. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>ttinst1.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec181/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>ttinst2.doc
+<ul>
+<li>Changed “NPUSHB” to “NPUSHW” in GETVARIATION example.</li>
+<li>Content ported into Web page: <a href="../otspec181/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec181/ttochap1" data-linktype="relative-path">ttochap1.htm</a>
+<ul>
+<li>Clarified expected behavior for OpenType Layout processing when glyph runs are formatted with different variation instances of a variable font.</li>
+</ul>
+</li>
+<li><a href="../otspec181/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>
+<ul>
+<li>Corrected errors introducted when porting from Word documents (some changes from earlier versions were not retained). (Post-release erratum.)</li>
+<li>Corrected error in description of “logical OR” inadvertently added when porting from Word documents. (Post-release erratum.)</li>
+<li>Removed incorrect text inadvertently added to description of Round to Half Grid (RTHG) when porting from Word documents. (Post-release erratum.)</li>
+<li>Corrected error in code range of MIRP inadvertently introduced when porting from Word documents. (Post-release erratum.)</li>
+</ul>
+</li>
+<li><a href="../otspec181/vdmx" data-linktype="relative-path">vdmx.htm</a>
+<ul>
+<li>Revised names of member structures.</li>
+<li>Removed VDMX groups from the header format description — these are subtables referenced via offsets.</li>
+</ul>
+</li>
+</ul>
+<p><a id="v1.8"></a></p>
+<h2 id="version-18">Version 1.8</h2>
+<p>Released September 2016.</p>
+<p><em>Summary of Changes:</em></p>
+<ul>
+<li><a href="../otspec180/avar" data-linktype="relative-path">avar.htm</a>
+<ul>
+<li>Axis variations table added.</li>
+</ul>
+</li>
+<li><a href="../otspec180/base" data-linktype="relative-path">base.htm</a>
+<ul>
+<li>Changed single Fixed version field to USHORT major/minor versions.</li>
+<li>Changed int16/uint16 to SHORT/USHORT.</li>
+<li>Added version 1.1 header.</li>
+<li>Added section on OpenType Font Variations.</li>
+<li>Revised description of BaseCoord Format 3 to accommodate Font Variations.</li>
+<li>Added section for the Item Variation Store table.</li>
+</ul>
+</li>
+<li><a href="../otspec180/cff2" data-linktype="relative-path">cff2.htm</a>
+<ul>
+<li>Compact Font Format 2 table added.</li>
+</ul>
+</li>
+<li><a href="../otspec180/cff2charstr" data-linktype="relative-path">cff2charstr.htm</a>
+<ul>
+<li>CFF 2 CharString Format added.</li>
+</ul>
+</li>
+<li><a href="../otspec180/chapter2" data-linktype="relative-path">chapter2.htm</a>
+<ul>
+<li>Changed int16/uint16 to SHORT/USHORT.</li>
+<li>Added section on OpenType Font Variations.</li>
+<li>Added VariationIndex table.</li>
+<li>Added FeatureVariations table and constituent formats.</li>
+</ul>
+</li>
+<li><a href="../otspec180/cvar" data-linktype="relative-path">cvar.htm</a>
+<ul>
+<li>CVT variations table added.</li>
+</ul>
+</li>
+<li><a href="../otspec180/featurelist" data-linktype="relative-path">featurelist.htm</a>
+<ul>
+<li>Added Required Variation Alternates feature.</li>
+<li>Added Vertical Alternates for Rotation feature.</li>
+</ul>
+</li>
+<li><a href="../otspec180/features_fj" data-linktype="relative-path">features_fj.htm</a>
+<ul>
+<li>Revised feature descriptions for 'fina', 'halt', 'init', 'isol' (similar to ISO/IEC 14496-22:2015 Draft Amendment 2).</li>
+<li>Marked the 'hngl' feature as deprecated (following ISO/IEC 14496-22:2015 Draft Amendment 2).</li>
+</ul>
+</li>
+<li><a href="../otspec180/features_ko" data-linktype="relative-path">features_ko.htm</a>
+<ul>
+<li>Revised feature descriptions for 'medi' (similar to ISO/IEC 14496-22:2015 Draft Amendment 2).</li>
+</ul>
+</li>
+<li><a href="../otspec180/features_pt" data-linktype="relative-path">features_pt.htm</a>
+<ul>
+<li>Added Required Variation Alternates feature.</li>
+</ul>
+</li>
+<li><a href="../otspec180/features_uz" data-linktype="relative-path">features_uz.htm</a>
+<ul>
+<li>Revised feature description for 'vert' (similar to ISO/IEC 14496-22:2015 Amendment 1).</li>
+<li>Added Vertical Alternates for Rotation feature (similar to ISO/IEC 14496-22:2015 Amendment 1).</li>
+<li>Revised feature description for 'vhal' (similar to ISO/IEC 14496-22:2015 Draft Amendement 2).</li>
+</ul>
+</li>
+<li><a href="../otspec180/fvar" data-linktype="relative-path">fvar.htm</a>
+<ul>
+<li>Font variations table added.</li>
+</ul>
+</li>
+<li><a href="../otspec180/gasp" data-linktype="relative-path">gasp.htm</a>
+<ul>
+<li>Added section on OpenType Font Variations.</li>
+</ul>
+</li>
+<li><a href="../otspec180/gdef" data-linktype="relative-path">gdef.htm</a>
+<ul>
+<li>Added missing sections describing Mark Attachment Class and Mark Glyph Sets tables.</li>
+<li>Added sections for the Item Variation Store table.</li>
+<li>Changed single Fixed version field to USHORT major/minor versions.</li>
+<li>Changed int16/uint16 to SHORT/USHORT.</li>
+<li>Added version 1.2 header.</li>
+<li>Revised description of CaretValue Format 3 to accommodate Font Variations.</li>
+</ul>
+</li>
+<li><a href="../otspec180/glyf" data-linktype="relative-path">glyf.htm</a>
+<ul>
+<li>Revised description of WE_HAVE_A_TWO_BY_TWO flag (following ISO/IEC 14496-22:2015 Amendment 1).</li>
+<li>In table of composite flags, revised descriptions for OVERLAP_COMPOUND, SCALED_COMPONENT_OFFSET and UNSCALED_COMPONENT_OFFSET (similar to changes in ISO/IEC 14496-22:2015 Amendment 1).</li>
+</ul>
+</li>
+<li><a href="../otspec180/gpos" data-linktype="relative-path">gpos.htm</a>
+<ul>
+<li>Changed single Fixed version field to USHORT major/minor versions.</li>
+<li>Changed int16/uint16 to SHORT/USHORT.</li>
+<li>Added section on OpenType Font Variations.</li>
+<li>Added version 1.1 header and FeatureVariations table.</li>
+<li>Revised descriptions of ValueRecord and ValueFormat to allow for VariationIndex table.</li>
+<li>Revised reserved mask for ValueFormat to 0xFF00.</li>
+<li>Revised description of Anchor format 3 to allow for VariationIndex table.</li>
+</ul>
+</li>
+<li>grstate.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec180/tt_graphics_state" data-linktype="relative-path">tt_graphics_state.htm</a>. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec180/gsub" data-linktype="relative-path">gsub.htm</a>
+<ul>
+<li>Changed single Fixed version field to USHORT major/minor versions.</li>
+<li>Changed int16/uint16 to SHORT/USHORT.</li>
+<li>Added section on OpenType Font Variations.</li>
+<li>Added version 1.1 header and FeatureVariations table.</li>
+</ul>
+</li>
+<li><a href="../otspec180/gvar" data-linktype="relative-path">gvar.htm</a>
+<ul>
+<li>Glyph variations table added.</li>
+</ul>
+</li>
+<li><a href="../otspec180/head" data-linktype="relative-path">head.htm</a>
+<ul>
+<li>Changed single Fixed version field to USHORT major/minor versions.</li>
+<li>Changed description of checkSumAdjustment (following ISO/IEC 14496-22:2015 Amendment 1).</li>
+<li>Revised description of flags bits 1, 5 and 6 – 10.</li>
+<li>Added note about variable fonts.</li>
+</ul>
+</li>
+<li><a href="../otspec180/hhea" data-linktype="relative-path">hhea.htm</a>
+<ul>
+<li>Changed single Fixed version field to USHORT major/minor versions.</li>
+<li>Added section on OpenType Font Variations.</li>
+</ul>
+</li>
+<li><a href="../otspec180/hvar" data-linktype="relative-path">hvar.htm</a>
+<ul>
+<li>Horizontal metrics variations table added.</li>
+</ul>
+</li>
+<li><a href="../otspec180/" data-linktype="relative-path">index.htm</a>
+<ul>
+<li>Added chapters: OpenType Font Variations Overview, OpenType Font Variations Common Table Formats, The CFF 2 CharString Format, Adobe Technical Note #5209.</li>
+<li>Reordered entries between “Specification” and “Appendices” sections.</li>
+<li>Removed mention of Microsoft Word documents. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li>instgly.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec180/tt_instructing_glyphs" data-linktype="relative-path">tt_instructing_glyphs.htm</a>. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec180/jstf" data-linktype="relative-path">jstf.htm</a>
+<ul>
+<li>Changed single Fixed version field to USHORT major/minor versions.</li>
+<li>Changed int16/uint16 to SHORT/USHORT.</li>
+<li>Added section and other remarks on OpenType Font Variations.</li>
+</ul>
+</li>
+<li><a href="../otspec180/languagetags" data-linktype="relative-path">languagetags.htm</a>
+<ul>
+<li>Revised introductory text regarding tag syntax.</li>
+<li>Revised ISO 639 values for 'QIN ', 'SYR '.</li>
+<li>Added tags: SYRE, SYRJ, SYRN.</li>
+</ul>
+</li>
+<li><a href="../otspec180/merg" data-linktype="relative-path">merg.htm</a>
+<ul>
+<li>Merge table added.</li>
+</ul>
+</li>
+<li><a href="../otspec180/meta" data-linktype="relative-path">meta.htm</a>
+<ul>
+<li>Added meta table.</li>
+</ul>
+</li>
+<li><a href="../otspec180/mvar" data-linktype="relative-path">mvar.htm</a>
+<ul>
+<li>Metrics variations table added.</li>
+</ul>
+</li>
+<li><a href="../otspec180/name" data-linktype="relative-path">name.htm</a>
+<ul>
+<li>Changed description of name ID 6 (following ISO/IEC 14496-22:2015 Amendment 1).</li>
+<li>Added new name ID 25.</li>
+</ul>
+</li>
+<li><a href="../otspec180/os2" data-linktype="relative-path">os2.htm</a>
+<ul>
+<li>Added comment for usWeightClass regarding variable fonts and 'wght' style axis.</li>
+<li>Added comment for usWidthClass regarding variable fonts and 'wdth' style axis.</li>
+<li>Corrected misspelling of field name (following ISO/IEC 14496-22:2015 Amendment 1).</li>
+<li>Added section on OpenType Font Variations.</li>
+<li>Added note regarding fsSelection bit 15.</li>
+</ul>
+</li>
+<li><a href="../otspec180/os2ver0" data-linktype="relative-path">os2ver0.htm</a>
+<ul>
+<li>Corrected misspelling of field name (following ISO/IEC 14496-22:2015 Amendment 1).</li>
+<li>Added footer.</li>
+</ul>
+</li>
+<li><a href="../otspec180/os2ver1" data-linktype="relative-path">os2ver1.htm</a>
+<ul>
+<li>Corrected misspelling of field name (following ISO/IEC 14496-22:2015 Amendment 1).</li>
+<li>Added footer.</li>
+</ul>
+</li>
+<li><a href="../otspec180/os2ver2" data-linktype="relative-path">os2ver2.htm</a>
+<ul>
+<li>Corrected misspelling of field name (following ISO/IEC 14496-22:2015 Amendment 1).</li>
+</ul>
+</li>
+<li><a href="../otspec180/os2ver3" data-linktype="relative-path">os2ver3.htm</a>
+<ul>
+<li>Corrected misspelling of field name (following ISO/IEC 14496-22:2015 Amendment 1).</li>
+</ul>
+</li>
+<li><a href="../otspec180/os2ver4" data-linktype="relative-path">os2ver4.htm</a>
+<ul>
+<li>Corrected misspelling of field name.</li>
+</ul>
+</li>
+<li><a href="../otspec180/otff" data-linktype="relative-path">otff.htm</a>
+<ul>
+<li>Changed sfntVersion to ULONG, and clarified discussion of version numbers.</li>
+<li>Revised description of font collections (similar to changes in ISO/IEC 14496-22:2015 Amendment 1).</li>
+<li>Added new tables (CFF2, 'avar', 'cvar', 'gvar', 'gvar', HVAR, MVAR, VVAR, STAT) and notes on OpenType Font Variations.</li>
+<li>Removed obsolete reference to ATM.</li>
+</ul>
+</li>
+<li><a href="../otspec180/otvarcommonformats" data-linktype="relative-path">otvarcommonformats.htm</a>
+<ul>
+<li>Added OpenType Font Variations Common Table Formats chapter.</li>
+</ul>
+</li>
+<li><a href="../otspec180/otvaroverview" data-linktype="relative-path">otvaroverview.htm</a>
+<ul>
+<li>Added OpenType Font Variations Overview chapter.</li>
+</ul>
+</li>
+<li><a href="../otspec180/post" data-linktype="relative-path">post.htm</a>
+<ul>
+<li>Revised descriptions of Versions 1.0, 2.0 and 3.0 to allow for use in fonts with CFF 2 outlines.</li>
+<li>Added section on OpenType Font Variations.</li>
+</ul>
+</li>
+<li><a href="../otspec180/recom" data-linktype="relative-path">recom.htm</a>
+<ul>
+<li>Added note in Filenames recommendations about naming of files for variable fonts.</li>
+<li>Removed section on first four glyphs (following ISO/IEC 14496-22:2015 Amendment 1).</li>
+<li>Revised title and content of section on .notdef (similar to ISO/IEC 14496-22:2015 Amendment 1).</li>
+<li>Added notes in 'name' table recommendations about naming of variable fonts.</li>
+<li>Revised 'name' table recommendation for name ID 6 (increased length limit from 63 to 127).</li>
+<li>Revised OS/2 table recommendation regarding PANOSE value (following ISO/IEC 14496-22:2015 Amendment 1), and fixed external link.</li>
+<li>Revised symbol-font recommendations regarding PANOSE value (following ISO/IEC 14496-22:2015 Amendment 1).</li>
+<li>Added section on stroke reduction in variable fonts.</li>
+<li>Corrected link to PANOSE specification. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec180/sbix" data-linktype="relative-path">sbix.htm</a>
+<ul>
+<li>Standard bitmap graphics table added.</li>
+</ul>
+</li>
+<li><a href="../otspec180/stat" data-linktype="relative-path">stat.htm</a>
+<ul>
+<li>Style attributes table added.</li>
+</ul>
+</li>
+<li><a href="../otspec180/svg" data-linktype="relative-path">svg.htm</a>
+<ul>
+<li>Added requirement that SVG documents must be encoded in UTF-8 (following ISO/IEC 14496-22:2015 Draft Amendment 2).</li>
+<li>Added clarification for rendering multiple glyphs from a shared SVG document.</li>
+<li>Removed context-* properties from default stylesheet applied to SVG documents.</li>
+<li>Revised language for handling different SVG versions (following ISO/IEC 14496-22:2015 Draft Amendment 2).</li>
+<li>Added SVG Glyph Examples section (following ISO/IEC 14496-22:2015 Draft Amendment 2).</li>
+<li>Minor typo corrections and clarifications.</li>
+</ul>
+</li>
+<li><a href="../otspec180/ttinst" data-linktype="relative-path">ttinst.htm</a>
+<ul>
+<li>Revised links to refer to content ported from Microsoft Word files to Web pages. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li>ttinst1.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec180/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li>ttinst2.doc
+<ul>
+<li>Clarified description of the GET INFO instruction.</li>
+<li>Added GET VARIATION instruction.</li>
+<li>Content ported into Web page: <a href="../otspec180/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec180/ttochap1" data-linktype="relative-path">ttochap1.htm</a>
+<ul>
+<li>Added section on OpenType Font Variations.</li>
+</ul>
+</li>
+<li><a href="../otspec180/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>
+<ul>
+<li>Corrected error in description of “logical OR” inadvertently added when porting from Word documents. (Post-release erratum.)</li>
+<li>Removed incorrect text inadvertently added to description of Round to Half Grid (RTHG) when porting from Word documents. (Post-release erratum.)</li>
+<li>Corrected error in code range of MIRP inadvertently introduced when porting from Word documents. (Post-release erratum.)</li>
+</ul>
+</li>
+<li><a href="../otspec180/vhea" data-linktype="relative-path">vhea.htm</a>
+<ul>
+<li>Added section on OpenType Font Variations.</li>
+</ul>
+</li>
+<li><a href="../otspec180/vvar" data-linktype="relative-path">vvar.htm</a>
+<ul>
+<li>Vertical metrics variations table added.</li>
+</ul>
+</li>
+</ul>
+<p><a id="v1.7"></a></p>
+<h2 id="version-17">Version 1.7</h2>
+<p>Released March 2015.</p>
+<p><em>Summary of Changes:</em></p>
+<ul>
+<li><a href="../otspec170/cbdt" data-linktype="relative-path">cbdt.htm</a>
+<ul>
+<li>Created new page</li>
+</ul>
+</li>
+<li><a href="../otspec170/cblc" data-linktype="relative-path">cblc.htm</a>
+<ul>
+<li>Created new page</li>
+</ul>
+</li>
+<li><a href="../otspec170/cmap" data-linktype="relative-path">cmap.htm</a>
+<ul>
+<li>Minor text change in format 4</li>
+</ul>
+</li>
+<li><a href="../otspec170/colr" data-linktype="relative-path">colr.htm</a>
+<ul>
+<li>Created new page</li>
+</ul>
+</li>
+<li><a href="../otspec170/cpal" data-linktype="relative-path">cpal.htm</a>
+<ul>
+<li>Created new page</li>
+</ul>
+</li>
+<li><a href="../otspec170/featurelist" data-linktype="relative-path">featurelist.htm</a>
+<ul>
+<li>Added Dotless Forms, Flattened accent forms, Math script style alternates, Required Contextual Alternates and Stretching Glyph Decomposition</li>
+</ul>
+</li>
+<li><a href="../otspec170/features_ae" data-linktype="relative-path">features_ae.htm</a>
+<ul>
+<li>Updated 'cv<em>XX</em>'</li>
+<li>Added Dotless forms</li>
+</ul>
+</li>
+<li><a href="../otspec170/features_fj" data-linktype="relative-path">features_fj.htm</a>
+<ul>
+<li>Added Flattened ascent forms</li>
+<li>Updated UI suggestion for 'halt'</li>
+</ul>
+</li>
+<li><a href="../otspec170/features_pt" data-linktype="relative-path">features_pt.htm</a>
+<ul>
+<li>Updated Stylistic sets and Optical size</li>
+<li>Added Math script style alternates, Required Contextual Alternates and Stretching Glyph Decomposition</li>
+</ul>
+</li>
+<li><a href="../otspec170/features_uz" data-linktype="relative-path">features_uz.htm</a>
+<ul>
+<li>Updated UI suggestion for 'vhal'</li>
+</ul>
+</li>
+<li><a href="../otspec170/gasp" data-linktype="relative-path">gasp.htm</a>
+<ul>
+<li>Added bit flag</li>
+</ul>
+</li>
+<li>grstate.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec170/tt_graphics_state" data-linktype="relative-path">tt_graphics_state.htm</a>. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec170/gsub" data-linktype="relative-path">gsub.htm</a>
+<ul>
+<li>Fixed typo in ligature substitution</li>
+</ul>
+</li>
+<li><a href="../otspec170/head" data-linktype="relative-path">head.htm</a>
+<ul>
+<li>Clarified date description</li>
+<li>Update description of bit 11</li>
+</ul>
+</li>
+<li><a href="../otspec170/hmtx" data-linktype="relative-path">hmtx.htm</a>
+<ul>
+<li>Updated text beneath table</li>
+</ul>
+</li>
+<li><a href="../otspec170/" data-linktype="relative-path">index.htm</a>
+<ul>
+<li>Updated version number</li>
+<li>Removed mention of Microsoft Word documents. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li>instgly.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec170/tt_instructing_glyphs" data-linktype="relative-path">tt_instructing_glyphs.htm</a>. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec170/jstf" data-linktype="relative-path">jstf.htm</a>
+<ul>
+<li>Fixed typo in Jstf priority table</li>
+</ul>
+</li>
+<li><a href="../otspec170/languagetags" data-linktype="relative-path">languagetags.htm</a>
+<ul>
+<li>Added new tags</li>
+</ul>
+</li>
+<li><a href="../otspec170/math" data-linktype="relative-path">math.htm</a>
+<ul>
+<li>Added new table</li>
+</ul>
+</li>
+<li><a href="../otspec170/maxp" data-linktype="relative-path">maxp.htm</a>
+<ul>
+<li>Updated maxFunctionDefs description</li>
+</ul>
+</li>
+<li><a href="../otspec170/name" data-linktype="relative-path">name.htm</a>
+<ul>
+<li>Changed name IDs 16 and 17 from Preferred name to Typographic name and updated descriptions</li>
+<li>Added name IDs 23 and 24</li>
+<li>Updated description for name ID 6</li>
+<li>Updated description for name ID 20</li>
+</ul>
+</li>
+<li><a href="../otspec170/os2" data-linktype="relative-path">os2.htm</a>
+<ul>
+<li>Updated version to 5.0</li>
+<li>Updated formats</li>
+<li>Added usLowerOpticalPointSize and usUpperOpticalPointSize</li>
+</ul>
+</li>
+<li>os2ver4.htm
+<ul>
+<li>Added page to archive version 4.0</li>
+</ul>
+</li>
+<li><a href="../otspec170/otff" data-linktype="relative-path">otff.htm</a>
+<ul>
+<li>Changed Mantissa to Integer</li>
+<li>Changed Truetype collection to Font Collection</li>
+<li>Added new tables (CBDT, CBLC, COLR, CPAL and MATH)</li>
+<li>Moved 'gasp' table to TT Outline table</li>
+<li>Marked VORG table as optional in relation to Postscript outlines</li>
+</ul>
+</li>
+<li><a href="../otspec170/post" data-linktype="relative-path">post.htm</a>
+<ul>
+<li>Updated reference to glyph list</li>
+<li>Updated reference to index numbers</li>
+</ul>
+</li>
+<li><a href="../otspec170/recom" data-linktype="relative-path">recom.htm</a>
+<ul>
+<li>Added info on .OTC</li>
+<li>Added post table note</li>
+<li>Corrected link to PANOSE specification. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec170/scripttags" data-linktype="relative-path">scripttags.htm</a>
+<ul>
+<li>Added new tags</li>
+</ul>
+</li>
+<li><a href="../otspec170/svg" data-linktype="relative-path">svg.htm</a>
+<ul>
+<li>Created new page</li>
+</ul>
+</li>
+<li><a href="../otspec170/ttinst" data-linktype="relative-path">ttinst.htm</a>
+<ul>
+<li>Revised links to refer to content ported from Microsoft Word files to Web pages. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li>ttinst1.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec170/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li>ttinst2.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec170/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec170/vorg" data-linktype="relative-path">vorg.htm</a>
+<ul>
+<li>Indicated table is optional</li>
+</ul>
+</li>
+</ul>
+<p><a id="v1.6"></a></p>
+<h2 id="version-16">Version 1.6</h2>
+<p>Released April 2009; updated July 2010.</p>
+<p><em>Summary of Changes:</em></p>
+<ul>
+<li>Updated HTML to be compliant with W3C standards</li>
+<li><a href="../otspec160/cff" data-linktype="relative-path">cff.htm</a>
+<ul>
+<li>Appended description(July 2010)</li>
+</ul>
+</li>
+<li><a href="../otspec160/chapter2" data-linktype="relative-path">chapter2.htm</a>
+<ul>
+<li>Added information regarding GDEF table requirements</li>
+<li>Updated page to show correct number of LookupTypes for GSUB and GPOS</li>
+<li>Added MarkFilteringSet to Lookup table</li>
+</ul>
+</li>
+<li><a href="../otspec160/cmap" data-linktype="relative-path">cmap.htm</a>
+<ul>
+<li>Updated outdated terminology</li>
+<li>Added note to 'cmap' header explaining where to find definitions of ID values</li>
+<li>Changed platform name from Microsoft to Windows</li>
+<li>Added Format 13 (updated July 2010)</li>
+<li>Updated note on the language field in 'cmap' subtables (July 2010)</li>
+</ul>
+</li>
+<li><a href="../otspec160/featurelist" data-linktype="relative-path">featurelist.htm</a>
+<ul>
+<li>Updated feature list</li>
+</ul>
+</li>
+<li><a href="../otspec160/features_ae" data-linktype="relative-path">features_ae.htm</a>
+<ul>
+<li>Added Character Variants feature</li>
+<li>Clarified script/language sensitivity for 'c2sc' feature</li>
+</ul>
+</li>
+<li><a href="../otspec160/features_ko" data-linktype="relative-path">features_ko.htm</a>
+<ul>
+<li>Added Left-to-right alternates</li>
+<li>Added Left-to-right mirrored forms</li>
+<li>Updated 'lnum' and 'onum' (July 2010)</li>
+</ul>
+</li>
+<li><a href="../otspec160/features_pt" data-linktype="relative-path">features_pt.htm</a>
+<ul>
+<li>Added to recommended implementation for Stylistic Sets</li>
+<li>Updated Right-to-left alternates</li>
+<li>Added Right-to-left mirrored forms</li>
+<li>Fixed link to 'name' table</li>
+<li>Clarified script/language sensitivity for 'smcp' feature</li>
+<li>Clarified script/language sensitivity for 'size' feature</li>
+</ul>
+</li>
+<li><a href="../otspec160/gdef" data-linktype="relative-path">gdef.htm</a>
+<ul>
+<li>Updated information relating to GSUB and GPOS tables</li>
+<li>Added MarkGlyphSetsDef to GDEF header</li>
+<li>Updated version number</li>
+<li>Change version number from fixed to ULONG</li>
+<li>Updated GDEF header description (July 2010)</li>
+</ul>
+</li>
+<li><a href="../otspec160/gpos" data-linktype="relative-path">gpos.htm</a>
+<ul>
+<li>Updated text in Pair Positioning Adjustment: Format 2</li>
+</ul>
+</li>
+<li>grstate.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec160/tt_graphics_state" data-linktype="relative-path">tt_graphics_state.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec160/head" data-linktype="relative-path">head.htm</a>
+<ul>
+<li>Deprecated fontDirectionHint</li>
+<li>Updated description for bit 14 (July 2010)</li>
+</ul>
+</li>
+<li><a href="../otspec160/" data-linktype="relative-path">index.htm</a>
+<ul>
+<li>Updated version number</li>
+<li>Added appendix for OMPL</li>
+<li>Removed mention of Microsoft Word documents. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>instgly.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec160/tt_instructing_glyphs" data-linktype="relative-path">tt_instructing_glyphs.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec160/kern" data-linktype="relative-path">kern.htm</a>
+<ul>
+<li>Updated definition (July 2010)</li>
+</ul>
+</li>
+<li><a href="../otspec160/languagetags" data-linktype="relative-path">languagetags.htm</a>
+<ul>
+<li>Removed the word “standard” from French and German tags</li>
+<li>Added IPPH and AMPH tags</li>
+<li>Added additional expanatory text</li>
+<li>Added column for ISO 639</li>
+</ul>
+</li>
+<li><a href="../otspec160/loca" data-linktype="relative-path">loca.htm</a>
+<ul>
+<li>Added information about zero length glyphs at the end of the table</li>
+</ul>
+</li>
+<li><a href="../otspec160/name" data-linktype="relative-path">name.htm</a>
+<ul>
+<li>Changed platform name from Microsoft to Windows</li>
+<li>Updated outdated terminology</li>
+<li>Added Format 1 Naming table</li>
+<li>Removed “set to zero” from name ID 15</li>
+<li>Updated Unicode Platform Specific encoding ID table (July 2010)</li>
+<li>Updated description for Name ID 4 (July 2010)</li>
+</ul>
+</li>
+<li><a href="../otspec160/ompl" data-linktype="relative-path">ompl.txt</a>
+<ul>
+<li>Added OpenType Mirrored Pairs List</li>
+</ul>
+</li>
+<li><a href="../otspec160/os2" data-linktype="relative-path">os2.htm</a>
+<ul>
+<li>Fixed typo in Telugu range</li>
+<li>Updated bit 61 (July 2010)</li>
+<li>Corrected comments under fsSelection bit table (July 2010)</li>
+</ul>
+</li>
+<li><a href="../otspec160/otff" data-linktype="relative-path">otff.htm</a>
+<ul>
+<li>Changed ULONG to FIXED for TTC Header version numbers</li>
+<li>Changed “Table Directory” to “Table Record” since it is refering to a single entry in the directory</li>
+</ul>
+</li>
+<li><a href="../otspec160/prep" data-linktype="relative-path">prep.htm</a>
+<ul>
+<li>Fixed typo (changed CVT to CV)</li>
+<li>Added reference to table’s previous name</li>
+</ul>
+</li>
+<li><a href="../otspec160/recom" data-linktype="relative-path">recom.htm</a>
+<ul>
+<li>Updated recommendations for 'glyf' table, 'kern' table, 'name' table and non-standard (symbol) fonts (July 2010)</li>
+<li>Corrected link to PANOSE specification. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec160/ttochap1" data-linktype="relative-path">ttchap1.htm</a>
+<ul>
+<li>Added text processing information for ltr and rtl text</li>
+</ul>
+</li>
+<li><a href="../otspec160/ttinst" data-linktype="relative-path">ttinst.htm</a>
+<ul>
+<li>Revised links to refer to content ported from Microsoft Word files to Web pages. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>ttinst1.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec160/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>ttinst2.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec160/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+</ul>
+<p><a id="v1.5"></a></p>
+<h2 id="version-15">Version 1.5</h2>
+<p>Released May 2008.</p>
+<p><em>Summary of Changes:</em></p>
+<ul>
+<li><a href="../otspec150/changes" data-linktype="relative-path">changes.htm</a>
+<ul>
+<li>Reversed order so newest changes are at the top</li>
+</ul>
+</li>
+<li><a href="../otspec150/cmap" data-linktype="relative-path">cmap.htm</a>
+<ul>
+<li>Added Format 14: Unicode Variation Sequences</li>
+</ul>
+</li>
+<li><a href="../otspec150/featurelist" data-linktype="relative-path">featurelist.htm</a>
+<ul>
+<li>Added new features to list</li>
+</ul>
+</li>
+<li><a href="../otspec150/features_ae" data-linktype="relative-path">features_ae.htm</a>
+<ul>
+<li>Added Centered CJK Punctuation, Conjunct Forms and Conjunct Form after Ro</li>
+<li>Updated Akhand and Below-base Forms</li>
+</ul>
+</li>
+<li><a href="../otspec150/features_fj" data-linktype="relative-path">features_fj.htm</a>
+<ul>
+<li>Updated Half Forms</li>
+</ul>
+</li>
+<li><a href="../otspec150/features_ko" data-linktype="relative-path">features_ko.htm</a>
+<ul>
+<li>Explained 'kern'/'palt' interaction</li>
+<li>Added date to JIS reference in NLC Kanji Forms</li>
+<li>Updated Nukta Forms</li>
+</ul>
+</li>
+<li><a href="../otspec150/features_pt" data-linktype="relative-path">features_pt.htm</a>
+<ul>
+<li>Explained 'kern'/'palt' interaction</li>
+<li>Added Proportional Kana</li>
+<li>Updated Pre-base, Post-base and Reph Forms</li>
+<li>Added Rakar Forms</li>
+</ul>
+</li>
+<li><a href="../otspec150/features_uz" data-linktype="relative-path">features_uz.htm</a>
+<ul>
+<li>Explained 'vpal'/'vkrn' interaction</li>
+<li>Updated Vattu Variants</li>
+</ul>
+</li>
+<li><a href="../otspec150/gasp" data-linktype="relative-path">gasp.htm</a>
+<ul>
+<li>Changed version number to 1 in 'gasp' table</li>
+<li>Added flags for symmetric gridfit and symmetric smoothing</li>
+</ul>
+</li>
+<li><a href="../otspec150/gdef" data-linktype="relative-path">gdef.htm</a>
+<ul>
+<li>Fixed typo regarding the number of tables within the Glyph Definition table</li>
+<li>Fixed spelling error under CaretValue Format 1</li>
+</ul>
+</li>
+<li>grstate.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec150/tt_graphics_state" data-linktype="relative-path">tt_graphics_state.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec150/gsub" data-linktype="relative-path">gsub.htm</a>
+<ul>
+<li>Corrected title for ContextSubstFormat3 subtable</li>
+</ul>
+</li>
+<li><a href="../otspec150/glyf" data-linktype="relative-path">glyf.htm</a>
+<ul>
+<li>Fixed typo in simple glyph description</li>
+</ul>
+</li>
+<li><a href="../otspec150/head" data-linktype="relative-path">head.htm</a>
+<ul>
+<li>Updated description for bit 13</li>
+</ul>
+</li>
+<li><a href="../otspec150/ibmfc" data-linktype="relative-path">ibmfc.htm</a>
+<ul>
+<li>Removed examples that were inaccurate</li>
+<li>Updated references to ISO standard</li>
+<li>Adjusted wording for subclasses not specifically refected in ISO standard</li>
+</ul>
+</li>
+<li><a href="../otspec150/" data-linktype="relative-path">index.htm</a>
+<ul>
+<li>Updated version number</li>
+<li>Added ISO information</li>
+<li>Removed mention of Microsoft Word documents. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>instgly.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec150/tt_instructing_glyphs" data-linktype="relative-path">tt_instructing_glyphs.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec150/languagetags" data-linktype="relative-path">languagetags.htm</a>
+<ul>
+<li>Updated list of tags</li>
+</ul>
+</li>
+<li><a href="../otspec150/loca" data-linktype="relative-path">loca.htm</a>
+<ul>
+<li>Removed incorrect example</li>
+<li>Changed “should” to “must”</li>
+</ul>
+</li>
+<li><a href="../otspec150/maxp" data-linktype="relative-path">maxp.htm</a>
+<ul>
+<li>Removed redundant sentence</li>
+</ul>
+</li>
+<li><a href="../otspec150/name" data-linktype="relative-path">name.htm</a>
+<ul>
+<li>Added platform 0 encoding ID 5 for Unicode variation sequences</li>
+<li>Added Name IDs 21 and 22</li>
+<li>Updated Microsoft language IDs</li>
+</ul>
+</li>
+<li><a href="../otspec150/os2" data-linktype="relative-path">os2.htm</a>
+<ul>
+<li>Updated text describing ulUnicodeRange1 – ulUnicodeRange4</li>
+<li>Added bits 7, 8 and 9 to fsSelection table</li>
+<li>Updated version number</li>
+<li>Updated ulUnicodeRange with latest range bits and added block ranges</li>
+<li>Added recommendation to usDefaultChar and usBreakChar description</li>
+<li>Corrected link to PANOSE specification. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec150/os2ver0" data-linktype="relative-path">os2ver0.htm</a>
+<ul>
+<li>Corrected link to PANOSE specification. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec150/os2ver1" data-linktype="relative-path">os2ver1.htm</a>
+<ul>
+<li>Corrected link to PANOSE specification. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec150/os2ver2" data-linktype="relative-path">os2ver2.htm</a>
+<ul>
+<li>Corrected link to PANOSE specification. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec150/os2ver3" data-linktype="relative-path">os2ver3.htm</a>
+<ul>
+<li>Created new page to archive previous version of OS/2 table</li>
+<li>Corrected link to PANOSE specification. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec150/otff" data-linktype="relative-path">otff.htm</a>
+<ul>
+<li>Added new data type (UINT24) to handle Unicode variation sequences</li>
+<li>Added recommendation regarding VORG table</li>
+</ul>
+</li>
+<li><a href="../otspec150/recom" data-linktype="relative-path">recom.htm</a>
+<ul>
+<li>Added additional cross-platform recommendations</li>
+<li>Added additional BASE table recommendations</li>
+<li>Added recommendation regarding VORG table</li>
+<li>Corrected link to PANOSE specification. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec150/scripttags" data-linktype="relative-path">scripttags.htm</a>
+<ul>
+<li>Added script tags for scripts recently added to Unicode</li>
+<li>Changed 'dflt' script to DFLT script in the description at the bottom of the page</li>
+</ul>
+</li>
+<li><a href="../otspec150/ttinst" data-linktype="relative-path">ttinst.htm</a>
+<ul>
+<li>Revised links to refer to content ported from Microsoft Word files to Web pages. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>ttinst1.doc
+<ul>
+<li>INSTCTRL: Correct value stated for selector flag 3.</li>
+<li>Content ported into Web page: <a href="../otspec150/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>ttinst2.doc
+<ul>
+<li>Updated GETINFO with ClearType information</li>
+<li>Content ported into Web page: <a href="../otspec150/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec150/ttochap1" data-linktype="relative-path">ttochap1.htm</a>
+<ul>
+<li>Removed outdated information about behavior on Windows 95</li>
+</ul>
+</li>
+<li><a href="../otspec150/wgl4d" data-linktype="relative-path">wgl4d.htm</a>
+<ul>
+<li>Added four Macedonian characters</li>
+</ul>
+</li>
+</ul>
+<p><a id="v1.4"></a></p>
+<h2 id="version-14">Version 1.4</h2>
+<p>Released 11 October 2002.</p>
+<p><em>Summary of Changes:</em></p>
+<ul>
+<li><a href="../otspec140/baselinetags" data-linktype="relative-path">baselinetags.htm</a>
+<ul>
+<li>Corrected typographic error.</li>
+<li>Changed hanging baseline references from Hindi to Tibetan.</li>
+</ul>
+</li>
+<li><a href="../otspec140/chapter2" data-linktype="relative-path">chapter2.htm</a>
+<ul>
+<li>Corrected link to GDEF table.</li>
+<li>Add documentation on new script tag DFLT.</li>
+</ul>
+</li>
+<li><a href="../otspec140/cmap" data-linktype="relative-path">cmap.htm</a>
+<ul>
+<li>Add Name column to tabular data to make consistent with other parts of spec.</li>
+<li>Correct description of Encoding Record.</li>
+</ul>
+</li>
+<li><a href="../otspec140/cvt" data-linktype="relative-path">cvt.htm</a>
+<ul>
+<li>Indicate that length must be integral value of FWORD units.</li>
+</ul>
+</li>
+<li><a href="../otspec140/dsig" data-linktype="relative-path">dsig.htm</a>
+<ul>
+<li>Provide information for ulVersion to be 0x00000001.</li>
+<li>Update to show usFlag bits that are assigned.</li>
+<li>Add section on signatures for TrueType Collections.</li>
+</ul>
+</li>
+<li><a href="../otspec140/ebdt" data-linktype="relative-path">ebdt.htm</a>
+<ul>
+<li>Change wording to indicate EBDT is superset of 'bdat'. These are not the same.</li>
+</ul>
+</li>
+<li><a href="../otspec140/featurelist" data-linktype="relative-path">featurelist.htm</a>
+<ul>
+<li>Added new features: 'abvf', 'c2pc', 'ljmo', 'nlck', 'pcap', 'pref', 'rtla', 'tjmo', 'unic', and 'vjmo'.</li>
+<li>Change friendly name of 'calt' from Connection Forms to Contextual Alternates.</li>
+</ul>
+</li>
+<li><a href="../otspec140/fpgm" data-linktype="relative-path">fpgm.htm</a>
+<ul>
+<li>Add comment that array size <em>n</em> is the number of bytes in the table.</li>
+</ul>
+</li>
+<li><a href="../otspec140/gdef" data-linktype="relative-path">gdef.htm</a>
+<ul>
+<li>Example 6, typos in the comments column for increasing 15 and 16ppem corrected.</li>
+</ul>
+</li>
+<li><a href="../otspec140/gpos" data-linktype="relative-path">gpos.htm</a>
+<ul>
+<li>Clarify origin of Cartesian coordinate system at baseline of the left side.</li>
+<li>Specify all values are done in font unit measurements.</li>
+<li>Update images for better presentation.</li>
+<li>PairPosFormat1 subtable ValueRecord changed to Offset, PairSetOffset[PairSetCount].</li>
+<li>Update wording on MarkToMark attachment.</li>
+</ul>
+</li>
+<li>grstate.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec140/tt_graphics_state" data-linktype="relative-path">tt_graphics_state.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec140/gsub" data-linktype="relative-path">gsub.htm</a>
+<ul>
+<li>Add Lookup Type 8, Reverse Chaining contextual single substitution.</li>
+</ul>
+</li>
+<li><a href="../otspec140/hdmx" data-linktype="relative-path">hdmx.htm</a>
+<ul>
+<li>Remove references to EGA.</li>
+<li>Add statement that bit 2 of head.flag must be set to 1.</li>
+<li>Add Name columns to tabular data for consistency with spec.</li>
+</ul>
+</li>
+<li><a href="../otspec140/head" data-linktype="relative-path">head.htm</a>
+<ul>
+<li>Updated macStyle bit descriptions for bits 2 to 15.</li>
+<li>unitsPerEm annotated that it should be a power of 2.</li>
+</ul>
+</li>
+<li><a href="../otspec140/hhea" data-linktype="relative-path">hhea.htm</a>
+<ul>
+<li>Change FWord to FWORD for correct data type spelling.</li>
+</ul>
+</li>
+<li><a href="../otspec140/ibmfc" data-linktype="relative-path">ibmfc.htm</a>
+<ul>
+<li>Fix formatting to indent subclasses for better readability.</li>
+</ul>
+</li>
+<li><a href="../otspec140/" data-linktype="relative-path">index.htm</a>
+<ul>
+<li>Update the version number to 1.4.</li>
+<li>Removed mention of Microsoft Word documents. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>instgly.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec140/tt_instructing_glyphs" data-linktype="relative-path">tt_instructing_glyphs.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec140/name" data-linktype="relative-path">name.htm</a>
+<ul>
+<li>Add Name column to tabular data for consistency with spec.</li>
+<li>Correct descriptions in Naming Table for count and nameRecord[count].</li>
+<li>Clarified description of encoding ID 0/3. Added encoding ID 0/4. Changed description of encoding ID 3/10 to UTF-32.</li>
+<li>Added description and example, for use of name ID 4 in CFF fonts.</li>
+<li>Clarified working for use of name ID 5 (Version string).</li>
+<li>Changed wording for name ID 16 (Preferred Family) and name ID 17 (Preferred Subfamily).</li>
+<li>Suggest that style strings (name ID 2 or 17) match with OS/2.usWeightClass and OS/2.usWidthClass.</li>
+</ul>
+</li>
+<li><a href="../otspec140/os2" data-linktype="relative-path">os2.htm</a>
+<ul>
+<li>Updated version number to 0x0003</li>
+<li>Updated Unicode sub-range bits to be aligned with Unicode 3.2.</li>
+<li>Remove weighted calculation of xAvgCharWidth.</li>
+<li>Make fsType bits 0-3 to be mutually exclusive. In other words, only one of those bits may be set to “1” at a time. This is to avoid problems of ambiguity in what the font designer intends.</li>
+<li>Change link to PANOSE specification.</li>
+<li>Updated description of usFirstCharIndex, usLastCharIndex, usDefaultChar, usBreakChar; in context of fonts that provide surrogate character support.</li>
+<li>Corrected link to PANOSE specification. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec140/os2ver0" data-linktype="relative-path">os2ver0.htm</a>
+<ul>
+<li>Corrected link to PANOSE specification. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec140/os2ver1" data-linktype="relative-path">os2ver1.htm</a>
+<ul>
+<li>Corrected link to PANOSE specification. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec140/os2ver2" data-linktype="relative-path">os2ver2.htm</a>
+<ul>
+<li>Corrected link to PANOSE specification. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec140/otff" data-linktype="relative-path">otff.htm</a>
+<ul>
+<li>Update filename information for TrueType outline fonts.</li>
+<li>Add data types for FWORD and UFWORD.</li>
+<li>Corrected content and description of TTC header v1 and v2.</li>
+<li>Moved VORG table to PostScript Outlines group.</li>
+</ul>
+</li>
+<li><a href="../otspec140/pclt" data-linktype="relative-path">pclt.htm</a>
+<ul>
+<li>Change to discourage use of this table.</li>
+</ul>
+</li>
+<li><a href="../otspec140/recom" data-linktype="relative-path">recom.htm</a>
+<ul>
+<li>Added recommendation for first four glyphs in font.</li>
+<li>Added recommendation for shape of .notdef glyph.</li>
+<li>Corrected link to PANOSE specification. (Post-release update, September 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec140/scripttags" data-linktype="relative-path">scripttags.htm</a>
+<ul>
+<li>Add script tags for Byzantine Music and Default.</li>
+</ul>
+</li>
+<li><a href="../otspec140/ttinst" data-linktype="relative-path">ttinst.htm</a>
+<ul>
+<li>Revised links to refer to content ported from Microsoft Word files to Web pages. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>ttinst1.doc
+<ul>
+<li>Content ported into Web page: <a href="../otspec140/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li>ttinst2.doc
+<ul>
+<li>Corrected description in Logical_Functions.Greater_Than.</li>
+<li>Content ported into Web page: <a href="../otspec140/tt_instructions" data-linktype="relative-path">tt_instructions.htm</a>. (Post-release update, August 2018.)</li>
+</ul>
+</li>
+<li><a href="../otspec140/ttoreg" data-linktype="relative-path">ttoreg.htm</a>
+<ul>
+<li>Reworded and reorganized for better readability.</li>
+</ul>
+</li>
+<li><a href="../otspec140/vdmx" data-linktype="relative-path">vdmx.htm</a>
+<ul>
+<li>Change ratio record and vTable record to tabular format.</li>
+<li>Recommend use of version 1 VDMX.</li>
+</ul>
+</li>
+<li><a href="../otspec140/wgl4e" data-linktype="relative-path">wgl4e.htm</a>
+<ul>
+<li>Optional glyphs identified and marked. Added a footnote.</li>
+</ul>
+</li>
+</ul>
+<p><a id="v1.3"></a></p>
+<h2 id="version-13">Version 1.3</h2>
+<p>Released April, 2001.</p>
+<p><em>Summary of Changes:</em></p>
+<ul>
+<li>Multiple Master support in OpenType, discontinued. The following tables pertaining to it have been removed from this version of the OpenType specification: 'fvar', MMSD, MMFX.</li>
+<li>base.htm
+<ul>
+<li><em>BaseTagList Table</em><br>
+Added a sentence with a link to the baseline tags in the tags registry.</li>
+<li><em>BaseCoord Format 4</em><br>
+Removed.</li>
+</ul>
+</li>
+<li>cff.htm
+<ul>
+<li>Removed references to MM fonts in the CFF and Type 2 CharString Format specifications. See the change log in each specification for additional changes made.</li>
+</ul>
+</li>
+<li>chapter2.htm
+<ul>
+<li><em>Table Organisation</em><br>
+In paragraph 3, changed the number of types of GSUB and GPOS lookups. Phrase added to Paragraph 4 to exclude the Extension lookup.</li>
+<li><em>LookupFlag bit enumeration</em><br>
+Name of the first bit reverted back to RightToLeft. Provided newer description of its use.</li>
+<li><em>Coverage Table</em><br>
+Phrase added to exclude the Extension lookup.</li>
+</ul>
+</li>
+<li>cmap.htm
+<ul>
+<li>Merged paragraph 3 and 4 in the introduction section.</li>
+<li>Added notes that fonts for Windows that support UCS-4 characters (surrogates), need to use an encoding ID 10 and format 12.</li>
+<li>The version field has been renamed as “language”, to align it with Apple’s TT spec. Added a note to clarify the use of this field.</li>
+<li>Added information that platform ID 3, encoding ID 7,8 and 9 are reserved.</li>
+<li>Added platform ID 3, encoding ID 10.</li>
+<li>Swapped the description of encoding ID 3 and 4. They were incorrectly mapped to Big5 and PRC respectively, in earlier versions of the specification.</li>
+<li>Added a note on OTF Windows compatibility mapping.</li>
+<li><em>Formats 2, 4, 6.</em><br>
+Made the description of the length field in these formats consistent with the rest of the formats.</li>
+<li><em>Format 2</em><br>
+Removed the duplicate entry for subHeaders[ ].</li>
+<li><em>Format 4</em><br>
+Corrected endCode and startCode values in the example for this format.</li>
+<li><em>Supporting 4-byte character codes (Formats 8, 10, 12)</em><br>
+Added these new formats.</li>
+</ul>
+</li>
+<li>ebdt.htm
+<ul>
+<li>Minor typo in the name of ebdtComponent corrected.</li>
+</ul>
+</li>
+<li>feattags.htm
+<ul>
+<li>Added features 'ccmp', 'fin2', 'fin3', 'med2' and 'rlig'.</li>
+<li>Clarified the Feature Interaction sections for 'kern', 'vkrn'.</li>
+<li>Updated GSUB lookup type to be used, in the Recommended implementation section of 'ordn'.</li>
+</ul>
+</li>
+<li>fvar.htm
+<ul>
+<li>This table removed.</li>
+</ul>
+</li>
+<li>gdef.htm
+<ul>
+<li><em>Introduction</em><br>
+Added information on the MarkAttachClassDef field.</li>
+<li><em>Overview</em><br>
+Updated image to contain MarkAttachClassDef.</li>
+<li><em>GDEF Header</em><br>
+Added missing information on the MarkAttachClassDef field.</li>
+<li><em>GDEF Header Table</em><br>
+Added the note that offsets might be null for the GlyphClassDef, AttachList, LigCaretList, MarkAttachClassDef</li>
+<li><em>GlyphClassDef Enumeration List</em><br>
+An explanatory note added for definition of ligatures and component glyphs.</li>
+<li><em>Mark Attachment Class Definition Table</em><br>
+An explanatory section and example 7 added.</li>
+<li><em>CaretValue: Format 4</em><br>
+This format used by MM fonts removed.</li>
+</ul>
+</li>
+<li>gpos.htm
+<ul>
+<li>Corrected the link “Common Table Formats” to read “OpenType Common Table Formats” throughout table.</li>
+<li><em>Table Organization</em><br>
+Updated the image. Added links for all lookup types. Added Extension positioning as LookupType 9, types 10+ are now Reserved.</li>
+<li><em>PairPosFormat1 subtable</em><br>
+PairSet field corrected to specify it as an array of Offsets.</li>
+<li><em>Lookup Type 6</em><br>
+Sentence added to clarify input context for MarkToBase, MarkToLigature and MarkToMark positioning tables.</li>
+<li><em>LookupType 9: Extension Positioning</em><br>
+This new lookup type added.</li>
+<li><em>ValueRecord table</em><br>
+Removed XIdPlacement, YIdPlacement, XIdAdvance, YIdAdvance and the sentence following the table.</li>
+<li><em>ValueFormat bit enumeration</em><br>
+Removed XIdPlacement, YIdPlacement, XIdAdvance, YIdAdvance and the sentence following the table.</li>
+<li><em>Anchor Table: Format 4</em><br>
+Removed.</li>
+</ul>
+</li>
+<li>gsub.htm
+<ul>
+<li>Corrected the link “Common Table Formats” to read “OpenType Common Table Formats” throughout table.</li>
+<li><em>Substituting Glyphs with OpenTypeTM</em><br>
+Types of lookups corrected to six. Added an explanation to the ligature substitution section, to clarify the location occupied by a ligature glyph when it replaces a sequence of glyphs. Missing paragraph on Chaining contextual substitution added.</li>
+<li><em>Table Organization</em><br>
+Updated image.</li>
+<li><em>LookupType Enumeration table for glyph substitution</em><br>
+Added links for all lookup types. Added Extension Substitution as the 7th lookup type. This hence classifies types 8+ as Reserved.</li>
+<li><em>LookupType 2:</em><br>
+Prohibited the deletion of an input glyph, and added that GlyphCount should always be greater than 0.</li>
+<li><em>Chaining Context Substitution Format 1: Simple Chaining Context Glyph Substitution</em><br>
+Added that the match for the string <em>backtrack sequence + input sequence + lookahead sequence</em> takes place in the simplest of cases; and that lookup flag values affect backtrack/lookahead sequences. Since the input sequence includes the covered glyph, removed “covered glyph” from the above string.</li>
+<li><em>LookupType 7: Extension Substitution</em><br>
+This new lookup type added.</li>
+</ul>
+</li>
+<li>head.htm
+<ul>
+<li><em>table</em><br>
+Clarified description for bit 1, 5-10.<br>
+Added specification for bit 13.</li>
+</ul>
+</li>
+<li>hhea.htm
+<ul>
+<li><em>table</em><br>
+Added a footnote for the fields Ascender, Descender and LineGap.</li>
+</ul>
+</li>
+<li>hmtx.htm
+<ul>
+<li>Added a note that the advanceWidth for each glyph in CFF OpenType fonts must match its x width in the CFF table.</li>
+</ul>
+</li>
+<li>loca.htm
+<ul>
+<li>Corrected minor typo.</li>
+</ul>
+</li>
+<li>maxp.htm
+<ul>
+<li>Added a note to indicate the difference in representing the fractional part of a version number when it is non-zero.</li>
+</ul>
+</li>
+<li>mmfx.htm
+<ul>
+<li>This table removed.</li>
+</ul>
+</li>
+<li>mmsd.htm
+<ul>
+<li>This table removed.</li>
+</ul>
+</li>
+<li>name.htm
+<ul>
+<li>Minor rewording of text done in the introduction section related to fonts for the Macintosh.</li>
+<li><em>Platform ID, specific encoding ID and languageId information combined into one table.</em></li>
+<li><em>Unicode platform-specific encoding IDs (platform ID = 0)</em><br>
+This new table added.</li>
+<li><em>Microsoft platform-specific encoding IDs</em><br>
+This table replaced with a more comprehensive table from the cmap.htm.</li>
+<li><em>Mac platform-specific encoding IDs:</em><br>
+Clarified IDs 2 and 25. Corrected typo in ID 32.</li>
+<li><em>Mac language IDs:</em><br>
+Newer IDs added 23-150.</li>
+<li><em>ISO specific encodings (platform ID=2)</em><br>
+Marked as deprecated. Minor typo in the sentence below the table corrected.</li>
+<li><em>Custom platform-specific encoding IDs (platform ID = 4)</em><br>
+Newer platform ID added.</li>
+<li><em>Name IDs</em><br>
+Added newer description for nameID 5. Added nameID 19 and 20.</li>
+<li><em>Examples</em><br>
+Added example for nameID 19.</li>
+<li><em>LCID-CP list</em><br>
+Updated this list.</li>
+</ul>
+</li>
+<li>os2.htm
+<ul>
+<li><em>xAvgCharWidth.description</em><br>
+Comments for this field updated.</li>
+<li><em>fsType.table</em><br>
+Added Bit Mask and description details for the case when no bit is set; added Bit Mask value 0x0001.</li>
+<li><em>fsType.comments</em><br>
+Information on setting Bit Masks consolidated into the description column of the table. Removed the redundant section below the table.</li>
+<li><em>yStrikeoutPosition.description</em><br>
+Added that this is the distance of the top of the strikeout stroke.</li>
+<li><em>panose.description</em><br>
+Removed dead URL for the PANOSE evaluation document, added that the “greybook” reference could be used instead.</li>
+<li><em>ulUnicodeRange.table</em><br>
+Updated the Unicode standard version number to 3.0 in the description for these fields. Added bits 70- 127. Added a footnote for setting bit 57 (Surrogates).</li>
+<li><em>usFirstCharIndex.description</em><br>
+Minor correction: added the word platform specific.</li>
+<li><em>sTypoAscender and sTypodescender</em><br>
+Minor corrections done; “design space” now referred to as “ideo em box” in the descriptions; added a links to recom.htm for these fields.</li>
+<li><em>usWinAscent</em><br>
+Explanatory note added to explain the circumstances in which clipping will take place.</li>
+<li><em>usWinDescent</em><br>
+Explanatory note added to explain the circumstances in which clipping will take place.</li>
+<li><em>sxHeight</em><br>
+Added a note that this metric can be used in font substitution.</li>
+<li><em>usDefaultChar</em><br>
+Added that for a given font, missing glyphs will be displayed using the content of glyph 0 in the selected font.</li>
+</ul>
+</li>
+<li>otff.htm
+<ul>
+<li><em>Version Numbers</em><br>
+Added explanation that representation of a non-zero fractional part in version numbers, differs from the representation of the matissa.</li>
+<li><em>Tables Related to PostScript Outlines</em><br>
+Removed links and description details for the fvar, MMSD and MMFX tables.</li>
+<li><em>Advanced Typographic Tables</em><br>
+Added a link to OpenType Layout Common Table Formats.</li>
+<li><em>Other OpenType Tables</em><br>
+Added the VORG table name to the list.</li>
+</ul>
+</li>
+<li>otover.htm
+<ul>
+<li><em>Related documentation</em><br>
+Removed sections in the description related to MM fonts.</li>
+</ul>
+</li>
+<li>post.htm
+<ul>
+<li><em>table.version.description</em><br>
+Added versions 2.5 and 3.0</li>
+<li><em>table.underlinePosition.description</em><br>
+PostScript information added.</li>
+<li><em>version2.0</em><br>
+Updated name and description details in the table contents</li>
+<li><em>version2.5</em><br>
+Updated table contents, added that this version has been deprecated.</li>
+</ul>
+</li>
+<li>recom.htm
+<ul>
+<li><em>BASE Table</em><br>
+This section added.</li>
+<li><em>'cmap' table</em><br>
+Added details on requirements that need to be satisfied by surrogate fonts on Windows.</li>
+<li><em>'head' Table</em><br>
+Added details regarding usage of the fontRevision value.</li>
+<li><em>'hhea' Table</em><br>
+Removed sentence which incorrectly stated that OpenType fonts that include CFF data must set numberOfHMetrics equal to the number of glyphs in the font.</li>
+<li><em>'post' Table</em><br>
+Updated content related to glyph names in the post table.</li>
+<li><em>OS/2 Table</em><br>
+Added section on sTypoAscender, sTypoDescender, sTypoLineGap.</li>
+<li><em>General Recommendations</em><br>
+Updated the table ordering list for OpenType fonts containing CFF data by adding the 'maxp' table; and, removing the 'fvar' and MMSD tables.</li>
+<li><em>Baseline to Baseline Distances</em><br>
+Added a paragraph on the recommended use of sTypoAscender, sTypoDescender, and sTypoLineGap.</li>
+<li><em>OpenType CJK Font Guidelines</em><br>
+This new section added.</li>
+</ul>
+</li>
+<li>ttochap1.htm
+<ul>
+<li><em>Introduction</em><br>
+Removed MMSD reference.<br>
+Expanded the brief description of the content of Registered OpenType Layout Tags to reflect all OpenType tags: scripts, languages, baselines, features.</li>
+<li><em>How Multiple Master OpenType Fonts Use OpenType Layout Tables</em><br>
+This section removed.</li>
+</ul>
+</li>
+<li>ttoreg.htm
+<ul>
+<li>Added links in the introduction section, to help jump to the script, language, baseline and feature tag sections.</li>
+<li><em>Script tags</em><br>
+Corrected script tag length description.<br>
+Added newer script tags.</li>
+<li><em>Language system tags</em><br>
+Added newer language tags.</li>
+<li><em>Baseline tags</em><br>
+Added newer baseline tags: 'icfb', 'icft' and 'idtp'. Expanded the description of existing tags into two categories: “Baseline for HorizAxis” and “Baseline for VertAxis”.</li>
+<li><em>Ideographic Em-Box</em><br>
+This new section added.</li>
+<li><em>Ideographic Character Face</em><br>
+This new section added.</li>
+</ul>
+</li>
+<li>vhea.htm
+<ul>
+<li><em>Introduction</em><br>
+Added a link each for the vmtx table and the CJK guidelines section.</li>
+<li><em>table.version.description</em><br>
+Version number increased to 1.1. Added a note to indicate the difference in representing the fractional part of a version number when it is non-zero.</li>
+<li><em>table.ascent</em><br>
+Replaced by vertTypoAscender.</li>
+<li><em>table.descent</em><br>
+Replaced by vertTypoDescender.</li>
+<li><em>table.lineGap</em><br>
+Replaced by vertTypoLineGap.</li>
+<li><em>Vertical Header Table Example</em><br>
+Changed version value to 1.1. Corrected the name for vertTypoLineGap</li>
+</ul>
+</li>
+<li>vmtx.htm
+<ul>
+<li><em>Introduction</em><br>
+Added a link for accessing the CJK guidelines section.</li>
+<li><em>Vertical Origin and Advance Height</em><br>
+This new section added.</li>
+<li><em>Vertical Metrics Table Format</em><br>
+Added note on the calculating the top side bearing.</li>
+</ul>
+</li>
+<li>vorg.htm
+<ul>
+<li>This new table added. This is needed by CFF OpenType fonts to locate the origin of vertical glyphs.</li>
+</ul>
+</li>
+<li>wgl4d.htm
+<ul>
+<li>Added a missing asterisk for PostScriptName.macron</li>
+<li>Added U+02DC (tilde) — was missing from the list.</li>
+</ul>
+</li>
+</ul>
+<p><a id="v1.25"></a></p>
+<h2 id="version-125">Version 1.25</h2>
+<p>Released July, 2000.</p>
+<p><em>Summary of Changes:</em></p>
+<ul>
+<li>feattags.htm (Feature Tags) -
+<ul>
+<li><em>Features added:</em><br>
+'abvm' (Above-base Mark Positioning); 'abvs' (Above-base Substitutions); 'akhn' (Akhand); 'blwf' (Below-base Forms); 'blws' (Below-base Substitutions); 'clig' (Contextual Ligatures); 'cswh' (Contextual Swash); 'curs' (Cursive Positioning); 'dist' (Distances); 'falt' (Final Glyph on Line Alternates); 'half' (Half Forms); 'haln' (Halant Forms); 'hkna' (Horizontal Kana Alternates); 'isol' (Isolated Forms); 'jalt' (Justification Alternates); 'locl' (Localized Forms) (replaces 'jajp', 'kokr', 'vivn', 'zhch', and 'zhtw'); 'mkmk' (Mark to Mark Positioning); 'nukt' (Nukta Forms); 'pres' (Pre-base substitutions); 'pstf' (Post-base Forms); 'psts' (Post-base Substitutions); 'rphf' (Reph Forms); 'ruby' (Ruby Notation Forms); 'size' (Optical Size); 'vatu' (Vattu Variants); 'vhal' (Alternate Vertical Half Metrics); 'vkna' (Vertical Kana Alternates); 'vkrn' (Vertical Kerning) 'vpal' (Proportional Alternate Vertical Metrics).</li>
+<li><em>Features removed:</em><br>
+'crcy' (Currency), 'dpng' (Diphthongs), 'jajp' (Japanese Forms), 'kokr' (Korean Forms), 'vivn' (Vietnamese Forms), 'zhcn' (Simplified Chinese Forms), 'zhtw' (Traditional Chinese Forms).</li>
+<li><em>Features modified:</em><br>
+'aalt': Added ordering suggestion, reworked user interface suggestions, clarified implementation recommendation, feature interaction and function.<br>
+'altv': changed tag to 'valt'.<br>
+'c2sc', 'dlig': Clarified function, example and feature interaction.<br>
+'calt', 'case', 'dnom', 'expt', 'halt', 'hist', 'hwid', 'jp78', 'jp83', 'jp90', 'kern', 'lfbd', 'liga', 'lnum', 'numr', 'onum', 'pwid', 'qwid', 'rtbd', 'smpl', 'sups', 'titl', 'twid', 'valt': Clarified feature interaction.<br>
+'fina', 'init', 'medi', 'rand', 'salt', 'swsh': Clarified user interface suggestion and feature interaction.<br>
+'frac': Added 'numr' and 'dnom' extensions, clarified feature interaction.<br>
+'fwid', 'palt': Clarified feature interaction and function.<br>
+'hngl': Clarified feature interaction and implementation recommendation.<br>
+'ital': Clarified function and feature interaction.<br>
+'mark': Added example, application interface, user interface suggestion, script sensitivity, feature interaction. Modified recommended implementation.<br>
+'mset': Added example.<br>
+'nalt': Clarified user interface suggestion, implementation recommendation and feature interaction.<br>
+'opbd': Added 'lfbd' and 'rtbd' extensions; clarified user interface suggestion and feature interaction.<br>
+'ordn': Clarified script sensitivity, corrected lookup type, clarified implementation recommendation and feature interaction.  'ornm': Clarified user interface suggestion, implementation recommendation, feature interaction and function description.<br>
+'smcp': Added note about dotlessi; clarified function and feature interaction.<br>
+'trad': corrected terminology (hanzi, not hanja), clarified user interface suggestion and implementation recommendation.<br>
+'vert': Clarified feature interaction and added ordering recommendation; extended application interface notes.<br>
+'vrt2': Changed “friendly” name, clarified feature interaction and added ordering recommendation; added ATM/OTF driver information and descriptions of how to construct the rotated glyphs in the Function section.<br>
+'zero': Clarified user interface suggestion.</li>
+<li><em>Features relocated:</em><br>
+'mark' and 'mset' have been moved from the Metric Behaviors category, to the Other Substitutions category for consistency in classification.</li>
+</ul>
+</li>
+<li>chapter2.htm - modified description of FeatureParams field for a non-null offset (the 'size' feature uses it).</li>
+</ul>
+<p><a id="v1.2"></a></p>
+<h2 id="version-12">Version 1.2</h2>
+<p>Released November, 1998.</p>
+<p><em>Summary of Changes:</em></p>
+<ul>
+<li>Data type notation and spelling corrected throughout</li>
+<li>base.htm - added BaseCoord Table Format 4</li>
+<li>chapter2.htm - corrected example 3; refined description of next glyph; reserved RightToLeft lookup flag; corrected descriptions of LookupFlag bits</li>
+<li>cmap.htm - removed legacy encodings</li>
+<li>dsig.htm - updated field names and format of signature record; added step to creation of content digest</li>
+<li>feattags.htm - registered new features 'crcy', 'dnom', 'jajp', 'kokr', 'lfbd', 'numr', 'rtbd', 'vivn', 'vrt2', 'zhcn', 'zhtw'; removed features 'trak', 'vrot'; edited and clarified descriptions of features 'afrc', 'altv', 'c2sc', 'calt', 'case', 'cpsp', 'dlig', 'dpng', 'expt', 'fina', 'frac', 'fwid', 'halt', 'hlig', 'lngl', 'hwid', 'init', 'ital', 'jp78', 'jp90', 'kern', 'lnum', 'medi', 'mgrk', 'onum', 'opbd', 'ordn', 'ornm', 'palt', 'pnum', 'pwid', 'qwid', 'smcp', 'smpl', 'sups', 'tnam', 'tnum', 'trad', 'twid', 'vert'</li>
+<li>gdef.htm - added MarkAttachClassDef to header, and MarkAttachmentType bit setting to LookupFlag bits; added CaretValue Table Format 4</li>
+<li>glyf.htm - added table detailing component record structure</li>
+<li>gsub.htm - added format 6, for chaining contextual substitution; general editing</li>
+<li>gpos.htm - added format 8, for chaining contextual positioning; clarified pair positioning operations; corrected Example 10; clarified coordinate system description; refined description of when a lookup is finished; added AnchorTable Format 4; general editing</li>
+<li>head.htm - added note about fontRevision field; clarified description of compression flag</li>
+<li>hhea.htm - corrected description of numberOfHMetrics</li>
+<li>mmfx.htm - corrections throughout; added MMFXIdZero</li>
+<li>name.htm - general editing</li>
+<li>os2.htm - renamed usMaxLookup to usMaxContext; edited descriptions of defaultChar and breakChar; updated registered vendors</li>
+<li>otff.htm - general editing; added ulDsigTag and related fields to TTC header; added datatypes LONGDATETIME; clarified checksum calculations; added tag name restrictions; clarified use of version numbers</li>
+<li>post.htm - renamed FormatType to Version</li>
+<li>vhea.htm - replaced mention of centerline with vertical baseline; corrected description of numOfLongVerMetrics</li>
+<li>CFF.pdf and Type2.pdf updated (December 1998)</li>
+<li>Several PostScript glyph names corrected in the WGL tables (18 December 1998)</li>
+<li>name.htm - Descriptions of name ID 13 and 14 corrected (29 January 1999)</li>
+<li>mmsd.htm - Attribute flags corrected (29 January 1999)</li>
+<li>head.htm - Data type of xMin corrected (29 January 1999)</li>
+</ul>
+<p><a id="1.1"></a></p>
+<h2 id="version-11">Version 1.1</h2>
+<p>Released April, 1998.</p>
+<p><em>Summary of Changes:</em></p>
+<ul>
+<li>CFF and Type2 specs updated</li>
+<li>chapter2.htm - corrected typo in figure 2d (fig2d.gif)</li>
+<li>dsig.htm - added info about location of DSIG table; added list of sfnt structural requirements</li>
+<li>feattags.htm - created more comprehensive list and description of layout feature tags</li>
+<li>gpos.htm - corrected illustration 4f (fig4f.gif)</li>
+<li>head.htm - added bit 12 (converted) to flags field</li>
+<li>hhea.htm - removed CFF restriction listed in numberOfHMetrics field; added caretOffset field.</li>
+<li>maxp.htm - added version 0.5 table (numGlyphs field); general editing</li>
+<li>name.htm - added name IDs 16, 17, and 18; corrected name ID example</li>
+<li>os2.htm - added new version (2), adding new fields sxHeight, sCapHeight, usDefaultChar, usBreakChar, usMaxLookup; clarified sTypoAscender and sTypoDescender fields; changed some Unicode range values to reflect Unicode 2; updated registered vendors</li>
+<li>otff.htm - general editing; added description of two types of TTC headers, and DSIG table location</li>
+<li>recom.htm - general editing</li>
+</ul>
+<p><a id="v.1.01"></a></p>
+<h2 id="version-101">Version 1.01</h2>
+<p>Released October, 1997.</p>
+<p><em>Summary of Changes:</em></p>
+<ul>
+<li>mmfx.htm, fvar.htm, mmsd.htm, otover.htm, recom.htm - edits throughout</li>
+<li>loca.htm - changed long-aligned to word-aligned for local offsets</li>
+<li>wgl4.htm - added reference to Euro symbol</li>
+<li>dsig.htm - added note about system use of DSIG table to distinguish OT from TT fonts</li>
+<li>ttoreg.htm - added 'VIT ', 'TRK ', and 'ROM ' lang sys tags</li>
+<li>otff.htm - rearranged table list</li>
+<li>base.htm - change to basecoordformat3 data type</li>
+<li>gpos.htm - pairposformat1 subtable valuerecord becomes offset</li>
+<li>kern.htm - GPOS clarification</li>
+<li>name.htm - added name IDs 13 and 14</li>
+<li>ltsh.htm - clarified option for fixed-pitch fonts</li>
+<li>vdmx.htm - version 1 added to VDMX table</li>
+<li>os2.htm - added codepage range 8 for Vietnamese; added new vendor IDs, including UNKN</li>
+</ul>
+<p><a id="v1.0"></a></p>
+<h2 id="version-10">Version 1.0</h2>
+<p>Released April, 1997.</p>
+
+</body>
+</html>

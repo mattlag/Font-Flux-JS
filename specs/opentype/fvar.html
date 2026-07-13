@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fvar — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/fvar">https://learn.microsoft.com/en-us/typography/opentype/spec/fvar</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="fvar--font-variations-table">fvar — Font Variations Table</h1>
+<p>OpenType Font Variations allow a font designer to incorporate multiple faces within a font family into a single font resource. Variable fonts can provide great flexibility for content authors and designers while also allowing the font data to be represented in an efficient format.</p>
+<p>A variable font allows for continuous variation along some given design axis, such as weight:</p>
+<figure><img src="media/fvar_fig1.png" alt="Variations of capital G along a weight axis" data-linktype="relative-path"><figcaption>Figure: Continuous variation along a design axis</figcaption></figure>
+<p>Conceptually, variable fonts define one or more axes over which design characteristics can vary. Weight is one possible axis of variation, but many different kinds of variation are possible. Variable fonts are not limited to a single axis of variation, but can combine two or more different axes of variation. For example, the following illustrates a combination of weight and width variation:</p>
+<figure><img src="media/fvar_fig2.png" alt="Variations of capital G in a design space with weight and width axes" data-linktype="relative-path"><figcaption>Figure: Continuous variation along multiple design axes</figcaption></figure>
+<p>The set of axes supported by a font define a variation space for that font, supporting a potentially-vast number of design-variation instances at positions across that space.</p>
+<p>The font variations table ('fvar') provides the global definition of variations supported within the font. It specifies the axes of variation that are used and the ranges of variation for each axis. It also allows the font designer to specify certain coordinate positions within the font’s variation space as named instances. Named instances have designer-provided names, effectively equivalent to sub-family names, that applications can use as a short list of “pre-chosen” design variants they can offer to users.</p>
+<p>For a general introduction to OpenType Font Variations, see <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p>All variable fonts must include a font variations table, as well as other required or optional tables used in variable fonts.</p>
+<p>Note that some of the information in the font variations table also needs to be reflected in the <a href="stat.html" data-linktype="relative-path">style attributes (STAT)</a> table, which is also required in all variable fonts. In particular, each axis and each named instance specified in the font variations table must have matching axis records and axis value tables in the style attributes table.</p>
+<p><a id="tableFormats"></a></p>
+<h2 id="table-formats">Table Formats</h2>
+<p>The font variations table consists of a table header, followed by an array of variation axis records, followed by an array of named-instance records:</p>
+<figure><img src="media/fvar_fig3.png" alt="Block diagram of fvar table data" data-linktype="relative-path"><figcaption>Figure: High-level organization of the font variations table</figcaption></figure>
+<p><a id="fvarHeader"></a></p>
+<h3 id="fvar-header">'fvar' Header</h3>
+<p>The format of the font variations table header is as follows.</p>
+<p><em>Font variations header:</em></p>
+<p><a id="fvarHeaderFormat"></a></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version number of the font variations table — set to 1.</td>
+</tr>
+<tr id="minorVersion">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version number of the font variations table — set to 0.</td>
+</tr>
+<tr id="axesArrayOffset">
+<td>Offset16</td>
+<td>axesArrayOffset</td>
+<td>Offset in bytes from the beginning of the table to the start of the VariationAxisRecord array.</td>
+</tr>
+<tr id="reserved">
+<td>uint16</td>
+<td>(reserved)</td>
+<td>This field is permanently reserved. Set to 2.</td>
+</tr>
+<tr id="axisCount">
+<td>uint16</td>
+<td>axisCount</td>
+<td>The number of variation axes in the font (the number of records in the axes array).</td>
+</tr>
+<tr id="axisSize">
+<td>uint16</td>
+<td>axisSize</td>
+<td>The size in bytes of each VariationAxisRecord — set to 20 (0x0014) for this version.</td>
+</tr>
+<tr id="instanceCount">
+<td>uint16</td>
+<td>instanceCount</td>
+<td>The number of named instances defined in the font (the number of records in the instances array).</td>
+</tr>
+<tr id="instanceSize">
+<td>uint16</td>
+<td>instanceSize</td>
+<td>The size in bytes of each InstanceRecord — set to either <em>axisCount * sizeof(Fixed) + 4</em>, or <em>axisCount * sizeof(Fixed) + 6</em>.</td>
+</tr>
+</tbody>
+</table>
+<p>The header is followed by axes and instances arrays. The location of the axes array is specified in the axesArrayOffset field; the instances array directly follows the axes array.</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VariationAxisRecord</td>
+<td>axes[axisCount]</td>
+<td>The variation axis array.</td>
+</tr>
+<tr>
+<td>InstanceRecord</td>
+<td>instances[instanceCount]</td>
+<td>The named instance array.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em> The axisSize and instanceSize fields indicate the size of the VariationAxisRecord and InstanceRecord structures. In this version of the 'fvar' table, the InstanceRecord structure has an optional field, and so two different size formulations are possible. Future minor-version updates of the 'fvar' table may define compatible extensions to either format. Implementations must use the axisSize and instanceSize fields to determine the start of each record.</p>
+</blockquote>
+<p>The set of axes that make up the font’s variation space are defined by an array of variation axis records. The number of records, and the number of axes, is determined by the axisCount field. A functional variable font must have an axisCount value that is greater than zero. If axisCount is zero, then the font is not functional as a variable font, and must be treated as a non-variable font; any variation-specific tables or data is ignored.</p>
+<p><a id="variationAxisRecord"></a></p>
+<h3 id="variationaxisrecord">VariationAxisRecord</h3>
+<p>The format of the variation axis record is as follows:</p>
+<p><em>VariationAxisRecord</em></p>
+<p><a id="variationAxisRec"></a></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="axisTag">
+<td>Tag</td>
+<td>axisTag</td>
+<td>Tag identifying the design variation for the axis.</td>
+</tr>
+<tr id="minValue">
+<td>Fixed</td>
+<td>minValue</td>
+<td>The minimum coordinate value for the axis.</td>
+</tr>
+<tr id="defaultValue">
+<td>Fixed</td>
+<td>defaultValue</td>
+<td>The default coordinate value for the axis.</td>
+</tr>
+<tr id="maxValue">
+<td>Fixed</td>
+<td>maxValue</td>
+<td>The maximum coordinate value for the axis.</td>
+</tr>
+<tr id="flags">
+<td>uint16</td>
+<td>flags</td>
+<td>Axis qualifiers — see details below.</td>
+</tr>
+<tr id="axisNameID">
+<td>uint16</td>
+<td>axisNameID</td>
+<td>The name ID for entries in the 'name' table that provide a display name for this axis.</td>
+</tr>
+</tbody>
+</table>
+<p>Each axis has a tag that identifies the design variation for the axis. For example, the tag 'wght' designates a weight variation. Tags are registered for commonly-used design axes, but foundry-defined tags may also be used. Registered tags define valid ranges of coordinate values for the axis across all fonts. The variation axis record defines minimum and maximum values supported by the font, which may be more limited that the valid ranges defined for a registered tag.</p>
+<blockquote>
+<p><em>Note:</em> Axis values given in the variation axis record use <em>user scale</em> coordinates that are specific to each axis tag. The user scale for each registered tag is described with the definition of each tag. In most other font tables that contain variation-related data, axis coordinate values are expressed using <em>normalized</em> coordinate scales. For more information regarding user scales and normalized scales, and a specification of the normalization process, see the <a href="otvaroverview.html#CSN" data-linktype="relative-path">Coordinate Scales and Normalization</a> section in the OpenType Font Variations Overview chapter.</p>
+</blockquote>
+<p>To be valid, axis tags must conform to general requirements for the Tag type (see <a href="otff.html#data-types" data-linktype="relative-path">Data Types</a>) as well as certain additional requirements. Also, the valid patterns for registered tags and for foundry-defined tags are mutually exclusive. This is required to ensure there is never a future conflict between foundry-defined tags in existing fonts and newly-registered tags.</p>
+<p>For more details on axis tags, their validity requirements, and definitions for registered design-variation axes, see <a href="dvaraxisreg.html" data-linktype="relative-path">OpenType Design-Variation Axis Tag Registry</a>.</p>
+<p>The default value interacts with the glyph and glyph variations tables in a particular way: the variation instance that has the default coordinate value for each axis will use glyph outlines as defined in the glyph table, without any variations from the glyph variations table applied. This instance is referred to as the default instance.</p>
+<p>Flags can be assigned to indicate certain uses or behaviors for a given axis, independent of the specific axis tag and its definition. If no flags are set, then no assumptions are to be made beyond the definition for a registered axis. The following flags are defined.</p>
+<table id="axisFlags">
+<tbody>
+<tr>
+<th>Mask</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="axisFlags_1">
+<td>0x0001</td>
+<td>HIDDEN_AXIS</td>
+<td>The axis should not be exposed directly in user interfaces.</td>
+</tr>
+<tr id="axisFlags_reserved">
+<td>0xFFFE</td>
+<td>Reserved</td>
+<td>Reserved for future use — set to 0.</td>
+</tr>
+</tbody>
+</table>
+<p>The HIDDEN_AXIS flag is provided to indicate a recommendation by the font developer that the axis not be exposed directly to end users in application user interfaces. Reasons for setting this flag might include that the axis is intended only for programmatic interaction, or is intended for font-internal use by the font developer. If this flag is set, the axis should not be exposed to users in application user interfaces except in specialized scenarios, such as a font inspection utility. The flag should not affect handling of named instances, which should always be exposed in text-formatting user interfaces. If this flag is not set, then applications may expose the given axis in a default user interface or, based on the nature of the axis, may choose to expose it in an advanced-user interface.</p>
+<p>The axisNameID field provides a name ID that can be used to obtain strings from the 'name' table that can be used to refer to the axis in application user interfaces. The name ID must be greater than 255 and less than 32768. For registered axis tags, a conventional US English axis name is provided; it is recommended that that name, or localized derivative names, be used in application user interfaces to provide greater consistency in user experience between different fonts.</p>
+<p><a id="instanceRecord"></a></p>
+<h3 id="instancerecord">InstanceRecord</h3>
+<p>The instance record format includes a UserTuple record that specifies a position within the font’s variation space. The UserTuple record has an array of user scale coordinates:</p>
+<p><em>UserTuple record:</em></p>
+<p><a id="tupleRecord_fixed"></a><a id="userTuple"></a></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="coordinates">
+<td>Fixed</td>
+<td>coordinates[axisCount]</td>
+<td>Coordinate array specifying a position within the font’s variation space.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em> The UserTuple record and <a href="otvarcommonformats.html#tuple-records" data-linktype="relative-path">Tuple record</a> both describe a position in the variation space but are distinct: UserTuple uses Fixed values to represent user scale coordinates, while the Tuple record uses F2DOT14 values to represent normalized coordinates.</p>
+</blockquote>
+<p>The format of the instance record is as follows.</p>
+<p><em>InstanceRecord:</em></p>
+<p><a id="instanceRec"></a></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="subfamilyNameID">
+<td>uint16</td>
+<td>subfamilyNameID</td>
+<td>The name ID for entries in the 'name' table that provide subfamily names for this instance.</td>
+</tr>
+<tr id="flags">
+<td>uint16</td>
+<td>flags</td>
+<td>Reserved for future use — set to 0.</td>
+</tr>
+<tr id="coordinates">
+<td>UserTuple</td>
+<td>coordinates</td>
+<td>The coordinate array for this instance.</td>
+</tr>
+<tr id="postScriptNameID">
+<td>uint16</td>
+<td>postScriptNameID</td>
+<td>Optional. The name ID for entries in the 'name' table that provide PostScript names for this instance.</td>
+</tr>
+</tbody>
+</table>
+<p>The postScriptNameID field is optional. All of the instance records in a given font must be the same size, with all either including or omitting the postScriptNameID field.</p>
+<p>The subfamilyNameID field provides a name ID that can be used to obtain strings from the 'name' table that can be treated as equivalent to name ID 17 (typographic subfamily) strings for the given instance. Values of 2 or 17 can be used; otherwise, values must be greater than 255 and less than 32768. The values 2 or 17 should only be used if the named instance corresponds to the font’s default instance.</p>
+<p>The postScriptNameID field provides a name ID that can be used to obtain strings from the 'name' table that can be treated as equivalent to name ID 6 (PostScript name) strings for the given instance. Values of 6 and 0xFFFF can be used; otherwise, values must be greater than 255 and less than 32768. If the value is 0xFFFF, then the value is ignored, and no PostScript name equivalent is provided for the instance. The value 6 should only be used if the named instance corresponds to the font’s default instance.</p>
+<p>All of the instance records in a font should have distinct coordinates and distinct subfamilyNameID and postScriptName ID values. If two or more records share the same coordinates, the same nameID values or the same postScriptNameID values, then all but the first can be ignored.</p>
+<p>The default instance of a font is that instance for which the coordinate value of each axis is the defaultValue specified in the corresponding variation axis record. An instance record is not required for the default instance, though an instance record can be provided. When enumerating named instances, the default instance should be enumerated even if there is no corresponding instance record. If an instance record is included for the default instance (that is, an instance record has coordinates set to default values), then the nameID value should be set to 2 or 17 or to a name ID with the same value as name ID 2 or 17. Also, if a postScriptNameID is included in instance records, the value should be set to 6 or to a name ID with the same value as name ID 6.</p>
+<blockquote>
+<p><em>Note:</em> Since an instance record for the default instance is not required, a variable font that has no instance records defined in the 'fvar' table (instanceCount is zero) still has one named instance.</p>
+</blockquote>
+<p><a id="variationInstanceSelection"></a></p>
+<h2 id="variation-instance-selection">Variation Instance Selection</h2>
+<p>When formatting text using a variable font, applications must select a particular variation instance; that is, specific, in-range values must be specified for each of the axes defined in the font variation table. An instance may be selected by reference to a named instanced defined in an instance record, or by using a set of arbitrary axis values for the various axes. If a value is not specified for any particular axis, the default value for that axis defined in the font is used. If an application specifies a value for an axis that is less than the minValue defined in the font, then minValue must be used. Similarly, if an application specifies a value greater than the maxValue defined in the font, then maxValue must be used.</p>
+<p><a id="examples"></a></p>
+<h2 id="example">Example</h2>
+<p>This example is for a hypothetical font with family name “SelawikV” that has two axes of variation, for weight and width. This table summarizes the description of the axes for the font:</p>
+<table>
+<tbody>
+<tr>
+<th>Axis tag</th>
+<th>Minimum value</th>
+<th>Default value</th>
+<th>Maximum value</th>
+<th>Axis name ID</th>
+</tr>
+<tr>
+<td>'wght'</td>
+<td>300</td>
+<td>400</td>
+<td>700</td>
+<td>256</td>
+</tr>
+<tr>
+<td>'wdth'</td>
+<td>62.5</td>
+<td>100</td>
+<td>150</td>
+<td>257</td>
+</tr>
+</tbody>
+</table>
+<p>This font also has the following named instances:</p>
+<table>
+<tbody>
+<tr>
+<th>Instance subfamily name</th>
+<th>Subfamily name ID</th>
+<th>PostScript name</th>
+<th>PostScript name ID</th>
+<th>'wght' value</th>
+<th>'wdth' value</th>
+</tr>
+<tr>
+<td>Regular</td>
+<td>258</td>
+<td>SelawikV-Regular</td>
+<td>262</td>
+<td>400</td>
+<td>100</td>
+</tr>
+<tr>
+<td>Bold</td>
+<td>259</td>
+<td>SelawikV-Bold</td>
+<td>263</td>
+<td>700</td>
+<td>100</td>
+</tr>
+<tr>
+<td>Condensed</td>
+<td>260</td>
+<td>SelawikV-Condensed</td>
+<td>264</td>
+<td>400</td>
+<td>75</td>
+</tr>
+<tr>
+<td>Condensed Bold</td>
+<td>261</td>
+<td>SelawikV-CondensedBold</td>
+<td>265</td>
+<td>700</td>
+<td>75</td>
+</tr>
+</tbody>
+</table>
+<p>The 'fvar' table is constructed as follows:</p>
+<table>
+<tbody>
+<tr>
+<th>Hex data</th>
+<th>Field</th>
+<th>Comment</th>
+</tr>
+<tr>
+<td></td>
+<td><b>Header</b></td>
+<td></td>
+</tr>
+<tr>
+<td>0001</td>
+<td>majorVersion</td>
+<td></td>
+</tr>
+<tr>
+<td>0000</td>
+<td>minorVersion</td>
+<td></td>
+</tr>
+<tr>
+<td>0010</td>
+<td>axesArrayOffset</td>
+<td>16 bytes — combined size of fields before the axes array.</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>countSizePairs</td>
+<td>2 count/size pairs: axis, instance</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>axisCount</td>
+<td>2 axes ('wght', 'wdth')</td>
+</tr>
+<tr>
+<td>0014</td>
+<td>axisSize</td>
+<td>Size of each variation axis record is 20 bytes.</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>instanceCount</td>
+<td>4 named instances</td>
+</tr>
+<tr>
+<td>000E</td>
+<td>instanceSize</td>
+<td>Size of instance records is 14 bytes.</td>
+</tr>
+<tr>
+<td></td>
+<td><b>First variation axis record</b></td>
+<td></td>
+</tr>
+<tr>
+<td>77676874</td>
+<td>axisTag</td>
+<td>Axis tag 'wght'.</td>
+</tr>
+<tr>
+<td>012C0000</td>
+<td>minValue</td>
+<td>Minimum 'wght' value is 300 (Fixed format).</td>
+</tr>
+<tr>
+<td>01900000</td>
+<td>defaultValue</td>
+<td>Default 'wght' value is 400.</td>
+</tr>
+<tr>
+<td>02BC0000</td>
+<td>maxValue</td>
+<td>Maximum 'wght' value is 700.</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>flags</td>
+<td></td>
+</tr>
+<tr>
+<td>0100</td>
+<td>axisNameID</td>
+<td>Display name “Weight” uses name ID 256.</td>
+</tr>
+<tr>
+<td></td>
+<td><b>Second variation axis record</b></td>
+<td></td>
+</tr>
+<tr>
+<td>77647468</td>
+<td>axisTag</td>
+<td>Axis tag 'wdth'.</td>
+</tr>
+<tr>
+<td>003E8000</td>
+<td>minValue</td>
+<td>Minimum 'wdth' value is 62.5 (Fixed format).</td>
+</tr>
+<tr>
+<td>00640000</td>
+<td>defaultValue</td>
+<td>Default 'wdth' value is 100.</td>
+</tr>
+<tr>
+<td>00960000</td>
+<td>maxValue</td>
+<td>Maximum 'wdth' value is 150.</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>flags</td>
+<td></td>
+</tr>
+<tr>
+<td>0101</td>
+<td>axisNameID</td>
+<td>Display name “Width” uses name ID 257.</td>
+</tr>
+<tr>
+<td></td>
+<td><b>First instance record</b></td>
+<td></td>
+</tr>
+<tr>
+<td>0102</td>
+<td>subfamilyNameID</td>
+<td>Instance subfamily name “Regular” uses name ID 258.</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>flags</td>
+<td></td>
+</tr>
+<tr>
+<td>01900000</td>
+<td>coordinates[0]</td>
+<td>'wght' coordinate is 400.</td>
+</tr>
+<tr>
+<td>00640000</td>
+<td>coordinates[1]</td>
+<td>'wdth' coordinate is 100.</td>
+</tr>
+<tr>
+<td>0106</td>
+<td>postScriptNameID</td>
+<td>Instance PostScript name “SelawikV-Regular” uses name ID 262.</td>
+</tr>
+<tr>
+<td></td>
+<td><b>Second instance record</b></td>
+<td></td>
+</tr>
+<tr>
+<td>0103</td>
+<td>subfamilyNameID</td>
+<td>Instance subfamily name “Bold” uses name ID 259.</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>flags</td>
+<td></td>
+</tr>
+<tr>
+<td>02BC0000</td>
+<td>coordinates[0]</td>
+<td>'wght' coordinate is 700.</td>
+</tr>
+<tr>
+<td>00640000</td>
+<td>coordinates[1]</td>
+<td>'wdth' coordinate is 100.</td>
+</tr>
+<tr>
+<td>0107</td>
+<td>postScriptNameID</td>
+<td>Instance PostScript name “SelawikV-Bold” uses name ID 263.</td>
+</tr>
+<tr>
+<td></td>
+<td><b>Third instance record</b></td>
+<td></td>
+</tr>
+<tr>
+<td>0104</td>
+<td>subfamilyNameID</td>
+<td>Instance subfamily name “Condensed” uses name ID 260.</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>flags</td>
+<td></td>
+</tr>
+<tr>
+<td>01900000</td>
+<td>coordinates[0]</td>
+<td>'wght' coordinate is 400.</td>
+</tr>
+<tr>
+<td>004B0000</td>
+<td>coordinates[1]</td>
+<td>'wdth' coordinate is 75.</td>
+</tr>
+<tr>
+<td>0108</td>
+<td>postScriptNameID</td>
+<td>Instance PostScript name “SelawikV-Condensed” uses name ID 264.</td>
+</tr>
+<tr>
+<td></td>
+<td><b>Fourth instance record</b></td>
+<td></td>
+</tr>
+<tr>
+<td>0105</td>
+<td>subfamilyNameID</td>
+<td>Instance subfamily name “Condensed Bold” uses name ID 261.</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>flags</td>
+<td></td>
+</tr>
+<tr>
+<td>02BC0000</td>
+<td>coordinates[0]</td>
+<td>'wght' coordinate is 700.</td>
+</tr>
+<tr>
+<td>004B0000</td>
+<td>coordinates[1]</td>
+<td>'wdth' coordinate is 75.</td>
+</tr>
+<tr>
+<td>0109</td>
+<td>postScriptNameID</td>
+<td>Instance PostScript name “SelawikV-CondensedBold” uses name ID 265.</td>
+</tr>
+</tbody>
+</table>
+<p>The total size of the table is 112 bytes.</p>
+
+</body>
+</html>

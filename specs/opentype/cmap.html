@@ -1,0 +1,1103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cmap — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/cmap">https://learn.microsoft.com/en-us/typography/opentype/spec/cmap</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="cmap--character-to-glyph-index-mapping-table">cmap — Character to Glyph Index Mapping Table</h1>
+<p><a id="overview"></a></p>
+<h2 id="table-overview">Table overview</h2>
+<p>This table defines the mapping of character codes to a default glyph index. Different subtables may be defined that each contain mappings for different character encoding schemes. The table header indicates the character encodings for which subtables are present.</p>
+<p>Regardless of the encoding scheme, character codes that do not correspond to any glyph in the font should be mapped to glyph index 0. The glyph at this location must be a special glyph representing a missing character, commonly known as .notdef.</p>
+<p>Each subtable is in one of seven possible formats and begins with a format field indicating the format used. The first four formats — formats 0, 2, 4 and 6 — were originally defined prior to Unicode 2.0. These formats allow for 8-bit single-byte, 8-bit multi-byte, and 16-bit encodings. With the introduction of supplementary planes in Unicode 2.0, the Unicode addressable code space extends beyond 16 bits. To accommodate this, three additional formats were added — formats 8, 10 and 12 — that allow for 32-bit encoding schemes.</p>
+<p>Other enhancements in Unicode led to the addition of other subtable formats. Subtable format 13 allows for an efficient mapping of many characters to a single glyph; this is useful for “last-resort” fonts that provide fallback rendering for all possible Unicode characters with a distinct fallback glyph for different Unicode ranges. Subtable format 14 provides a unified mechanism for supporting Unicode variation sequences.</p>
+<p>Of the seven available formats, not all are commonly used today. Formats 4 or 12 are appropriate for most new fonts, depending on the Unicode character repertoire supported. Format 14 is used in many applications for support of Unicode variation sequences. Some platforms also make use for format 13 for a last-resort fallback font. Other subtable formats are not recommended for use in new fonts. Application developers, however, should anticipate that any of the formats may be used in fonts.</p>
+<blockquote>
+<p><em>Note:</em> The 'cmap' table version number remains at 0x0000 for fonts that make use of the newer subtable formats.</p>
+</blockquote>
+<p><a id="cmapHeader"></a></p>
+<h2 id="cmap-header">'cmap' Header</h2>
+<p>The Character to Glyph Index Mapping table is organized as follows.</p>
+<p><em>'cmap' Header:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>version</td>
+<td>Table version number (0).</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>numTables</td>
+<td>Number of encoding tables that follow.</td>
+</tr>
+<tr>
+<td>EncodingRecord</td>
+<td>encodingRecords[numTables]</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><a id="encodings"></a></p>
+<h2 id="encoding-records-and-encodings">Encoding records and encodings</h2>
+<p>The array of encoding records specifies particular encodings and the offset to the subtable for each encoding.</p>
+<p><a id="encodingRec"></a></p>
+<p><em>EncodingRecord:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>platformID</td>
+<td>Platform ID.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>encodingID</td>
+<td>Platform-specific encoding ID.</td>
+</tr>
+<tr>
+<td>Offset32</td>
+<td>subtableOffset</td>
+<td>Byte offset from beginning of table to the subtable for this encoding.</td>
+</tr>
+</tbody>
+</table>
+<p>The platform ID and platform-specific encoding ID in the encoding record are used to specify a particular character encoding. In the case of the Macintosh platform, a language field within the mapping subtable is also used for this purpose.</p>
+<p>The encoding record entries in the 'cmap' header must be sorted first by platform ID, then by platform-specific encoding ID, and then by the language field in the corresponding subtable. Each platform ID, platform-specific encoding ID, and subtable language combination may appear only once in the 'cmap' table.</p>
+<p>Apart from a format 14 subtable, all other subtables are exclusive: applications should select and use one and ignore the others. If a Unicode subtable is used (platform 0, or platform 3 / encoding 1 or 10), then a format 14 subtable using platform 0/encoding 5 can also be supplemented for mapping Unicode variation sequences.</p>
+<p>If a font includes Unicode subtables for both 16-bit encoding (typically, format 4) and also 32-bit encoding (formats 10 or 12), then the characters supported by the subtable for 32-bit encoding should be a superset of the characters supported by the subtable for 16-bit encoding, and the 32-bit encoding should be used by applications.</p>
+<p>Fonts should not include 16-bit Unicode subtables using both format 4 and format 6; format 4 should be used. Similarly, fonts should not include 32-bit Unicode subtables using both format 10 and format 12; format 12 should be used.</p>
+<p>If a font includes encoding records for Unicode subtables of the same format but with different platform IDs, an application may choose which to select, but should make this selection consistently each time the font is used.</p>
+<h3 id="platform-ids">Platform IDs</h3>
+<p>The following platform IDs are defined:</p>
+<table>
+<thead>
+<tr>
+<th>Platform&nbsp;ID</th>
+<th>Platform name</th>
+<th>Platform-specific encoding IDs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Unicode</td>
+<td><a href="#unicode-platform-platform-id--0" data-linktype="self-bookmark">Various</a></td>
+</tr>
+<tr>
+<td>1</td>
+<td>Macintosh</td>
+<td><a href="#macintosh-platform-platform-id--1" data-linktype="self-bookmark">Script manager code</a></td>
+</tr>
+<tr>
+<td><em>2</em></td>
+<td><em>ISO [deprecated]</em></td>
+<td><em><a href="#iso-platform-platform-id--2" data-linktype="self-bookmark">ISO encoding</a> [deprecated]</em></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Windows</td>
+<td><a href="#windows-platform-platform-id--3" data-linktype="self-bookmark">Windows encoding</a></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Custom</td>
+<td><a href="#custom-platform-platform-id--4-and-otf-windows-nt-compatibility-mapping" data-linktype="self-bookmark">Custom</a></td>
+</tr>
+</tbody>
+</table>
+<p>Platform ID values 240 through 255 are reserved for user-defined platforms and shall never be assigned to a registered platform.</p>
+<p><a id="unicodePlatform"></a></p>
+<h3 id="unicode-platform-platform-id--0">Unicode platform (platform ID = 0)</h3>
+<p>The following encoding IDs are defined for use with the Unicode platform:</p>
+<table>
+<tbody>
+<tr>
+<th>Encoding&nbsp;ID</th>
+<th>Description</th>
+</tr>
+<tr id="encID0_pid0">
+<td>0</td>
+<td>Unicode 1.0 semantics—<em>deprecated</em></td>
+</tr>
+<tr id="encID1_pid0">
+<td>1</td>
+<td>Unicode 1.1 semantics—<em>deprecated</em></td>
+</tr>
+<tr id="encID2_pid0">
+<td>2</td>
+<td>ISO/IEC 10646 semantics—<em>deprecated</em></td>
+</tr>
+<tr id="encID3_pid0">
+<td>3</td>
+<td>Unicode 2.0 and onwards semantics, Unicode BMP only</td>
+</tr>
+<tr id="encID4_pid0">
+<td>4</td>
+<td>Unicode 2.0 and onwards semantics, Unicode full repertoire</td>
+</tr>
+<tr id="encID5_pid0">
+<td>5</td>
+<td>Unicode variation sequences—for use with subtable format 14</td>
+</tr>
+<tr id="encID6_pid0">
+<td>6</td>
+<td>Unicode full repertoire—for use with subtable format 13</td>
+</tr>
+</tbody>
+</table>
+<p>Use of encoding IDs 0, 1 or 2 is deprecated.</p>
+<p>Encoding ID 3 should be used in conjunction with 'cmap' subtable formats 4 or 6. Encoding ID 4 should be used in conjunction with subtable formats 10 or 12.</p>
+<p>Unicode variation sequences supported by the font should be specified in the 'cmap' table using a format 14 subtable. A format 14 subtable must only be used under platform ID 0 and encoding ID 5; and encoding ID 5 should only be used with a format 14 subtable.</p>
+<p>Encoding ID 6 should only be used in conjunction with 'cmap' subtable format 13; and subtable format 13 should only be used under platform ID 0 and encoding ID 6.</p>
+<p><a id="macPlatform"></a></p>
+<h3 id="macintosh-platform-platform-id--1">Macintosh platform (platform ID = 1)</h3>
+<p>Older Macintosh versions required fonts to have a 'cmap' subtable for platform ID 1. For current Apple platforms, use of platform ID 1 is discouraged. See the <a href="name.html#macintosh-encoding-ids-script-manager-codes" data-linktype="relative-path">'name'</a> table chapter for details regarding encoding IDs defined for the Macintosh platform.</p>
+<p><a id="isoPlatform"></a></p>
+<h3 id="iso-platform-platform-id--2">ISO platform (platform ID = 2)</h3>
+<p>Use of this platform ID is deprecated.</p>
+<p>The following encoding IDs are defined for use with the ISO platform:</p>
+<table>
+<tbody>
+<tr>
+<th>Code</th>
+<th>ISO encoding</th>
+</tr>
+<tr id="encID0_pid2">
+<td>0</td>
+<td>7-bit ASCII</td>
+</tr>
+<tr id="encID1_pid2">
+<td>1</td>
+<td>ISO 10646</td>
+</tr>
+<tr id="encID2_pid2">
+<td>2</td>
+<td>ISO 8859-1</td>
+</tr>
+</tbody>
+</table>
+<p><a id="windowsPlatform"></a></p>
+<h3 id="windows-platform-platform-id--3">Windows platform (platform ID = 3)</h3>
+<p>The Windows platform supports several encodings. When creating fonts for Windows, Unicode 'cmap' subtables should always be used—platform ID 3 with encoding ID 1 or encoding ID 10. See below for additional details.</p>
+<p>The following encoding IDs are supported on the Windows platform:</p>
+<table>
+<thead>
+<tr>
+<th>Platform ID</th>
+<th>Encoding ID</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3</td>
+<td>0</td>
+<td>Symbol</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1</td>
+<td>Unicode BMP</td>
+</tr>
+<tr>
+<td>3</td>
+<td>2</td>
+<td>ShiftJIS</td>
+</tr>
+<tr>
+<td>3</td>
+<td>3</td>
+<td>PRC</td>
+</tr>
+<tr>
+<td>3</td>
+<td>4</td>
+<td>Big5</td>
+</tr>
+<tr>
+<td>3</td>
+<td>5</td>
+<td>Wansung</td>
+</tr>
+<tr>
+<td>3</td>
+<td>6</td>
+<td>Johab</td>
+</tr>
+<tr>
+<td>3</td>
+<td>7</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td>3</td>
+<td>8</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td>3</td>
+<td>9</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td>3</td>
+<td>10</td>
+<td>Unicode full repertoire</td>
+</tr>
+</tbody>
+</table>
+<p>Fonts that support only Unicode BMP characters (U+0000 to U+FFFF) on the Windows platform must use encoding 1 with a format 4 subtable. This encoding must not be used to support Unicode supplementary-plane characters.</p>
+<p>Fonts that support Unicode supplementary-plane characters (U+10000 to U+10FFFF) on the Windows platform must use encoding 10 with a format 12 subtable.</p>
+<p>The symbol encoding was created to support fonts with arbitrary ornaments or symbols not supported in Unicode or other standard encodings. A format 4 subtable would be used, typically with up to 224 graphic characters assigned at code positions beginning with 0xF020. This corresponds to a sub-range within the Unicode Private-Use Area (PUA), though this is not a Unicode encoding. In legacy usage, some applications would represent the symbol characters in text using a single-byte encoding, and then map 0x20 to the OS/2.usFirstCharIndex value in the font. In new fonts, symbols or characters not in Unicode should be encoded using PUA code points in a Unicode 'cmap' subtable.</p>
+<p>See the <a href="recom.html#cmap-table" data-linktype="relative-path">Recommendations</a> chapter for additional information.</p>
+<p><a id="customPlatform_OTF"></a></p>
+<h3 id="custom-platform-platform-id--4-and-otf-windows-nt-compatibility-mapping">Custom platform (platform ID = 4) and OTF Windows NT compatibility mapping</h3>
+<p>Platform ID 4 is a legacy platform that was created to provide compatibility of older applications with OpenType fonts that had been adapted from older Type 1 fonts. This platform is not commonly used today, and should not be used in new fonts.</p>
+<table>
+<tbody>
+<tr>
+<th>ID</th>
+<th>Custom encoding</th>
+</tr>
+<tr>
+<td>0-255</td>
+<td>OTF Windows NT compatibility mapping</td>
+</tr>
+</tbody>
+</table>
+<p>This 'cmap' platform provides a compatibility mechanism for non-Unicode applications that use the font as if it were Windows ANSI encoded. Non-Windows ANSI Type 1 fonts, such as Cyrillic and Central European fonts that Adobe shipped in the past, had “0” (Windows ANSI) recorded in the CharSet field of the .PFM file; Adobe Type Manager for Windows 9x ignored the CharSet altogether. Adobe provides this compatibility 'cmap' encoding in every OpenType font converted from a Type1 font in which the Encoding is not StandardEncoding.</p>
+<p>When platform ID 4 is used, the encoding ID must be set to the Windows charset value (in the range 0 to 255, inclusive) present in the .PFM file of the original Type 1 font.</p>
+<p>If a platform ID 4, encoding ID 0 – 255 'cmap' encoding is present in an OpenType font with CFF outlines, then the OTF font driver in Windows NT will: (a) superimpose the glyphs encoded at character codes 0-255 in the encoding on the corresponding Windows ANSI (code page 1252) Unicode values in the Unicode encoding it reports to the system; (b) add Windows ANSI (CharSet 0) to the list of CharSets supported by the font; and (c) consider the value of the encoding ID to be a Windows CharSet value and add it to the list of CharSets supported by the font. Note that the 'cmap' subtable needs to use Format 0 or 6 for its subtable, and the encoding needs to be identical to the CFF’s encoding.</p>
+<h2 id="cmap-subtable-formats">'cmap' subtable formats</h2>
+<p><a id="language"></a></p>
+<h3 id="use-of-the-language-field-in-cmap-subtables">Use of the language field in 'cmap' subtables</h3>
+<p>All 'cmap' subtable formats include a <em>language</em> field. The language field must be set to zero for all 'cmap' subtables whose platform IDs are other than Macintosh (platform ID 1). For 'cmap' subtables whose platform IDs are Macintosh, set this field to the Macintosh language ID of the 'cmap' subtable plus one, or to zero if the 'cmap' subtable is not language-specific. For example, a Mac OS Turkish 'cmap' subtable must set this field to 18, since the Macintosh language ID for Turkish is 17. A Mac OS Roman 'cmap' subtable must set this field to 0, since Mac OS Roman is not a language-specific encoding.</p>
+<p><a id="format0"></a></p>
+<h3 id="format-0-byte-encoding-table">Format 0: Byte encoding table</h3>
+<p>Format 0 was the standard mapping subtable used on older Macintosh platforms but is not required on newer Apple platforms.</p>
+<p><a id="subtable_0"></a></p>
+<p><em>'cmap' Subtable Format 0:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>format</td>
+<td>Format number is set to 0.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>length</td>
+<td>This is the length in bytes of the subtable.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>language</td>
+<td>For requirements on use of the language field, see “<a href="#language" data-linktype="self-bookmark">Use of the language field in 'cmap' subtables</a>” in this document.</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>glyphIdArray[256]</td>
+<td>An array that maps character codes to glyph index values.</td>
+</tr>
+</tbody>
+</table>
+<p>This is a simple 1 to 1 mapping of character codes to glyph indices. The glyph set is limited to 256. If this format is used to index into a larger glyph set, only the first 256 glyphs will be accessible.</p>
+<p><a id="format2"></a></p>
+<h3 id="format-2-high-byte-mapping-through-table">Format 2: High byte mapping through table</h3>
+<p>This subtable format was created for “double-byte” encodings following national character code standards used for Japanese, Chinese, and Korean characters. These code standards use a mixed 8-/16-bit encoding. This format is not commonly used today.</p>
+<p>In these mixed 8-/16-bit encodings, certain byte values signal the first byte of a 2-byte character. (These byte values are also valid as the second byte of a 2-byte character.) In addition, even for the 2-byte characters, the mapping of character codes to glyph index values depends heavily on the first byte. Consequently, the table begins with an array that maps the first byte to a SubHeader record. For 2-byte character codes, the SubHeader is used to map the second byte’s value into a sub-range of a glyph index array—a <em>sub-array</em>—, as described below. When processing mixed 8-/16-bit text, SubHeader 0 is special: it is used for single-byte character codes. When SubHeader 0 is used, a second byte is not needed; the single byte value is mapped through the specified sub-array.</p>
+<p><a id="subtable_2"></a></p>
+<p><em>'cmap' Subtable Format 2:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>format</td>
+<td>Format number is set to 2.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>length</td>
+<td>This is the length in bytes of the subtable.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>language</td>
+<td>For requirements on use of the language field, see “<a href="#language" data-linktype="self-bookmark">Use of the language field in 'cmap' subtables</a>” in this document.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>subHeaderKeys[256]</td>
+<td>Array that maps high bytes into the subHeaders array: value is subHeaders index × 8.</td>
+</tr>
+<tr>
+<td>SubHeader</td>
+<td>subHeaders[ ]</td>
+<td>Variable-length array of SubHeader records.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>glyphIdArray[ ]</td>
+<td>Variable-length array containing sub-arrays used for mapping the low byte of 2-byte characters.</td>
+</tr>
+</tbody>
+</table>
+<p>The SubHeader record is structured as follows:</p>
+<p><a id="subHeadRec"></a></p>
+<p><em>SubHeader Record:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>firstCode</td>
+<td>First valid low byte for this SubHeader.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>entryCount</td>
+<td>Number of valid low bytes for this SubHeader.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>idDelta</td>
+<td>See text below.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>idRangeOffset</td>
+<td>See text below.</td>
+</tr>
+</tbody>
+</table>
+<p>The firstCode and entryCount values specify a subrange that begins at firstCode and has a length equal to the value of entryCount. This subrange stays within the 0-255 range of the byte being mapped. Bytes outside of this subrange are mapped to glyph index 0 (missing glyph). The offset of the byte within this subrange is then used as index into a corresponding sub-array of glyphIdArray. This sub-array is also of length entryCount. The value of the idRangeOffset is the number of bytes past the actual location of the idRangeOffset word where the glyphIdArray element corresponding to firstCode appears.</p>
+<p>Finally, if the value obtained from the sub-array is not 0 (which indicates the missing glyph), you should add idDelta to it in order to get the glyphIndex. The value idDelta permits the same sub-array to be used for several different subheaders. The idDelta arithmetic is modulo 65536. If the result after adding idDelta to the value from the sub-array is less than zero, add 65536 to obtain a valid glyph ID.</p>
+<p><a id="format4"></a></p>
+<h3 id="format-4-segment-mapping-to-delta-values">Format 4: Segment mapping to delta values</h3>
+<p>This is the standard character-to-glyph-index mapping subtable for fonts that support only Unicode Basic Multilingual Plane characters (U+0000 to U+FFFF).</p>
+<blockquote>
+<p><em>Note:</em> To support Unicode supplementary-plane characters, <a href="#format-12-segmented-coverage" data-linktype="self-bookmark">format 12</a> should be used.</p>
+</blockquote>
+<p>This format is used when the character codes for the characters represented by a font fall into several contiguous ranges, possibly with holes in some or all of the ranges (that is, some of the codes in a range might not have a representation in the font). The format-dependent data is divided into three parts, which must occur in the following order:</p>
+<ol>
+<li>A four-word header gives parameters for an optimized search of the segment list.</li>
+<li>Four parallel arrays describe the segments (one segment for each contiguous range of codes).</li>
+<li>A variable-length array of glyph IDs (unsigned words).</li>
+</ol>
+<p><a id="subtable_4"></a></p>
+<p><em>'cmap' Subtable Format 4:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>format</td>
+<td>Format number is set to 4.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>length</td>
+<td>This is the length in bytes of the subtable.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>language</td>
+<td>For requirements on use of the language field, see “<a href="#language" data-linktype="self-bookmark">Use of the language field in 'cmap' subtables</a>” in this document.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>segCountX2</td>
+<td>2 × segCount.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>searchRange</td>
+<td>Maximum power of 2 less than or equal to segCount, times 2<br>((2**floor(log<sub>2</sub>(segCount))) * 2, where “**” is an exponentiation operator)</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>entrySelector</td>
+<td>Log<sub>2</sub> of the maximum power of 2 less than or equal to segCount<br>(log<sub>2</sub>(searchRange/2), which is equal to floor(log<sub>2</sub>(segCount)))</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>rangeShift</td>
+<td>segCount times 2, minus searchRange<br>((segCount * 2) - searchRange)</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>endCode[segCount]</td>
+<td>End characterCode for each segment, last=0xFFFF.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>reservedPad</td>
+<td>Set to 0.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>startCode[segCount]</td>
+<td>Start character code for each segment.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>idDelta[segCount]</td>
+<td>Delta for all character codes in segment.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>idRangeOffset[segCount]</td>
+<td>Offsets into glyphIdArray or 0</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>glyphIdArray[ ]</td>
+<td>Glyph index array (arbitrary length)</td>
+</tr>
+</tbody>
+</table>
+<p>The number of segments is specified by segCount, which is not given directly in the header but is readily derived from segCountX2. All of the other header parameters are derived from it. The searchRange value is twice the largest power of 2 that is less than or equal to segCount. For example, if segCount=39, we have the following:</p>
+<table>
+<tbody><tr><td>segCountX2</td><td>78</td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+<tr><td>searchRange</td><td>64 (= 2 × (largest power of 2 &lt;=39))</td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+<tr><td>entrySelector</td><td>5 (= log<sub>2</sub>32)</td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+<tr><td>rangeShift</td><td>14 (= 2 × 39 - 64)</td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+</tbody></table>
+<p>To assist in quick binary searches, the searchRange, entrySelector and rangeShift fields are included as parameters that can be used in configuring search algorithms. In particular, binary search is optimal when the number of entries is a power of two. The searchRange field provides the largest number of items that can be searched with that constraint (maximum power of two). The rangeShift field provides the remaining number of items that would also need to be searched. The entrySelector field indicates the maximum number of levels into the binary tree will need to be entered.</p>
+<p>In early implementations on devices with limited hardware capabilities, optimizations provided by the searchRange, entrySelector and rangeShift fields were of high importance. They have less importance on modern devices but could still be used in some implementations. However, incorrect values could potentially be used as an attack vector against some implementations. Since these values can be derived from the segCountX2 field when the file is parsed, it is strongly recommended that parsing implementations not rely on the searchRange, entrySelector and rangeShift fields in the font but derive them independently from segCountX2. Font files, however, should continue to provide valid values for these fields to maintain compatibility with all existing implementations.</p>
+<p>Each segment is described by a startCode and endCode, along with an idDelta and an idRangeOffset, which are used for mapping the character codes in the segment. The segments are sorted in order of increasing endCode values, and the segment values are specified in four parallel arrays. You search for the first endCode that is greater than or equal to the character code you want to map. If the corresponding startCode is less than or equal to the character code, then you use the corresponding idDelta and idRangeOffset to map the character code to a glyph index (otherwise, the missingGlyph is returned). For the search to terminate, the final startCode and endCode values must be 0xFFFF. This segment need not contain any valid mappings. (It can just map the single character code 0xFFFF to missingGlyph). However, the segment must be present.</p>
+<p>If the idRangeOffset value for the segment is not 0, the mapping of character codes relies on glyphIdArray. The character code offset from startCode is added to the idRangeOffset value. This sum is used as an offset from the current location within idRangeOffset itself to index out the correct glyphIdArray value. This obscure indexing trick works because glyphIdArray immediately follows idRangeOffset in the font file. The C expression that yields the glyph index is:</p>
+<pre><code>glyphId = *(idRangeOffset[i]/2
+            + (c - startCode[i])
+            + &amp;idRangeOffset[i])
+</code></pre>
+<p>The value <em>c</em> is the character code in question, and <em>i</em> is the segment index in which <em>c</em> appears. If the value obtained from the indexing operation is not 0 (which indicates missingGlyph), idDelta[i] is added to it to get the glyph index. The idDelta arithmetic is modulo 65536.</p>
+<p>If the idRangeOffset is 0, the idDelta value is added directly to the character code offset (i.e. <code>idDelta[i] + c</code>) to get the corresponding glyph index. Again, the idDelta arithmetic is modulo 65536. If the result after adding <code>idDelta[i] + c</code> is less than zero, add 65536 to obtain a valid glyph ID.</p>
+<p>As an example, the variant part of the table to map characters 10-20, 30-90, and 153-480 onto a contiguous range of glyph indices may look like this:</p>
+<table>
+<tbody><tr><td> segCountX2: </td><td> 8 </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+<tr><td> searchRange: </td><td> 8 </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+<tr><td> entrySelector: </td><td> 2 </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+<tr><td> rangeShift: </td><td> 0 </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+<tr><td> endCode: </td><td> 20  90  480  0xffff </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+<tr><td> reservedPad: </td><td> 0 </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+<tr><td> startCode: </td><td> 10  30  153  0xffff </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+<tr><td> idDelta: </td><td> -9  -18  -80  1 </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+<tr><td> idRangeOffset: </td><td> 0  0  0  0 </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+</tbody></table>
+<p>This table yields the following mappings:</p>
+<blockquote>
+<p>10 ⇒ 10 - 9 = 1<br>
+20 ⇒ 20 - 9 = 11<br>
+30 ⇒ 30 - 18 = 12<br>
+90 ⇒ 90 - 18 = 72<br>
+153 ⇒ 153 - 80 = 73<br>
+480 ⇒ 480 - 80 = 400<br>
+0xffff ⇒ 0</p>
+</blockquote>
+<p>Note that the delta values could be reworked so as to reorder the segments.</p>
+<p><a id="format6"></a></p>
+<h3 id="format-6-trimmed-table-mapping">Format 6: Trimmed table mapping</h3>
+<p>Format 6 was designed to map 16-bit characters to glyph indexes when the character codes for a font fall into a single contiguous range.</p>
+<p><a id="subtable_6"></a></p>
+<p><em>'cmap' Subtable Format 6:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>format</td>
+<td>Format number is set to 6.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>length</td>
+<td>This is the length in bytes of the subtable.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>language</td>
+<td>For requirements on use of the language field, see “<a href="#language" data-linktype="self-bookmark">Use of the language field in 'cmap' subtables</a>” in this document.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>firstCode</td>
+<td>First character code of subrange.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>entryCount</td>
+<td>Number of character codes in subrange.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>glyphIdArray[entryCount]</td>
+<td>Array of glyph index values for character codes in the range.</td>
+</tr>
+</tbody>
+</table>
+<p>The firstCode and entryCount values specify a subrange (beginning at firstCode, length = entryCount) within the range of possible character codes. Codes outside of this subrange are mapped to glyph index 0. The offset of the code (from the first code) within this subrange is used as index to the glyphIdArray, which provides the glyph index value.</p>
+<p><a id="format8"></a></p>
+<h3 id="format-8-mixed-16-bit-and-32-bit-coverage">Format 8: mixed 16-bit and 32-bit coverage</h3>
+<p>Subtable format 8 was designed to support Unicode supplementary-plane characters in UTF-16 encoding, though it is not commonly used. Format 8 is similar to format 2 in that it provides for mixed-length character codes. Instead of allowing for 8- and 16-bit character codes, however, it allows for 16- and 32-bit character codes.</p>
+<p>If a font contains Unicode supplementary-plane characters (U+10000 to U+10FFFF), then it’s likely that it will also include Unicode BMP characters (U+0000 to U+FFFF) as well. Hence, there is a need to map a mixture of 16-bit and 32-bit character codes. A simplifying assumption is made: namely, that there are no 32-bit character codes which share the same first 16 bits as any 16-bit character code. (Since the Unicode code space extends only to U+10FFFF, a potential conflict exists only for characters U+0000 to U+0010, which are non-printing control characters.) This means that the determination as to whether a particular 16-bit value is a standalone character code or the start of a 32-bit character code can be made by looking at the 16-bit value directly, with no further information required.</p>
+<p><a id="subtable_8"></a></p>
+<p><em>'cmap' Subtable Format 8:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>format</td>
+<td>Subtable format; set to 8.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>reserved</td>
+<td>Reserved; set to 0</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>length</td>
+<td>Byte length of this subtable (including the header)</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>language</td>
+<td>For requirements on use of the language field, see “<a href="#language" data-linktype="self-bookmark">Use of the language field in 'cmap' subtables</a>” in this document.</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>is32[8192]</td>
+<td>Tightly packed array of bits (8K bytes total) indicating whether the particular 16-bit (index) value is the start of a 32-bit character code</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>numGroups</td>
+<td>Number of groupings which follow</td>
+</tr>
+<tr>
+<td>SequentialMapGroup</td>
+<td>groups[numGroups]</td>
+<td>Array of SequentialMapGroup records.</td>
+</tr>
+</tbody>
+</table>
+<p>Each sequential map group record specifies a character range and the starting glyph ID mapped from the first character. Glyph IDs for subsequent characters follow in sequence.</p>
+<p><a id="seqMapGrpRec_8"></a></p>
+<p><em>SequentialMapGroup Record:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint32</td>
+<td>startCharCode</td>
+<td>First character code in this group; note that if this group is for one or more 16-bit character codes (which is determined from the is32 array), this 32-bit value will have the high 16-bits set to zero</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>endCharCode</td>
+<td>Last character code in this group; same condition as listed above for the startCharCode</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>startGlyphID</td>
+<td>Glyph index corresponding to the starting character code</td>
+</tr>
+</tbody>
+</table>
+<p>A few notes here. The endCharCode is used, rather than a count, because comparisons for group matching are usually done on an existing character code, and having the endCharCode be there explicitly saves the necessity of an addition per group. Groups must be sorted by increasing startCharCode. A group’s endCharCode must be less than the startCharCode of the following group, if any.</p>
+<p>To determine if a particular word (cp) is the first half of 32-bit code points, one can use an expression such as ( is32[ cp / 8 ] &amp; ( 1 &lt;&lt; ( 7 - ( cp % 8 ) ) ) ). If this is non-zero, then the word is the first half of a 32-bit code point.</p>
+<p>0 is not a special value for the high word of a 32-bit code point. A font must not have both a glyph for the code point 0x0000 and glyphs for code points with a high word of 0x0000.</p>
+<p>The presence of the packed array of bits indicating whether a particular 16-bit value is the start of a 32-bit character code is useful even when the font contains no glyphs for a particular 16-bit start value. This is because the system software often needs to know how many bytes ahead the next character begins, even if the current character maps to the missing glyph. By including this information explicitly in this table, no “secret” knowledge needs to be encoded into the OS.</p>
+<p>Although this format was created to support Unicode supplementary-plane characters, it is not widely supported or used. Also, no character encoding other than Unicode uses mixed 16-/32-bit characters. The use of this format is discouraged.</p>
+<p><a id="format10"></a></p>
+<h3 id="format-10-trimmed-array">Format 10: Trimmed array</h3>
+<p>Subtable format 10 was designed to support Unicode supplementary-plane characters, though it is not commonly used. Format 10 is similar to format 6 in that it defines a trimmed array for a tight range of character codes. It differs, however, in that it uses 32-bit character codes.</p>
+<p><a id="subtable_10"></a></p>
+<p><em>'cmap' Subtable Format 10:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>format</td>
+<td>Subtable format; set to 10.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>reserved</td>
+<td>Reserved; set to 0</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>length</td>
+<td>Byte length of this subtable (including the header)</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>language</td>
+<td>For requirements on use of the language field, see “<a href="#language" data-linktype="self-bookmark">Use of the language field in 'cmap' subtables</a>” in this document.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>startCharCode</td>
+<td>First character code covered</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>numChars</td>
+<td>Number of character codes covered</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>glyphIdArray[]</td>
+<td>Array of glyph indices for the character codes covered</td>
+</tr>
+</tbody>
+</table>
+<p>This format is not widely used and is not supported on Windows platforms. It would be most suitable for fonts that support only a contiguous range of Unicode supplementary-plane characters, but such fonts are rare.</p>
+<p><a id="format12"></a></p>
+<h3 id="format-12-segmented-coverage">Format 12: Segmented coverage</h3>
+<p>This is the standard character-to-glyph-index mapping subtable for fonts supporting Unicode character repertoires that include supplementary-plane characters (U+10000 to U+10FFFF).</p>
+<p>Fonts that include a format 12 subtable can also include a format 4 subtable for compatibility with older applications. This is not required, however. See the <a href="recom.html#cmap-table" data-linktype="relative-path">Recommendations</a> chapter for additional information.</p>
+<p>Format 12 is similar to format 4 in that it defines segments for sparse representation. It differs, however, in that it uses 32-bit character codes.</p>
+<p><a id="subtable_12"></a></p>
+<p><em>'cmap' Subtable Format 12:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>format</td>
+<td>Subtable format; set to 12.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>reserved</td>
+<td>Reserved; set to 0</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>length</td>
+<td>Byte length of this subtable (including the header)</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>language</td>
+<td>For requirements on use of the language field, see “<a href="#language" data-linktype="self-bookmark">Use of the language field in 'cmap' subtables</a>” in this document.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>numGroups</td>
+<td>Number of groupings which follow</td>
+</tr>
+<tr>
+<td>SequentialMapGroup</td>
+<td>groups[numGroups]</td>
+<td>Array of SequentialMapGroup records.</td>
+</tr>
+</tbody>
+</table>
+<p>The sequential map group record is the same format as is used for the format 8 subtable. The qualifications regarding 16-bit character codes does not apply here, however, since characters codes are uniformly 32-bit.</p>
+<p><a id="seqMapGrpRec_12"></a></p>
+<p><em>SequentialMapGroup Record:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint32</td>
+<td>startCharCode</td>
+<td>First character code in this group</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>endCharCode</td>
+<td>Last character code in this group</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>startGlyphID</td>
+<td>Glyph index corresponding to the starting character code</td>
+</tr>
+</tbody>
+</table>
+<p>Groups must be sorted by increasing startCharCode. A group’s endCharCode must be less than the startCharCode of the following group, if any. The endCharCode is used, rather than a count, because comparisons for group matching are usually done on an existing character code, and having the endCharCode be there explicitly saves the necessity of an addition per group.</p>
+<p><a id="format13"></a></p>
+<h3 id="format-13-many-to-one-range-mappings">Format 13: Many-to-one range mappings</h3>
+<p>This subtable provides for situations in which the same glyph is used for hundreds or even thousands of consecutive characters spanning across multiple ranges of the code space. This subtable format may be useful for “last resort” fonts, although these fonts may use other suitable subtable formats as well. (For “last resort” fonts, see also the <a href="head.html" data-linktype="relative-path">'head' table</a> flags, bit 14.)</p>
+<blockquote>
+<p><em>Note:</em> Subtable format 13 has the same structure as format 12; it differs only in the interpretation of the startGlyphID/glyphID fields.</p>
+</blockquote>
+<p><a id="subtable_13"></a></p>
+<p><em>'cmap' Subtable Format 13:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>format</td>
+<td>Subtable format; set to 13.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>reserved</td>
+<td>Reserved; set to 0</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>length</td>
+<td>Byte length of this subtable (including the header)</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>language</td>
+<td>For requirements on use of the language field, see “<a href="#language" data-linktype="self-bookmark">Use of the language field in 'cmap' subtables</a>” in this document.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>numGroups</td>
+<td>Number of groupings which follow</td>
+</tr>
+<tr>
+<td>ConstantMapGroup</td>
+<td>groups[numGroups]</td>
+<td>Array of ConstantMapGroup records.</td>
+</tr>
+</tbody>
+</table>
+<p>The constant map group record has the same structure as the sequential map group record, with start and end character codes and a mapped glyph ID. However, the same glyph ID applies to all characters in the specified range rather than sequential glyph IDs.</p>
+<p><a id="constMapGrpRec"></a></p>
+<p><em>ConstantMapGroup Record:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint32</td>
+<td>startCharCode</td>
+<td>First character code in this group</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>endCharCode</td>
+<td>Last character code in this group</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>glyphID</td>
+<td>Glyph index to be used for all the characters in the group’s range.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="format14"></a></p>
+<h3 id="format-14-unicode-variation-sequences">Format 14: Unicode variation sequences</h3>
+<p>Subtable format 14 specifies the Unicode variation sequences (UVSes) supported by the font. A variation sequence, according to the Unicode Standard, comprises a base character followed by a variation selector. For example, &lt;U+82A6, U+E0101&gt;.</p>
+<p>This subtable format must only be used under platform ID 0 and encoding ID 5.</p>
+<p>The subtable partitions the UVSes supported by the font into two categories: “default” and “non-default” UVSes. Given a UVS, if the glyph obtained by looking up the base character of that sequence in the Unicode 'cmap' subtable (i.e., the BMP subtable or BMP + supplementary-planes subtable) is the glyph to use for that sequence, then the sequence is a “default” UVS. Otherwise, it is a “non-default” UVS, and the glyph to use for that sequence is specified in the format 14 subtable itself.</p>
+<p>The example at the bottom of the page shows how a font vendor can use format 14 for a JIS-2004-aware font.</p>
+<p><a id="subtable_14"></a></p>
+<p><em>'cmap' Subtable Format 14:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>format</td>
+<td>Subtable format; set to 14.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>length</td>
+<td>Byte length of this subtable (including this header)</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>numVarSelectorRecords</td>
+<td>Number of variation Selector Records</td>
+</tr>
+<tr>
+<td>VariationSelector</td>
+<td>varSelector[numVarSelectorRecords]</td>
+<td>Array of VariationSelector records.</td>
+</tr>
+</tbody>
+</table>
+<p>Each VariationSelector record specifies a variation selector character, and offsets to “default” and “non-default” tables used to map variation sequences using that variation selector.</p>
+<p><a id="varSelRec"></a></p>
+<p><em>VariationSelector Record:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint24</td>
+<td>varSelector</td>
+<td>Variation selector</td>
+</tr>
+<tr>
+<td>Offset32</td>
+<td>defaultUVSOffset</td>
+<td>Offset from the start of the format 14 subtable to Default UVS table. May be 0.</td>
+</tr>
+<tr>
+<td>Offset32</td>
+<td>nonDefaultUVSOffset</td>
+<td>Offset from the start of the format 14 subtable to Non-Default UVS table. May be 0.</td>
+</tr>
+</tbody>
+</table>
+<p>The VariationSelector records are sorted in increasing order of varSelector. No two records may have the same varSelector value.</p>
+<p>A VariationSelector record and the data its offsets point to specify those UVSes supported by the font for which the variation selector is the varSelector value of the record. The base characters of the UVSes are stored in the tables pointed to by the offsets. The UVSes are partitioned by whether they are default or non-default UVSes.</p>
+<p>Glyph IDs to be used for non-default UVSes are specified in the Non-Default UVS table.</p>
+<p><a id="subtable_dfltUVS"></a></p>
+<h4 id="default-uvs-table">Default UVS table</h4>
+<p>A Default UVS table is simply a range-compressed list of Unicode scalar values, representing the base characters of the default UVSes which use the varSelector of the associated VariationSelector record.</p>
+<p><a id="dfltUVS"></a></p>
+<p><em>DefaultUVS Table:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint32</td>
+<td>numUnicodeValueRanges</td>
+<td>Number of Unicode character ranges.</td>
+</tr>
+<tr>
+<td>UnicodeRange</td>
+<td>ranges[numUnicodeValueRanges]</td>
+<td>Array of UnicodeRange records.</td>
+</tr>
+</tbody>
+</table>
+<p>Each Unicode range record specifies a contiguous range of Unicode values.</p>
+<p><a id="unicRngRec"></a></p>
+<p><em>UnicodeRange Record:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint24</td>
+<td>startUnicodeValue</td>
+<td>First value in this range</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>additionalCount</td>
+<td>Number of additional values in this range</td>
+</tr>
+</tbody>
+</table>
+<p>For example, the range U+4E4D – U+4E4F (3 values) will set startUnicodeValue to 0x004E4D and additionalCount to 2. A singleton range will set additionalCount to 0.</p>
+<p>The sum (startUnicodeValue + additionalCount) must not exceed 0xFFFFFF.</p>
+<p>The Unicode Value Ranges are sorted in increasing order of startUnicodeValue. The ranges must not overlap; i.e., (startUnicodeValue + additionalCount) must be less than the startUnicodeValue of the following range (if any).</p>
+<p>All code points listed in the ranges array should have corresponding entries in a Unicode 'cmap' subtable. Applications could encounter fonts in which this is not the case, however.</p>
+<p><a id="subtable_nonDfltUVS"></a></p>
+<h4 id="non-default-uvs-table">Non-Default UVS table</h4>
+<p>A Non-Default UVS table is a list of pairs of Unicode scalar values and glyph IDs. The Unicode values represent the base characters of all non-default UVSes which use the varSelector of the associated VariationSelector record, and the glyph IDs specify the glyph IDs to use for the UVSes.</p>
+<p><a id="nonDfltUVS"></a></p>
+<p><em>NonDefaultUVS Table:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint32</td>
+<td>numUVSMappings</td>
+<td>Number of UVS Mappings that follow</td>
+</tr>
+<tr>
+<td>UVSMapping</td>
+<td>uvsMappings[numUVSMappings]</td>
+<td>Array of UVSMapping records.</td>
+</tr>
+</tbody>
+</table>
+<p>Each UVSMapping record provides a glyph ID mapping for one base Unicode character, when that base character is used in a variation sequence with the current variation selector.</p>
+<p><a id="uvsMapRec"></a></p>
+<p><em>UVSMapping Record:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint24</td>
+<td>unicodeValue</td>
+<td>Base Unicode value of the UVS</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>glyphID</td>
+<td>Glyph ID of the UVS</td>
+</tr>
+</tbody>
+</table>
+<p>The UVS Mappings are sorted in increasing order of unicodeValue. No two mappings in this table may have the same unicodeValue values.</p>
+<p>Typically, code points listed in the uvsMappings array will have corresponding entries in a Unicode 'cmap' subtable. This is not required, however. For example, it might not be the case if a font is intended for use with content in which a given Unicode character only occurs in a variation sequence.</p>
+<p><a id="format14Example"></a></p>
+<h4 id="example">Example</h4>
+<p>Here is an example of how a format 14 'cmap' subtable may be used in a font that is aware of JIS-2004 variant glyphs. The CIDs (character IDs) in this example refer to those in the Adobe Character Collection “Adobe-Japan1” and can be assumed to be identical to the glyph IDs in the font in our example.</p>
+<p>JIS-2004 changed the default glyph variants for some of its code points. For example:</p>
+<p>JIS-90: U+82A6 ⇒ CID 1142<br>
+JIS-2004: U+82A6 ⇒ CID 7961</p>
+<p>Both of these glyph variants are supported through the use of Unicode variation sequences, as the following examples from Unicode’s UVS registry show:</p>
+<p>U+82A6 U+E0100 ⇒ CID 1142<br>
+U+82A6 U+E0101 ⇒ CID 7961</p>
+<p>If the font wants to support the JIS-2004 variants by default, it will:</p>
+<ul>
+<li>encode glyph ID 7961 at U+82A6 in the Unicode 'cmap' subtable;</li>
+<li>specify &lt;U+82A6, U+E0101&gt; in the UVS 'cmap' subtable’s Default UVS table (varSelector will be 0x0E0101 and defaultUVSOffset will point to data containing a 0x0082A6 Unicode value);</li>
+<li>specify &lt;U+82A6, U+E0100&gt; ⇒ glyph ID 1142 in the UVS 'cmap' subtable’s Non-Default UVS table (varSelector will be 0x0E0100 and nonDefaultBaseUVSOffset will point to data containing a unicodeValue 0x0082A6 and glyphID 1142).</li>
+</ul>
+<p>If, however, the font wants to support the JIS-90 variants by default, it will:</p>
+<ul>
+<li>encode glyph ID 1142 at U+82A6 in the Unicode 'cmap' subtable;</li>
+<li>specify &lt;U+82A6, U+E0100&gt; in the UVS 'cmap' subtable’s Default UVS table;</li>
+<li>specify &lt;U+82A6, U+E0101&gt; ⇒ glyph ID 7961 in the UVS 'cmap' subtable’s Non-Default UVS table.</li>
+</ul>
+
+</body>
+</html>

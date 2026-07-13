@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dsig — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/dsig">https://learn.microsoft.com/en-us/typography/opentype/spec/dsig</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="dsig--digital-signature-table">DSIG — Digital Signature Table</h1>
+<h2 id="overview">Overview</h2>
+<p>The DSIG table contains the digital signature of the OpenType™ font. Signature formats are widely documented and rely on a key pair architecture. Software developers, or publishers posting material on the Internet, create signatures using a private key. Operating systems or applications authenticate the signature using a public key.</p>
+<p>The W3C and major software and operating system developers have specified security standards that describe signature formats, specify secure collections of web objects, and recommend authentication architecture. OpenType fonts with signatures will support these standards.</p>
+<p>OpenType fonts offer many security features:</p>
+<ul>
+<li>Operating systems and browsing applications can identify the source and integrity of font files before using them,</li>
+<li>Font developers can specify embedding restrictions in OpenType fonts, and these restrictions cannot be altered in a font signed by the developer.</li>
+</ul>
+<p>The enforcement of signatures is an administrative policy that may be supported by the host environment in which fonts are used. Systems may restrict use of unsigned fonts, or may allow policy to be controlled by a system administrator.</p>
+<p>Anyone can obtain identity certificates and encryption keys from a certifying agency, such as Verisign or GTE’s Cybertrust, free or at a very low cost.</p>
+<h2 id="table-structure">Table structure</h2>
+<p>The DSIG table is organized as follows. The first portion of the table is the header.</p>
+<p><a id="header"></a></p>
+<p><em>DsigHeader</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="version">
+<td>uint32</td>
+<td>version</td>
+<td>Version number of the DSIG table (0x00000001)</td>
+</tr>
+<tr id="numSignatures">
+<td>uint16</td>
+<td>numSignatures</td>
+<td>Number of signatures in the table</td>
+</tr>
+<tr id="flags">
+<td>uint16</td>
+<td>flags</td>
+<td>Permission flags:<br>
+bit 0: cannot be resigned<br>
+bits 1-7: Reserved (Set to 0)</td>
+</tr>
+<tr id="signatureRecs">
+<td>SignatureRecord</td>
+<td>signatureRecords[numSignatures]</td>
+<td>Array of signature records</td>
+</tr>
+</tbody>
+</table>
+<p>The version of the DSIG table is expressed as a uint32, beginning at 0. The version of the DSIG table currently used is version 1 (0x00000001).</p>
+<p>Permission bit 0 allows a party signing the font to prevent any other parties from also signing the font (counter-signatures). If this bit is set to zero (0) the font may have a signature applied over the existing digital signature(s). A party who wants to ensure that their signature is the last signature can set this bit.</p>
+<p>The DSIG header has an array of signature records that specify the format and offset of signature blocks.</p>
+<p><a id="signatureRec"></a></p>
+<p><em>SignatureRecord</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="format">
+<td>uint32</td>
+<td>format</td>
+<td>Format of the signature</td>
+</tr>
+<tr id="length">
+<td>uint32</td>
+<td>length</td>
+<td>Length of signature in bytes</td>
+</tr>
+<tr id="offset">
+<td>Offset32</td>
+<td>signatureBlockOffset</td>
+<td>Offset to the signature block from the beginning of the table</td>
+</tr>
+</tbody>
+</table>
+<p>Signatures are contained in one or more signature blocks. Signature blocks may have various formats; currently one format is defined. The format identifier specifies both the format of the signature block, as well as the hashing algorithm used to create and authenticate the signature.</p>
+<p><a id="signatureBlock_1"></a></p>
+<p><em>Signature Block Format 1</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="reserved1">
+<td>uint16</td>
+<td>reserved1</td>
+<td>Reserved for future use; set to zero.</td>
+</tr>
+<tr id="reserved2">
+<td>uint16</td>
+<td>reserved2</td>
+<td>Reserved for future use; set to zero.</td>
+</tr>
+<tr id="signatureLength">
+<td>uint32</td>
+<td>signatureLength</td>
+<td>Length (in bytes) of the PKCS#7 packet in the signature field.</td>
+</tr>
+<tr id="signature">
+<td>uint8</td>
+<td>signature[signatureLength]</td>
+<td>PKCS#7 packet</td>
+</tr>
+</tbody>
+</table>
+<p>For more information about PKCS#7 signatures, see <em>RFC 2315, PKCS #7: Cryptographic Message Syntax, Version 1.5</em> (<a href="https://www.rfc-editor.org/info/rfc2315" data-linktype="external">https://www.rfc-editor.org/info/rfc2315</a>).</p>
+<p>For more information about counter-signatures, see <em>RFC 2985, PKCS #9: Selected Object Classes and Attribute Types, Version 2.0</em> (<a href="https://www.rfc-editor.org/info/rfc2985" data-linktype="external">https://www.rfc-editor.org/info/rfc2985</a>).</p>
+<p><strong>Format 1: For whole fonts, with either TrueType outlines and/or CFF or CFF2 data</strong></p>
+<p>PKCS#7 or PKCS#9. The signed content digest is created as follows:</p>
+<ol>
+<li>If there is an existing DSIG table in the font:<br>
+a. Remove the DSIG table from font.<br>
+b. Remove the DSIG table entry from the <a href="otff.html#tabledirectory" data-linktype="relative-path">table directory</a>.<br>
+c. Adjust table offsets as necessary.<br>
+d. Recalculate the checksumAdjustment in the 'head' table.</li>
+<li>Select the flags value and append it to a copy of the revised font data.</li>
+<li>Hash the revised font data using a secure one-way hash (such as MD5) to create the content digest.</li>
+<li>Create the PKCS#7 signature block using the content digest.</li>
+<li>Create a new DSIG table containing the signature block.</li>
+<li>Add the DSIG table to the font, adjusting table offsets as necessary.</li>
+<li>Add a DSIG table entry to the table directory.</li>
+<li>Recalculate the checksumAdjustment in the 'head' table.</li>
+</ol>
+<p>Validation of a signature in a font file is done by repeating steps 1 – 4 in an in-memory copy of the font file, using the flags value from the font file in step 2. Note that changing the checksumAdjustment in the last step does not break the signature because validation is done on an in-memory copy with these changes.</p>
+<p>Prior to signing a font file, ensure that all the following attributes are true:</p>
+<ul>
+<li>The magic number in the 'head' table is correct.</li>
+<li>Given the numTables value in the table directory, the other values in the table directory are consistent.</li>
+<li>The table records in the table directory are ordered alphabetically by the table tags, and there are no duplicate tags.</li>
+<li>The offset of each table is a multiple of 4. (That is, tables are long word aligned.)</li>
+<li>The first actual table in the file comes immediately after the directory of tables.</li>
+<li>If the tables are sorted by offset, then for all tables i (where index 0 means the table with the smallest offset), Offset[i] + Length[i] &lt;= Offset[i+1] and Offset[i] + Length[i] &gt;= Offset[i+1] - 3. In other words, the tables do not overlap, and there are at most 3 bytes of padding between tables.</li>
+<li>The pad bytes between tables are all zeros.</li>
+<li>The offset of the last table in the file plus its length is not greater than the size of the file.</li>
+<li>The checksums of all tables are correct.</li>
+<li>The 'head' table’s checksumAdjustment field is correct.</li>
+</ul>
+<h2 id="signatures-for-font-collection-files">Signatures for font collection files</h2>
+<p>The DSIG table for a font collection file (.ttc or .otc) must be the last table in the file. The offset to the table is put in the TTCHeader (version 2). Signatures of font collection files must be Format 1 signatures.</p>
+<p>The signature of a font collection file applies to the entire file, not to the individual fonts contained within the file. Signing the font collection file ensures that other contents are not added to the file.</p>
+<p>Individual fonts included in a font collection file should not be individually signed as the process of making the font collection file could invalidate the signature on individual fonts.</p>
+<p>When DSIG table is created for a font collection file, the steps given above are used, with these revisions:</p>
+<ul>
+<li>In step 1: if there is an existing DSIG table referenced in a version 2.0 TTC header, the DSIG table is removed, and the DSIG fields in the TTC header are set to NULL. No recalculation of a checksumAdjustment is required.</li>
+<li>In steps 6 and 7: the DSIG table is added to the file, not to any individual font within the collection. A version 2.0 TTC header is required, with the DSIG fields in the TTC header set to reference the DSIG table.</li>
+<li>Step 8 is not applicable.</li>
+</ul>
+<p>See the <a href="otff.html#ttc-header" data-linktype="relative-path">TTC Header</a> section of the OpenType Font File chapter for related information.</p>
+
+</body>
+</html>

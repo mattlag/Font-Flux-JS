@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gvar — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/gvar">https://learn.microsoft.com/en-us/typography/opentype/spec/gvar</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="gvar--glyph-variations-table">gvar — Glyph Variations Table</h1>
+<p>OpenType Font Variations allow a font designer to incorporate multiple faces within a font family into a single font resource. In a variable font, the <a href="fvar.html" data-linktype="relative-path">font variations ('fvar')</a> table defines a set of design variations supported by the font, and then various tables provide data that specify how different font values, such as X-height or X and Y coordinates for glyph outline points, are adjusted for different variation instances. The glyph variations ('gvar') table provides all of the variation data that describe how TrueType glyph outlines in a 'glyf' table change across the font’s variation space.</p>
+<p>For a general overview of OpenType Font Variations, see the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p><a id="intro"></a></p>
+<h2 id="introduction">Introduction</h2>
+<p>The glyph variations table can only be used in combination with TrueType outlines — a <a href="glyf.html" data-linktype="relative-path">glyph ('glyf')</a> table — and also in combination with a <a href="fvar.html" data-linktype="relative-path">font variations ('fvar')</a> table and other required or optional tables used in variable fonts.</p>
+<p>The 'gvar' table contains <em>glyph variation data</em> sub-tables with variation data for each glyph in the 'glyf' table. The glyph variation data is a specific variant of the <em>tuple variation store</em> format, which is described in detail in the chapter <a href="otvarcommonformats.html" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>. Another variant of the tuple variation store is also used in the 'cvar' table. Differences between these and details specific to the 'gvar' table are described in the Common Table Formats chapter.</p>
+<p>Variation data is comprised of many adjustment-delta values. These deltas apply to particular target items, such as the X or Y coordinate of some glyph outline point, and are applicable for instances within a particular region of the font’s variation space. The tuple variation store format organizes deltas into groupings by region of applicability, with a different group of data for each region. As glyph outlines often comprise the largest volume of data in a font, the tuple variation store format uses run-length encoding and other optimization mechanisms to provide efficient representation of the variation data.</p>
+<p>Each region-specific grouping of data includes data covering all of the outline points for the given glyph. This means that the tuple variation store formats are suited to unpacking and processing delta values for all outline points at once, rather than for random outline points. In most application scenarios, glyph outline processing involves the entire glyph outline at once, so this bias in the format is generally not a particular limitation.</p>
+<p>A notable exception, however, is the use of horizontal or vertical glyph metrics in text-layout operations that occur prior to rendering. The TrueType rasterizer dynamically generates “phantom” points for each glyph that represent horizontal and vertical advance widths and side bearings, and the variation data within the 'gvar' table includes data for these phantom points. (See the chapter <a href="tt_instructing_glyphs.html#phantoms" data-linktype="relative-path">Instructing TrueType Glyphs</a> for more background on phantom points.) Thus, a text-layout implementation could utilize the 'gvar' table to obtain interpolated glyph metrics for a given variation instance. Doing so, however, would require invocation of the rasterizer and processing of data for all outline points of each glyph rather than just the glyph-metric phantom points. As an alternative, the <a href="hvar.html" data-linktype="relative-path">horizontal metrics variations (HVAR)</a> and <a href="vvar.html" data-linktype="relative-path">vertical metrics variations (VVAR)</a> tables can provide variation data for glyph metrics that can be processed without invoking the rasterizer, and that use different formats that are better suited to processing data for particular items — advances or side bearings for specific glyphs. For this reason, it is recommended that variable fonts include an HVAR table, and also a VVAR table if the font has 'vhea' and 'vmtx' tables to support vertical layout.</p>
+<p><a id="gvarFormat"></a></p>
+<h2 id="glyph-variations-table-format">Glyph variations table format</h2>
+<p>The glyph variations table is comprised of a header followed by GlyphVariationData subtables for each glyph that describe the ways that each glyph is transformed across the font’s variation space.</p>
+<p>Each glyph variation data table includes sets of data that reference various regions within the font’s variation space. Each region is defined using one or three tuple records, with a “peak” tuple record required. In many cases, a region referenced by one glyph will also be referenced by many other glyphs. As an optimization, the 'gvar' table allows for a shared set of tuple records that can be referenced by the tuple variation store data for any glyph.</p>
+<p>The high-level structure of the 'gvar' table is as follows:</p>
+<figure><img src="media/gvar_fig1.png" alt="Block diagram of gvar table data" data-linktype="relative-path"><figcaption>Figure: High-level organization of 'gvar' table</figcaption></figure>
+<p>The header includes offsets to the start of the shared tuples data, and to the start of the glyph variation data tables.</p>
+<p>Each glyph variation data table provides variation data for a particular glyph. These are variable in size. For this reason, the header also includes an array of offsets for each glyph variation data table from the start of the glyph variation data table array. There is one offset corresponding to each glyph ID, plus one extra offset. (Note that the same scheme is also used in the <a href="loca.html" data-linktype="relative-path">index to location ('loca')</a> table.) The difference between two consecutive offsets in the array indicates the size of a given table, with an extra offset in the array to indicate the size of the last table. Some sizes derived in this way may be zero, in which case there is no glyph variation data for that particular glyph, and the same outline is used for that glyph ID across the entire variation space.</p>
+<p><a id="gvarHeader"></a></p>
+<h2 id="gvar-header">'gvar' header</h2>
+<p>The glyph variations table header format is as follows:</p>
+<p><a id="gvarHeaderFormat"></a></p>
+<p><em>'gvar' header:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version number of the glyph variations table — set to 1.</td>
+</tr>
+<tr id="minorVersion">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version number of the glyph variations table — set to 0.</td>
+</tr>
+<tr id="axisCount">
+<td>uint16</td>
+<td>axisCount</td>
+<td>The number of variation axes for this font. This must be the same number as axisCount in the 'fvar' table.</td>
+</tr>
+<tr id="sharedTupleCount">
+<td>uint16</td>
+<td>sharedTupleCount</td>
+<td>The number of shared tuple records. Shared tuple records can be referenced within glyph variation data tables for multiple glyphs, as opposed to other tuple records stored directly within a glyph variation data table.</td>
+</tr>
+<tr id="sharedTuplesOffset">
+<td>Offset32</td>
+<td>sharedTuplesOffset</td>
+<td>Offset from the start of this table to the shared tuple records.</td>
+</tr>
+<tr id="glyphCount">
+<td>uint16</td>
+<td>glyphCount</td>
+<td>The number of glyphs in this font. This must match the number of glyphs stored elsewhere in the font.</td>
+</tr>
+<tr id="flags">
+<td>uint16</td>
+<td>flags</td>
+<td>Bit-field that gives the format of the offset array that follows. If bit 0 is clear, the offsets are uint16; if bit 0 is set, the offsets are uint32.</td>
+</tr>
+<tr id="glyphVariationDataOffset">
+<td>Offset32</td>
+<td>glyphVariationDataArrayOffset</td>
+<td>Offset from the start of this table to the array of GlyphVariationData tables.</td>
+</tr>
+<tr id="glyphVariationDataOffsets">
+<td>Offset16 or Offset32</td>
+<td>glyphVariationDataOffsets[glyphCount + 1]</td>
+<td>Offsets from the start of the GlyphVariationData array to each GlyphVariationData table.</td>
+</tr>
+</tbody>
+</table>
+<p>If the short format (Offset16) is used for offsets, the value stored is the offset divided by 2. Hence, the actual offset for the location of the GlyphVariationData table within the font will be the value stored in the offsets array multiplied by 2.</p>
+<p><a id="SharedTuples"></a></p>
+<h2 id="shared-tuples-array">Shared tuples array</h2>
+<p>The shared tuples array provides a set of variation-space positions that can be referenced by variation data for any glyph. The shared tuples array follows the GlyphVariationData offsets array at the end of the 'gvar' header. This data is simply an array of tuple records, each representing a position in the font’s variation space.</p>
+<p><a id="sharedTuplesArray"></a></p>
+<p><em>Shared tuples array:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="sharedTuples">
+<td>Tuple</td>
+<td>sharedTuples[sharedTupleCount]</td>
+<td>Array of tuple records shared across all glyph variation data tables.</td>
+</tr>
+</tbody>
+</table>
+<p>Tuple records that are in the shared array or that are contained directly within a given glyph variation data table use 2.14 values to represent normalized coordinate values. See the <a href="otvarcommonformats.html#tuple-records" data-linktype="relative-path">Common Table Formats</a> chapter for details.</p>
+<p><a id="GVD"></a></p>
+<h2 id="the-glyphvariationdata-table-array">The GlyphVariationData table array</h2>
+<p>The GlyphVariationData table array follows the 'gvar' header and shared tuples array. Each GlyphVariationData table describes the variation data for a single glyph in the font.</p>
+<p>The glyph variation data table is a specific form of the tuple variation store format, described in the chapter <a href="otvarcommonformats.html#tuple-records" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>. It is comprised of a header, followed by serialized data.</p>
+<figure> <img src="media/gvar_fig2.png" alt="Block diagram of data in the glyph variation data subtable" data-linktype="relative-path"> <figcaption>High-level organization of GlyphVariationData table</figcaption> </figure>
+<p>The variation data includes logical groupings of data that apply to different regions of the variation space — <em>tuple variation data</em> tables. These logical groupings are stored in two parts: a header, and serialized data. The glyph variation data header includes an array of tuple variation-data headers, each of which is associated with a particular portion of the serialized data.</p>
+<p>The serialized data includes adjustment delta values and also packed “point” numbers that identify the points in the glyph outline to which the deltas apply. In the case of a composite glyph, these numbers are component indices rather than point number indices. The serialized data for a given region can include point number data that applies to that specific tuple-variation data, but there can also be a shared set of point number data, stored at the start of the serialized data. Shared point number data can be used in relation to multiple tuple-variation data tables for the given glyph.</p>
+<p>The GlyphVariationData header is structured as follows.</p>
+<p><a id="gvdHeader"></a></p>
+<p><em>GlyphVariationData header:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="tupleVariationCount">
+<td>uint16</td>
+<td>tupleVariationCount</td>
+<td>A packed field. The high 4 bits are flags, and the low 12 bits are the number of tuple variation tables for this glyph. The number of tuple variation tables can be any number between 1 and 4095.</td>
+</tr>
+<tr id="dataOffset">
+<td>Offset16</td>
+<td>dataOffset</td>
+<td>Offset from the start of the GlyphVariationData table to the serialized data</td>
+</tr>
+<tr id="tupleVariationHeaders">
+<td>TupleVariationHeader</td>
+<td>tupleVariationHeaders[tupleCount]</td>
+<td>Array of tuple variation headers.</td>
+</tr>
+</tbody>
+</table>
+<p>Complete details regarding the tupleVariationCount field and the flags used in that field, the TupleVariationHeader format, and the format of the serialized data are provided in the chapter, <a href="otvarcommonformats.html" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>.</p>
+<p><a id="Processing"></a></p>
+<h2 id="processing-the-gvar-table">Processing the 'gvar' table</h2>
+<p>When processing glyph data in a variable font for a particular variation instance, default glyph outline data will be obtained from 'glyf' table, which is combined with the corresponding glyph variation data subtable within the 'gvar' table.</p>
+<p>The tuple variation headers within the selected glyph variation data table will each specify a particular region of applicability within the font’s variation space. These will be compared with the coordinates for the selected variation instance to determine which of the tuple-variation data tables are applicable, and to calculate a scalar value for each. These comparisons and scalar calculations are done using normalized-scale coordinate values.</p>
+<p>For each of the tuple-variation data tables that are applicable, the point number and delta data will be unpacked and processed. The data for applicable regions can be processed in any order. Derived delta values will correspond to particular point numbers derived from the packed point number data. For a given point number, the computed scalar is applied to the X coordinate and Y coordinate deltas as a coefficient, and then resulting delta adjustments applied to the X and Y coordinates of the point.</p>
+<p>There are two aspects of  processing that are specific to the 'gvar' table. First, in the case of composite glyphs, point numbers refer either to components or to phantom points. Adjustments of phantom points are handled as for regular points, but adjustment to components are handled differently. Additional information regarding processing of variation data for composite glyphs is provided below.</p>
+<p>Secondly, within a given tuple-variation data table, deltas may be provided for all of the glyph’s points (and phantom points), or only for some points. If deltas are provided for only some point numbers in a glyph outline, then delta values for un-referenced points may need to be inferred using interpolation. This is additional processing specific to the 'gvar' table, and is described below.</p>
+<p><a id="PNCG"></a></p>
+<h2 id="point-numbers-and-processing-for-composite-glyphs">Point numbers and processing for composite glyphs</h2>
+<p>The general discussion above and in the description of interpolation in the Overview chapter assumes simple glyphs. Certain special considerations apply to composite glyphs.</p>
+<p>The variation data for composite glyphs also use packed point number data representing a series of numbers, but the numbers in this case, apart from the last four “phantom” point numbers, refer to the components that make up the glyph rather than to outline points. The glyph components of a composite glyph are assigned these pseudo-point numbers according to the order the components are given in the glyph entry, starting with 0. The four phantom point numbers representing side bearings are still added at the end, as for simple glyphs.</p>
+<p>For example, consider a composite glyph for “é” made up of two components: the base glyph “e”, and a glyph for the accent, positioned at a specified offset. Pseudo- and phantom point numbers would be as follows:</p>
+<table>
+<tbody>
+<tr>
+<th>Point number</th>
+<th>Element</th>
+</tr>
+<tr>
+<td>0</td>
+<td>Base glyph</td>
+</tr>
+<tr>
+<td>1</td>
+<td>Accent glyph</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Left side bearing point</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Right side bearing point</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Top side bearing point</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Bottom side bearing point</td>
+</tr>
+</tbody>
+</table>
+<p>Packed point number data for this glyph could include numbers referencing any or all of these elements.</p>
+<p>The adjustment deltas for component glyphs adjust the placement of the component. If a glyph component is not referenced in the packed point numbers, then its position is not adjusted. Each component glyph within a composite will have its own glyph entry that, itself, has its own variation data. The processing of component glyphs must begin with the most deeply-nested, non-composite glyphs.</p>
+<p>The position of a component can be represented in one of two ways: directly using X and Y offset values, or indirectly using point numbers in the parent and component glyphs that get aligned. Which method is used is determined by a bit in the flags field of a composite glyph description: if ARGS_ARE_XY_VALUES (bit 1) is set, then X and Y offsets are used; if that bit is clear, then point numbers are used. If the position of a component is represented using X and Y offsets — the ARGS_ARE_XY_VALUES flag is set — then adjustment deltas can be applied to those offsets. However, if the position of a component is represented using point numbers — the ARGS_ARE_XY_VALUES flag is not set — then adjustment deltas have no effect on that component and should not be specified.</p>
+<p>In addition to a component’s placement, the composite glyph description can also specify a scale value or a 2 × 2 matrix transformation to be applied to the component. Adjustment deltas do not have any effect on scaling or 2 × 2 transformations applied to a component. The deltas only affect the positioning of the component.</p>
+<p>If any component entry in a composite glyph has the USE_MY_METRICS flag set, then the hinted glyph metrics for the composite as a whole are taken from that component, rather than using the values given for the composite glyph itself. That is, the positions of phantom points for the composite glyph are set to the hinted positions of the component’s phantom points. If more than one component glyph has this flag set, then the metrics for the composite glyph are taken from the last component that has this flag set. In a variable font, if a component entry has this flag set, then the phantom point positions for the composite glyph are set to the interpolated and hinted positions of the component’s phantom point, and delta values for the composite glyph’s phantom points are not used.</p>
+<blockquote>
+<p><em>Note:</em> When a composite glyph has a component with the USE_MY_METRICS flag set, the 'hmtx' and HVAR data for the composite glyph are used in the same manner in which the 'hmtx' data would be used for a non-variable font. The 'hmtx' and HVAR data should be set to appropriate values for the composite glyph, though the hinted phantom point positions might not exactly match the linearly-scaled metrics obtained from the 'hmtx' and HVAR data.</p>
+</blockquote>
+<p><a id="processForCompositeGlyphs"></a></p>
+<p>The process for transforming a composite glyph is as follows.</p>
+<blockquote>
+<p>Let <strong>componentCount</strong> be the number of components in the composite glyph. Let <strong>components[]</strong> be the component descriptions of a composite glyph (base 0 index), and let <strong>C</strong> be a component entry in a composite glyph description.</p>
+<p>Using the standard variation interpolation algorithm, process the variation data for the glyph to obtain net X and Y delta adjustments for each of the components and phantom points.</p>
+<p>Apply the net X and Y delta adjustments to the phantom points (p = componentCount to componentCount + 3; note that the phantom point positions may be later overridden by a component):</p>
+<blockquote>
+<p>For AW and LSB points, apply the net X delta adjustments, and ignore Y deltas.</p>
+<p>For AH and TSB points, apply the net Y delta adjustments, and ignore X deltas.</p>
+</blockquote>
+<p>For p = 0 to componentCount - 1:</p>
+<blockquote>
+<p>C = components[p]</p>
+<p>For the glyph at C.glyphIndex, apply the variation interpolation process and run the hinting program.</p>
+<p>If ARGS_ARE_XY_VALUES is set in C.flags:</p>
+<blockquote>
+<p>Apply net X and Y delta adjustments for index p to the X and Y positioning offsets for C:</p>
+<blockquote>
+<p>X position offset = C.argument1 + netAdjustmentX</p>
+<p>Y position offset = C.argument2 + netAdjustmentY</p>
+</blockquote>
+</blockquote>
+<p>Else (ARGS_ARE_XY_VALUES is not set):</p>
+<blockquote>
+<p>Ignore any delta adjustments provided for this component.</p>
+</blockquote>
+<p>Apply scaling to C as applicable — if positioning offsets are scaled, it is the delta-adjusted offsets that are scaled.</p>
+<p>If USE_MY_METRICS is set in C.flags:</p>
+<blockquote>
+<p>Set the positions of the composite’s phantom points equal to the hinted positions of the phantom points for <code>C</code>.</p>
+</blockquote>
+<p>Loop (next p)</p>
+</blockquote>
+</blockquote>
+<p>For example, consider glyph 128 of the Skia font, which is the glyph for “Ä”. The glyph entry has two component entries, both with ARGS_ARE_XY_VALUES set. The advance width in the <a href="hmtx.html" data-linktype="relative-path">'hmtx'</a> table is 1358, and the left side bearing from the 'hmtx' table is 16, and xMin is 16. This puts left side bearing and right side bearing phantom points (point indices 2 and 3) at (0, 0) and (1358, 0). Relevant details from the composite glyph description are as follows:</p>
+<table>
+<tbody>
+<tr>
+<th>Component</th>
+<th>glyphIndex</th>
+<th>argument1 (X offset)</th>
+<th>argument2 (Y offset)</th>
+</tr>
+<tr>
+<td>0</td>
+<td>65</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>1</td>
+<td>315</td>
+<td>286</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>Glyph 128 has tuple variation data for various regions within the variation space; three will be considered for this example, with normalized coordinate positions as follows:</p>
+<table>
+<tbody>
+<tr>
+<th>Region</th>
+<th>(weight, width)</th>
+</tr>
+<tr>
+<td>R1</td>
+<td>(1,0)</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>(0,1)</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>(1,1)</td>
+</tr>
+</tbody>
+</table>
+<p>For this glyph, the variation data for R1 has the following deltas:</p>
+<table>
+<tbody>
+<tr>
+<th></th>
+<th>pt 0</th>
+<th>pt 1</th>
+<th>pt 2</th>
+<th>pt 3</th>
+</tr>
+<tr>
+<th>X</th>
+<td>0</td>
+<td>69</td>
+<td>58</td>
+<td>145</td>
+</tr>
+<tr>
+<th>Y</th>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>The data for R2 has the following deltas:</p>
+<table>
+<tbody>
+<tr>
+<th></th>
+<th>pt 0</th>
+<th>pt 1</th>
+<th>pt 2</th>
+<th>pt 3</th>
+</tr>
+<tr>
+<th>X</th>
+<td>0</td>
+<td>53</td>
+<td>38</td>
+<td>351</td>
+</tr>
+<tr>
+<th>Y</th>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>The data for R3 has deltas for points 0, 1 and 2 only:</p>
+<table>
+<tbody>
+<tr>
+<th></th>
+<th>pt 0</th>
+<th>pt 1</th>
+<th>pt 2</th>
+<th>pt 3</th>
+</tr>
+<tr>
+<th>X</th>
+<td>0</td>
+<td>-8</td>
+<td>-30</td>
+<td></td>
+</tr>
+<tr>
+<th>Y</th>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>As all of the Y delta values are zero, there is no adjustment to Y coordinate values.</p>
+<p>Now consider a variation instance with coordinates (0.2, 0.7). Variation data for all three of the regions above will have an effect, with scalar values as follow:</p>
+<table>
+<tbody>
+<tr>
+<th>Region</th>
+<th>Scaler</th>
+</tr>
+<tr>
+<td>R1</td>
+<td>0.2</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>0.7</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>0.14</td>
+</tr>
+</tbody>
+</table>
+<p>The net adjustment to X coordinate values for component offsets and phantom points will be as follows:</p>
+<table>
+<tbody>
+<tr>
+<th>Item</th>
+<th>Derived X coordinate adjustment</th>
+</tr>
+<tr>
+<td>Component 1 X offset</td>
+<td>0.2 × 69 + 0.7 × 53 + 0.14 × -8<br>
+= 49.78</td>
+</tr>
+<tr>
+<td>Left side bearing point X coordinate</td>
+<td>0.2 × 58 + 0.7 × 38 + 0.14 × 30<br>
+= 42.4</td>
+</tr>
+<tr>
+<td>Right side bearing point X coordinate</td>
+<td>0.2 × 145 + 0.7 × 351 + 0.14 × 0<br>
+= 274.7</td>
+</tr>
+</tbody>
+</table>
+<p>Combining these adjustments with the default values in the 'glyf' entry yields the following:</p>
+<table>
+<tbody>
+<tr>
+<th>Component 0 (X, Y) offset</th>
+<td>(0,0)</td>
+</tr>
+<tr>
+<th>Component 1 (X, Y) offset</th>
+<td>(286 + 49.78, 0)<br>
+= (335.78, 0)</td>
+</tr>
+<tr>
+<th>Left side bearing phantom point</th>
+<td>(0 + 42.4, 0)<br>
+= (42.4, 0)</td>
+</tr>
+<tr>
+<th>Right side bearing phantom point</th>
+<td>(1358 + 274.7, 0)<br>
+= (1632.7, 0)</td>
+</tr>
+</tbody>
+</table>
+<p><a id="IDUP"></a></p>
+<h2 id="inferred-deltas-for-un-referenced-point-numbers">Inferred deltas for un-referenced point numbers</h2>
+<p>The tuple variation data for a given glyph and region (a given tuple variation data set) may include deltas for all outline points, or for only some. The packed point number data identifies the points for which deltas are provided. If some points are omitted from the list of point numbers, then the data does not explicitly include delta values for them, and deltas may need to be inferred. This is done for a given glyph on a region-by-region basis based on the point numbers specified with each set of tuple variation data.</p>
+<blockquote>
+<p><em>Note:</em> Inferring of deltas for un-referenced points applies only to simple glyphs, not to composite glyphs.</p>
+</blockquote>
+<p>A single set of point-number data is used for both X- and Y-direction deltas. If a point has explicit deltas, then it has explicit deltas for both X and Y directions. If the point requires inferred deltas, then both X and Y deltas are inferred. The values of inferred X and Y deltas are calculated separately.</p>
+<p>The scalar calculated for a given region and variation instance is applied to the inferred deltas to obtain scaled delta adjustments that are applied to the point coordinates, just as for explicit deltas.</p>
+<p>The process of calculating inferred variation deltas is somewhat comparable to the TrueType <em>Interpolate Untouched Points (IUP)</em> instruction. (See the chapter, <a href="tt_instructions.html#interpolate-untouched-points-through-the-outline" data-linktype="relative-path">The TrueType Instruction Set</a> for more information regarding the IUP instruction.) Both calculate an adjustment for an unaffected point based on the adjustments to adjacent, affected points. In the case of the IUP instruction, however, the calculated adjustment is based on the position of adjacent points <em>after other instructions have applied</em>. In contrast, calculation of inferred variation deltas is based on the <em>default positions</em> of points and the unscaled delta values for a given region. It is not impacted by the order in which the tuple-variation data for different regions is processed, and the inferred deltas can be pre-computed before any processing for a specific instance is done. Also, the calculations used for deriving the value of inferred deltas are slightly different from the calculations used for the IUP instruction.</p>
+<p>Calculation of inferred deltas is done for a given glyph and a given region on a contour-by-contour basis.</p>
+<p>For a given contour, if the point number list does not include any of the points in that contour, then none of the points in the contour are affected and no inferred deltas need to be computed.</p>
+<p>If the point number list includes some but not all of the points in a given contour, then inferred deltas must be derived for the points that were not included in the point number list, as follows.</p>
+<p>First, for any un-referenced point, identify the nearest points before and after, in point number order, that <em>are</em> referenced. Note that the same referenced points will be used for calculating both X and Y inferred deltas. If there is no lower point number from that contour that was referenced, then the highest, referenced point number from that contour is used. Similarly, if no higher point number from that contour was referenced, then the lowest, referenced point number is used.</p>
+<p>Once the adjacent, referenced points are identified, then inferred-delta calculation is done separately for X and Y directions.</p>
+<p>Next, the (X or Y) grid coordinate values of the adjacent, referenced points are compared. If these coordinates are the same, then the delta values for the adjacent points are compared: if the delta values are the same, then this value is used as the inferred delta for the target, un-referenced point. If the delta values are different, then the inferred delta for the target point is zero.</p>
+<blockquote>
+<p><em>Note:</em> If exactly one point from the contour is referenced in the point number list, then every point in that contour uses the same X and Y delta values as that point. This follows as a specific case of the above: for all other points that are not referenced, the one referenced point is at once both the preceding adjacent point and the following adjacent point. Hence, the adjacent points have the same coordinate value and the same delta, and therefore the un-referenced points get an inferred delta of the same value.</p>
+</blockquote>
+<p>If the coordinates of the adjacent, referenced points are different, then the coordinate for the same (X or Y) direction of the target point is compared to those coordinates. If the coordinate of the target point is between the coordinates of the adjacent points, then a delta is interpolated, as described below. But if the coordinate of the target point is not between the coordinates of the adjacent points, then the inferred delta is the delta for whichever of the adjacent points is closer in the given direction.</p>
+<p><a id="processForInferredDeltas"></a></p>
+<p>The following pseudo-code summarizes the above details.</p>
+<pre><code>if precedingPoint.coord = followingPoint.coord
+{
+    if precedingPoint.delta = followingPoint.delta
+        targetPoint.delta = precedingPoint.delta
+    else
+        targetPoint.delta = 0
+}
+else  /* precedingPoint.coord &lt;&gt; followingPoint.coord */
+{
+    if targetPoint.coord &lt;= min(precedingPoint.coord, followingPoint.coord)
+    {
+        if precedingPoint.coord &lt; followingPoint.coord
+            targetPoint.delta = precedingPoint.delta
+        else  /* followingPoint.coord &lt; precedingPoint.coord */
+            targetPoint.delta = followingPoint.delta
+    }
+    else if targetPoint.coord &gt;= max(precedingPoint.coord, followingPoint.coord)
+    {
+        if precedingPoint.coord &gt; followingPoint.coord, then
+            targetPoint.delta = precedingPoint.delta
+        else  /* followingPoint.coord &gt; precedingPoint.coord */
+            targetPoint.delta = followingPoint.delta
+    }
+    else  /* target point coordinate is between adjacent point coordinates */
+    {
+        /* target point delta is derived from the adjacent point deltas
+           using linear interpolation */
+    }
+}
+</code></pre>
+<p>When the coordinates of the two adjacent points are different and the coordinate of the target point is between those coordinates, then a delta for the target point is computed by linear interpolation of the deltas for the two adjacent points. The following describes this calculation for either X or Y direction.</p>
+<blockquote>
+<p><em>Note:</em> The logical flow of the algorithm to this point implies that the coordinates of the two adjacent points are different. This avoids a division by zero in the following calculations that would otherwise occur.</p>
+</blockquote>
+<p>Select one of the two adjacent points as the reference point, and let the other be the comparison point. It doesn’t matter which is which. Let <strong>refCoord</strong> be the coordinate value for the current direction of the former, and let <strong>compCoord</strong> be the coordinate value for the latter. Let <strong>targetCoord</strong> be the coordinate value for the target, un-referenced point. Calculate a proportion, <strong>proportion</strong>, as follows:</p>
+<img src="media/gvar_fig3.png" alt="Proportion equals target coord minus ref coord quantity over quantity comp coord minus ref coord" data-linktype="relative-path">
+<p>Now let <strong>deltaRef</strong> and <strong>deltaComp</strong> be the unscaled adjustment-delta values in the variation data for the reference and comparison points. The inferred delta for the target point, <strong>deltaTarget</strong>, is calculated as follows:</p>
+<img src="media/gvar_fig4.png" alt="delta target equals one minus proportion quantity times delta ref plus proportion times delta comp" data-linktype="relative-path">
+<p>The following example illustrates the process for obtaining inferred deltas. Suppose P1, P2 and P3 are points in the same contour, with coordinate positions as shown below, and that P1 and P3 are referenced in the point number data while P2 is not.</p>
+<img src="media/gvar_fig5.png" alt="Three contour points, P1, P2 and P3" data-linktype="relative-path">
+<p>Note that P1 and P3 have different X and Y coordinates. Also note that, in the X direction, P2 is between the two adjacent points, while in the Y direction it is not. For the Y direction, the inferred delta will be the delta of the closer point, P3.</p>
+<p>For the X direction, let P1 be the reference point; P3 is the comparison point. A proportion is calculated:</p>
+<img src="media/gvar_fig6.png" alt="proportion equals 260 minus 245 quantity divided by quantity 305 minus 246" data-linktype="relative-path">
+<p>Now suppose that P1 and P3 have X and Y deltas in the variation data as follows:</p>
+<table>
+<tbody>
+<tr>
+<th>Point</th>
+<th>X delta</th>
+<th>Y delta</th>
+</tr>
+<tr>
+<th>P1</th>
+<td>+28</td>
+<td>-62</td>
+</tr>
+<tr>
+<th>P3</th>
+<td>-42</td>
+<td>-57</td>
+</tr>
+</tbody>
+</table>
+<p>The inferred X delta for P2, deltaX_P2, is calculated as follows:</p>
+<img src="media/gvar_fig7.png" alt="delta x for P2 equals 1 minus 0.25 quantity times 28 plus 0.25 times negative 42, which equals 10.5" data-linktype="relative-path">
+<p>The inferred Y delta for P2 is the value of the Y delta for P3. Thus, the deltas for all three points is obtained:</p>
+<table>
+<tbody>
+<tr>
+<th>Point</th>
+<th>X delta</th>
+<th>Y delta</th>
+</tr>
+<tr>
+<th>P1</th>
+<td>+28</td>
+<td>-62</td>
+</tr>
+<tr>
+<th>P2</th>
+<td>+10.5</td>
+<td>-57</td>
+</tr>
+<tr>
+<th>P3</th>
+<td>-42</td>
+<td>-57</td>
+</tr>
+</tbody>
+</table>
+<p>These delta values can now be used in the interpolation algorithm, with a scalar applied to each based on the region coordinates and the coordinates for the current variation instance.</p>
+
+</body>
+</html>

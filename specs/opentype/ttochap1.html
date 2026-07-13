@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ttochap1 — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/ttochap1">https://learn.microsoft.com/en-us/typography/opentype/spec/ttochap1</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="opentype-layout-overview">OpenType Layout Overview</h1>
+<p>OpenType Layout tables provide advanced typographic capabilities for high-quality international typography:</p>
+<ul>
+<li>A rich mapping between characters and glyphs, allowing for ligatures, positional forms, alternates, and other substitutions.</li>
+<li>Ability to perform two-dimensional positioning and glyph attachment.</li>
+<li>Explicit script and language information, so a text-processing application can adjust its behavior accordingly.</li>
+<li>An open format that allows font developers to define their own typographical features.</li>
+</ul>
+<p>This overview introduces the power and flexibility of the OpenType Layout font model. The OpenType Layout tables are described in more detail in separate sections of the OpenType specification. See <a href="otff.html#advanced-typographic-tables" data-linktype="relative-path">Advanced Typgraphic Tables</a>.</p>
+<p>Common formats used in different OpenType Layout tables are documented in the <a href="chapter2.html" data-linktype="relative-path">“OpenType Layout Common Table Formats”</a> chapter.</p>
+<p>Registered OpenType Layout tags for scripts, languages, features and baselines are documented in the chapter <a href="ttoreg.html" data-linktype="relative-path">OpenType Layout Tag Registry</a>.</p>
+<p><a name="Overview"></a></p>
+<h2 id="opentype-layout-at-a-glance">OpenType Layout at a glance</h2>
+<p>OpenType Layout addresses complex typographic requirements for correct display of many different scripts as well as for fine typography in any script.</p>
+<p>Using OpenType Layout tables, fonts can support alternative forms of characters and provide data used for accessing them. For example, in Arabic, the shape of a character often varies with the character’s position in a word. As shown in the following figure, the ha character will take any of four shapes, depending on whether it stands alone or whether it falls at the beginning, middle, or end of a word. When performing text layout, a text-processing application evaluates the word-position contexts in which the ha character occurs, and then OpenType Layout data informs the application which glyph to substitute for each context.</p>
+<figure><img src="media/otlch1_fig1a.gif" alt="Glyphs for different positional forms of hah" data-linktype="relative-path"><figcaption>Figure 1a Isolated, initial, medial, and final forms of the Arabic character ha. </figcaption></figure>
+<p>Similarly, OpenType Layout data can be used by an application to substitute the correct forms of characters when text is positioned vertically instead of horizontally, such as with Kanji. For example, Kanji uses alternative forms of parentheses when positioned vertically.</p>
+<figure><img src="media/otlch1_fig1b.gif" alt="Kanji ideograph with parentheses in horizontal and vertical layout" data-linktype="relative-path"><figcaption>Figure 1b Alternative forms of parentheses used when positioning Kanji vertically. </figcaption></figure>
+<p>OpenType Layout data also supports the composition and decomposition of ligatures. For example, English, French, and other languages written with Latin script can substitute a single ligature, such as “fi”, for its component glyphs - in this case, “f” and “i”. Conversely, the individual “f” and “i” glyphs could replace the ligature, possibly to give a text-processing application more flexibility when spacing glyphs to fill a line of justified text. Or similarly, many Arabic script glyph sequences may be substituted by a single ligature glyph.</p>
+<figure><img src="media/otlch1_fig1c.gif" alt="Glyphs for f and i and an f-i ligature glyph" data-linktype="relative-path"><figcaption>Figure 1c Two Latin glyphs and their associated ligature. </figcaption></figure>
+<figure><img src="media/otlch1_fig1d.gif" alt="Sequence of three Arabic glyphs and the associated ligature glyph" data-linktype="relative-path"><figcaption>Figure 1d Three Arabic glyphs and their associated ligature. </figcaption></figure>
+<p>Glyph substitution is just one way OpenType Layout extends font capabilities. Fonts containing OpenType Layout tables can also specify how glyphs are to be attached to one another. X and Y coordinates are used to specify the attachment points between glyphs. This functionality can be used to attach diacritical marks to glyphs, as well as to create connected (cursive) text.</p>
+<p>OpenType Layout fonts also may contain baseline information that specifies how to position glyphs horizontally or vertically. Because baselines may vary from one script (set of characters) to another, this information is especially useful for aligning text that mixes glyphs from scripts for different languages.</p>
+<figure><img src="media/otlch1_fig1e.gif" alt="a line of text with both Latin and Arabic scripts" data-linktype="relative-path"><figcaption>Figure 1e A line of text, baselines adjusted, mixing Latin and Arabic scripts. </figcaption></figure>
+<p>As much as possible, OpenType Layout tables define only the information that is specific to a particular font. The tables do not try to encode information that remains constant within the conventions of a particular language or the typography of a particular script. Such information that would be replicated across all fonts in a given language belongs in a text-processing application for that language, not in the fonts.</p>
+<p><a name="Terminology"></a></p>
+<h2 id="opentype-layout-terminology">OpenType Layout terminology</h2>
+<p>The OpenType Layout model is organized around glyphs, scripts, language systems, features, and lookups.</p>
+<h3 id="characters-versus-glyphs">Characters versus glyphs</h3>
+<p>Users don’t view or print characters: a user views or prints <em>glyphs</em>. A character is an abstract entity with a numeric representation in data; a glyph is a visualization of a character. For example, the character CAPITAL LETTER A is visually depicted by the glyph “A” in a font such as Times New Roman Bold. A font contains a collection of glyphs. To retrieve glyphs, the client uses information in the 'cmap' table of the font, which maps the client’s character codes to glyph indices in the table.</p>
+<p>Glyphs can also represent combinations of characters and alternative forms of characters: glyphs and characters do not strictly correspond one-to-one. For example, a user might type two characters, which might be better represented with a single ligature glyph. Conversely, the same character might take different forms at the beginning, middle, or end of a word, so a font would need several different glyphs to represent a single character. OpenType Layout fonts contain a table that provides a client with information about possible glyph substitutions.</p>
+<figure><img src="media/otlch1_fig1f.gif" alt="Alternative ampersand glyphs" data-linktype="relative-path"><figcaption>Figure 1f Multiple glyphs for the ampersand character. </figcaption></figure>
+<h3 id="scripts">Scripts</h3>
+<p>A script is composed of a group of related characters, which may be used by one or more languages. Latin, Arabic, and Thai are examples of scripts. A font may support characters from a single script, or from many scripts. Within an OpenType Layout font, scripts are identified by unique 4-byte <em>tags</em>.</p>
+<figure><img src="media/otlch1_fig1g.gif" alt="a Latin glyph, Kanji glyph, and Arabic glyph" data-linktype="relative-path"><figcaption>Figure 1g Glyphs in the Latin, Kanji, and Arabic scripts. </figcaption></figure>
+<h3 id="language-systems">Language systems</h3>
+<p>Scripts, in turn, can be divided into language systems. For example, the Latin script is used to write English, French, or German, but each language has its own special requirements for text processing. A font developer can choose to provide information that is tailored to the script, to the language system, or to both.</p>
+<p>Language systems, unlike scripts, are not necessarily evident when a text-processing client examines the characters being used. To avoid ambiguity, the user or the operating system needs to identify the language system. Otherwise, the client will use the default language-system information provided with each script.</p>
+<figure><img src="media/otlch1_fig1h.png" alt="The string 'dil' with the small caps feature applied, using English and Turkish language systems: with the Turkish language system, the small cap for 'i' is dotted." data-linktype="relative-path"><figcaption>Figure 1h Differences between the English and Turkish language systems. </figcaption></figure>
+<h3 id="features-and-lookups">Features and lookups</h3>
+<p>Features define typographic capabilities of the font, and are the means that applications use to invoke those capabilities. These can include essential capabilities required for display of some scripts, as well as other capabilities for fine typography. A font that supports positioning of diacritical marks will implement a 'mark' feature. A font that supports substitution of vertical glyphs will implement a 'vert' feature.</p>
+<p>Lookups are data used to implement the capabilities invoked by features. Lookup tables describe glyph substitution or glyph positioning actions that an application should apply to achieve the desired typographic effect. A feature can be used to refer to a typographic capability in a font-independent way, but lookups provide the font-specific data used to implement that capability.</p>
+<p>The OpenType Layout feature model provides flexibility for font developers, allowing them to choose capabilities to support in a font as appropriate for a given design or the requirements of their customers. The model also provides extensibility for future enhancements: on-going innovation can lead to features for new capabilities being defined over time.</p>
+<figure><img src="media/otlch1_fig1i.gif" alt="block diagram showing script, language system and feature table organization" data-linktype="relative-path"><figcaption>Figure 1i The relationship of scripts, language systems, features, and lookups for substitution and positioning tables. </figcaption></figure>
+<h3 id="opentype-layout-tables">OpenType Layout tables</h3>
+<p>OpenType Layout makes use of five tables: GSUB, GPOS, BASE, JSTF, and GDEF. These tables and their formats are discussed in separate chapters. The following paragraphs provide a brief overview.</p>
+<p><a href="gsub.html" data-linktype="relative-path">GSUB</a>: Contains information about glyph substitutions to handle single glyph substitution, one-to-many substitution (ligature decomposition), aesthetic alternatives, multiple glyph substitution (ligatures), and contextual glyph substitution.</p>
+<p><a href="gpos.html" data-linktype="relative-path">GPOS</a>: Contains information about X and Y positioning of glyphs to handle single glyph adjustment, adjustment of paired glyphs, cursive attachment, mark attachment, and contextual glyph positioning.</p>
+<p><a href="base.html" data-linktype="relative-path">BASE</a>: Contains information about baseline offsets on a script-by-script basis.</p>
+<p><a href="jstf.html" data-linktype="relative-path">JSTF</a>: Contains justification information, including whitespace and Kashida adjustments.</p>
+<p><a href="gdef.html" data-linktype="relative-path">GDEF</a>: Contains information about all individual glyphs in the font: type (simple glyph, ligature, or combining mark), attachment points (if any), and ligature caret (if a ligature glyph).</p>
+<p>The <a href="math.html" data-linktype="relative-path">MATH</a> table is an additional advanced layout table containing special metric values and other data required for layout of mathematical expressions and formulas.</p>
+<p>Common Table Formats: Several <a href="chapter2.html" data-linktype="relative-path">common table formats</a> are used by the OpenType Layout tables.</p>
+<p><a name="OTLProcessing"></a></p>
+<h2 id="text-processing-with-opentype-layout">Text processing with OpenType Layout</h2>
+<p>A text-processing client follows a standard process to convert the string of characters entered by a user into positioned glyphs. To produce text with OpenType Layout fonts:</p>
+<ol>
+<li>Using the 'cmap' table in the font, the client converts the character codes into a sequence of glyph indices.</li>
+<li>Using information in the GSUB table, the client modifies the resulting glyph sequence, substituting positional or vertical glyphs, ligatures, or other alternatives as appropriate.</li>
+<li>Using positioning information in the GPOS table and baseline offset information in the BASE table, the client then positions the glyphs.</li>
+<li>Using <em>design coordinates</em> the client determines device-independent line breaks. Design coordinates are high-resolution and device independent.</li>
+<li>Using information in the JSTF table, the client justifies the lines, if the user has specified such alignment.</li>
+<li>The client rasterizes the line of glyphs and renders the glyphs in <em>device coordinates</em> that correspond to the resolution of the output device.</li>
+</ol>
+<p>Throughout this process the text-processing client keeps track of the association between the characters of the original string and the glyph indices of the final, rendered text. In addition, the client can save language and script information within the text stream to clearly associate runs in the original text with specific typographical behavior.</p>
+<p><a name="Bidi"></a></p>
+<p><a name="ltrrtl" id="ltrrtl"></a></p>
+<h3 id="left-to-right-and-right-to-left-text">Left-to-right and right-to-left text</h3>
+<p>When an OpenType text layout engine applies the Unicode bidi algorithm and gets to the point where mirroring needs to be performed on runs with an even, i.e. left-to-right (LTR), resolved level, it does the following:</p>
+<ol>
+<li><p>Glyph-level mirroring:</p>
+<p>Apply feature 'ltrm' to the entire LTR run to substitute mirrored forms.</p>
+</li>
+<li><p>LTR glyph alternates:</p>
+<p>Apply feature 'ltra' to the entire LTR run to finesse glyph selection.</p>
+</li>
+</ol>
+<p>For runs with an odd, i.e. <strong>right-to-left</strong> (RTL), resolved level, the engine does the following:</p>
+<ol>
+<li><p>Character-level mirroring:</p>
+<pre>For each character i in the RTL run:  
+  If it is mapped to character j by the OMPL and cmap(j) is non-zero:  
+    Use glyph cmap(j) at character i.
+</pre>
+<p>Here OMPL refers to the <a href="ompl.html" data-linktype="relative-path">OpenType Mirroring Pairs List</a>, and cmap(<em>j</em>) refers to the glyph mapped from code point <em>j</em> in the Unicode 'cmap' subtable.</p>
+<p>For example, suppose U+0028, LEFT PARENTHESIS, occurred in the run at resolved level 1. The glyph at that code point in the run will be replaced by cmap(U+0029), since {U+0028, U+0029} is a pair in the OMPL.</p>
+</li>
+<li><p>Glyph-level mirroring:</p>
+<p>The engine applies the <a href="features_pt#rtlm" data-linktype="relative-path">'rtlm'</a> feature to the entire RTL run. The feature, if present, substitutes mirrored forms for characters other than those covered by the first elements of OMPL pairs (otherwise, it could cancel the effects of character-level mirroring).</p>
+<p>The data contents of the OMPL are identical to the Bidi Mirroring Glyph Property file of Unicode 5.1, and will never be revised. Thus, it will be up to the 'rtlm' feature to provide, if needed, mirrored forms for both (a) Unicode 5.1 code points with the “mirrored” property but no appropriate Unicode 5.1 character mirrors, as well as (b) all future “mirrored” property additions to Unicode, whether or not character mirrors exist for them.</p>
+<p>With such a division of labor between the layout engine and the font, most fonts will not need to include an 'rtlm' feature, since the mirrored forms in their Unicode 'cmap' subtable would be adequate.</p>
+</li>
+<li><p>RTL glyph alternates:</p>
+<p>The engine applies the <a href="features_pt#rtla" data-linktype="relative-path">'rtla'</a> feature to the entire RTL run. The feature, if present, substitutes variants appropriate for right-to-left text (other than mirrored forms).</p>
+</li>
+</ol>
+<p>In practice, the engine may apply features simultaneously; thus, it is up to the font vendor to ensure that the features’ lookups are ordered to achieve the desired effect of the algorithms described above. The engine may optimize its implementation in various ways, e.g. by taking advantage of the fact that character- and glyph-level mirroring won’t both apply on the same element in the run.</p>
+<p><a name="Variations"></a></p>
+<h2 id="opentype-layout-and-font-variations">OpenType Layout and Font Variations</h2>
+<p>OpenType Font Variations allow a single font to support many design variations along one or more axes of variation. For example, a font with weight and width variations might support weights from thin to black, and widths from ultra-condensed to ultra-expanded. For general information on OpenType Font Variations, see the chapter <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations overview</a>.</p>
+<p>Data used to support Font Variations are integrated into the tables used for OpenType Layout. Variation of glyph outlines and metrics across a font’s variation space can impact the design-grid distances that get used in OpenType Layout tables, such as anchor positions used in a GPOS attachment lookup. Data elements in OpenType Layout formats can be associated with variation data that describes how the default value is adjusted for different variation instances.</p>
+<p>In some variable fonts, it may be desirable to have different glyph-substitution or glyph-positioning actions used for different regions within the font’s variation space. For example, for narrow or heavy instances in which counters become small, it may be desirable to make certain glyph substitutions to use alternate glyphs with certain strokes removed or outlines simplified to allow for larger counters. Such effects can be achieved using a feature variations table within either the GSUB or GPOS table. The feature variations table is described in the chapter, <a href="chapter2.html" data-linktype="relative-path">OpenType Layout Common Table Formats</a>. See also the <a href="features_pt#rvrn" data-linktype="relative-path">Required Variation Alternates ('rvrn')</a> feature in the OpenType Layout tag registry.</p>
+<p>Different variation instances of a variable font have the same glyph IDs. For that reason, it might seem possible for lookups to be applied across a glyph sequence in which glyphs are formatted using different variation instances of a variable font. Doing so, however, could lead to unpredictable behaviors since font developers might not have sufficient control over how lookup tables are generated, and it would not be feasible to test the vast number of possible cross-instance interactions. For these reasons, layout processing implementations must treat different variation instances of a variable font as distinct style runs for purposes of OpenType Layout processing.</p>
+
+</body>
+</html>

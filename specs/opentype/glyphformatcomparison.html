@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>glyphformatcomparison — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/glyphformatcomparison">https://learn.microsoft.com/en-us/typography/opentype/spec/glyphformatcomparison</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="comparison-of-glyf-cff--and-cff2-tables">Comparison of 'glyf', 'CFF ' and CFF2 tables</h1>
+<p>Three alternate formats are available for storing monochrome glyph outlines in OpenType fonts: the <a href="glyf.html" data-linktype="relative-path">'glyf'</a> table, the <a href="cff.html" data-linktype="relative-path">'CFF '</a> table, and the <a href="cff2.html" data-linktype="relative-path">CFF2</a> table. A functioning OpenType font must contain one of these tables. This section provides a comparison of these alternate formats for glyph data.</p>
+<p>CFF2 and CFF use cubic (3rd order) Bézier curves to represent glyph outlines, whereas the 'glyf' table uses quadratic (2nd order) Bézier curves. CFF2 and CFF also use a different conceptual model for “hints” than the 'glyf' table. The three tables also differ in relation to support of variations and in how variation data is stored.</p>
+<p>The following table provides a summary comparison of the CFF2, 'CFF ' and 'glyf' tables. Note that some of these differences might not be exposed in high-level font editing software or in runtime programming interfaces.</p>
+<table>
+<thead>
+<tr>
+<th>Consideration</th>
+<th>glyf</th>
+<th>CFF</th>
+<th>CFF2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>curves</em></td>
+<td>quadratic (2nd order) Bézier</td>
+<td>cubic (3rd order) Bézier</td>
+<td>cubic (3rd order) Bézier</td>
+</tr>
+<tr>
+<td><em>coordinate precision</em></td>
+<td>1 design unit</td>
+<td>1/65536 design unit</td>
+<td>1/65536 design unit</td>
+</tr>
+<tr>
+<td><em>de-duplication</em></td>
+<td>contours can be shared by multiple glyphs using composite glyphs</td>
+<td>CharString data can be shared by multiple glyphs using subroutines</td>
+<td>CharString data can be shared by multiple glyphs using subroutines</td>
+</tr>
+<tr>
+<td><em>hinting</em></td>
+<td>TrueType instructions move outline points by controlled amounts</td>
+<td>alignment zones apply to all glyphs, stem locations are declared in each glyph</td>
+<td>alignment zones apply to arbitrary groups of glyphs, stem locations are declared in each glyph</td>
+</tr>
+<tr>
+<td><em>decoding</em></td>
+<td>not stack-based (except TrueType instructions)</td>
+<td>mostly stack-based</td>
+<td>mostly stack-based</td>
+</tr>
+<tr>
+<td><em>OpenType variations</em></td>
+<td>supported: outline variation data is stored in the <a href="gvar.html" data-linktype="relative-path">'gvar'</a> table (OFF: 7.3.4); hint variation data is stored in the <a href="cvar.html" data-linktype="relative-path">'cvar'</a> table (OFF: 7.3.2)</td>
+<td>not supported</td>
+<td>supported: variation data for outlines and hints is stored within the CFF2 table, partially using common formats for variation data also used in other tables, and partially interleaved within the CharString data for individual glyph descriptions</td>
+</tr>
+<tr>
+<td><em>data redundancy</em></td>
+<td>low</td>
+<td>moderate</td>
+<td>low</td>
+</tr>
+<tr>
+<td><em>overlapping contours</em></td>
+<td>supported</td>
+<td>not supported</td>
+<td>supported</td>
+</tr>
+</tbody>
+</table>
+<h2 id="other-cff2-versus-cff-differences">Other CFF2 versus CFF differences</h2>
+<p>The CFF2 format was changed from the CFF format to consolidate with other parts of the OpenType format, to eliminate data not needed within an OpenType font, and to support OpenType Font Variations. The following are key differences.</p>
+<ul>
+<li>FontSets are not supported in a CFF2 table. Accordingly, a CFF2 table may contain only one TopDICT, and a TopDICT INDEX is not supported.</li>
+<li>Name INDEX and String INDEX are not supported in the CFF2 table.</li>
+<li>Encoding and charset tables are not supported in CFF2. The corresponding TopDICT operators are removed, along with several other TopDICT operators.</li>
+<li>CFF2 CharStrings do not contain a value for advance width.</li>
+<li>For CFF2 tables, the fill rule for CharStrings must always be the nonzero winding number rule, rather than the even-odd rule. This is required in order to support variable font data, in which it is not practical to enforce removal of overlaps between paths.</li>
+<li>For CFF2, the CharString stack depth is increased from 48 to 513.</li>
+<li>The PrivateDICT and CharString operator sets are extended in CFF2 to include <strong>blend</strong> and <strong>vsindex</strong> operators.</li>
+<li>The Type 2 <strong>endchar</strong> and <strong>return</strong> CharString operators are removed from CFF2, as well as all logic, storage and math operators.</li>
+</ul>
+
+</body>
+</html>

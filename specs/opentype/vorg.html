@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vorg — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/vorg">https://learn.microsoft.com/en-us/typography/opentype/spec/vorg</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="vorg--vertical-origin-table">VORG — Vertical Origin Table</h1>
+<p>This optional table specifies the y coordinate of the vertical origin of every glyph in the font.</p>
+<p>This table may only be used in CFF or CFF2 OpenType fonts. If present in OpenType fonts containing TrueType outline data, it must be ignored: the Vertical Metrics ('vmtx') and Glyph Data ('glyf') tables provide all the information necessary to accurately calculate the y coordinate of a glyph’s vertical origin. See the “Vertical Origin and Advance Height” section in the <a href="vmtx.html" data-linktype="relative-path">'vmtx'</a> table specification for more details.</p>
+<p>The 'vmtx' and Vertical Header ('vhea') tables continue to be required for all OpenType fonts that support vertical writing. Advance heights must continue to be obtained from the 'vmtx' table; that is the only place they are stored.</p>
+<p>If a VORG table is present in a CFF or CFF2 OpenType font, the application may choose to obtain the y coordinate of a glyph’s vertical origin either:</p>
+<ol>
+<li>directly from the VORG table, or</li>
+<li>by first calculating the top of the glyph’s bounding box from the CFF or CFF2 CharString data and then adding to it the glyph’s top side bearing from the 'vmtx' table.</li>
+</ol>
+<p>The former method offers the advantage of increased accuracy and efficiency, since bounding box results calculated from the CFF or CFF2 CharString can differ depending on the rounding decisions and data types of the bounding box algorithm. The latter method provides compatibility for applications that are either unaware of or choose not to support the VORG.</p>
+<p>Thus, the VORG table doesn’t add any new font metric values per se; it simply improves accuracy and efficiency for applications, since the intermediate step of calculating bounding boxes from the CFF or CFF2 CharString is rendered unnecessary.</p>
+<p>See <a href="recom.html#cjk" data-linktype="relative-path">OpenType CJK Font Guidelines</a> in the Recommendations chapter for more information about constructing CJK (Chinese, Japanese, and Korean) fonts.</p>
+<h2 id="vertical-origin-table-format">Vertical Origin table format</h2>
+<p>The VORG table is structured as follows:</p>
+<p><em>VerticalOrigin table</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version—set to 1.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version—set to 0.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>defaultVertOriginY</td>
+<td>The y coordinate of a glyph’s vertical origin, in the font’s design coordinate system, to be used if no entry is present for the glyph in the vertOriginYMetrics array.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>numVertOriginYMetrics</td>
+<td>Number of elements in the vertOriginYMetrics array.</td>
+</tr>
+<tr>
+<td>VertOriginYMetrics</td>
+<td>vertOriginYMetrics[numVertOriginYMetrics]</td>
+<td>Array of VertOriginYMetrics records, sorted by glyph ID.</td>
+</tr>
+</tbody>
+</table>
+<p>The VertOriginYMetrics record has the following format:</p>
+<p><em>VertOriginYMetrics record</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>glyphIndex</td>
+<td>Glyph index.</td>
+</tr>
+<tr>
+<td>int16</td>
+<td>vertOriginY</td>
+<td>Y coordinate, in the font’s design coordinate system, of the glyph’s vertical origin.</td>
+</tr>
+</tbody>
+</table>
+<p>This array must be sorted by increasing glyphIndex, and must not have more than one element with the same glyphIndex. In a size-optimized implementation, glyphs whose vertical origin’s y coordinate equals defaultVertOriginY will not have an entry in this array.</p>
+<p>If all glyphs in a font share the same defaultVertOriginY value, the length of the VORG table will be 8 bytes in a size-optimized implementation, since the vertOriginYMetrics array will be absent.</p>
+<p>Typically, only the full-width Latin glyphs in an East Asian font will have entries in the vertOriginYMetrics array. Glyphs rotated for vertical writing, as used in the Vertical Alternates and Rotation ('vrt2') feature, for example, can take advantage of the default value if they are designed appropriately.</p>
+<p>In the following example of a complete VORG table for a 1000-unit-em font, every glyph in the font is specified as having a vertOriginY of 880 except for glyphs with glyph indices 10, 12, and 13:</p>
+<pre><code>majorVersion         =1
+minorVersion         =0
+defaultVertOriginY   =880
+numVertOriginYMetrics=3
+--- vertOriginYMetrics[index]=(glyphIndex,vertOriginY)
+[0]=(10,889)
+[1]=(12,861)
+[2]=(13,849)
+</code></pre>
+
+</body>
+</html>

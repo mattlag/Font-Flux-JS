@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gasp — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/gasp">https://learn.microsoft.com/en-us/typography/opentype/spec/gasp</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="gasp--grid-fitting-and-scan-conversion-procedure-table">gasp — Grid-fitting and Scan-conversion Procedure Table</h1>
+<p>This table contains information which describes the preferred rasterization techniques for the typeface when it is rendered on grayscale-capable devices. This table also has some use for monochrome devices, which may use the table to turn off hinting at very large or small sizes, to improve performance.</p>
+<p>At very small sizes, the best appearance on grayscale devices can usually be achieved by rendering the glyphs in grayscale without using hints. At intermediate sizes, hinting and monochrome rendering will usually produce the best appearance. At large sizes, the combination of hinting and grayscale rendering will typically produce the best appearance.</p>
+<p>If the 'gasp' table is not present in a typeface, the rasterizer may apply default rules to decide how to render the glyphs on grayscale devices.</p>
+<p>Two versions of the 'gasp' table have been defined: both versions use the same formats, except that two new flags were defined in version 1, as documented below. All new fonts and applications should use version 1.</p>
+<p><a id="gaspFormats"></a></p>
+<h2 id="gasp-table-formats">'gasp' Table Formats</h2>
+<p>The 'gasp' table consists of a header followed by groupings of 'gasp' records.</p>
+<p><a id="header"></a></p>
+<p><em>'gasp' Header</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>version</td>
+<td>Version number (0 or 1—set to 1 in new fonts)</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>numRanges</td>
+<td>Number of records to follow</td>
+</tr>
+<tr>
+<td>GaspRange</td>
+<td>gaspRanges[numRanges]</td>
+<td>Sorted by ppem</td>
+</tr>
+</tbody>
+</table>
+<p>The array of GaspRange records provides recommended behaviors for various ppem sizes.</p>
+<p><a id="gaspRangeRec"></a></p>
+<p><em>GaspRange Record</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>rangeMaxPPEM</td>
+<td>Upper limit of range, in PPEM</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>rangeGaspBehavior</td>
+<td>Flags describing desired rasterizer behavior.</td>
+</tr>
+</tbody>
+</table>
+<p>There are four RangeGaspBehavior flags defined.</p>
+<p><a id="behaviorFlags"></a></p>
+<p><em>RangeGaspBehavior flags</em></p>
+<table>
+<thead>
+<tr>
+<th>Mask</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0x0001</td>
+<td>GASP_GRIDFIT</td>
+<td>Use gridfitting</td>
+</tr>
+<tr>
+<td>0x0002</td>
+<td>GASP_DOGRAY</td>
+<td>Use grayscale rendering</td>
+</tr>
+<tr>
+<td>0x0004</td>
+<td>GASP_SYMMETRIC_GRIDFIT</td>
+<td>Use gridfitting with ClearType symmetric smoothing<br>Only supported in version 1</td>
+</tr>
+<tr>
+<td>0x0008</td>
+<td>GASP_SYMMETRIC_SMOOTHING</td>
+<td>Use smoothing along multiple axes with ClearType®<br>Only supported in version 1</td>
+</tr>
+<tr>
+<td>0xFFF0</td>
+<td>Reserved</td>
+<td>Reserved flags — set to 0</td>
+</tr>
+</tbody>
+</table>
+<p>The set of bit flags may be extended in the future. The first two bit flags operate independently of the following two bit flags. If font smoothing is enabled, then the first two bit flags are used. If ClearType is enabled, then the following two bit flags are used. The seven currently defined values of rangeGaspBehavior would have the following uses:</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GASP_DOGRAY</td>
+<td>0x0002</td>
+<td>small sizes, typically ppem &lt; 9</td>
+</tr>
+<tr>
+<td>GASP_GRIDFIT</td>
+<td>0x0001</td>
+<td>medium sizes, typically 9 &lt;= ppem &lt;= 16</td>
+</tr>
+<tr>
+<td>GASP_DOGRAY | GASP_GRIDFIT</td>
+<td>0x0003</td>
+<td>large sizes, typically ppem &gt; 16</td>
+</tr>
+<tr>
+<td>GASP_SYMMETRIC_GRIDFIT</td>
+<td>0x0004</td>
+<td>typically always enabled</td>
+</tr>
+<tr>
+<td>GASP_SYMMETRIC_SMOOTHING</td>
+<td>0x0008</td>
+<td>larger screen sizes, typically ppem &gt; 15, most commonly used with the gridfit flag.</td>
+</tr>
+<tr>
+<td>GASP_SYMMETRIC_SMOOTHING | GASP_SYMMETRIC_GRIDFIT</td>
+<td>0x000C</td>
+<td>larger screen sizes, typically ppem &gt; 15</td>
+</tr>
+<tr>
+<td>(no flags)</td>
+<td>0x0000</td>
+<td>optional for very large sizes, typically ppem &gt; 2048</td>
+</tr>
+</tbody>
+</table>
+<p>The records in the gaspRange[] array must be sorted in order of increasing rangeMaxPPEM value. The last record should use 0xFFFF as a sentinel value for rangeMaxPPEM and should describe the behavior desired at all sizes larger than the previous record’s upper limit. If the only entry in 'gasp' is the 0xFFFF sentinel value, the behavior described will be used for <em>all</em> sizes.</p>
+<p><a id="gaspVar"></a></p>
+<h2 id="gasp-table-and-opentype-font-variations">'gasp' Table and OpenType Font Variations</h2>
+<p>In a variable font, the threshold sizes at which rasterizer behaviors are changed may need to be adjusted for different variation instances. Variation data for adjusting the rangeMaxPPEM value of up to ten GaspRange records can be provided in the <a href="mvar.html" data-linktype="relative-path">metrics variations (MVAR)</a> table, referenced using value tags 'gsp0' to 'gsp9'. Note that the rasterizer behavior for a given GaspRange record cannot be changed for different variation instances; only the rangeMaxPPEM value can be adjusted.</p>
+<p>The last GaspRange record in a 'gasp' table is assumed to have a rangeMaxPPEM value of 0xFFFF (effectively infinity). The rangeMaxPPEM value of the last record is never adjusted for different instances; the number of value records in the MVAR table that are associated with 'gasp' entries must never be more than numRanges minus one.</p>
+<p>For general information on OpenType Font Variations, see the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p><a id="examples"></a></p>
+<h2 id="sample-gasp-table">Sample 'gasp' table</h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+<th>Font smoothing meaning</th>
+<th>ClearType with symmetric smoothing meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>version</td>
+<td>0x0001</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>numRanges</td>
+<td>0x0004</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>gaspRanges[0]</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>rangeMaxPPEM</td>
+<td>0x0008</td>
+<td>ppem &lt;= 8</td>
+<td>ppem &lt;= 8</td>
+</tr>
+<tr>
+<td>rangeGaspBehavior</td>
+<td>0x000A</td>
+<td>grayscale only</td>
+<td>symmetric ClearType only</td>
+</tr>
+<tr>
+<td><strong>gaspRanges[1]</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>rangeMaxPPEM</td>
+<td>0x0010</td>
+<td>9 &lt;= ppem &lt;= 16</td>
+<td>9 &lt;= ppem &lt;= 16</td>
+</tr>
+<tr>
+<td>rangeGaspBehavior</td>
+<td>0x0005</td>
+<td>gridfit only</td>
+<td>symmetric gridfit only</td>
+</tr>
+<tr>
+<td><strong>gaspRanges[2]</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>rangeMaxPPEM</td>
+<td>0x0013</td>
+<td>17 &lt;= ppem &lt;= 19</td>
+<td>17 &lt;= ppem &lt;= 19</td>
+</tr>
+<tr>
+<td>rangeGaspBehavior</td>
+<td>0x0007</td>
+<td>gridfit and grayscale</td>
+<td>symmetric gridfit</td>
+</tr>
+<tr>
+<td><strong>gaspRanges[3]</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>rangeMaxPPEM</td>
+<td>0xFFFF</td>
+<td>20 &lt;= ppem</td>
+<td>20 &lt;= ppem</td>
+</tr>
+<tr>
+<td>rangeGaspBehavior</td>
+<td>0x000F</td>
+<td>gridfit and grayscale</td>
+<td>symmetric gridfit and symmetric smoothing</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

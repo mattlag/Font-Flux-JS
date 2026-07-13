@@ -1,0 +1,4221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gpos — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/gpos">https://learn.microsoft.com/en-us/typography/opentype/spec/gpos</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="gpos--glyph-positioning-table">GPOS — Glyph Positioning Table</h1>
+<p><a id="overview"></a></p>
+<h2 id="overview">Overview</h2>
+<p>The Glyph Positioning table (GPOS) provides precise control over glyph placement for sophisticated text layout and rendering in each script and language system that a font supports.</p>
+<p>Complex glyph positioning becomes an issue in many writing systems, such as Vietnamese, that use diacritical and other marks to modify the sound or meaning of characters. These writing systems require controlled placement of all marks in relation to one another for legibility and linguistic accuracy.</p>
+<figure><img alt="Vietnamese text with diacritic marks on vowels" src="media/gpos_fig4a.gif" data-linktype="relative-path"><figcaption>Figure 4a. Vietnamese words with marks.</figcaption></figure>
+<p>Other writing systems require sophisticated glyph positioning for correct typographic composition. For instance, Urdu glyphs are calligraphic and connect to one another along a descending, diagonal text line that proceeds from right to left. To properly render Urdu, a text-processing client must modify both the horizontal (X) and vertical (Y) positions of each glyph (see Figure 4b).</p>
+<figure><img alt="Correct display of an Urdu word, and display with incorrect glyph positions" src="media/gpos_fig4b.gif" data-linktype="relative-path"><figcaption>Figure 4b. Urdu layout requires glyph positioning control, as well as contextual substitution</figcaption></figure>
+<p>With the GPOS table, a font developer can define a complete set of positioning adjustment features. GPOS data, organized by script and language system, is easy for a text-processing client to use to position glyphs.</p>
+<p><a id="ttPositioning"></a></p>
+<p><strong>Basic glyph positioning</strong></p>
+<p>Basic text layout implementations that do not make use of the GPOS table rely on two values to determine a glyph’s position: placement, and advance. If glyphs are positioned with respect to a virtual “pen point” that moves along a line of text, placement describes the glyph’s position with respect to the current pen point, and advance describes where to move the pen point to position the next glyph (see Figure 4c). For horizontal text, placement corresponds to the left side bearing, and advance corresponds to the advance width.</p>
+<figure><img alt="Default glyph metrics used for basic glyph positioning" src="media/gpos_fig4c.gif" data-linktype="relative-path"><figcaption>Figure 4c. Basic glyph positioning</figcaption></figure>
+<p>Apart from the GPOS tables, other font tables specify placement and advance only in the X direction for horizontal layout and only in the Y direction for vertical layout. For simple layout of some writing systems, these two values could provide for adequate glyph positioning. For more sophisticated layout, however, the values need to cover a richer range. Placement and advance may need adjustment vertically, as well as horizontally.</p>
+<p>The only positioning adjustment defined in other font tables is pair kerning, supported by the legacy <a href="kern.html" data-linktype="relative-path">'kern'</a> table, which modifies the horizontal spacing between two glyphs. A typical kerning table lists pairs of glyphs and specifies how much space a text-processing client should add or remove between the glyphs to properly display each pair. It does not provide specific information about how to adjust the glyphs in each pair and cannot adjust contexts of more than two glyphs.</p>
+<p><a id="otPositioning"></a></p>
+<p><strong>Advanced glyph positioning</strong></p>
+<p>The GPOS table provides excellent control and flexibility for positioning a single glyph and for positioning multiple glyphs in relation to one another. By using both X and Y values that the GPOS table defines for placement and advance and by using glyph attachment points, a client can more precisely adjust the position of a glyph.</p>
+<p>In addition, the GPOS table can reference a Device table to define subtle, device-dependent adjustments to any placement or advance value at any font size and device resolution. For example, a Device table can specify adjustments at 51 pixels per em (ppem) that do not occur at 50 ppem.</p>
+<p>X and Y values specified for placement operations are always within the typical Cartesian coordinate system (origin at the baseline of the left side), regardless of the writing direction. Additionally, all values specified are done so in font unit measurements. This is especially convenient for font designers, since glyphs are drawn in the same coordinate system. However, it’s important to note that the meaning of “advance width” changes, depending on the writing direction.</p>
+<p>For example, in left-to-right scripts, if the first glyph has an advance width of 100, then the second glyph begins at 100,0. In right-to-left scripts, if the first glyph has an advance width of 100, then the second glyph begins at -100,0. For a top-to-bottom feature, to increase the advance height of a glyph by 100, the YAdvance = 100. For any feature, regardless of writing direction, to lower the dieresis over an “o” by 10 units, set the YPlacement = -10.</p>
+<p>Other GPOS features can define attachment points to combine glyphs and position them with respect to one another. A glyph might have multiple attachment points. The point used will depend on the glyph to be attached. For instance, a base glyph could have attachment points for different diacritical marks.</p>
+<figure><img alt="Glyph outline with multiple attachment points" src="media/gpos_attach.gif" data-linktype="relative-path"><figcaption>Figure 4d. Base glyph with multiple attachment points.</figcaption></figure>
+<p>To reduce the size of the font file, a base glyph may use the same attachment point for all mark glyphs assigned to a particular class. For example, a base glyph could have two attachment points, one above and one below the glyph. Then all marks that attach above glyphs would be attached at the high point, and all marks that attach below glyphs would be attached at the low point. Attachment points are useful in scripts such as Arabic that combine numerous glyphs with vowel marks.</p>
+<p>Attachment points also are useful for connecting cursive-style glyphs. Glyphs in cursive fonts can be designed to attach or overlap when rendered. Alternatively, the font developer can use the GPOS table to create a cursive attachment feature and define explicit exit and entry attachment points for each glyph (see Figure 4e).</p>
+<figure><img alt="Urdu word with connections between glyphs at different heights" src="media/gpos_fig4e.gif" data-linktype="relative-path"><figcaption>Figure 4e. Entry and exit points marked on contextual Urdu glyph variants</figcaption></figure>
+<p>The GPOS table supports eight types of actions for positioning and attaching glyphs:</p>
+<ul>
+<li>A <em>single adjustment</em> positions one glyph, such as a superscript or subscript.</li>
+<li>A <em>pair adjustment</em> positions two glyphs with respect to one another. Kerning is an example of pair adjustment.</li>
+<li>A <em>cursive attachment</em> describes cursive scripts and other glyphs that are connected with attachment points when rendered.</li>
+<li>A <em>mark-to-base attachment</em> positions combining marks with respect to base glyphs, as when positioning vowels, diacritical marks, or tone marks in Arabic, Hebrew, and Vietnamese.</li>
+<li>A <em>mark-to-ligature attachment</em> positions combining marks with respect to ligature glyphs. Because ligatures may have multiple points for attaching marks, the font developer needs to associate each mark with one of the ligature glyph’s components.</li>
+<li>A <em>mark-to-mark attachment</em> positions one mark relative to another, as when positioning tone marks with respect to vowel diacritical marks in Vietnamese.</li>
+<li><em>Contextual positioning</em> describes how to position one or more glyphs in context, within an identifiable sequence of specific glyphs, glyph classes, or varied sets of glyphs. One or more positioning operations may be performed on “input” context sequences. Figure 4f illustrates a context for positioning adjustments.</li>
+<li><em>Chained contexts positioning</em> describes how to position one or more glyphs in a chained context, within an identifiable sequence of specific glyphs, glyph classes, or varied sets of glyphs. One or more positioning operations may be performed on “input” context sequences.</li>
+</ul>
+<figure><img alt="The word 'Wörter' with the accent lowered to avoid the overhang of capital W" src="media/gpos_fig4f.gif" data-linktype="relative-path"><figcaption>Figure 4f. Contextual positioning lowered the accent over a vowel glyph that followed an overhanging uppercase glyph</figcaption></figure>
+<p>The GPOS data formats used to implement the different types of positioning and attaching actions include a ninth type, <em>positioning extension</em>. This provides a format extension mechanism, allowing reference to subtables using 32-bit offsets rather than 16-bit offsets. It does not provide an additional type of positioning action, however.</p>
+<p><a id="gposVar"></a></p>
+<h2 id="gpos-table-and-opentype-font-variations">GPOS table and OpenType Font Variations</h2>
+<p>OpenType Font Variations allow a single font to support many design variations along one or more axes of design variation. For example, a font with weight and width variations might support weights from thin to black, and widths from ultra-condensed to ultra-expanded. For general information on OpenType Font Variations, see the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview.</a></p>
+<p>When different variation instances are selected, the design of individual glyphs changes. The same contours and points are used, but the position in the design grid of each point can change, as can the default horizontal or vertical advance and side bearings. As a result, corresponding changes may also be required for positioning and advance adjustments in the GPOS table.</p>
+<p>Positioning actions in the GPOS table can be expressed directly using explicit X or Y font-unit values. In a variable font, these X and Y values apply to the default instance and may need to be adjusted for the current variation instance. This is done using variation data with processes similar to those used for glyph outlines and other font data, as described in the OpenType Font Variations Overview chapter.</p>
+<p>For certain GPOS actions, positions can be expressed indirectly by reference to specific glyph outline points. In a variable font, use of glyph points to specify a positioning action would require invoking the rasterizer to process the glyph-outline variation data in order to obtain the adjusted position of the point before the glyph positioning operation can be completed. This could have a significant, negative impact on performance of text-layout processing. For this reason, in a variable font, positions that require adjustment for different variation instances should always be expressed directly as X and Y values.</p>
+<p>Variation data for adjustment of GPOS X or Y values is stored within an <em>ItemVariationStore</em> table located within the <a href="gdef.html" data-linktype="relative-path">GDEF</a> table. The same item variation store is also used for adjustment of values in the GDEF and JSTF tables. The item variation store and constituent formats are described in the chapter, <a href="otvarcommonformats.html" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>.</p>
+<p>The variation data within an item variation store is comprised of a number of adjustment deltas that get applied to the default values of target items for variation instances within particular regions of the font’s variation space. The item variation store format uses <em>delta-set indices</em> to reference variation delta data for particular target, font-data items to which they are applied. Data external to the item variation store identifies the delta-set index to be used for each given target item. Within the GPOS table, these indices are specified within <em>VariationIndex</em> tables, with one VariationIndex table referenced for each item that requires variation adjustment.</p>
+<p>Note that the VariationIndex table is a variant of a Device table, with a distinct format value. (For full details on the <a href="chapter2.html#devVarIdxTbls" data-linktype="relative-path">Device and VariationIndex</a> table formats, see the chapter, <a href="chapter2.html" data-linktype="relative-path">OpenType Layout Common Table Formats</a>.) As a result, variable fonts cannot use device tables. A VariationIndex table will be ignored in applications that do not support Font Variations, or if the font is not a variable font.</p>
+<p><a id="organization"></a></p>
+<h2 id="gpos-table-organization">GPOS table organization</h2>
+<p>The GPOS table begins with a header that defines offsets to a ScriptList, a FeatureList, a LookupList, and an optional FeatureVariations table (see Figure 4g):</p>
+<ul>
+<li>The <a href="chapter2.html#slTbl_sRec" data-linktype="relative-path">ScriptList</a> identifies all the scripts and language systems in the font that use glyph positioning.</li>
+<li>The <a href="chapter2.html#flTbl" data-linktype="relative-path">FeatureList</a> defines all the glyph positioning features required to render these scripts and language systems.</li>
+<li>The <a href="chapter2.html#lulTbl" data-linktype="relative-path">LookupList</a> contains all the lookup data needed to implement each glyph positioning feature.</li>
+<li>The <a href="chapter2.html#featVarTbl" data-linktype="relative-path">FeatureVariations</a> table can be used to substitute an alternate set of lookup tables to use for any given feature under specified conditions. This is currently used only in variable fonts.</li>
+</ul>
+<p>For a detailed discussion of ScriptLists, FeatureLists, LookupLists, and FeatureVariation tables, see the chapter, <a href="chapter2.html" data-linktype="relative-path">OpenType Layout Common Table Formats</a> .</p>
+<figure><img alt="Block diagram of GPOS subtables" src="media/gpos_fig4g.png" data-linktype="relative-path"><figcaption>Figure 4g. High-level organization of GPOS table</figcaption></figure>
+<p>The GPOS table is organized so text processing clients can easily locate the features and lookups that apply to a particular script or language system. To access GPOS information, clients should use the following procedure:</p>
+<ol>
+<li>Locate the current script in the GPOS ScriptList table.</li>
+<li>If the language system is known, search the script for the correct LangSys table; otherwise, use the script’s default LangSys table.</li>
+<li>The LangSys table provides index numbers into the GPOS FeatureList table to access a required feature and a number of additional features.</li>
+<li>Inspect the featureTag of each feature, and select the feature tables to apply to an input glyph string.</li>
+<li>If a Feature Variation table is present, evaluate conditions in the Feature Variation table to determine if any of the initially-selected feature tables should be substituted by an alternate feature table.</li>
+<li>Each feature table provides an array of index numbers into the GPOS LookupList table. Assemble all lookups from the set of chosen feature tables, and apply the lookups in the order given in the LookupList table.</li>
+</ol>
+<p>For a detailed description of the Feature Variation table and how it is processed, see the chapter, <a href="chapter2.html" data-linktype="relative-path">OpenType Layout Common Table Formats</a>.</p>
+<p>Lookup data is defined in <a href="chapter2.html#lookupTbl" data-linktype="relative-path">Lookup tables</a>, which are defined in the OpenType Layout Common Table Formats chapter. A Lookup table contains one or more subtables that define the specific conditions, type, and results of a positioning action used to implement a feature. Specific Lookup subtable types are used for glyph positioning actions, and are defined in this chapter. All subtables within a Lookup table must be of the same lookup type, as listed in the following table for the GposLookupType enumeration:</p>
+<p><a id="gsubLookupTypeEnum"></a></p>
+<p><em>GposLookupType enumeration</em></p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="#SP" data-linktype="self-bookmark">Single adjustment</a></td>
+<td>Adjust position of a single glyph</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="#PP" data-linktype="self-bookmark">Pair adjustment</a></td>
+<td>Adjust position of a pair of glyphs</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="#CAP" data-linktype="self-bookmark">Cursive attachment</a></td>
+<td>Attach cursive glyphs</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="#MBP" data-linktype="self-bookmark">Mark-to-base attachment</a></td>
+<td>Attach a combining mark to a base glyph</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="#MLP" data-linktype="self-bookmark">Mark-to-ligature attachment</a></td>
+<td>Attach a combining mark to a ligature</td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="#MMP" data-linktype="self-bookmark">Mark-to-mark attachment</a></td>
+<td>Attach a combining mark to another mark</td>
+</tr>
+<tr>
+<td>7</td>
+<td><a href="#CP" data-linktype="self-bookmark">Contextual positioning</a></td>
+<td>Position one or more glyphs in context</td>
+</tr>
+<tr>
+<td>8</td>
+<td><a href="#CCP" data-linktype="self-bookmark">Chained contexts positioning</a></td>
+<td>Position one or more glyphs in chained context</td>
+</tr>
+<tr>
+<td>9</td>
+<td><a href="#EP" data-linktype="self-bookmark">Positioning extension</a></td>
+<td>Extension mechanism for other positionings</td>
+</tr>
+</tbody>
+</table>
+<p>Each lookup type has one or more subtable formats. The “best” format depends on the type of positioning operation and the resulting storage efficiency. When glyph information is best presented in more than one format, a single lookup may define more than one subtable, as long as all the subtables are of the same lookup type. For example, within a given lookup, a glyph index array format could best represent one set of target glyphs, whereas a glyph index range format could be better for another set.</p>
+<p>Certain structures are used across multiple GPOS lookup subtable types and formats. All lookup subtables use the <a href="chapter2.html" data-linktype="relative-path">Coverage table</a>, which is defined in the OpenType Layout Common Table Formats chapter. Single and pair adjustments (lookup types 1 and 2) use a <a href="#valueRecord" data-linktype="self-bookmark"><em>ValueRecord</em></a> structure and associated <em>ValueFormat</em> enumeration; attachment subtables (lookup types 3, 4, 5 and 6) use <a href="#anchorTables" data-linktype="self-bookmark"><em>Anchor</em></a> and <a href="#markArrayTable" data-linktype="self-bookmark"><em>MarkArray</em></a> tables. These shared formats are defined later in this chapter.</p>
+<p>A series of positioning operations on the same glyph or string requires multiple lookups, one for each separate action. Each lookup has a different array index in the LookupList table and is applied in the LookupList order. The positioning adjustment of each lookup is applied to the result of previous lookups. When the adjustments are expressed as absolute placement or advance adjustments in the X or Y direction, these adjustments are accumulated as each lookup is processed. For adjustments expressed using attachment points, however, attachment point positioning can override the effect of preceding lookups.</p>
+<p>During text processing, a client applies a lookup to each glyph in the string before moving to the next lookup. A lookup is finished for a glyph after the client locates the target glyph or glyph context and performs a positioning action, if specified. To move to the “next” glyph, the client will skip all the glyphs that participated in the lookup operation: glyphs that were positioned as well as any other glyphs that formed an input sequence context for the operation. Only glyphs in the input sequence are skipped; in the case of chained contexts positioning, the glyphs in the lookahead sequence are not skipped.</p>
+<p>There is just one exception: the “next” glyph in a sequence may be one of those that formed a context for the operation just performed. Specifically, in the case of pair positioning operations (i.e., kerning), if the ValueRecord for the second glyph is null, that glyph is treated as the “next” glyph in the sequence.</p>
+<p>The next section of this chapter describes the GPOS header and the subtables defined for each GposLookupType. <a href="#examples" data-linktype="self-bookmark">Examples</a> at the end of this chapter illustrate the GPOS header and seven of the nine lookup types, as well as the ValueRecord and Anchor and MarkArray tables.</p>
+<h2 id="gpos-table-structures">GPOS table structures</h2>
+<p><a id="header"></a></p>
+<h3 id="gpos-header">GPOS Header</h3>
+<p>The GPOS table begins with a header that contains a version number for the table. Two versions are defined. Version 1.0 contains offsets to three tables: ScriptList, FeatureList, and LookupList. Version 1.1 also includes an offset to a FeatureVariations table. For descriptions of these tables, see the chapter, <a href="chapter2.html" data-linktype="relative-path">OpenType Layout Common Table Formats</a> . Example 1 at the end of this chapter shows a GPOS Header version 1.0 table definition.</p>
+<p><a id="gposHeader_10"></a></p>
+<p><em>GPOS Header, version 1.0</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion_10">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version of the GPOS table, = 1.</td>
+</tr>
+<tr id="minorVersion_10">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version of the GPOS table, = 0.</td>
+</tr>
+<tr id="scriptListOffset_10">
+<td>Offset16</td>
+<td>scriptListOffset</td>
+<td>Offset to ScriptList table, from beginning of GPOS table.</td>
+</tr>
+<tr id="featureListOffset_10">
+<td>Offset16</td>
+<td>featureListOffset</td>
+<td>Offset to FeatureList table, from beginning of GPOS table.</td>
+</tr>
+<tr id="lookupListOffset_10">
+<td>Offset16</td>
+<td>lookupListOffset</td>
+<td>Offset to LookupList table, from beginning of GPOS table.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="gposHeader_11"></a></p>
+<p><em>GPOS Header, version 1.1</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion_11">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version of the GPOS table, = 1.</td>
+</tr>
+<tr id="minorVersion_11">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version of the GPOS table, = 1.</td>
+</tr>
+<tr id="scriptListOffset_11">
+<td>Offset16</td>
+<td>scriptListOffset</td>
+<td>Offset to ScriptList table, from beginning of GPOS table.</td>
+</tr>
+<tr id="featureListOffset_11">
+<td>Offset16</td>
+<td>featureListOffset</td>
+<td>Offset to FeatureList table, from beginning of GPOS table.</td>
+</tr>
+<tr id="lookupListOffset_11">
+<td>Offset16</td>
+<td>lookupListOffset</td>
+<td>Offset to LookupList table, from beginning of GPOS table.</td>
+</tr>
+<tr id="featureVariationsOffset_11">
+<td>Offset32</td>
+<td>featureVariationsOffset</td>
+<td>Offset to FeatureVariations table, from beginning of GPOS table (may be NULL).</td>
+</tr>
+</tbody>
+</table>
+<p><a id="SP"></a></p>
+<h3 id="lookup-type-1-subtable-single-adjustment-positioning">Lookup type 1 subtable: single adjustment positioning</h3>
+<p>A single adjustment positioning subtable (SinglePos) is used to adjust the placement or advance of a single glyph, such as a subscript or superscript. In addition, a SinglePos subtable is commonly used to implement lookup data for contextual positioning.</p>
+<p>A SinglePos subtable will have one of two formats: one that applies the same adjustment to a series of glyphs (format 1), and one that applies a different adjustment for each unique glyph (format 2).</p>
+<p><a id="SPF1"></a></p>
+<p><strong>Single adjustment positioning format 1: single positioning value</strong></p>
+<p>A SinglePosFormat1 subtable applies the same positioning value or values to each glyph listed in its Coverage table. For instance, when a font uses old-style numerals, this format could be applied to uniformly lower the position of all math operator glyphs.</p>
+<p>The format 1 subtable consists of a format identifier, an offset to a Coverage table that defines the glyphs to be adjusted by the positioning values, a ValueRecord, and a ValueFormat identifier that describes the amount and kinds of data in the ValueRecord.</p>
+<p>The ValueRecord specifies one or more positioning values to be applied to all covered glyphs. For example, if all glyphs in the Coverage table require both horizontal and vertical adjustments, the ValueRecord will specify values for both xPlacement and yPlacement.</p>
+<p>Example 2 at the end of this chapter shows a SinglePosFormat1 subtable used to adjust the placement of subscript glyphs.</p>
+<p><a id="singlePos_1"></a></p>
+<p><em>SinglePosFormat1 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="posFormat_sp1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — format = 1.</td>
+</tr>
+<tr id="coverageOffset_sp1">
+<td>Offset16</td>
+<td>coverageOffset</td>
+<td>Offset to Coverage table, from beginning of SinglePos subtable.</td>
+</tr>
+<tr id="valueFormat_sp1">
+<td>uint16</td>
+<td>valueFormat</td>
+<td>Defines the types of data in the ValueRecord.</td>
+</tr>
+<tr id="valueRecord_sp1">
+<td>ValueRecord</td>
+<td>valueRecord</td>
+<td>Defines positioning value(s) — applied to all glyphs in the Coverage table.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="SPF2"></a></p>
+<p><strong>Single adjustment positioning format 2: array of positioning values</strong></p>
+<p>A SinglePosFormat2 subtable provides an array of ValueRecords that contains one positioning value for each glyph in the Coverage table. This format is more flexible than format 1, but it requires more space in the font file.</p>
+<p>For example, assume that the Cyrillic script will be used in left-justified text. For all glyphs, format 2 could define position adjustments for left side bearings to align the left edges of the paragraphs. To achieve this, the Coverage table would list every glyph in the script, and the SinglePosFormat2 subtable would define a ValueRecord for each covered glyph. Correspondingly, each ValueRecord would specify an xPlacement adjustment value for the left side bearing.</p>
+<blockquote>
+<p><em>Note:</em> A single ValueFormat applies to all ValueRecords defined in a SinglePos subtable. In this example, if xPlacement is the only value that a ValueRecord needs to optically align the glyphs, then the X_PLACEMENT flag will be the only flag set in the valueFormat field of the subtable.</p>
+</blockquote>
+<p>As in format 1, the format 2 subtable consists of a format identifier, an offset to a Coverage table that defines the glyphs to be adjusted by the positioning values, and the ValueFormat flags field that describes the amount and kinds of data in the ValueRecords. In addition, the format 2 subtable includes:</p>
+<ul>
+<li>A count of the ValueRecords. One ValueRecord is defined for each glyph in the Coverage table.</li>
+<li>An array of ValueRecords that specify positioning values. Because the array follows the Coverage Index order, the first ValueRecord applies to the first glyph listed in the Coverage table, and so on.</li>
+</ul>
+<p>Example 3 at the end of this chapter shows how to adjust the spacing of three dash glyphs with a SinglePosFormat2 subtable.</p>
+<p><a id="singlePos_2"></a></p>
+<p><em>SinglePosFormat2 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="posFormat_sp2">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — format = 2.</td>
+</tr>
+<tr id="coverageOffset_sp2">
+<td>Offset16</td>
+<td>coverageOffset</td>
+<td>Offset to Coverage table, from beginning of SinglePos subtable.</td>
+</tr>
+<tr id="valueFormat_sp2">
+<td>uint16</td>
+<td>valueFormat</td>
+<td>Defines the types of data in the ValueRecords.</td>
+</tr>
+<tr id="valueCount_sp2">
+<td>uint16</td>
+<td>valueCount</td>
+<td>Number of ValueRecords — must equal glyphCount in the Coverage table.</td>
+</tr>
+<tr id="valueRecords_sp2">
+<td>ValueRecord</td>
+<td>valueRecords[valueCount]</td>
+<td>Array of ValueRecords — positioning values applied to glyphs.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="PP"></a></p>
+<h3 id="lookup-type-2-subtable-pair-adjustment-positioning">Lookup type 2 subtable: pair adjustment positioning</h3>
+<p>A pair adjustment positioning subtable (PairPos) is used to adjust the placement or advances of two glyphs in relation to one another — for instance, to specify kerning data for pairs of glyphs. Compared to a typical kerning table, however, a PairPos subtable offers more flexibility and precise control over glyph positioning. The PairPos subtable can adjust each glyph in a pair independently in both the X and Y directions, and it can explicitly describe the particular type of adjustment applied to each glyph.</p>
+<p>PairPos subtables can be either of two formats: one that identifies glyphs individually by index (format 1), and one that identifies glyphs by class (format 2).</p>
+<p><a id="PPF1"></a></p>
+<p><strong>Pair adjustment positioning format 1: adjustments for glyph pairs</strong></p>
+<p>Format 1 uses glyph indices to access positioning data for one or more specific pairs of glyphs. All pairs are specified in the order determined by the layout direction of the text.</p>
+<blockquote>
+<p><em>Note:</em> For text written from right to left, the right-most glyph will be the first glyph in a pair; conversely, for text written from left to right, the left-most glyph will be first.</p>
+</blockquote>
+<p>A PairPosFormat1 subtable contains a format identifier and two ValueFormat fields:</p>
+<ul>
+<li>valueFormat1 applies to the ValueRecords for the first glyph in each pair. The single ValueFormat field applies to ValueRecords for all first glyphs. If valueFormat1 is set to zero (0), the corresponding glyph has no ValueRecord and, therefore, should not be repositioned.</li>
+<li>valueFormat2 applies to the ValueRecords for the second glyph in each pair. The single ValueFormat field applies to ValueRecords for all second glyphs. If valueFormat2 is set to 0, then the second glyph of the pair is the “next” glyph for which a lookup should be performed.</li>
+</ul>
+<p>A PairPos subtable also defines an offset to a Coverage table that lists the indices of the first glyphs in each pair. More than one pair can have the same first glyph, but the Coverage table will list that glyph only once.</p>
+<p>The subtable also contains an array of offsets to PairSet tables (pairSetOffsets) and a count of the defined tables. The pairSetOffsets array contains one offset for each glyph listed in the Coverage table and uses the same order as the Coverage Index.</p>
+<p><a id="pairPos_1"></a></p>
+<p><em>PairPosFormat1 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="posFormat_pp1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — format = 1.</td>
+</tr>
+<tr id="coverageOffset_pp2">
+<td>Offset16</td>
+<td>coverageOffset</td>
+<td>Offset to Coverage table, from beginning of PairPos subtable.</td>
+</tr>
+<tr id="valueFormat1_pp1">
+<td>uint16</td>
+<td>valueFormat1</td>
+<td>Defines the types of data in valueRecord1 — for the first glyph in the pair (may be zero).</td>
+</tr>
+<tr id="valueFormat2_pp1">
+<td>uint16</td>
+<td>valueFormat2</td>
+<td>Defines the types of data in valueRecord2 — for the second glyph in the pair (may be zero).</td>
+</tr>
+<tr id="pairSetCount_pp1">
+<td>uint16</td>
+<td>pairSetCount</td>
+<td>Number of PairSet tables.</td>
+</tr>
+<tr id="pairSetOffsets_pp1">
+<td>Offset16</td>
+<td>pairSetOffsets[pairSetCount]</td>
+<td>Array of offsets to PairSet tables. Offsets are from beginning of PairPos subtable, ordered by Coverage Index.</td>
+</tr>
+</tbody>
+</table>
+<p>A PairSet table enumerates all the glyph pairs that begin with a covered glyph. An array of PairValue records contains one record for each pair and lists the records sorted by the glyph ID of the second glyph in each pair. The pairValueCount field specifies the number of PairValue records in the set.</p>
+<p><a id="pairSetTbl"></a></p>
+<p><em>PairSet table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="pairValueCount_ps">
+<td>uint16</td>
+<td>pairValueCount</td>
+<td>Number of PairValue records.</td>
+</tr>
+<tr id="pairValueRecords_ps">
+<td>PairValue</td>
+<td>pairValueRecords[pairValueCount]</td>
+<td>Array of PairValue records, ordered by glyph ID of the second glyph.</td>
+</tr>
+</tbody>
+</table>
+<p>A PairValue record specifies the second glyph in a pair and defines a ValueRecord for each glyph (valueRecord1 and valueRecord2). If valueFormat1 in the PairPos subtable is set to zero (0), valueRecord1 will be empty; similarly, if valueFormat2 is 0, valueRecord2 will be empty.</p>
+<p>Example 4 at the end of this chapter shows a PairPosFormat1 subtable that defines two cases of pair kerning.</p>
+<p><a id="pairValueRec"></a></p>
+<p><em>PairValue record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="secondGlyph_pvr">
+<td>uint16</td>
+<td>secondGlyph</td>
+<td>Glyph ID of second glyph in the pair (first glyph is listed in the Coverage table).</td>
+</tr>
+<tr id="valueRecord1_pvr">
+<td>ValueRecord</td>
+<td>valueRecord1</td>
+<td>Positioning data for the first glyph in the pair.</td>
+</tr>
+<tr id="valueRecord2_pvr">
+<td>ValueRecord</td>
+<td>valueRecord2</td>
+<td>Positioning data for the second glyph in the pair.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="PPF2"></a></p>
+<p><strong>Pair adjustment positioning format 2: class pair adjustment</strong></p>
+<p>Format 2 defines a pair as a set of two glyph classes and modifies the positions of all the glyphs in a class. For example, this format is useful in Japanese scripts that apply specific kerning operations to all glyph pairs that contain punctuation glyphs. One class would be defined as all glyphs that may be coupled with punctuation marks, and the other classes would be groups of similar punctuation glyphs.</p>
+<p>In a PairPosFormat2 subtable, glyph classes are defined using a <a href="chapter2.html#classDefTbl" data-linktype="relative-path">Class Definition</a> table, defined in the OpenType Layout Common Table Formats chapter.</p>
+<p>The PairPosFormat2 subtable begins with a format identifier and an offset to a Coverage table, measured from the beginning of the PairPos subtable. The Coverage table lists the indices of the first glyphs that may appear in each glyph pair. More than one pair may begin with the same glyph, but the Coverage table lists the glyph index only once.</p>
+<p>A PairPosFormat2 subtable also includes two ValueFormat fields:</p>
+<ul>
+<li>valueFormat1 applies to the ValueRecords for the first glyph in each pair. The single ValueFormat field applies to ValueRecords for all first glyphs. If valueFormat1 is set to zero (0), then the ValueRecords for the first glyph will be empty and, therefore, the first glyph is not repositioned.</li>
+<li>valueFormat2 applies to the ValueRecords for the second glyph in each pair. The single ValueFormat field applies to ValueRecords for all second glyphs. If valueFormat2 is set to 0, then the ValueRecords for the second glyph of the pair will be empty, the second glyph is not repositioned, and it becomes the “next” glyph for which a lookup is performed.</li>
+</ul>
+<p>PairPosFormat2 requires that each glyph in all pairs be assigned to a class, which is identified by an integer called a class value. Pairs are then represented in a two-dimensional array as sequences of two class values. Multiple pairs can be represented in one format 2 subtable.</p>
+<p>A PairPosFormat2 subtable contains offsets to two class definition tables: one that assigns class values to all the first glyphs in all pairs (classDef1), and one that assigns class values to all the second glyphs in all pairs (classDef2). If both glyphs in a pair use the same class definition, the offset value can be the same for classDef1 as for classDef2, but they are not required to be the same. The subtable also specifies the number of glyph classes defined in classDef1 and in classDef2, including class 0.</p>
+<p>For each class identified in the classDef1 table, a Class1 record enumerates all pairs that contain a particular class as a first component. The class1Records array stores all Class1 records according to class value.</p>
+<blockquote>
+<p><em>Note:</em> Class1 records are not tagged with a class value identifier. Instead, the index value of a Class1 record in the array defines the class value represented by the record. For example, the first Class1 record enumerates pairs that begin with a class 0 glyph, the second Class1 record enumerates pairs that begin with a class 1 glyph, and so on.</p>
+</blockquote>
+<p><a id="pairPos_2"></a></p>
+<p><em>PairPosFormat2 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="posFormat_pp1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — format = 2.</td>
+</tr>
+<tr id="coverageOffset_pp2">
+<td>Offset16</td>
+<td>coverageOffset</td>
+<td>Offset to Coverage table, from beginning of PairPos subtable.</td>
+</tr>
+<tr id="valueFormat1_pp2">
+<td>uint16</td>
+<td>valueFormat1</td>
+<td>ValueRecord definition — for the first glyph of the pair (may be zero).</td>
+</tr>
+<tr id="valueFormat2_pp2">
+<td>uint16</td>
+<td>valueFormat2</td>
+<td>ValueRecord definition — for the second glyph of the pair (may be zero).</td>
+</tr>
+<tr id="classDef1Offset_pp2">
+<td>Offset16</td>
+<td>classDef1Offset</td>
+<td>Offset to ClassDef table, from beginning of PairPos subtable — for the first glyph of the pair.</td>
+</tr>
+<tr id="classDef2Offset_pp2">
+<td>Offset16</td>
+<td>classDef2Offset</td>
+<td>Offset to ClassDef table, from beginning of PairPos subtable — for the second glyph of the pair.</td>
+</tr>
+<tr id="classDef1Count_pp2">
+<td>uint16</td>
+<td>class1Count</td>
+<td>Number of classes in classDef1 table — includes class 0.</td>
+</tr>
+<tr id="classDef2Count_pp2">
+<td>uint16</td>
+<td>class2Count</td>
+<td>Number of classes in classDef2 table — includes class 0.</td>
+</tr>
+<tr id="class1Records_pp2">
+<td>Class1</td>
+<td>class1Records[class1Count]</td>
+<td>Array of Class1 records, ordered by classes in classDef1.</td>
+</tr>
+</tbody>
+</table>
+<p>Each Class1 record contains an array of Class2 records, which also are ordered by class value. One Class2 record must be declared for each class in the classDef2 table, including class 0.</p>
+<p><a id="class1Rec"></a></p>
+<p><em>Class1 record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="class2Records_c1Rec">
+<td>Class2</td>
+<td>class2Records[class2Count]</td>
+<td>Array of Class2 records, ordered by classes in classDef2.</td>
+</tr>
+</tbody>
+</table>
+<p>A Class2 record consists of two ValueRecords, one for the first glyph in a class pair (valueRecord1) and one for the second glyph (valueRecord2). Note that both fields of a Class2 record are optional: If the PairPos subtable has a value of zero (0) for valueFormat1 or valueFormat2, then the corresponding record (valueRecord1 or valueRecord2) will be empty — that is, not present. For example, if valueFormat1 is zero, then the Class2 record will begin with and consist solely of valueRecord2. The text-processing client must be aware of the variable nature of the Class2 record and use the valueFormat1 and valueFormat2 fields to determine the size and content of the Class2 record.</p>
+<p>Example 5 at the end of this chapter demonstrates pair kerning with glyph classes in a PairPosFormat2 subtable.</p>
+<p><a id="class2Rec"></a></p>
+<p><em>Class2 record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="value1_c2">
+<td>ValueRecord</td>
+<td>valueRecord1</td>
+<td>Positioning for first glyph — empty if valueFormat1 = 0.</td>
+</tr>
+<tr id="value2_c2">
+<td>ValueRecord</td>
+<td>valueRecord2</td>
+<td>Positioning for second glyph — empty if valueFormat2 = 0.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="CAP"></a></p>
+<h3 id="lookup-type-3-subtable-cursive-attachment-positioning">Lookup type 3 subtable: cursive attachment positioning</h3>
+<p>Some cursive fonts are designed so that adjacent glyphs join when rendered with their default positioning. However, if positioning adjustments are needed to join the glyphs, a cursive attachment positioning (CursivePos) subtable can describe how to connect the glyphs by aligning two anchor points: the designated exit point of a glyph, and the designated entry point of the following glyph.</p>
+<p>Anchor alignment can result in horizontal or vertical positioning adjustments, or both. Note that the positioning effects in the text-layout direction (horizontal, for horizontal layout) work differently than for the <em>cross-stream</em> direction (vertical, in horizontal layout):</p>
+<ul>
+<li>For adjustments in the line-layout direction, the layout engine adjusts the advance of the first glyph (in logical order). This effectively moves the second glyph relative to the first so that the anchors are aligned in that direction.</li>
+<li>For the cross-stream direction, placement of one glyph is adjusted to make the anchors align. Which glyph is adjusted is determined by the <a href="chapter2.html#lookupFlags_1" data-linktype="relative-path">RIGHT_TO_LEFT flag</a> in the parent lookup table: if the RIGHT_TO_LEFT flag is clear, the second glyph is adjusted to align anchors with the first glyph; if the RIGHT_TO_LEFT flag is set, the first glyph is adjusted to align anchors with the second glyph.</li>
+</ul>
+<p>Note that, if the RIGHT_TO_LEFT lookup flag is set, then the <em>last</em> glyph in the connected sequence keeps its initial position in the cross-stream direction relative to the baseline, and the cross-stream positions of the preceding, connected glyphs are adjusted.</p>
+<p>The subtable has one format: CursivePosFormat1.</p>
+<p><a id="CAPF1"></a></p>
+<p><strong>Cursive attachment positioning format 1</strong></p>
+<p>The CursivePosFormat1 subtable begins with a format identifier and an offset to a Coverage table, which lists all the glyphs that define cursive attachment data. In addition, the subtable contains an array of EntryExit records: one for each glyph listed in the Coverage table, sorted in Coverage index order.</p>
+<p><a id="cursivePos_1"></a></p>
+<p><em>CursivePosFormat1 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="posFormat_cp1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — format = 1.</td>
+</tr>
+<tr id="coverageOffset_cp1">
+<td>Offset16</td>
+<td>coverageOffset</td>
+<td>Offset to Coverage table, from beginning of CursivePos subtable.</td>
+</tr>
+<tr id="entryExitCount_cp1">
+<td>uint16</td>
+<td>entryExitCount</td>
+<td>Number of EntryExit records.</td>
+</tr>
+<tr id="entryExitRecords_cp1">
+<td>EntryExit</td>
+<td>entryExitRecords[entryExitCount]</td>
+<td>Array of EntryExit records, in Coverage index order.</td>
+</tr>
+</tbody>
+</table>
+<p>Each EntryExit record consists of two offsets: one to an Anchor table that identifies the entry point on the glyph, and an offset to an Anchor table that identifies the exit point on the glyph. See later in this chapter for a description of the Anchor table.</p>
+<p>To position glyphs using the CursivePosFormat1 subtable, a text-processing client aligns the exit anchor point of a glyph with the entry anchor point of the following glyph. If no corresponding anchor point exists, the offset for either the entry or exit Anchor table may be NULL, in which case no positioning adjustment is applied.</p>
+<p>At the end of this chapter, Example 6 describes cursive glyph attachment in the Urdu language.</p>
+<p><a id="entryExitRec"></a></p>
+<p><em>EntryExit record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="entryAnchor_ee">
+<td>Offset16</td>
+<td>entryAnchorOffset</td>
+<td>Offset to entryAnchor table, from beginning of CursivePos subtable (may be NULL).</td>
+</tr>
+<tr id="exitAnchor_ee">
+<td>Offset16</td>
+<td>exitAnchorOffset</td>
+<td>Offset to exitAnchor table, from beginning of CursivePos subtable (may be NULL).</td>
+</tr>
+</tbody>
+</table>
+<p><a id="MBP"></a></p>
+<h3 id="lookup-type-4-subtable-mark-to-base-attachment-positioning">Lookup type 4 subtable: mark-to-base attachment positioning</h3>
+<p>The mark-to-base attachment (MarkBasePos) subtable is used to position combining mark glyphs with respect to base glyphs. For example, the Arabic, Hebrew, and Thai scripts combine vowels, diacritical marks, and tone marks with base glyphs.</p>
+<p>In the MarkBasePos subtable, every mark glyph has an anchor point and is also assigned to a mark class. Each base glyph then defines an anchor point for each class of marks it uses. When a mark is combined with a given base, the mark placement is adjusted so that the mark anchor is aligned with the base anchor for the applicable mark class. Placement of the base glyph and advances of both glyphs are not affected.</p>
+<p>For example, assume two mark classes: all marks positioned above base glyphs (class 0), and all marks positioned below base glyphs (class 1). In this case, each base glyph that uses these marks would define two anchor points, one for attaching the mark glyphs listed in class 0, and one for attaching the mark glyphs listed in class 1.</p>
+<p>To identify the base glyph that combines with a mark, the text-processing client must look backward in the glyph string from the mark to the preceding base glyph. To combine the mark and base glyph, the client aligns their attachment points, positioning the mark with respect to the final pen point (advance) position of the base glyph.</p>
+<p>A mark class is identified by a specific integer. Within the MarkBasePos subtable, the anchor definition of each mark, and the assignment of each mark to a mark class, is provided using a MarkArray table in combination with a mark Coverage table. First, a mark Coverage table specifies all of the mark glyphs covered by the subtable. Then, for every mark in the Coverage table, the MarkArray table has a corresponding MarkRecord that defines the anchor and class assignment for the mark. The <a href="#markArrayTable" data-linktype="self-bookmark">MarkArray</a> table and MarkRecord are defined later in this chapter.</p>
+<p>The MarkToBase Attachment subtable has one format: MarkBasePosFormat1.</p>
+<p><a id="MBPF1"></a></p>
+<p><strong>Mark-to-base attachment positioning format 1</strong></p>
+<p>The MarkBasePosFormat1 subtable begins with a format identifier and offsets to two Coverage tables: one that lists all the mark glyphs referenced in the subtable, and one that lists all the base glyphs referenced in the subtable.</p>
+<p>The MarkBasePosFormat1 subtable also contains an offset to a MarkArray table. For each mark glyph in the mark Coverage table, a MarkRecord in the MarkArray table specifies its class and an offset to the Anchor table that describes the mark’s attachment point. The classCount field specifies the total number of distinct mark classes defined in all the MarkRecords.</p>
+<p>The MarkBasePosFormat1 subtable also contains an offset to a BaseArray table, which defines for each base glyph an array of anchors, one for each mark class.</p>
+<p><a id="markBase_1"></a></p>
+<p><em>MarkBasePosFormat1 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="posFormat_mb1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — format = 1.</td>
+</tr>
+<tr id="markCoverageOffset_mb1">
+<td>Offset16</td>
+<td>markCoverageOffset</td>
+<td>Offset to markCoverage table, from beginning of MarkBasePos subtable.</td>
+</tr>
+<tr id="baseCoverageOffset_mb1">
+<td>Offset16</td>
+<td>baseCoverageOffset</td>
+<td>Offset to baseCoverage table, from beginning of MarkBasePos subtable.</td>
+</tr>
+<tr id="markClassCount_mb1">
+<td>uint16</td>
+<td>markClassCount</td>
+<td>Number of classes defined for marks.</td>
+</tr>
+<tr id="markArrayOffset_mb1">
+<td>Offset16</td>
+<td>markArrayOffset</td>
+<td>Offset to MarkArray table, from beginning of MarkBasePos subtable.</td>
+</tr>
+<tr id="baseArrayOffset_mb1">
+<td>Offset16</td>
+<td>baseArrayOffset</td>
+<td>Offset to BaseArray table, from beginning of MarkBasePos subtable.</td>
+</tr>
+</tbody>
+</table>
+<p>The BaseArray table consists of an array of BaseRecords. The array stores the BaseRecords in the same order as the baseCoverage index. Each base glyph in the baseCoverage table has a BaseRecord.</p>
+<p><a id="baseArrayTbl"></a></p>
+<p><em>BaseArray table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="baseCount_ba">
+<td>uint16</td>
+<td>baseCount</td>
+<td>Number of BaseRecords.</td>
+</tr>
+<tr id="baseRecords_ba">
+<td>BaseRecord</td>
+<td>baseRecords[baseCount]</td>
+<td>Array of BaseRecords, in order of baseCoverage Index.</td>
+</tr>
+</tbody>
+</table>
+<p>A BaseRecord declares one Anchor table for each mark class (including class 0) identified in the MarkRecords of the MarkArray table. Each Anchor table specifies one attachment point used to attach all the marks in a particular class to the base glyph. A BaseRecord contains an array of offsets to Anchor tables. The zero-based array of offsets defines the entire set of attachment points each base glyph uses to attach marks. The offsets to Anchor tables are ordered by mark class.</p>
+<blockquote>
+<p><em>Note:</em> Anchor tables are not tagged with class value identifiers. Instead, the index value of an Anchor table in the array defines the class value represented by the Anchor table.</p>
+</blockquote>
+<p>Example 7 at the end of this chapter defines mark positioning above and below base glyphs with a MarkBasePosFormat1 subtable.</p>
+<p><a id="baseRec"></a></p>
+<p><em>BaseRecord</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="baseAnchorOffsets">
+<td>Offset16</td>
+<td>baseAnchorOffsets[markClassCount]</td>
+<td>Array of offsets (one per mark class) to Anchor tables. Offsets are from beginning of BaseArray table, ordered by class (offsets may be NULL).</td>
+</tr>
+</tbody>
+</table>
+<p><a id="MLP"></a></p>
+<h3 id="lookup-type-5-subtable-mark-to-ligature-attachment-positioning">Lookup type 5 subtable: mark-to-ligature attachment positioning</h3>
+<p>The mark-to-ligature attachment (MarkLigPos) subtable is used to position combining mark glyphs with respect to ligature base glyphs. With mark-to-base attachment, described previously, each base glyph has an attachment point defined for each class of marks. Mark-to-ligature attachment is similar, except that each ligature glyph is defined to have multiple components (in a virtual sense — not actual glyphs), and each component has a separate set of attachment points defined for the different mark classes.</p>
+<p>As a result, a ligature glyph may have multiple base attachment points for one class of marks. For a given mark assigned to a particular class, the appropriate base attachment point is determined by which ligature component the mark is associated with. This is dependent on the original character string and subsequent character- or glyph-sequence processing, not the font data alone. While a text-layout client is performing any character-based preprocessing or any glyph-substitution operations using the <a href="gsub.html" data-linktype="relative-path">GSUB</a> table, the text-layout client must keep track of associations of marks to particular ligature-glyph components.</p>
+<p>The MarkLigPos subtable can be used to define multiple mark-to-ligature attachments. In the subtable, every mark glyph has an anchor point and is associated with a class of marks. As with MarkToBase attachment, mark anchors and class assignments are defined using a MarkArray table in combination with a mark Coverage table. Every ligature glyph specifies a two-dimensional array of data: for each component in a ligature, an array of anchor points is defined, one for each class of marks.</p>
+<p>For example, assume two mark classes: all marks positioned above base glyphs (class 0), and all marks positioned below base glyphs (class 1). In this case, each component of a base ligature glyph may define two anchor points, one for attaching the mark glyphs listed in class 0, and one for attaching the mark glyphs listed in class 1. Alternatively, if the language system does not allow marks on the second component, the first ligature component may define two anchor points, one for each class of marks, and the second ligature component may define no anchor points.</p>
+<p>To position a combining mark using a MarkLigPos subtable, the text-processing client must work backward from the mark to the preceding ligature glyph. To correctly access the subtables, the client must keep track of the component associated with the mark. Aligning the attachment points combines the mark and ligature.</p>
+<p>As with mark-to-base attachment, when a mark is combined with a given ligature base, the mark placement is adjusted so that the mark anchor is aligned with the applicable base anchor. Placement of the base glyph and advances of both glyphs are not affected.</p>
+<p>The MarkToLigature attachment subtable has one format: MarkLigPosFormat1.</p>
+<p><a id="MLPF1"></a></p>
+<p><strong>Mark-to-ligature attachment positioning format 1</strong></p>
+<p>The MarkLigPosFormat1 subtable begins with a format identifier and two offsets to Coverage tables that list all the mark glyphs and ligature glyphs referenced in the subtable.</p>
+<p>The MarkLigPosFormat1 subtable also contains an offset to a MarkArray table. For each mark glyph in the mark Coverage table, a MarkRecord in the MarkArray table specifies its class and an offset to the Anchor table that describes the mark’s attachment point. The markClassCount field specifies the total number of distinct mark classes defined in all the MarkRecords.</p>
+<p>The MarkLigPosFormat1 subtable also contains an offset to a LigatureArray table, which defines for each ligature glyph the two-dimensional array of anchor data: one anchor per ligature component per mark class.</p>
+<p><a id="markLigPos_1"></a></p>
+<p><em>MarkLigPosFormat1 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="posFormat_ml1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — format = 1.</td>
+</tr>
+<tr id="markCoverageOffset_ml1">
+<td>Offset16</td>
+<td>markCoverageOffset</td>
+<td>Offset to markCoverage table, from beginning of MarkLigPos subtable.</td>
+</tr>
+<tr id="ligatureCoverageOffset_ml1">
+<td>Offset16</td>
+<td>ligatureCoverageOffset</td>
+<td>Offset to ligatureCoverage table, from beginning of MarkLigPos subtable.</td>
+</tr>
+<tr id="markClassCount_ml1">
+<td>uint16</td>
+<td>markClassCount</td>
+<td>Number of defined mark classes.</td>
+</tr>
+<tr id="markArrayOffset_ml1">
+<td>Offset16</td>
+<td>markArrayOffset</td>
+<td>Offset to MarkArray table, from beginning of MarkLigPos subtable.</td>
+</tr>
+<tr id="ligatureArrayOffset_ml1">
+<td>Offset16</td>
+<td>ligatureArrayOffset</td>
+<td>Offset to LigatureArray table, from beginning of MarkLigPos subtable.</td>
+</tr>
+</tbody>
+</table>
+<p>The LigatureArray table contains an array of offsets to LigatureAttach tables. The ligatureAttachOffsets array lists the offsets to LigatureAttach tables, one for each ligature glyph listed in the ligatureCoverage table, in the same order as the ligatureCoverage index.</p>
+<p><a id="ligatureArrayTbl"></a></p>
+<p><em>LigatureArray table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="ligatureCount_ligArray">
+<td>uint16</td>
+<td>ligatureCount</td>
+<td>Number of LigatureAttach table offsets.</td>
+</tr>
+<tr id="ligatureAttachOffsets_ligArray">
+<td>Offset16</td>
+<td>ligatureAttachOffsets[ligatureCount]</td>
+<td>Array of offsets to LigatureAttach tables. Offsets are from beginning of LigatureArray table, ordered by ligatureCoverage index.</td>
+</tr>
+</tbody>
+</table>
+<p>Each LigatureAttach table consists of an array of ComponentRecords, which describe the component glyphs in a ligature. The array stores the ComponentRecords in the same order as the components in the ligature. The order of the records also corresponds to the writing direction — that is, the logical direction — of the text. For text written left to right, the first component is on the left; for text written right to left, the first component is on the right.</p>
+<p><a id="ligatureAttachTbl"></a></p>
+<p><em>LigatureAttach table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="componentCount_ligAttach">
+<td>uint16</td>
+<td>componentCount</td>
+<td>Number of ComponentRecords in this ligature.</td>
+</tr>
+<tr id="componentRecs_ligAttach">
+<td>ComponentRecord</td>
+<td>componentRecords[componentCount]</td>
+<td>Array of Component records, ordered in writing direction.</td>
+</tr>
+</tbody>
+</table>
+<p>A ComponentRecord, one for each component in the ligature, contains an array of offsets to the Anchor tables that define all the attachment points used to attach marks to the component. For each mark class (including class 0) identified in the MarkArray records, an Anchor table specifies the point used to attach all the marks in a particular class to the ligature base glyph, relative to the component.</p>
+<p>In a ComponentRecord, the zero-based ligatureAnchorOffsets array lists offsets to Anchor tables by mark class. If a component does not define an attachment point for a particular class of marks, then the offset to the corresponding Anchor table will be NULL.</p>
+<p>Example 8 at the end of this chapter shows a MarkLigPosFormat1 subtable used to attach mark accents to a ligature glyph in the Arabic script.</p>
+<p><a id="componentRec"></a></p>
+<p><em>ComponentRecord</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="ligatureAnchorOffsets">
+<td>Offset16</td>
+<td>ligatureAnchorOffsets[markClassCount]</td>
+<td>Array of offsets (one per class) to Anchor tables. Offsets are from beginning of LigatureAttach table, ordered by class (offsets may be NULL).</td>
+</tr>
+</tbody>
+</table>
+<p><a id="MMP"></a></p>
+<h3 id="lookup-type-6-subtable-mark-to-mark-attachment-positioning">Lookup type 6 subtable: mark-to-mark attachment positioning</h3>
+<p>The mark-to-mark attachment (MarkMarkPos) subtable is identical in form to the mark-to-base attachment subtable, although its function is different. Mark-to-mark attachment defines the position of one mark relative to another mark as when, for example, positioning tone marks with respect to vowel diacritical marks in Vietnamese.</p>
+<p>The attaching mark is mark1, and the base mark being attached to is mark2. In the MarkMarkPos subtable, every mark1 glyph has an anchor attachment point and is assigned to a class of marks. As for mark glyphs in a mark-to-base attachment, the anchor point and class assignment of mark1 glyphs is defined using a MarkArray table in combination with a mark1 Coverage table. Each mark2 glyph defines an anchor point for each class of mark1 marks.</p>
+<p>For example, assume two mark1 classes: all marks positioned to the left of mark2 glyphs (class 0), and all marks positioned to the right of mark2 glyphs (class 1). Each mark2 glyph that uses these marks defines two anchor points: one for attaching the mark1 glyphs listed in class 0, and one for attaching the mark1 glyphs listed in class 1.</p>
+<p>The mark2 glyph that combines with a mark1 glyph is the glyph preceding the mark1 glyph in glyph string order (skipping glyphs according to LookupFlags). The subtable applies precisely when that mark2 glyph is covered by the mark2 Coverage. To combine the mark glyphs, the placement of the mark1 glyph is adjusted such that the relevant attachment points coincide. Advance widths are not affected. The input context for mark-to-base, mark-to-ligature and mark-to-mark positioning tables is the mark that is being positioned. If a sequence contains several marks, a lookup may act on it several times, to position them.</p>
+<p>The mark-to-mark attachment subtable has one format: MarkMarkPosFormat1.</p>
+<p><a id="MMPF1"></a></p>
+<p><strong>Mark-to-mark attachment positioning format 1</strong></p>
+<p>The MarkMarkPosFormat1 subtable begins with a format identifier and two offsets to Coverage tables: one that lists all the mark1 glyphs referenced in the subtable (mark1Coverage), and one that lists all the mark2 glyphs referenced in the subtable (mark2Coverage).</p>
+<p>The subtable also has an offset to a MarkArray table for the mark1 glyphs. For each mark glyph in the mark1Coverage table, a MarkRecord in the MarkArray table specifies its class and an offset to the Anchor table that describes the mark’s attachment point. The markClassCount field specifies the total number of distinct mark classes defined in all the MarkRecords.</p>
+<p>The MarkMarkPosFormat1 subtable also has an offset to a <em>Mark2Array</em> table, which defines for each mark2 glyph an array of anchors, one for each mark1 mark class.</p>
+<p><a id="markMarkPos_1"></a></p>
+<p><em>MarkMarkPosFormat1 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="posFormat_mm1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — format = 1.</td>
+</tr>
+<tr id="mark1CoverageOffset_mm1">
+<td>Offset16</td>
+<td>mark1CoverageOffset</td>
+<td>Offset to Combining Mark Coverage table, from beginning of MarkMarkPos subtable.</td>
+</tr>
+<tr id="mark2CoverageOffset_mm1">
+<td>Offset16</td>
+<td>mark2CoverageOffset</td>
+<td>Offset to Base Mark Coverage table, from beginning of MarkMarkPos subtable.</td>
+</tr>
+<tr id="markClassCount_mm1">
+<td>uint16</td>
+<td>markClassCount</td>
+<td>Number of Combining Mark classes defined.</td>
+</tr>
+<tr id="mark1ArrayOffset_mm1">
+<td>Offset16</td>
+<td>mark1ArrayOffset</td>
+<td>Offset to MarkArray table for mark1, from beginning of MarkMarkPos subtable.</td>
+</tr>
+<tr id="mark2ArrayOffset_mm1">
+<td>Offset16</td>
+<td>mark2ArrayOffset</td>
+<td>Offset to Mark2Array table for mark2, from beginning of MarkMarkPos subtable.</td>
+</tr>
+</tbody>
+</table>
+<p>The Mark2Array table contains one Mark2 record for each mark2 glyph listed in the mark2Coverage table. It stores the records in the same order as the mark2Coverage index.</p>
+<p><a id="mark2ArrayTbl"></a></p>
+<p><em>Mark2Array table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="mark2Count_m2a">
+<td>uint16</td>
+<td>mark2Count</td>
+<td>Number of Mark2 records.</td>
+</tr>
+<tr id="mark2Records_m2a">
+<td>Mark2</td>
+<td>mark2Records[mark2Count]</td>
+<td>Array of Mark2 records, in Coverage order.</td>
+</tr>
+</tbody>
+</table>
+<p>Each Mark2 record contains an array of offsets to Anchor tables (mark2AnchorOffsets). The zero-based array of offsets, measured from the beginning of the Mark2Array table, defines the entire set of mark2 attachment points used to attach mark1 glyphs to a specific mark2 glyph. The Anchor tables referenced in the mark2AnchorOffsets array are ordered by mark1 class value.</p>
+<p>A Mark2 record declares one Anchor table for each mark class (including class 0) identified in the MarkRecords of the MarkArray. Each Anchor table specifies one mark2 attachment point used to attach all the mark1 glyphs in a particular class to the mark2 glyph.</p>
+<p>Example 9 at the end of the chapter shows a MarkMarkPosFormat1 subtable for attaching one mark to another in the Arabic script.</p>
+<p><a id="mark2Rec"></a></p>
+<p><em>Mark2 record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="mark2AnchorOffsets">
+<td>Offset16</td>
+<td>mark2AnchorOffsets[markClassCount]</td>
+<td>Array of offsets (one per class) to Anchor tables. Offsets are from beginning of Mark2Array table, in class order (offsets may be NULL).</td>
+</tr>
+</tbody>
+</table>
+<p><a id="CP"></a></p>
+<h3 id="lookup-type-7-subtable-contextual-positioning">Lookup type 7 subtable: contextual positioning</h3>
+<p>A contextual positioning subtable describes glyph positioning in context so a text-processing client can adjust the position of one or more glyphs within a certain pattern of glyphs.</p>
+<p>Contextual positioning subtables can use any of three formats that are common to the GSUB and GPOS tables. These define input sequence patterns to be matched against the text glyph sequence, and then actions to be applied to glyphs within the input sequence. The actions are specified as “nested” lookups, and each is applied to a particular sequence position within the input sequence.</p>
+<p>Each sequence position + nested lookup combination is specified in a <a href="chapter2.html#sequence-lookup-record" data-linktype="relative-path">SequenceLookupRecord</a>. Examples <a href="#example10" data-linktype="self-bookmark">10</a>, <a href="#example11" data-linktype="self-bookmark">11</a>, <a href="#example12" data-linktype="self-bookmark">12</a>, and <a href="#example13" data-linktype="self-bookmark">13</a> at the end of this chapter illustrate the use of sequence lookup records within the GPOS table.</p>
+<p>While the subtable formats are common between the GSUB and GPOS tables, the lookups referenced by sequence lookup records within the GPOS table are referenced by index into the GPOS LookupList table. In this way, actions specified by a GPOS contextual lookup can only be positioning adjustments.</p>
+<p><a id="CPF1"></a></p>
+<p><strong>Contextual positioning format 1: simple glyph contexts</strong></p>
+<p>Format 1 defines the context for a glyph positioning operation as a particular sequence of glyphs. For example, a context could be &lt;To&gt;, &lt;xyzabc&gt;, &lt;!?*#@&gt;, or any other glyph sequence.</p>
+<p>For example, suppose that accent mark glyphs above lowercase x-height vowel glyphs need to be lowered when an overhanging capital letter glyph precedes the vowel. When the client locates this context in the text, the subtable identifies the position of the accent mark and a lookup index. A lookup specifies a positioning action that lowers the accent mark over the vowel so that it does not collide with the overhanging capital.</p>
+<p>Format 1 contextual positioning is implemented using a SequenceContextFormat1 table. See <a href="chapter2.html#seqctxt1" data-linktype="relative-path">Sequence Context Format 1: simple glyph contexts</a> in the OpenType Layout Common Table Formats chapter for complete details.</p>
+<p><a href="#example10" data-linktype="self-bookmark">Example 10</a> at the end of this chapter demonstrates glyph kerning in context with a SequenceContextFormat1 subtable.</p>
+<p><a id="CPF2"></a></p>
+<p><strong>Contextual positioning format 2: class-based glyph contexts</strong></p>
+<p>Format 2 defines contexts for glyph positioning as input sequence patterns, with patterns expressed in terms of glyph classes. The glyph classes are defined using a <a href="chapter2.html#class-definition-table" data-linktype="relative-path">Class Definition table</a>. Several sequence patterns may be specified, with each pattern specifying a class of glyphs for each input sequence position.</p>
+<p>To clarify the notion of class-based context rules, suppose that certain sequences of three glyphs need special kerning. The glyph sequences consist of an uppercase glyph that overhangs on the right side, a punctuation mark glyph, and then a quote glyph. In this case, the set of uppercase glyphs would constitute one glyph class (class 1), the set of punctuation mark glyphs would constitute a second glyph class (class 2), and the set of quote mark glyphs would constitute a third glyph class (class 3). The input context might be specified as a pattern of one glyph from class 1, followed by one glyph from class 2, followed by one glyph from class 3.</p>
+<p>Format 2 contextual positioning is implemented using a SequenceContextFormat2 table. See <a href="chapter2.html#seqctxt2" data-linktype="relative-path">Sequence Context Format 2: class-based glyph contexts</a> in the OpenType Layout Common Table Formats chapter for complete details.</p>
+<p><a href="#example11" data-linktype="self-bookmark">Example 11</a> at the end of this chapter demonstrates a SequenceContextFormat2 subtable that uses glyph classes to modify accent positions in glyph strings.</p>
+<p><a id="CPF3"></a></p>
+<p><strong>Contextual positioning format 3: coverage-based glyph contexts</strong></p>
+<p>Format 3 defines a context for glyph positioning as an input sequence pattern expressed in terms of Coverage tables. A different Coverage table is defined for each sequence position.</p>
+<p>Format 3 is like format 2 in that patterns are defined using sets of glyphs. However, with the glyph classes used in format 2, each glyph is in exactly one class. With format 3, any glyph can occur in multiple Coverage tables.</p>
+<p>Unlike Formats 1 and 2, however, this format can define only one context.</p>
+<p>For example, consider an input context that contains an uppercase glyph (position 0), followed by any narrow uppercase glyph (position 1), and then another uppercase glyph (position 2). This context requires three Coverage tables, one for each position:</p>
+<ul>
+<li>For position 0, the first position, the Coverage table lists the set of all uppercase glyphs.</li>
+<li>For position 1, the second position, the Coverage table lists the set of all narrow uppercase glyphs, which is a subset of the glyphs listed in the Coverage table for position 0.</li>
+<li>For position 2, the Coverage table lists the set of all uppercase glyphs again.</li>
+</ul>
+<blockquote>
+<p><em>Note:</em> Both position 0 and position 2 can use the same Coverage table.</p>
+</blockquote>
+<p>Format 3 contextual positioning is implemented using a SequenceContextFormat3 table. See <a href="chapter2.html#seqctxt3" data-linktype="relative-path">Sequence Context Format 3: coverage-based glyph contexts</a> in the OpenType Layout Common Table Formats chapter for complete details.</p>
+<p><a href="#example12" data-linktype="self-bookmark">Example 12</a> at the end of this chapter illustrates the use of a SequenceContextFormat3 subtable to change the positions of sign glyphs in math equations.</p>
+<p><a id="CCP"></a></p>
+<h3 id="lookup-type-8-subtable-chained-contexts-positioning">Lookup type 8 subtable: chained contexts positioning</h3>
+<p>A <em>chained contexts</em> positioning subtable describes glyph positioning in context with an ability to look back and/or look ahead in the sequence of glyphs. The design of the chained contexts positioning subtable is parallel to that of the contextual positioning subtable, including the availability of three formats. Each format can describe one or more chained backtrack, input, and lookahead sequence combinations, and one or more positioning adjustments for glyphs in each input sequence.</p>
+<p>Positioning adjustments may be specified only for the input sequence context, not for backtrack and lookahead sequences.</p>
+<p>Note that backtrack sequences are specified in reverse logical order. See the <a href="chapter2.html#chseqctxt1" data-linktype="relative-path">Chained Sequence Context Format 1</a> section in the OpenType Layout Common Table Formats chapter for details regarding chained backtrack, input, and lookahead sequences.</p>
+<p><a id="CCPF1"></a></p>
+<p><strong>Chained contexts positioning format 1: simple glyph contexts</strong></p>
+<p>Format 1 defines the context for a glyph substitution as a particular sequence of glyphs. For example, a context could be &lt;xyz&gt;, &lt;holiday&gt;, &lt;!?*#@&gt;, or any other glyph sequence. Specific glyph sequences are used for input, backtrack or lookahead contexts.</p>
+<p>Format 1 chained context substitutions are implemented using a ChainedSequenceContextFormat1 table. See <a href="chapter2.html#chseqctxt1" data-linktype="relative-path">Chained Sequence Context Format 1: simple glyph contexts</a> in the OpenType Layout Common Table Formats chapter for complete details.</p>
+<p><a id="CCPF2"></a></p>
+<p><strong>Chained contexts positioning format 2: class-based glyph contexts</strong></p>
+<p>Format 2 defines contexts for glyph positioning as patterns expressed in terms of glyph classes. The glyph classes are defined using a <a href="chapter2.html#class-definition-table" data-linktype="relative-path">Class Definition table</a>. Several sequence patterns may be specified, with each pattern specifying a class of glyphs for each sequence position.</p>
+<p>To chain contexts, three separate Class Definition tables are used for the backtrack sequence, input sequence, and lookahead sequence.</p>
+<p>Format 2 contextual substitutions are implemented using a ChainedSequenceContextFormat2 table. See <a href="chapter2.html#chseqctxt2" data-linktype="relative-path">Chained Sequence Context Format 2: class-based glyph contexts</a> in the OpenType Layout Common Table Formats chapter for complete details.</p>
+<p><a id="CCPF3"></a></p>
+<p><strong>Chained contexts positioning format 3: coverage-based glyph contexts</strong></p>
+<p>Format 3 defines contexts for glyph positioning as patterns expressed in terms of Coverage tables. A different Coverage table is defined for each position in a sequence. To chain contexts, three separate sets of Coverage tables are used for the backtrack sequence, input sequence, and lookahead sequence.</p>
+<p>Format 3 is like format 2 in that patterns are defined using sets of glyphs. However, with the glyph classes used in format 2, each glyph is in exactly one class. With format 3, any glyph can occur in multiple Coverage tables.</p>
+<p>Format 3 contextual substitutions are implemented using a ChainedSequenceContextFormat3 table. See <a href="chapter2.html#chseqctxt3" data-linktype="relative-path">Chained Sequence Context Format 3: coverage-based glyph contexts</a> in the OpenType Layout Common Table Formats chapter for complete details.</p>
+<p><a id="EP"></a></p>
+<h3 id="lookup-type-9-subtable-positioning-subtable-extension">Lookup type 9 subtable: positioning subtable extension</h3>
+<p>This lookup type provides a way to access lookup subtables within the GPOS table using 32-bit offsets. This is needed if the total size of the subtables exceeds the 16-bit limits of the various other offsets in the GPOS table. In this specification, the subtable stored at the 32-bit offset location is termed the “extension” subtable.</p>
+<p>This subtable type uses one format: PosExtensionFormat1.</p>
+<p><a id="EPF1"></a></p>
+<p><strong>Positioning extension format 1</strong></p>
+<p><a id="extension_1"></a></p>
+<p><em>PosExtensionFormat1 subtable</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="posFormat_ep1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — format = 1.</td>
+</tr>
+<tr id="extensionLookupType_ep1">
+<td>uint16</td>
+<td>extensionLookupType</td>
+<td>Lookup type of subtable referenced by extensionOffset (i.e. the extension subtable).</td>
+</tr>
+<tr id="extensionOffset_ep1">
+<td>Offset32</td>
+<td>extensionOffset</td>
+<td>Offset to the extension subtable, of lookup type extensionLookupType, relative to the start of the PosExtensionFormat1 subtable.</td>
+</tr>
+</tbody>
+</table>
+<p>The extensionLookupType field must be set to any lookup type other than 9. If a lookup table uses extension subtables, then all of the extension subtables must have the same extensionLookupType. All offsets to extension subtables are set in the usual way—that is, relative to the start of the PosExtensionFormat1 subtable.</p>
+<p>When a layout engine encounters a GPOS type 9 Lookup table, it shall:</p>
+<ul>
+<li>Proceed as though the Lookup table’s lookupType field were set to the extensionLookupType of the subtables.</li>
+<li>Proceed as though each extension subtable referenced by extensionOffset replaced the type 9 subtable that referenced it.</li>
+</ul>
+<p><a id="sharedTables"></a></p>
+<h3 id="shared-formats-value-record-anchor-table-mark-array-table">Shared formats: value record, anchor table, mark array table</h3>
+<p>Several lookup subtables described earlier in this chapter refer to one or more of the same formats for positioning data: ValueRecord, Anchor table, and MarkArray table. These shared formats are described here.</p>
+<p><a id="valueRecord"></a></p>
+<h4 id="value-record">Value record</h4>
+<p>GPOS subtables use the ValueRecord format to describe all the variables and values used to adjust the position of a glyph or set of glyphs. A ValueRecord may define any combination of X and Y values (in design units) to add to (positive values) or subtract from (negative values) the placement and advance values provided in the font. In non-variable fonts, a ValueRecord may also contain an offset to a Device table for each of the specified values. In a variable font, it may also contain an offset to a VariationIndex table for each of the specified values.</p>
+<p>Note that all fields of a ValueRecord are optional: to save space, only the fields that are required need be included in a given instance. Because the GPOS table uses ValueRecords for many purposes, the sizes and contents of ValueRecords may vary from subtable to subtable. A ValueRecord is always accompanied by a ValueFormat flags field that specifies which of the ValueRecord fields is present. If a ValueRecord specifies more than one value, the values must be listed in the order shown in the ValueRecord definition. If the associated ValueFormat flags indicate that a field is not present, then the next present field follows immediately after the last preceding, present field. The text-processing client must be aware of the flexible and variable nature of ValueRecords in the GPOS table.</p>
+<p>Example 14 at the end of the chapter uses ValueFormat and a ValueRecord to specify positioning values in GPOS.</p>
+<p><a id="valueRec"></a></p>
+<p><em>ValueRecord</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="xPlacement_vr">
+<td>int16</td>
+<td>xPlacement</td>
+<td>Horizontal adjustment for placement, in design units.</td>
+</tr>
+<tr id="yPlacement_vr">
+<td>int16</td>
+<td>yPlacement</td>
+<td>Vertical adjustment for placement, in design units.</td>
+</tr>
+<tr id="xAdvance_vr">
+<td>int16</td>
+<td>xAdvance</td>
+<td>Horizontal adjustment for advance, in design units — only used for horizontal layout.</td>
+</tr>
+<tr id="yAdvance_vr">
+<td>int16</td>
+<td>yAdvance</td>
+<td>Vertical adjustment for advance, in design units — only used for vertical layout.</td>
+</tr>
+<tr id="xPlaDevice_vr">
+<td>Offset16</td>
+<td>xPlaDeviceOffset</td>
+<td>Offset to Device table (non-variable font) / VariationIndex table (variable font) for horizontal placement, from beginning of the immediate parent table (SinglePos or PairPosFormat2 lookup subtable, PairSet table within a PairPosFormat1 lookup subtable) — may be NULL.</td>
+</tr>
+<tr id="yPlaDevice_vr">
+<td>Offset16</td>
+<td>yPlaDeviceOffset</td>
+<td>Offset to Device table (non-variable font) / VariationIndex table (variable font) for vertical placement, from beginning of the immediate parent table (SinglePos or PairPosFormat2 lookup subtable, PairSet table within a PairPosFormat1 lookup subtable) — may be NULL.</td>
+</tr>
+<tr id="xAdvDevice_vr">
+<td>Offset16</td>
+<td>xAdvDeviceOffset</td>
+<td>Offset to Device table (non-variable font) / VariationIndex table (variable font) for horizontal advance, from beginning of the immediate parent table (SinglePos or PairPosFormat2 lookup subtable, PairSet table within a PairPosFormat1 lookup subtable) — may be NULL.</td>
+</tr>
+<tr id="yAdvDevice_vr">
+<td>Offset16</td>
+<td>yAdvDeviceOffset</td>
+<td>Offset to Device table (non-variable font) / VariationIndex table (variable font) for vertical advance, from beginning of the immediate parent table (SinglePos or PairPosFormat2 lookup subtable, PairSet table within a PairPosFormat1 lookup subtable) — may be NULL.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em> Device tables are used only in non-variable fonts, while VariationIndex tables are used only in variable fonts.</p>
+</blockquote>
+<p>In variable fonts, VariationIndex tables are needed to reference variation data for any placement or advance value that requires adjustment for different variation instances.</p>
+<blockquote>
+<p><em>Note:</em> While a separate reference to a VariationIndex table is required for each value that requires variation, two or more values that require the same variation data can have offsets that point to the same VariationIndex table, and two or more VariationIndex tables can reference the same variation data entries.</p>
+</blockquote>
+<blockquote>
+<p><em>Note:</em> If no VariationIndex table is used for a particular placement or advance value, then that value is used for all variation instances.</p>
+</blockquote>
+<p>A ValueFormat flags field defines the types of positioning adjustment data that ValueRecords specify. SinglePos subtables will have ValueRecords for a single glyph position in a glyph sequence; PairPos subtables will have separate ValueRecords for two glyph positions. In a given subtable, the same ValueFormat applies to every ValueRecord for a given glyph position.</p>
+<p>The ValueFormat determines whether the ValueRecords:</p>
+<ul>
+<li>Apply to placement, advance, or both.</li>
+<li>Apply to the horizontal position (X coordinate), the vertical position (Y coordinate), or both.</li>
+<li>Could refer to one or more Device tables (in non-variable fonts) or VariationIndex tables (in variable fonts) for any of the specified values.</li>
+</ul>
+<p>Each defined bit in the ValueFormat flags corresponds to a field in the ValueRecord and increases the size of the ValueRecord by 2 bytes. A ValueFormat of 0x0000 corresponds to an empty ValueRecord, which indicates no positioning changes.</p>
+<p>To identify the fields in each ValueRecord, the ValueFormat flags shown below are used. To specify multiple fields with a ValueFormat, the bit settings of the relevant fields are added with a logical OR operation.</p>
+<p>For example, to adjust the left-side bearing of a glyph, the ValueFormat will be 0x0001, and the ValueRecord will define the xPlacement value. To adjust the advance width of a different glyph, the ValueFormat will be 0x0004, and the ValueRecord will describe the xAdvance value. To adjust both the xPlacement and xAdvance of a set of glyphs, the ValueFormat will be 0x0005, and the ValueRecord will specify both values in the order they are listed in the ValueRecord definition.</p>
+<p><a id="valueFormatFlags"></a></p>
+<p><em>ValueFormat flags</em></p>
+<table>
+<tbody>
+<tr>
+<th>Mask</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="valueFormat_0001">
+<td>0x0001</td>
+<td>X_PLACEMENT</td>
+<td>Includes horizontal adjustment for placement.</td>
+</tr>
+<tr id="valueFormat_0002">
+<td>0x0002</td>
+<td>Y_PLACEMENT</td>
+<td>Includes vertical adjustment for placement.</td>
+</tr>
+<tr id="valueFormat_0004">
+<td>0x0004</td>
+<td>X_ADVANCE</td>
+<td>Includes horizontal adjustment for advance.</td>
+</tr>
+<tr id="valueFormat_0008">
+<td>0x0008</td>
+<td>Y_ADVANCE</td>
+<td>Includes vertical adjustment for advance.</td>
+</tr>
+<tr id="valueFormat_0010">
+<td>0x0010</td>
+<td>X_PLACEMENT_DEVICE</td>
+<td>Includes Device table (non-variable font) / VariationIndex table (variable font) for horizontal placement.</td>
+</tr>
+<tr id="valueFormat_0020">
+<td>0x0020</td>
+<td>Y_PLACEMENT_DEVICE</td>
+<td>Includes Device table (non-variable font) / VariationIndex table (variable font) for vertical placement.</td>
+</tr>
+<tr id="valueFormat_0040">
+<td>0x0040</td>
+<td>X_ADVANCE_DEVICE</td>
+<td>Includes Device table (non-variable font) / VariationIndex table (variable font) for horizontal advance.</td>
+</tr>
+<tr id="valueFormat_0080">
+<td>0x0080</td>
+<td>Y_ADVANCE_DEVICE</td>
+<td>Includes Device table (non-variable font) / VariationIndex table (variable font) for vertical advance.</td>
+</tr>
+<tr id="valueFormat_FF00">
+<td>0xFF00</td>
+<td>Reserved</td>
+<td>For future use (set to zero).</td>
+</tr>
+</tbody>
+</table>
+<p><a id="anchorTables"></a></p>
+<h4 id="anchor-table">Anchor table</h4>
+<p>A GPOS table uses anchor points to position one glyph with respect to another: two glyphs each define an anchor point, and the text-processing client attaches the glyphs by aligning their corresponding anchor points.</p>
+<p>To describe an anchor point, an Anchor table can use one of three formats. The first format uses X and Y coordinates, in design units, to specify a location for the anchor point in relation to the location of the outline for a given glyph. The other two formats refine the location of the anchor point using contour points (Format 2) or Device tables (Format 3). In a variable font, the third format uses a VariationIndex table (a variant of a Device table) to reference variation data for adjustment of the anchor position for the current variation instance, as needed.</p>
+<p><a id="anchorTable_1"></a></p>
+<p><strong>Anchor format 1: design units</strong></p>
+<p>AnchorFormat1 consists of a format identifier and a pair of design-unit coordinates that specify the location of the anchor point. This format has the benefits of small size and simplicity, but the anchor point cannot be hinted to adjust its position for different device resolutions.</p>
+<p>Example 15 at the end of this chapter uses AnchorFormat1.</p>
+<p><a id="anchorTbl_1"></a></p>
+<p><em>AnchorFormat1 table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="anchorFormat_a1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — format = 1.</td>
+</tr>
+<tr id="xCoordinate_a1">
+<td>int16</td>
+<td>xCoordinate</td>
+<td>Horizontal value, in design units.</td>
+</tr>
+<tr id="yCoordinate_a1">
+<td>int16</td>
+<td>yCoordinate</td>
+<td>Vertical value, in design units.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="anchorTable_2"></a></p>
+<p><strong>Anchor format 2: design units plus contour point</strong></p>
+<p>Like AnchorFormat1, AnchorFormat2 specifies a format identifier and a pair of design unit coordinates for the anchor point.</p>
+<p>For fine-tuning the location of the anchor point, AnchorFormat2 also provides an index to a glyph contour point that is on the outline of a glyph. Hinting can be used to move the contour anchor point. In the rendered text, the anchor point will provide the final positioning data for a given ppem size.</p>
+<p>Example 16 at the end of this chapter uses AnchorFormat2.</p>
+<p><a id="anchorTbl_2"></a></p>
+<p><em>AnchorFormat2 table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="anchorFormat_a2">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — format = 2.</td>
+</tr>
+<tr id="xCoordinate_a2">
+<td>int16</td>
+<td>xCoordinate</td>
+<td>Horizontal value, in design units.</td>
+</tr>
+<tr id="yCoordinate_a2">
+<td>int16</td>
+<td>yCoordinate</td>
+<td>Vertical value, in design units.</td>
+</tr>
+<tr id="anchorPoint_a2">
+<td>uint16</td>
+<td>anchorPoint</td>
+<td>Index to glyph contour point.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="anchorTable_3"></a></p>
+<p><strong>Anchor format 3: design units plus Device or VariationIndex tables</strong></p>
+<p>Like AnchorFormat1, AnchorFormat3 specifies a format identifier and provides coordinates that locate an anchor point. And, like AnchorFormat2, it permits fine adjustments in variable fonts to the coordinate values. However, AnchorFormat3 uses Device tables, rather than a contour point, for this adjustment.</p>
+<p>With a Device table, a client can adjust the position of the anchor point for any font size and device resolution. AnchorFormat3 can specify offsets to separate Device tables for the X and Y coordinates. If only one coordinate requires adjustment, the offset to the Device table for the other coordinate may be set to NULL.</p>
+<p>In variable fonts, AnchorFormat3 is required to reference variation data to adjust anchor points for different variation instances, if needed. In this case, AnchorFormat3 specifies an offset to a VariationIndex table, which is a variant of the Device table used for variations. If no VariationIndex table is used for a particular anchor point X or Y coordinate, then that value is used for all variation instances. While separate VariationIndex table references are required for each value that requires variation, two or more values that require the same variation-data values can have offsets that point to the same VariationIndex table, and two or more VariationIndex tables can reference the same variation data entries.</p>
+<p>Example 17 at the end of the chapter shows an AnchorFormat3 table.</p>
+<p><a id="anchorTbl_3"></a></p>
+<p><em>AnchorFormat3 table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="anchorFormat_a3">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — format = 3.</td>
+</tr>
+<tr id="xCoordinate_a3">
+<td>int16</td>
+<td>xCoordinate</td>
+<td>Horizontal value, in design units.</td>
+</tr>
+<tr id="yCoordinate_a3">
+<td>int16</td>
+<td>yCoordinate</td>
+<td>Vertical value, in design units.</td>
+</tr>
+<tr id="xDeviceOffset_a3">
+<td>Offset16</td>
+<td>xDeviceOffset</td>
+<td>Offset to Device table (non-variable font) / VariationIndex table (variable font) for X coordinate, from beginning of Anchor table (may be NULL).</td>
+</tr>
+<tr id="yDeviceOffset_a3">
+<td>Offset16</td>
+<td>yDeviceOffset</td>
+<td>Offset to Device table (non-variable font) / VariationIndex table (variable font) for Y coordinate, from beginning of Anchor table (may be NULL).</td>
+</tr>
+</tbody>
+</table>
+<p><a id="markArrayTable"></a></p>
+<h4 id="mark-array-table">Mark array table</h4>
+<p>The MarkArray table defines the class and the anchor point for a mark glyph. Three GPOS subtable types — mark-to-base attachment, mark-to-ligature attachment, and mark-to-mark attachment — use the MarkArray table to specify data for attaching marks.</p>
+<p>The MarkArray table contains an array of MarkRecords. Each MarkRecord defines the class of the mark and an offset to the Anchor table that contains data for the mark.</p>
+<p>A class value can be zero (0), but the MarkRecord must explicitly assign that class value. (This differs from the <a href="chapter2.html#classDefTbl" data-linktype="relative-path">Class Definition</a> table, in which all glyphs not assigned class values automatically belong to class 0.) The GPOS subtables that refer to MarkArray tables use the class assignments for indexing zero-based arrays that contain data for each mark class.</p>
+<p>In Example 18 at the end of the chapter, a MarkArray table and two MarkRecords define two mark classes.</p>
+<p><a id="markArrayTbl"></a></p>
+<p><em>MarkArray table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="markCount_ma">
+<td>uint16</td>
+<td>markCount</td>
+<td>Number of MarkRecords.</td>
+</tr>
+<tr id="markRecords_ma">
+<td>MarkRecord</td>
+<td>markRecords[markCount]</td>
+<td>Array of MarkRecords, ordered by corresponding glyphs in the associated mark Coverage table.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="markRec"></a></p>
+<p><em>MarkRecord</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="markClass_mr">
+<td>uint16</td>
+<td>markClass</td>
+<td>Class defined for the associated mark.</td>
+</tr>
+<tr id="markAnchorOffset_mr">
+<td>Offset16</td>
+<td>markAnchorOffset</td>
+<td>Offset to Anchor table, from beginning of MarkArray table.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="examples"></a></p>
+<h2 id="gpos-structure-examples">GPOS structure examples</h2>
+<p>The rest of this chapter describes examples of all the GPOS subtable formats, including each of the three formats available for contextual positioning. All the examples reflect unique parameters described below, but the samples provide a useful reference for building subtables specific to other situations.</p>
+<p>All the examples have three columns showing hex data, source, and comments.</p>
+<p><a id="example1"></a></p>
+<h3 id="example-1-gpos-header">Example 1: GPOS Header</h3>
+<p>Example 1 shows a typical GPOS Header table definition with offsets to a ScriptList, FeatureList, and LookupList.</p>
+<p><em>Example 1</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>GPOSHeader</b><br>
+TheGPOSHeader</td>
+<td>GPOSHeader table definition</td>
+</tr>
+<tr>
+<td>00010000</td>
+<td>0x00010000</td>
+<td>major / minor version</td>
+</tr>
+<tr>
+<td>000A</td>
+<td>TheScriptList</td>
+<td>offset to ScriptList table</td>
+</tr>
+<tr>
+<td>001E</td>
+<td>TheFeatureList</td>
+<td>offset to FeatureList table</td>
+</tr>
+<tr>
+<td>002C</td>
+<td>TheLookupList</td>
+<td>offset to LookupList table</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example2"></a></p>
+<h3 id="example-2-singleposformat1-subtable">Example 2: SinglePosFormat1 subtable</h3>
+<p>Example 2 uses the SinglePosFormat1 subtable to lower the Y placement of subscript glyphs in a font. The LowerSubscriptsSubTable defines one Coverage table, called LowerSubscriptsCoverage, which lists one range of glyph indices for the numeral/numeric subscript glyphs. The subtable’s ValueFormat setting indicates that the ValueRecord specifies only the yPlacement value, lowering each subscript glyph by 80 design units.</p>
+<p><em>Example 2</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>SinglePosFormat1</b><br>
+LowerSubscriptsSubTable</td>
+<td>SinglePos subtable definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format</td>
+</tr>
+<tr>
+<td>0008</td>
+<td>LowerSubscriptsCoverage</td>
+<td>offset to Coverage table</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>0x0002</td>
+<td>valueFormat: Y_PLACEMENT</td>
+</tr>
+<tr>
+<td></td>
+<td>ValueRecord</td>
+</tr>
+<tr>
+<td>FFB0</td>
+<td>-80</td>
+<td>move Y position down
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat2</b><br>
+LowerSubscriptsCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>format: ranges</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>rangeCount</td>
+</tr>
+<tr>
+<td></td>
+<td>rangeRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>01B3</td>
+<td>ZeroSubscriptGlyphID</td>
+<td>Start, first glyph ID</td>
+</tr>
+<tr>
+<td>01BC</td>
+<td>NineSubscriptGlyphID</td>
+<td>End, last glyph ID</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>startCoverageIndex</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example3"></a></p>
+<h3 id="example-3-singleposformat2-subtable">Example 3: SinglePosFormat2 subtable</h3>
+<p>This example uses a SinglePosFormat2 subtable to adjust the spacing of three dash glyphs by different amounts. The em dash spacing changes by 10 units, the en dash spacing changes by 25 units, and spacing of the standard dash changes by 50 units.</p>
+<p>The DashSpacingSubTable contains one Coverage table with three dash glyph indices, plus an array of ValueRecords, one for each covered glyph. The ValueRecords use the same ValueFormat to modify the xPlacement and xAdvance values of each glyph. The ValueFormat bit setting of 0x0005 is produced by adding the xPlacement and xAdvance bit settings.</p>
+<p><em>Example 3</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>SinglePosFormat2</b><br>
+DashSpacingSubTable</td>
+<td>SinglePos subtable definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>format</td>
+</tr>
+<tr>
+<td>0014</td>
+<td>DashSpacingCoverage</td>
+<td>offset to Coverage table</td>
+</tr>
+<tr>
+<td>0005</td>
+<td>0x0005</td>
+<td>ValueFormat: X_PLACEMENT || X_ADVANCE</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>valueCount</td>
+</tr>
+<tr>
+<td></td>
+<td>valueRecords[0]</td>
+<td>for dash glyph</td>
+</tr>
+<tr>
+<td>0032</td>
+<td>50</td>
+<td>xPlacement</td>
+</tr>
+<tr>
+<td>0032</td>
+<td>50</td>
+<td>xAdvance</td>
+</tr>
+<tr>
+<td></td>
+<td>valueRecords[1]</td>
+<td>for en dash glyph</td>
+</tr>
+<tr>
+<td>0019</td>
+<td>25</td>
+<td>xPlacement</td>
+</tr>
+<tr>
+<td>0019</td>
+<td>25</td>
+<td>xAdvance</td>
+</tr>
+<tr>
+<td></td>
+<td>valueRecords[2]</td>
+<td>for em dash glyph</td>
+</tr>
+<tr>
+<td>000A</td>
+<td>10</td>
+<td>xPlacement</td>
+</tr>
+<tr>
+<td>000A</td>
+<td>10</td>
+<td>xAdvance
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+DashSpacingCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: lists</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>004F</td>
+<td>DashGlyphID</td>
+<td>glyphArray[0]</td>
+</tr>
+<tr>
+<td>0125</td>
+<td>EnDashGlyphID</td>
+<td>glyphArray[1]</td>
+</tr>
+<tr>
+<td>0129</td>
+<td>EmDashGlyphID</td>
+<td>glyphArray[2]</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example4"></a></p>
+<h3 id="example-4-pairposformat1-subtable">Example 4: PairPosFormat1 subtable</h3>
+<p>Example 4 uses a PairPosFormat1 subtable to kern two glyph pairs - “Po” and “To” - by adjusting the xAdvance of the first glyph and the xPlacement of the second glyph. Two ValueFormats are defined, one for each glyph. The subtable contains a Coverage table that lists the index of the first glyph in each pair. It also contains an offset to a PairSet table for each covered glyph.</p>
+<p>A PairSet table defines an array of PairValue records to specify all the glyph pairs that contain a covered glyph as their first component. In this example, the PairSet table has one PairValue record that identifies the second glyph in the “Po” pair and two ValueRecords, one for the first glyph and one for the second. The PairSet table also has one PairValue record that lists the second glyph in the “To” pair and two ValueRecords, one for each glyph.</p>
+<p><em>Example 4</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>PairPosFormat1</b><br>
+PairKerningSubTable</td>
+<td>PairPos subtable definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format</td>
+</tr>
+<tr>
+<td>001E</td>
+<td>PairKerningCoverage</td>
+<td>offset to Coverage table</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>0x0004</td>
+<td>valueFormat1: X_ADVANCE only</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>0x0001</td>
+<td>ValueFormat2: X_PLACEMENT only</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>pairSetCount</td>
+</tr>
+<tr>
+<td>000E</td>
+<td>PairSetTable</td>
+<td>pairSetOffsets[0]</td>
+</tr>
+<tr>
+<td>0016</td>
+<td>PairSetTable</td>
+<td>pairSetOffsets[1]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>PairSetTable</b><br>
+PairSetTable</td>
+<td>PairSet table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>pairValueCount</td>
+</tr>
+<tr>
+<td></td>
+<td>pairValueRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>0059</td>
+<td>LowercaseOGlyphID</td>
+<td>secondGlyph</td>
+</tr>
+<tr>
+<td></td>
+<td>valueRecord1</td>
+<td>ValueRecord for first glyph</td>
+</tr>
+<tr>
+<td>FFE2</td>
+<td>-30</td>
+<td>xAdvance</td>
+</tr>
+<tr>
+<td></td>
+<td>valueRecord2</td>
+<td>ValueRecord for second glyph</td>
+</tr>
+<tr>
+<td>FFEC</td>
+<td>-20</td>
+<td>xPlacement
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>PairSetTable</b><br>
+PairSetTable</td>
+<td>PairSet table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>pairValueCount</td>
+</tr>
+<tr>
+<td></td>
+<td>pairValueRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>0059</td>
+<td>LowercaseOGlyphID</td>
+<td>secondGlyph</td>
+</tr>
+<tr>
+<td></td>
+<td>valueRecord1</td>
+<td>ValueRecord for first glyph</td>
+</tr>
+<tr>
+<td>FFD8</td>
+<td>-40</td>
+<td>xAdvance</td>
+</tr>
+<tr>
+<td></td>
+<td>valueRecord2</td>
+<td>ValueRecord for second glyph</td>
+</tr>
+<tr>
+<td>FFE7</td>
+<td>-25</td>
+<td>xPlacement
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+PairKerningCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: lists</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>002D</td>
+<td>UppercasePGlyphID</td>
+<td>glyphArray[0]</td>
+</tr>
+<tr>
+<td>0031</td>
+<td>UppercaseTGlyphID</td>
+<td>glyphArray[1]</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example5"></a></p>
+<h3 id="example-5-pairposformat2-subtable">Example 5: PairPosFormat2 subtable</h3>
+<p>The PairPosFormat2 subtable in this example defines pairs composed of two glyph classes. Two ClassDef tables are defined, one for each glyph class. The first glyph in each pair is in a class of lowercase glyphs with diagonal shapes (v, w, y), defined class 1 in the LowercaseClassDef table. The second glyph in each pair is in a class of punctuation glyphs (comma and period), defined in class 1 in the PunctuationClassDef table. The Coverage table only lists the indices of the glyphs in the LowercaseClassDef table since they occupy the first position in the pairs.</p>
+<p>The subtable defines two Class1 records for the classes defined in LowecaseClassDef, including Class0. Each record, in turn, defines a Class2 record for each class defined in PunctuationClassDef, including class 0. The Class2 records specify the positioning adjustments for the glyphs.</p>
+<p>The pairs are kerned by reducing the xAdvance of the first glyph by 50 design units. Because no positioning change applies to the second glyph, its ValueFormat2 field is set to 0, to indicate that Value2 is empty for each pair.</p>
+<p>Since no pairs begin with class 0 or class 2 glyphs, all the ValueRecords referenced in class1Records[0] contain values of 0 or are empty. However, class1Records[1] does define an xAdvance value in its class2Records[1] for kerning all pairs that contain a class 1 glyph followed by a class 2 glyph.</p>
+<p><em>Example 5</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>PairPosFormat2</b><br>
+PunctKerningSubTable</td>
+<td>PairPos subtable definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>format</td>
+</tr>
+<tr>
+<td>0018</td>
+<td>PunctKerningCoverage</td>
+<td>offset to Coverage table</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>0x0004</td>
+<td>valueFormat1: X_ADVANCE only</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>ValueFormat2: no ValueRecord for second glyph</td>
+</tr>
+<tr>
+<td>0022</td>
+<td>LowercaseClassDef</td>
+<td>offset to ClassDef1 table, for first class in pair</td>
+</tr>
+<tr>
+<td>0032</td>
+<td>PunctuationClassDef</td>
+<td>offset to ClassDef2 table, for second class in pair</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>Class1Count</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>Class2Count</td>
+</tr>
+<tr>
+<td></td>
+<td>class1Records[0]</td>
+<td>First Class1 record, for contexts beginning with class 0</td>
+</tr>
+<tr>
+<td></td>
+<td>class2Records[0]</td>
+<td>First Class2 record for class1Records[0]; valueFormat2 is zero, so no valueRecord2.</td>
+</tr>
+<tr>
+<td></td>
+<td>valueRecord1</td>
+<td></td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>xAdvance: no change for first glyph</td>
+</tr>
+<tr>
+<td></td>
+<td>class2Records[1]</td>
+<td>no valueRecord2</td>
+</tr>
+<tr>
+<td></td>
+<td>valueRecord1</td>
+<td></td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>xAdvance: no change for first glyph</td>
+</tr>
+<tr>
+<td></td>
+<td>class1Records[1]</td>
+<td>for contexts beginning with class 1</td>
+</tr>
+<tr>
+<td></td>
+<td>class2Records[0]</td>
+<td>no contexts with class 0 as second glyph; no valueRecord2</td>
+</tr>
+<tr>
+<td></td>
+<td>valueRecord1</td>
+<td></td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>xAdvance: no change for first glyph</td>
+</tr>
+<tr>
+<td></td>
+<td>class2Records[1]</td>
+<td>contexts with class 1 as second glyph; no valueRecord2</td>
+</tr>
+<tr>
+<td></td>
+<td>valueRecord1</td>
+<td></td>
+</tr>
+<tr>
+<td>FFCE</td>
+<td>-50</td>
+<td>xAdvance: move punctuation glyph left
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+PunctKerningCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: lists</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0046</td>
+<td>LowercaseVGlyphID</td>
+<td>glyphArray[0]</td>
+</tr>
+<tr>
+<td>0047</td>
+<td>LowercaseWGlyphID</td>
+<td>glyphArray[1]</td>
+</tr>
+<tr>
+<td>0049</td>
+<td>LowercaseYGlyphID</td>
+<td>glyphArray[2]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>ClassDefFormat2</b><br>
+LowercaseClassDef</td>
+<td>ClassDef table definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>format: ranges</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>classRangeCount</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>0046</td>
+<td>LowercaseVGlyphID</td>
+<td>startGlyphID</td>
+</tr>
+<tr>
+<td>0047</td>
+<td>LowercaseWGlyphID</td>
+<td>endGlyphID</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>class</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[1]</td>
+<td></td>
+</tr>
+<tr>
+<td>0049</td>
+<td>LowercaseYGlyphID</td>
+<td>startGlyphID</td>
+</tr>
+<tr>
+<td>0049</td>
+<td>LowercaseYGlyphID</td>
+<td>endGlyphID</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>class
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>ClassDefFormat2</b><br>
+PunctuationClassDef</td>
+<td>ClassDef table definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>format: ranges</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>classRangeCount</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>006A</td>
+<td>PeriodPunctGlyphID</td>
+<td>startGlyphID</td>
+</tr>
+<tr>
+<td>006B</td>
+<td>CommaPunctGlyphID</td>
+<td>endGlyphID</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>class</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example6"></a></p>
+<h3 id="example-6-cursiveposformat1-subtable">Example 6: CursivePosFormat1 subtable</h3>
+<p>In Example 6, the Urdu language system uses a CursivePosFormat1 subtable to attach glyphs along a diagonal baseline that descends from right to left. Two glyphs are defined with attachment data and listed in the Coverage table-the Kaf and Ha glyphs. For each glyph, the subtable contains an EntryExit record that defines offsets to two Anchor tables, an entry attachment point, and an exit attachment point. Each Anchor table defines X and Y coordinate values. To render Urdu down and diagonally, the entry point’s Y coordinate is above the baseline and the exit point’s Y coordinate is located below the baseline.</p>
+<p><em>Example 6</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>CursivePosFormat1</b><br>
+DiagonalWritingSubTable</td>
+<td>CursivePos subtable definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format</td>
+</tr>
+<tr>
+<td>000E</td>
+<td>DiagonalWritingCoverage</td>
+<td>offset to Coverage table</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>entryExitCount</td>
+</tr>
+<tr>
+<td></td>
+<td>entryExitRecords[0]</td>
+<td>EntryExit record for Kaf glyph</td>
+</tr>
+<tr>
+<td>0016</td>
+<td>KafEntryAnchor</td>
+<td>offset to EntryAnchor table</td>
+</tr>
+<tr>
+<td>001C</td>
+<td>KafExitAnchor</td>
+<td>offset to ExitAnchor table</td>
+</tr>
+<tr>
+<td></td>
+<td>entryExitRecords[1]</td>
+<td>EntryExit record for Ha glyph</td>
+</tr>
+<tr>
+<td>0022</td>
+<td>HaEntryAnchor</td>
+<td>offset to EntryAnchor table</td>
+</tr>
+<tr>
+<td>0028</td>
+<td>HaExitAnchor</td>
+<td>offset to ExitAnchor table
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+DiagonalWritingCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: lists</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0203</td>
+<td>KafGlyphID</td>
+<td>glyphArray[0]</td>
+</tr>
+<tr>
+<td>027E</td>
+<td>HaGlyphID</td>
+<td>glyphArray[1]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat1</b><br>
+KafEntryAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>05DC</td>
+<td>1500</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>002C</td>
+<td>44</td>
+<td>yCoordinate
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat1</b><br>
+KafExitAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>FFEC</td>
+<td>-20</td>
+<td>yCoordinate
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat1</b><br>
+HaEntryAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>05DC</td>
+<td>1500</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>002C</td>
+<td>44</td>
+<td>yCoordinate
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat1</b><br>
+HaExitAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>FFEC</td>
+<td>-20</td>
+<td>yCoordinate</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example7"></a></p>
+<h3 id="example-7-markbaseposformat1-subtable">Example 7: MarkBasePosFormat1 subtable</h3>
+<p>The MarkBasePosFormat1 subtable in Example 7 defines one Arabic base glyph, Tah, and two Arabic mark glyphs: a fathatan mark above the base glyph, and a kasra mark below the base glyph. The BaseGlyphsCoverage table lists the base glyph, and the MarkGlyphsCoverage table lists the mark glyphs.</p>
+<p>Each mark is also listed in the MarkArray, along with its attachment point data and a mark Class value. The MarkArray defines two mark classes: class 0 consists of marks located above base glyphs, and class 1 consists of marks located below base glyphs.</p>
+<p>The BaseArray defines attachment data for base glyphs. In this array, one BaseRecord is defined for the Tah glyph with offsets to two BaseAnchor tables, one for each class of marks. AboveBaseAnchor defines an attachment point for marks placed above the Tah base glyph, and BelowBaseAnchor defines an attachment point for marks placed below it.</p>
+<p><em>Example 7</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>MarkBasePosFormat1</b><br>
+MarkBaseAttachSubTable</td>
+<td>MarkBasePos subtable definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format</td>
+</tr>
+<tr>
+<td>000C</td>
+<td>MarkGlyphsCoverage</td>
+<td>offset to markCoverage table</td>
+</tr>
+<tr>
+<td>0014</td>
+<td>BaseGlyphsCoverage</td>
+<td>offset to baseCoverage table</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>markClassCount</td>
+</tr>
+<tr>
+<td>001A</td>
+<td>MarkGlyphsArray</td>
+<td>offset to MarkArray table</td>
+</tr>
+<tr>
+<td>0030</td>
+<td>BaseGlyphsArray</td>
+<td>offset to BaseArray table
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+MarkGlyphsCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: lists</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0333</td>
+<td>fathatanMarkGlyphID</td>
+<td>glyphArray[0]</td>
+</tr>
+<tr>
+<td>033F</td>
+<td>kasraMarkGlyphID</td>
+<td>glyphArray[1]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+BaseGlyphsCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: lists</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0190</td>
+<td>tahBaseGlyphID</td>
+<td>glyphArray[0]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>MarkArray</b><br>
+MarkGlyphsArray</td>
+<td>MarkArray table definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>markCount</td>
+</tr>
+<tr>
+<td></td>
+<td>markRecords[0]</td>
+<td>MarkRecords in Coverage index order</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>markClass, for marks over base</td>
+</tr>
+<tr>
+<td>000A</td>
+<td>fathatanMarkAnchor</td>
+<td>markAnchorOffset</td>
+</tr>
+<tr>
+<td></td>
+<td>markRecords[1]</td>
+<td></td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>markClass, for marks under</td>
+</tr>
+<tr>
+<td>0010</td>
+<td>kasraMarkAnchor</td>
+<td>markAnchorOffset
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat1</b><br>
+fathatanMarkAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>015A</td>
+<td>346</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>FF9E</td>
+<td>-98</td>
+<td>yCoordinate
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat1</b><br>
+kasraMarkAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>0105</td>
+<td>261</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>0058</td>
+<td>88</td>
+<td>yCoordinate
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseArray</b><br>
+BaseGlyphsArray</td>
+<td>BaseArray table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>baseCount</td>
+</tr>
+<tr>
+<td></td>
+<td>baseRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>0006</td>
+<td>AboveBaseAnchor</td>
+<td>baseAnchorOffsets[0]</td>
+</tr>
+<tr>
+<td>000C</td>
+<td>BelowBaseAnchor</td>
+<td>baseAnchorOffsets[1]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat1</b><br>
+AboveBaseAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>033E</td>
+<td>830</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>0640</td>
+<td>1600</td>
+<td>yCoordinate
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat1</b><br>
+BelowBaseAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>033E</td>
+<td>830</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>FFAD</td>
+<td>-83</td>
+<td>yCoordinate</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example8"></a></p>
+<h3 id="example-8-markligposformat1-subtable">Example 8: MarkLigPosFormat1 subtable</h3>
+<p>Example 8 uses the MarkLigPosFormat1 subtable to attach marks to a ligature glyph in the Arabic script. The hypothetical ligature is composed of three glyph components: a Lam (initial form), a meem (medial form), and a jeem (medial form). Accent marks are defined for the first two components: the sukun accent is positioned above lam, and the kasratan accent is placed below meem.</p>
+<p>The LigGlyphsCoverage table lists the ligature glyph and the MarkGlyphsCoverage table lists the two accent marks. Each mark is also listed in the MarkArray, along with its attachment point data and a mark Class value. The MarkArray defines two mark classes: class 0 consists of marks located above base glyphs, and class 1 consists of marks located below base glyphs.</p>
+<p>The LigGlyphsArray has an offset to one LigatureAttach table for the covered ligature glyph. This table, called LamWithMeemWithJeemLigAttach, defines a count and array of the component glyphs in the ligature. Each ComponentRecord defines offsets to two Anchor tables, one for each mark class.</p>
+<p>In the example, the first glyph component, lam, specifies a high attachment point for positioning accents above, but does not specify a low attachment point for placing accents below. The second glyph component, meem, defines a low attachment point for placing accents below, but not above. The third component, jeem, has no attachment points since the example defines no accents for it.</p>
+<p><em>Example 8</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>MarkLigPosFormat1</b><br>
+MarkLigAttachSubTable</td>
+<td>MarkLigPos subtable definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format</td>
+</tr>
+<tr>
+<td>000C</td>
+<td>MarkGlyphsCoverage</td>
+<td>offset to markCoverage table</td>
+</tr>
+<tr>
+<td>0014</td>
+<td>LigGlyphsCoverage</td>
+<td>offset to ligatureCoverage table</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>markClassCount</td>
+</tr>
+<tr>
+<td>001A</td>
+<td>MarkGlyphsArray</td>
+<td>offset to MarkArray table</td>
+</tr>
+<tr>
+<td>0030</td>
+<td>LigGlyphsArray</td>
+<td>offset to LigatureArray table
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+MarkGlyphsCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: lists</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>033C</td>
+<td>sukunMarkGlyphID</td>
+<td>glyphArray[0]</td>
+</tr>
+<tr>
+<td>033F</td>
+<td>kasratanMarkGlyphID</td>
+<td>glyphArray[1]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+LigGlyphsCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: lists</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0234</td>
+<td>LamWithMeemWithJeem<br>
+LigatureGlyphID</td>
+<td>glyphArray[0]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>MarkArray</b><br>
+MarkGlyphsArray</td>
+<td>MarkArray table definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>markCount</td>
+</tr>
+<tr>
+<td></td>
+<td>markRecords[0]</td>
+<td>MarkRecords in Coverage index order</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>markClass, for marks above components</td>
+</tr>
+<tr>
+<td>000A</td>
+<td>sukunMarkAnchor</td>
+<td>markAnchorOffset</td>
+</tr>
+<tr>
+<td></td>
+<td>markRecords[1]</td>
+<td></td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>markClass, for marks below components</td>
+</tr>
+<tr>
+<td>0010</td>
+<td>kasratanMarkAnchor</td>
+<td>markAnchorOffset
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat1</b><br>
+sukunMarkAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>015A</td>
+<td>346</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>FF9E</td>
+<td>-98</td>
+<td>yCoordinate
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat1</b><br>
+kasratanMarkAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>0105</td>
+<td>261</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>01E8</td>
+<td>488</td>
+<td>yCoordinate
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>LigatureArray</b><br>
+LigGlyphsArray</td>
+<td>LigatureArray table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>ligatureCount</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>LamWithMeemWithJeemLigAttach</td>
+<td>ligatureAttachOffsets[0]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>LigatureAttach</b><br>
+LamWithMeemWithJeemLigAttach</td>
+<td>LigatureAttach table definition</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>componentCount</td>
+</tr>
+<tr>
+<td></td>
+<td>componentRecords[0]</td>
+<td>Right-to-left text; ComponentRecords in writing-direction (logical) order: right-most glyph first</td>
+</tr>
+<tr>
+<td>000E</td>
+<td>AboveLamAnchor</td>
+<td>ligatureAnchorOffsets[0] — offsets ordered by mark class</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>NULL</td>
+<td>ligatureAnchorOffsets[1] — no attachment points for class 1 marks</td>
+</tr>
+<tr>
+<td></td>
+<td>componentRecords[1]</td>
+<td></td>
+</tr>
+<tr>
+<td>0000</td>
+<td>NULL</td>
+<td>ligatureAnchorOffsets[0] — no attachment points for class 0 marks</td>
+</tr>
+<tr>
+<td>0014</td>
+<td>BelowMeemAnchor</td>
+<td>ligatureAnchorOffsets — for class 1 marks (below)</td>
+</tr>
+<tr>
+<td></td>
+<td>componentRecords[2]</td>
+<td></td>
+</tr>
+<tr>
+<td>0000</td>
+<td>NULL</td>
+<td>ligatureAnchorOffsets — no attachment points for class 0 marks</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>NULL</td>
+<td>ligatureAnchorOffsets[1] — no attachment points for class 1 marks
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat1</b><br>
+AboveLamAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>0271</td>
+<td>625</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>0708</td>
+<td>1800</td>
+<td>yCoordinate
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat1</b><br>
+BelowMeemAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>0178</td>
+<td>376</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>FE90</td>
+<td>-368</td>
+<td>yCoordinate</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example9"></a></p>
+<h3 id="example-9-markmarkposformat1-subtable">Example 9: MarkMarkPosFormat1 subtable</h3>
+<p>The MarkMarkPosFormat1 subtable in Example 9 defines two Arabic marks glyphs. The hamza mark, the base mark (Mark2), is identified in the Mark2GlyphsCoverage table. The damma mark, the attaching mark (Mark1), is defined in the Mark1GlyphsCoverage table.</p>
+<p>Each Mark1 glyph is also listed in the Mark1Array, along with its attachment point data and a mark Class value. The Mark1GlyphsArray defines one mark class, class 0, that consists of marks located above Mark2 base glyphs. The Mark1GlyphsArray contains an offset to a dammaMarkAnchor table to specify the coordinate of the damma mark’s attachment point.</p>
+<p>The Mark2GlyphsArray table defines a count and an array of Mark2 records, one for each covered Mark2 base glyph. Each record contains an offset to a Mark2Anchor table for each Mark1 class. One Anchor table, AboveMark2Anchor, specifies a coordinate value for attaching the damma mark above the hamza base mark.</p>
+<p><em>Example 9</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>MarkMarkPosFormat1</b><br>
+MarkMarkAttachSubTable</td>
+<td>MarkBasePos subtable definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format</td>
+</tr>
+<tr>
+<td>000C</td>
+<td>Mark1GlyphsCoverage</td>
+<td>offset to mark1Coverage table</td>
+</tr>
+<tr>
+<td>0012</td>
+<td>Mark2GlyphsCoverage</td>
+<td>offset to mark2Coverage table</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>markClassCount</td>
+</tr>
+<tr>
+<td>0018</td>
+<td>Mark1GlyphsArray</td>
+<td>offset to mark1Array table</td>
+</tr>
+<tr>
+<td>0024</td>
+<td>Mark2GlyphsArray</td>
+<td>offset to mark2Array table
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+Mark1GlyphsCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: lists</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0296</td>
+<td>dammaMarkGlyphID</td>
+<td>glyphArray[0]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+Mark2GlyphsCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: lists</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0289</td>
+<td>hamzaMarkGlyphID</td>
+<td>glyphArray[1]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>MarkArray</b><br>
+Mark1GlyphsArray</td>
+<td>MarkArray table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>markCount</td>
+</tr>
+<tr>
+<td></td>
+<td>markRecords[0]</td>
+<td>MarkRecords in Coverage index order</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>markClass — for marks above base mark</td>
+</tr>
+<tr>
+<td>0006</td>
+<td>dammaMarkAnchor</td>
+<td>markAnchorOffset
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat1</b><br>
+dammaMarkAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>00BD</td>
+<td>189</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>FF99</td>
+<td>-103</td>
+<td>yCoordinate
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>Mark2Array</b><br>
+Mark2GlyphsArray</td>
+<td>Mark2Array table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>mark2Count</td>
+</tr>
+<tr>
+<td></td>
+<td>mark2Records[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>0004</td>
+<td>AboveMark2Anchor</td>
+<td>mark2AnchorOffsets[0]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat1</b><br>
+AboveMark2Anchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>00DD</td>
+<td>221</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>012D</td>
+<td>301</td>
+<td>yCoordinate</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example10"></a></p>
+<h3 id="example-10-contextual-positioning-format-1">Example 10: Contextual positioning format 1</h3>
+<p>Example 10 illustrates <a href="#CPF1" data-linktype="self-bookmark">contextual positioning format 1</a> using a <a href="chapter2.html#seqctxt1" data-linktype="relative-path">SequenceContextFormat1</a> subtable to adjust the spacing between three Arabic glyphs in a word. The context is the glyph sequence (from right to left): heh (initial form), thal (final form), and heh (isolated form). In the rendered word, the first two glyphs are connected, but the last glyph (the isolated form of heh), is separate. This subtable reduces the amount of space between the last glyph and the rest of the word.</p>
+<p>The subtable contains a WordCoverage table that lists the first glyph in the word, heh (initial), and one SequenceRuleSet table, called WordPosRuleSet, that defines all contexts beginning with this covered glyph.</p>
+<p>The WordPosRuleSet contains one SequenceRule table that describes a word context of three glyphs and identifies the second and third glyphs (the first glyph is identified by the WordPosRuleSet). When a text-processing client locates this context in text, it applies a Single Adjustment Positioning lookup (not shown in the example) at position 2 to reduce the spacing between the glyphs.</p>
+<p><em>Example 10</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>SequenceContextFormat1</b><br>
+MoveHehInSubtable</td>
+<td>SequenceContextFormat1 subtable definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format</td>
+</tr>
+<tr>
+<td>0008</td>
+<td>WordCoverage</td>
+<td>offset to Coverage table</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>seqRuleSetCount</td>
+</tr>
+<tr>
+<td>000E</td>
+<td>WordPosRuleSet</td>
+<td>seqRuleSetOffsets[0]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+WordCoverage</td>
+<td>Coverage table offset</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: lists</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>02A6</td>
+<td>hehInitialGlyphID</td>
+<td>glyphArray[0]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>SequenceRuleSet</b><br>
+WordPosRuleSet</td>
+<td>SequenceRuleSet table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>seqRuleCount</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>WordPosRule</td>
+<td>seqRuleOffsets[0]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>SequenceRule</b><br>
+WordPosRule</td>
+<td>SequenceRule table definition</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>seqLookupCount</td>
+</tr>
+<tr>
+<td>02DD</td>
+<td>thalFinalGlyphID</td>
+<td>inputSequence[0]</td>
+</tr>
+<tr>
+<td>02C6</td>
+<td>hehIsolatedGlyphID</td>
+<td>inputSequence[1]</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>seqLookupRecords[0]</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>sequenceIndex</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>lookupListIndex</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example11"></a></p>
+<h3 id="example-11-contextual-positioning-format-2">Example 11: Contextual positioning format 2</h3>
+<p>Example 11 illustrates <a href="#CPF2" data-linktype="self-bookmark">contextual positioning format 2</a> using a <a href="chapter2.html#seqctxt2" data-linktype="relative-path">SequenceContextFormat2</a> subtable with glyph classes to modify accent positions in contexts that have preceding overhanging, uppercase glyphs.</p>
+<p>In the example, MoveAccentsSubtable contains a Class Definition table that defines five glyph classes: class 1 consists of uppercase glyphs that overhang and create a wide open space on their right side; class 2 consists of uppercase glyphs that overhang and create a narrow space on their right side; class 3 contains lowercase x-height vowels; and class 4 contains accent glyphs placed over the lowercase vowels. The rest of the glyphs in the font fall into class 0.</p>
+<p>The MoveAccentsSubtable defines two similar context strings. The first consists of a class 1 uppercase glyph followed by a class 3 lowercase vowel glyph with a class 4 accent glyph over the vowel. When this context is found in the text, the client lowers the accent glyph over the vowel so that it does not collide with the overhanging glyph shape. The second context consists of a class 2 uppercase glyph, followed by a class 3 lowercase vowel glyph with a class 4 accent glyph over the vowel. When this context is found in the text, the client increases the advance width of the uppercase glyph to expand the space between it and the accented vowel.</p>
+<p>MoveAccentsSubtable defines a table, MoveAccentsCoverage, that identifies the first glyphs in the two contexts. It also has offsets to five ClassSequenceRuleSet tables, one for each class defined in the ClassDef table. Since no contexts begin with class 0, class 3, or class 4 glyphs, the offsets to the ClassSequenceRuleSet tables for these classes are NULL. ClassSequenceRuleSet[1] defines all contexts beginning with class 1 glyphs; it is called UCWideOverhangPosClass1Set. ClassSequenceRuleSet[2] defines all contexts beginning with class 2 glyphs, and it is called UCNarrowOverhangPosClass1Set.</p>
+<p>Each ClassSequenceRuleSet defines one ClassSequenceRule. The UCWideOverhangPosClass1Set uses the UCWideOverhangPosClassRule to specify the first context. The first class in this context string is identified by the index into the array of offsets to the ClassSequenceRuleSet tables; in this case, it is class 1. The ClassSequenceRule table lists the second and third classes in the context as class 3 and class 4. A Single Adjustment Positioning Lookup (not shown) lowers the accent glyph in position 3 in the context string.</p>
+<p>The UCNarrowOverhangPosClass1Set defines the UCNarrowOverhangPosClassRule for the second context. This ClassSequenceRule is identical to the UCWideOverhangPosClassRule, except that the first class in the context string is a class 2 lowercase glyph. A Single Adjustment Positioning Lookup (not shown) increases the advance width of the overhanging uppercase glyph in position 0 in the context string.</p>
+<p><em>Example 11</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>SequenceContextFormat2</b><br>
+MoveAccentsSubtable</td>
+<td>SequenceContextFormat2 subtable definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>format</td>
+</tr>
+<tr>
+<td>0012</td>
+<td>MoveAccentsCoverage</td>
+<td>Offset to Coverage table</td>
+</tr>
+<tr>
+<td>0020</td>
+<td>MoveAccentsClassDef</td>
+<td>Offset to ClassDef</td>
+</tr>
+<tr>
+<td>0005</td>
+<td>5</td>
+<td>classSeqRuleSetCount</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>NULL</td>
+<td>classSeqRuleSetOffsets[0] — no contexts begin with class 0 glyphs</td>
+</tr>
+<tr>
+<td>0060</td>
+<td>UCWideOverhangPosClass1Set</td>
+<td>classSeqRuleSetOffsets[1] — contexts beginning with class 1 glyphs</td>
+</tr>
+<tr>
+<td>0070</td>
+<td>UCNarrowOverhangPosClass2Set</td>
+<td>classSeqRuleSetOffsets[2] — contexts beginning with class 2 glyphs</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>NULL</td>
+<td>classSeqRuleSetOffsets[3] — no contexts begin with class 3 glyphs</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>NULL</td>
+<td>classSeqRuleSetOffsets[4] — no contexts begin with class 4 glyphs
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+MoveAccentsCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: lists</td>
+</tr>
+<tr>
+<td>0005</td>
+<td>5</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0029</td>
+<td>UppercaseFGlyphID</td>
+<td>glyphArray[0]</td>
+</tr>
+<tr>
+<td>0033</td>
+<td>UppercasePGlyphID</td>
+<td>glyphArray[1]</td>
+</tr>
+<tr>
+<td>0037</td>
+<td>UppercaseTGlyphID</td>
+<td>glyphArray[2]</td>
+</tr>
+<tr>
+<td>0039</td>
+<td>UppercaseVGlyphID</td>
+<td>glyphArray[3]</td>
+</tr>
+<tr>
+<td>003A</td>
+<td>UppercaseWGlyphID</td>
+<td>glyphArray[4]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>ClassDefFormat2</b><br>
+MoveAccentsClassDef</td>
+<td>ClassDef table definition defines five classes: 0 (all else), 1 (T, V, W: UCUnderhang), 2 (F, P: UCOverhang), 3 (a, e, I, o, u: LCVowels), 4 (tilde, umlaut)</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>format: ranges</td>
+</tr>
+<tr>
+<td>000A</td>
+<td>10</td>
+<td>classRangeCount</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>0029</td>
+<td>UppercaseFGlyphID</td>
+<td>startGlyphID</td>
+</tr>
+<tr>
+<td>0029</td>
+<td>UppercaseFGlyphID</td>
+<td>endGlyphID</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>class</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[1]</td>
+<td></td>
+</tr>
+<tr>
+<td>0033</td>
+<td>UppercasePGlyphID</td>
+<td>startGlyphID</td>
+</tr>
+<tr>
+<td>0033</td>
+<td>UppercasePGlyphID</td>
+<td>endGlyphID</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>class</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[2]</td>
+<td></td>
+</tr>
+<tr>
+<td>0037</td>
+<td>UppercaseTGlyphID</td>
+<td>startGlyphID</td>
+</tr>
+<tr>
+<td>0037</td>
+<td>UppercaseTGlyphID</td>
+<td>endGlyphID</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>class</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[3]</td>
+<td></td>
+</tr>
+<tr>
+<td>0039</td>
+<td>UppercaseVGlyphID</td>
+<td>startGlyphID</td>
+</tr>
+<tr>
+<td>003A</td>
+<td>UppercaseWGlyphID</td>
+<td>endGlyphID</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>class</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[4]</td>
+<td></td>
+</tr>
+<tr>
+<td>0042</td>
+<td>LowercaseAGlyphID</td>
+<td>startGlyphID</td>
+</tr>
+<tr>
+<td>0042</td>
+<td>LowercaseAGlyphID</td>
+<td>endGlyphID</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>class</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[5]</td>
+<td></td>
+</tr>
+<tr>
+<td>0046</td>
+<td>LowercaseEGlyphID</td>
+<td>startGlyphID</td>
+</tr>
+<tr>
+<td>0046</td>
+<td>LowercaseEGlyphID</td>
+<td>endGlyphID</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>class</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[6]</td>
+<td></td>
+</tr>
+<tr>
+<td>004A</td>
+<td>LowercaseIGlyphID</td>
+<td>startGlyphID</td>
+</tr>
+<tr>
+<td>004A</td>
+<td>LowercaseIGlyphID</td>
+<td>endGlyphID</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>class</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[7]</td>
+<td></td>
+</tr>
+<tr>
+<td>0051</td>
+<td>LowercaseOGlyphID</td>
+<td>startGlyphID</td>
+</tr>
+<tr>
+<td>0051</td>
+<td>LowercaseOGlyphID</td>
+<td>endGlyphID</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>class</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[8]</td>
+<td></td>
+</tr>
+<tr>
+<td>0056</td>
+<td>LowercaseUGlyphID</td>
+<td>startGlyphID</td>
+</tr>
+<tr>
+<td>0056</td>
+<td>LowercaseUGlyphID</td>
+<td>endGlyphID</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>class</td>
+</tr>
+<tr>
+<td></td>
+<td>classRangeRecords[9]</td>
+<td></td>
+</tr>
+<tr>
+<td>00F5</td>
+<td>TildeAccentGlyphID</td>
+<td>startGlyphID</td>
+</tr>
+<tr>
+<td>00F6</td>
+<td>UmlautAccentGlyphID</td>
+<td>endGlyphID</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>4</td>
+<td>class
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>ClassSequenceRuleSet</b><br>
+UCWideOverhangPosClass1Set</td>
+<td>ClassSequenceRuleSet table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>classSeqRuleCount</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>UCWideOverhangPosClassRule</td>
+<td>classSeqRuleOffsets[0]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>ClassSequenceRule</b><br>
+UCWideOverhangPosClassRule</td>
+<td>ClassSequenceRule table definition</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>seqLookupCount</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>inputClassSequence[0] — lowercase vowel</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>4</td>
+<td>inputClassSequence[1] — accent</td>
+</tr>
+<tr>
+<td></td>
+<td>seqLookupRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>sequenceIndex</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>lookupListIndex — lower the accent
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>ClassSequenceRuleSet</b><br>
+UCNarrowOverhangPosClass2Set</td>
+<td>ClassSequenceRuleSet table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>classSeqRuleCount</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>UCNarrowOverhangPosClassRule</td>
+<td>classSeqRuleOffsets[0]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>ClassSequenceRule</b><br>
+UCNarrowOverhangPosClassRule</td>
+<td>ClassSequenceRule table definition</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>seqLookupCount</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>inputClassSequence[0] — lowercase vowel</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>4</td>
+<td>inputClassSequence[1] — accent</td>
+</tr>
+<tr>
+<td></td>
+<td>seqLookupRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>sequenceIndex</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>lookupListIndex — increase overhang advance width</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example12"></a></p>
+<h3 id="example-12-contextual-positioning-format-3">Example 12: Contextual positioning format 3</h3>
+<p>Example 12 illustrates <a href="#CPF3" data-linktype="self-bookmark">contextual positioning format 3</a> using a <a href="chapter2.html#seqctxt3" data-linktype="relative-path">SequenceContextFormat3</a>  subtable to lower the position of math signs in math equations consisting of a lowercase descender or x-height glyph, a math sign glyph, and any lowercase glyph. Format 3 is better to use for this context than the class-based Format 2 because the sets of covered glyphs for positions 0 and 2 overlap.</p>
+<p>The LowerMathSignsSubtable contains offsets to three Coverage tables (XhtDescLCCoverage, MathSignCoverage, and LCCoverage), one for each position in the context glyph string. When the client finds the context in the text stream, it applies the SequenceLookupRecord data at position 1 and repositions the math sign.</p>
+<p><em>Example 12</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>SequenceContextFormat3</b><br>
+LowerMathSignsSubtable</td>
+<td>SequenceContextFormat3 subtable definition</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>format</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>seqLookupCount</td>
+</tr>
+<tr>
+<td>0010</td>
+<td>XhtDescLCCoverage</td>
+<td>coverageOffsets[0]</td>
+</tr>
+<tr>
+<td>003C</td>
+<td>MathSignCoverage</td>
+<td>coverageOffsets[1]</td>
+</tr>
+<tr>
+<td>0044</td>
+<td>LCCoverage</td>
+<td>coverageOffsets[2]</td>
+</tr>
+<tr>
+<td></td>
+<td>seqLookupRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>sequenceIndex</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>lookupListIndex
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+XhtDescLCCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: lists</td>
+</tr>
+<tr>
+<td>0014</td>
+<td>20</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>0033</td>
+<td>LCaGlyphID</td>
+<td>glyphArray[0]</td>
+</tr>
+<tr>
+<td>0035</td>
+<td>LCcGlyphID</td>
+<td>glyphArray[1]</td>
+</tr>
+<tr>
+<td>0037</td>
+<td>LCeGlyphID</td>
+<td>glyphArray[2]</td>
+</tr>
+<tr>
+<td>0039</td>
+<td>LCgGlyphID</td>
+<td>glyphArray[3]</td>
+</tr>
+<tr>
+<td>003B</td>
+<td>LCiGlyphID</td>
+<td>glyphArray[4]</td>
+</tr>
+<tr>
+<td>003C</td>
+<td>LCjGlyphID</td>
+<td>glyphArray[5]</td>
+</tr>
+<tr>
+<td>003F</td>
+<td>LCmGlyphID</td>
+<td>glyphArray[6]</td>
+</tr>
+<tr>
+<td>0040</td>
+<td>LCnGlyphID</td>
+<td>glyphArray[7]</td>
+</tr>
+<tr>
+<td>0041</td>
+<td>LCoGlyphID</td>
+<td>glyphArray[8]</td>
+</tr>
+<tr>
+<td>0042</td>
+<td>LCpGlyphID</td>
+<td>glyphArray[9]</td>
+</tr>
+<tr>
+<td>0043</td>
+<td>LCqGlyphID</td>
+<td>glyphArray[10]</td>
+</tr>
+<tr>
+<td>0044</td>
+<td>LCrGlyphID</td>
+<td>glyphArray[11]</td>
+</tr>
+<tr>
+<td>0045</td>
+<td>LCsGlyphID</td>
+<td>glyphArray[12]</td>
+</tr>
+<tr>
+<td>0046</td>
+<td>LCtGlyphID</td>
+<td>glyphArray[13]</td>
+</tr>
+<tr>
+<td>0047</td>
+<td>LCuGlyphID</td>
+<td>glyphArray[14]</td>
+</tr>
+<tr>
+<td>0048</td>
+<td>LCvGlyphID</td>
+<td>glyphArray[15]</td>
+</tr>
+<tr>
+<td>0049</td>
+<td>LCwGlyphID</td>
+<td>glyphArray[16]</td>
+</tr>
+<tr>
+<td>004A</td>
+<td>LCxGlyphID</td>
+<td>glyphArray[17]</td>
+</tr>
+<tr>
+<td>004B</td>
+<td>LCyGlyphID</td>
+<td>glyphArray[18]</td>
+</tr>
+<tr>
+<td>004C</td>
+<td>LCzGlyphID</td>
+<td>glyphArray[19]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat1</b><br>
+MathSignCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: lists</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>glyphCount</td>
+</tr>
+<tr>
+<td>011E</td>
+<td>EqualsSignGlyphID</td>
+<td>glyphArray[0]</td>
+</tr>
+<tr>
+<td>012D</td>
+<td>PlusSignGlyphID</td>
+<td>glyphArray[1]
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat2</b><br>
+LCCoverage</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>format: ranges</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>rangeCount</td>
+</tr>
+<tr>
+<td></td>
+<td>rangeRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>0033</td>
+<td>LCaGlyphID</td>
+<td>startGlyphID</td>
+</tr>
+<tr>
+<td>004C</td>
+<td>LCzGlyphID</td>
+<td>endGlyphID</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>startCoverageIndex</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example13"></a></p>
+<h3 id="example-13-sequencelookup-record">Example 13: SequenceLookup record</h3>
+<p>The SequenceLookup record in Example 13 identifies a lookup to apply at the second glyph position in a context glyph string.</p>
+<p><em>Example 13</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>SequenceLookupRecord</b><br>
+seqLookupRecords[0]</td>
+<td>SequenceLookupRecord definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>sequenceIndex — for second glyph position</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>lookupListIndex — apply this lookup to second glyph position</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example14"></a></p>
+<h3 id="example-14-valueformat-and-valuerecord">Example 14: ValueFormat and ValueRecord</h3>
+<p>Example 14 demonstrates how to specify positioning values in the GPOS table. Here, a SinglePosFormat1 subtable defines the ValueFormat and ValueRecord. The ValueFormat bit setting of 0x0099 says that the corresponding ValueRecord contains values for a glyph’s xPlacement and yAdvance. Device tables specify pixel adjustments for these values at font sizes from 11 ppem to 15 ppem.</p>
+<p><em>Example 14</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>SinglePosFormat1</b><br>
+OnesSubtable</td>
+<td>SinglePos subtable definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format</td>
+</tr>
+<tr>
+<td>000E</td>
+<td>Cov</td>
+<td>Offset to Coverage table</td>
+</tr>
+<tr>
+<td>0099</td>
+<td>0x0099</td>
+<td>valueFormat: X_PLACEMENT + Y_ADVANCE + X_PLACEMENT_DEVICE, Y_ADVANCE_DEVICE</td>
+</tr>
+<tr>
+<td></td>
+<td>valueRecord</td>
+<td></td>
+</tr>
+<tr>
+<td>0050</td>
+<td>80</td>
+<td>xPlacement</td>
+</tr>
+<tr>
+<td>00D2</td>
+<td>210</td>
+<td>yAdvance</td>
+</tr>
+<tr>
+<td>0018</td>
+<td>XPlaDeviceTable</td>
+<td>xPlaDeviceOffset</td>
+</tr>
+<tr>
+<td>0020</td>
+<td>YAdvDeviceTable</td>
+<td>yAdvDeviceOffset
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>CoverageFormat2</b><br>
+Cov</td>
+<td>Coverage table definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>format: ranges</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>rangeCount</td>
+</tr>
+<tr>
+<td></td>
+<td>rangeRecords[0]</td>
+<td></td>
+</tr>
+<tr>
+<td>00C8</td>
+<td>200</td>
+<td>startGlyphID</td>
+</tr>
+<tr>
+<td>00D1</td>
+<td>209</td>
+<td>endGlyphID</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>startCoverageIndex
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>DeviceTableFormat1</b><br>
+XPlaDeviceTable</td>
+<td>Device Table definition</td>
+</tr>
+<tr>
+<td>000B</td>
+<td>11</td>
+<td>startSize</td>
+</tr>
+<tr>
+<td>000F</td>
+<td>15</td>
+<td>endSize — five delta values (sizes 11 to 15)</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>deltaFormat: LOCAL_2_BIT_DELTAS</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>deltaValue[0]: increase 11ppem by 1 pixel</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>deltaValue[1]: increase 12ppem by 1 pixel</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>deltaValue[2]: increase 13ppem by 1 pixel</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>deltaValue[3]: increase 14ppem by 1 pixel</td>
+</tr>
+<tr>
+<td>5540</td>
+<td>1</td>
+<td>deltaValue[4]: increase 15ppem by 1 pixel
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>DeviceTableFormat1</b><br>
+YAdvDeviceTable</td>
+<td>Device Table definition</td>
+</tr>
+<tr>
+<td>000B</td>
+<td>11</td>
+<td>startSize</td>
+</tr>
+<tr>
+<td>000F</td>
+<td>15</td>
+<td>endSize — five delta values (sizes 11 to 15)</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>deltaFormat: LOCAL_2_BIT_DELTAS</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>deltaValue[0]: increase 11ppem by 1 pixel</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>deltaValue[1]: increase 12ppem by 1 pixel</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>deltaValue[2]: increase 13ppem by 1 pixel</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>deltaValue[3]: increase 14ppem by 1 pixel</td>
+</tr>
+<tr>
+<td>5540</td>
+<td>1</td>
+<td>deltaValue[4]: increase 15ppem by 1 pixel</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example15"></a></p>
+<h3 id="example-15-anchorformat1-table">Example 15: AnchorFormat1 table</h3>
+<p>Example 15 illustrates an Anchor table for the damma mark glyph in the Arabic script. Format1 is used to specify X and Y coordinate values in design units.</p>
+<p><em>Example 15</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat1</b><br>
+dammaMarkAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>00BD</td>
+<td>189</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>FF99</td>
+<td>-103</td>
+<td>yCoordinate</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example16"></a></p>
+<h3 id="example-16-anchorformat2-table">Example 16: AnchorFormat2 table</h3>
+<p>Example 16 shows an AnchorFormat2 table for an attachment point placed above a base glyph. With this format, the coordinate value for the Anchor depends on the final position of a specific contour point on the base glyph after hinting. The coordinates are specified in design units.</p>
+<p><em>Example 16</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat2</b><br>
+AboveBaseAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>format: design units plus contour point</td>
+</tr>
+<tr>
+<td>0142</td>
+<td>322</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>0384</td>
+<td>900</td>
+<td>yCoordinate</td>
+</tr>
+<tr>
+<td>000D</td>
+<td>13</td>
+<td>anchorPoint — glyph contour point index</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example17"></a></p>
+<h3 id="example-17-anchorformat3-table">Example 17: AnchorFormat3 table</h3>
+<p>Example 17 shows an AnchorFormat3 table that specifies an attachment point above a base glyph. Device tables modify the X and Y coordinates of the Anchor for the point size and resolution of the output font. Here, the Device tables define pixel adjustments for font sizes from 12 ppem to 17 ppem.</p>
+<p><em>Example 17</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>AnchorFormat3</b><br>
+AboveBaseAnchor</td>
+<td>Anchor table definition</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>format: design units plus device table</td>
+</tr>
+<tr>
+<td>0117</td>
+<td>279</td>
+<td>xCoordinate</td>
+</tr>
+<tr>
+<td>0515</td>
+<td>1301</td>
+<td>yCoordinate</td>
+</tr>
+<tr>
+<td>000A</td>
+<td>XDevice</td>
+<td>xDeviceOffset (may be NULL)</td>
+</tr>
+<tr>
+<td>0014</td>
+<td>YDevice</td>
+<td>yDeviceOffset (may be NULL)
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>DeviceTableFormat2</b><br>
+XDevice</td>
+<td>Device Table definition</td>
+</tr>
+<tr>
+<td>000C</td>
+<td>12</td>
+<td>startSize</td>
+</tr>
+<tr>
+<td>0011</td>
+<td>17</td>
+<td>endSize — six delta values (sizes 12 to 17)</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>deltaFormat: LOCAL_4_BIT_DELTAS</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>deltaValue[0]: increase 12ppem by 1 pixel</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>deltaValue[1]: increase 13ppem by 1 pixel</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>deltaValue[2]: increase 14ppem by 1 pixel</td>
+</tr>
+<tr>
+<td>1111</td>
+<td>1</td>
+<td>deltaValue[3]: increase 15ppem by 1 pixel</td>
+</tr>
+<tr>
+<td> </td>
+<td>2</td>
+<td>deltaValue[4]: increase 16ppem by 1 pixel</td>
+</tr>
+<tr>
+<td>2200</td>
+<td>2</td>
+<td>deltaValue[5]: increase 17ppem by 1 pixel
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>DeviceTableFormat2</b><br>
+YDevice</td>
+<td>Device Table definition</td>
+</tr>
+<tr>
+<td>000C</td>
+<td>12</td>
+<td>startSize</td>
+</tr>
+<tr>
+<td>0011</td>
+<td>17</td>
+<td>endSize — six delta values (sizes 12 to 17)</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>deltaFormat: LOCAL_4_BIT_DELTAS</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>deltaValue[0]: increase 12ppem by 1 pixel</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>deltaValue[1]: increase 13ppem by 1 pixel</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>deltaValue[2]: increase 14ppem by 1 pixel</td>
+</tr>
+<tr>
+<td>1111</td>
+<td>1</td>
+<td>deltaValue[3]: increase 15ppem by 1 pixel</td>
+</tr>
+<tr>
+<td> </td>
+<td>2</td>
+<td>deltaValue[4]: increase 16ppem by 1 pixel</td>
+</tr>
+<tr>
+<td>2200</td>
+<td>2</td>
+<td>deltaValue[5]: increase 17ppem by 1 pixel</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example18"></a></p>
+<h3 id="example-18-markarray-table-and-markrecord">Example 18: MarkArray table and MarkRecord</h3>
+<p>Example 18 shows a MarkArray table with class and attachment point data for two accent marks, a grave and a cedilla. Two MarkRecords are defined, one for each covered mark glyph. The first MarkRecord assigns a mark class value of 0 to accents placed above base glyphs, such as the grave, and has an offset to a graveMarkAnchor table. The second MarkRecord assigns a mark class value of 1 for all accents positioned below base glyphs, such as the cedilla, and has an offset to a cedillaMarkAnchor table.</p>
+<p><em>Example 18</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>MarkArray</b><br>
+MarkGlyphsArray</td>
+<td>MarkArray table definition</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>markCount</td>
+</tr>
+<tr>
+<td></td>
+<td>markRecords[0]</td>
+<td>for first mark in markCoverage table: grave</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>markClass — for marks placed above base glyphs</td>
+</tr>
+<tr>
+<td>000A</td>
+<td>graveMarkAnchor</td>
+<td>markAnchorOffset</td>
+</tr>
+<tr>
+<td></td>
+<td>markRecords[1]</td>
+<td>for second mark in markCoverage table: cedilla</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>markClass — for marks placed below base glyphs</td>
+</tr>
+<tr>
+<td>0010</td>
+<td>cedillaMarkAnchor</td>
+<td>markAnchorOffset</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

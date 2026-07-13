@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>name — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/name">https://learn.microsoft.com/en-us/typography/opentype/spec/name</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="name--naming-table">name — Naming Table</h1>
+<p>The naming table allows multilingual strings to be associated with the OpenType™ font. These strings can represent copyright notices, font names, family names, style names, and so on. To keep this table short, the font manufacturer may wish to make a limited set of entries in some small set of languages; later, the font can be “localized” and the strings translated or added. Other parts of the OpenType font that require these strings can refer to them using a language-independent name ID. In addition to language variants, the table also allows for platform-specific character-encoding variants. Applications that need a particular string can look it up by its platform ID, encoding ID, language ID and name ID. Note that different platforms may have different requirements for the encoding of strings.</p>
+<p>Many newer platforms can use strings intended for different platforms if a font does not include strings for that platform. Some applications might display incorrect strings, however, if strings for the current platform are not included.</p>
+<p><a id="nameHeader"></a></p>
+<h2 id="naming-table-header">Naming table header</h2>
+<p>There are two versions of the Naming Table. Version 0 uses platform-specific, numeric language identifiers. Version 1 allows for use of language-tag strings to indicate the language of strings. Both versions include variable-size string-data storage, and an array of name records that are used to identify the type of string (name ID), platform, encoding and language variants of the string, and the location within the storage.</p>
+<p><a id="nameHeader_0"></a></p>
+<h3 id="naming-table-version-0">Naming table version 0</h3>
+<p>The version 0 naming table is organized as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>version</td>
+<td>Table version number (=0).</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>count</td>
+<td>Number of name records.</td>
+</tr>
+<tr>
+<td>Offset16</td>
+<td>storageOffset</td>
+<td>Offset to start of string storage (from start of table).</td>
+</tr>
+<tr>
+<td>NameRecord</td>
+<td>nameRecord[count]</td>
+<td>The name records where <em>count</em> is the number of records.</td>
+</tr>
+<tr>
+<td>(Variable)</td>
+<td></td>
+<td>Storage for the actual string data.</td>
+</tr>
+</tbody>
+</table>
+<p>Version 0 differs from version 1 in regard to handling of language identification: it uses only numeric language IDs, which generally are values less than 0x8000 and have platform-specific interpretations. See Name Records below for more detail.</p>
+<p><a id="nameHeader_1"></a></p>
+<h3 id="naming-table-version-1">Naming table version 1</h3>
+<p>The version 1 naming table adds additional elements, as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>version</td>
+<td>Table version number (=1).</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>count</td>
+<td>Number of name records.</td>
+</tr>
+<tr>
+<td>Offset16</td>
+<td>storageOffset</td>
+<td>Offset to start of string storage (from start of table).</td>
+</tr>
+<tr>
+<td>NameRecord</td>
+<td>nameRecord[count]</td>
+<td>The name records where <em>count</em> is the number of records.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>langTagCount</td>
+<td>Number of language-tag records.</td>
+</tr>
+<tr>
+<td>LangTagRecord</td>
+<td>langTagRecord[langTagCount]</td>
+<td>The language-tag records where <em>langTagCount</em> is the number of records.</td>
+</tr>
+<tr>
+<td>(Variable)</td>
+<td></td>
+<td>Storage for the actual string data.</td>
+</tr>
+</tbody>
+</table>
+<p>When version 1 is used, the language IDs in name records can be less than or greater than 0x8000. If a language ID is less than 0x8000, it has a platform-specific interpretation as with a version 0 naming table. If a language ID is equal to or greater than 0x8000, it is associated with a language-tag record (LangTagRecord) that references a language-tag string. In this way, the language ID is associated with a language-tag string that specifies the language for name records using that language ID, regardless of the platform. These can be used for any platform that supports this language-tag mechanism.</p>
+<p>A font using a version 1 naming table may use a combination of platform-specific language IDs as well as language-tag records for a given platform and encoding.</p>
+<p><a id="langTagRec"></a></p>
+<p>Each LangTagRecord is organized as follows:</p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="length_ltr">
+<td>uint16</td>
+<td>length</td>
+<td>Language-tag string length (in bytes).</td>
+</tr>
+<tr id="offset_ltr">
+<td>Offset16</td>
+<td>langTagOffset</td>
+<td>Language-tag string offset from start of storage area (in bytes).</td>
+</tr>
+</tbody>
+</table>
+<p>Language-tag strings stored in the naming table must be encoded in UTF-16BE. The language tags must conform to <a href="https://tools.ietf.org/html/bcp47" data-linktype="external">IETF specification BCP 47</a>. This provides tags such as “en”, “fr-CA” and “zh-Hant” to identify languages, including dialects, written form and other language variants.</p>
+<p>The language-tag records are associated sequentially with language IDs starting with 0x8000. Each language-tag record corresponds to a language ID one greater than that for the previous language-tag record. Thus, language IDs associated with language-tag records must be within the range 0x8000 to 0x8000 + langTagCount - 1. If a name record uses a language ID that is greater than this, the identity of the language is unknown; such name records should not be used.</p>
+<p>For example, suppose a font has two language-tag records referencing strings in the storage: the first references the string “en”, and the second references the string “zh-Hant-HK” In this case, the language ID 0x8000 is used in name records to index English-language strings. The language ID 0x8001 is used in name records to index strings in Traditional Chinese as used in Hong Kong SAR.</p>
+<p><a id="nameRecord"></a></p>
+<h2 id="name-records">Name records</h2>
+<p>Each string in the string storage is referenced by a name record. The name record has a multi-part key, to identify the logical type of string and its language or platform-specific implementation variants, plus the location of the string in the string storage.</p>
+<p>Each NameRecord is organized as follows:</p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="platformID_nr">
+<td>uint16</td>
+<td>platformID</td>
+<td>Platform ID.</td>
+</tr>
+<tr id="encodingID_nr">
+<td>uint16</td>
+<td>encodingID</td>
+<td>Platform-specific encoding ID.</td>
+</tr>
+<tr id="languageID_nr">
+<td>uint16</td>
+<td>languageID</td>
+<td>Language ID.</td>
+</tr>
+<tr id="nameID_nr">
+<td>uint16</td>
+<td>nameID</td>
+<td>Name ID.</td>
+</tr>
+<tr id="length_nr">
+<td>uint16</td>
+<td>length</td>
+<td>String length (in bytes).</td>
+</tr>
+<tr id="offset_nr">
+<td>Offset16</td>
+<td>stringOffset</td>
+<td>String offset from start of storage area (in bytes).</td>
+</tr>
+</tbody>
+</table>
+<p>The name ID identifies a logical string category, such as family name or copyright. Name IDs are the same for all platforms and languages; these are described in detail below. The other three elements of the key allow for platform-specific implementations: a platform ID, a platform-specific encoding ID, and a language ID.</p>
+<p>As with encoding records in the <a href="cmap.html" data-linktype="relative-path">'cmap' table</a>, name records must be sorted first by platform ID, then by platform-specific encoding ID, then by language ID, and then by name ID. Descriptions of the various IDs follow.</p>
+<h2 id="platform-encoding-and-language">Platform, encoding and language</h2>
+<p>The platform, encoding and language IDs of a name record allow for platform-specific implementations. Different platforms can support different encodings, and different languages. All encoding IDs are platform-specific. Language IDs are similarly platform-specific, except in the case of IDs used in conjunction with the language-tag mechanism of naming table version 1, described above.</p>
+<blockquote>
+<p><em>Note:</em> Platform IDs, platform-specific encoding IDs and, in some cases, platform-specific language IDs are also used in the 'cmap' table.</p>
+</blockquote>
+<p>Language IDs refer to a value that identifies the language in which a particular string is written. Values less than 0x8000 are defined on a platform-specific basis. A version 0 naming table must use only language ID values less than 0x8000 from the platform-specific enumerations given below. (Exceptions to this requirement are permitted, however, in the case of user-defined platforms — platform IDs 240 to 255.) Values greater than or equal to 0x8000 may be used in a version 1 naming table in conjunction with language-tag records, as described above. Not all platforms have platform-specific language IDs, and not all platforms support language-tag records.</p>
+<p>Tables with detailed listings of platform, encoding and language IDs used within the 'name' table are provided at the end of this chapter. See <a href="#platform-encoding-and-language-ids" data-linktype="self-bookmark">Platform, encoding and language IDs</a>.</p>
+<p><a id="nameIDs"></a></p>
+<h2 id="name-ids">Name IDs</h2>
+<p>The following name IDs are pre-defined and apply to all platforms unless indicated otherwise. Name IDs 26 to 255, inclusive, are reserved for future standard names. Name IDs 256 to 32767, inclusive, are reserved for font-specific names such as those referenced by a font’s layout features.</p>
+<table>
+<tbody>
+<tr>
+<th>ID</th>
+<th>Meaning</th>
+</tr>
+<tr id="nid0">
+<td>0</td>
+<td>Copyright notice.</td>
+</tr>
+<tr id="nid1">
+<td>1</td>
+<td>Font Family name. The Font Family name is used in combination with Font Subfamily name (name ID 2), and should be shared among at most four fonts that differ only in weight or style (italic/oblique), as described below.
+<br><br>
+This four-way distinction should also be reflected in the <a href="os2.html#fss" data-linktype="relative-path">OS/2.fsSelection</a> field, using bits 0 and 5.
+<br><br>
+While some platforms or applications do not have this constraint, many existing applications that use this pair of names assume that a Font Family name is shared by at most four fonts that form a font style-linking group: regular, italic (or oblique), bold, and bold italic (or bold oblique). To be compatible with the broadest range of platforms and applications, it is strongly recommended that fonts limit use of Font Family name in this manner.
+<br><br>
+For extended typographic families that includes fonts other than the four basic styles (regular, italic, bold, bold italic), it is strongly recommended that name IDs <a href="#nid16" data-linktype="self-bookmark">16</a> and <a href="#nid17" data-linktype="self-bookmark">17</a> be used in fonts to create an extended, typographic grouping. (See examples provided below.)
+<br><br>
+It is also strongly recommended that applications support extended typographic-family groupings using name IDs 16 and 17. Note that variable fonts can include a large number of named instances, each of which will use a shared typographic family name (name ID 16) and will have a typographic subfamily name (equivalent to name ID 17). Applications that assume a four-style family grouping based on name IDs 1 and 2 are likely to provide a poor user experience with variable fonts.
+<br><br>
+For fonts within an extended typographic family that fall outside the basic four-way distinction, the distinguishing attributes should be reflected in the Font Family name so that those fonts appear as a separate font family in applications that support only four-member families. For example, the Font Family name for the Arial Narrow font is “Arial Narrow”; the Font Family name for the Arial Black font is “Arial Black”. Note that, in such cases, name ID 16 should also be included with a shared name (e.g., "Arial") that reflects the full, typographic family.</td>
+</tr>
+<tr id="nid2">
+<td>2</td>
+<td>Font Subfamily name. The Font Subfamily is used in combination with Font Family name (name ID 1), and distinguishes the fonts in a group with the same Font Family name. This should be used for weight and style (italic/oblique) variants only, as described below.
+<br><br>
+This four-way distinction should also be reflected in the <a href="os2.html#fss" data-linktype="relative-path">OS/2.fsSelection</a> field, using bits 0 and 5.
+<br><br>
+While some platforms or applications do not have this constraint, many existing applications that use name IDs 1 and 2 assume that a Font Family name is shared by at most four fonts that form a font style-linking group, and that Font Subfamily names would reflect one of the four basic styles, regular, italic (or oblique), bold, and bold italic (or bold oblique). To be compatible with the broadest range of platforms and applications, it is strongly recommended that fonts should limit use of Font Subfamily in this manner.
+<br><br>
+For extended typographic families that includes fonts other than the four basic styles (regular, italic, bold, bold italic), it is strongly recommended that name IDs <a href="#nid16" data-linktype="self-bookmark">16</a> and <a href="#nid17" data-linktype="self-bookmark">17</a> be used in fonts to create an extended, typographic grouping.
+<br><br>
+Within an extended typographic family that includes fonts beyond regular, bold, italic, or bold italic, distinctions for these other fonts are made in the Font Family name so that fonts appear to be in separate families. In some cases, this can lead to specifying a Subfamily name of “Regular” for a font that might not otherwise be considered a <em>regular</em> font. For example, the Arial Black font has a Font Family name of “Arial Black” and a Subfamily name of “Regular”. Note that, in such cases, name IDs 16 and 17 should also be included, using a shared value for name ID 16 (e.g., "Arial") that reflects the full typographic family, and values for name ID 17 that appropriately reflect the actual design variant of each font.
+<br><br>
+Fonts that are not part of an extended typographic family and with no distinctive weight or style (e.g., medium weight, not italic) should use "Regular" as the Font Subfamily name (for English).
+</td>
+</tr>
+<tr id="nid3">
+<td>3</td>
+<td>Unique font identifier.</td>
+</tr>
+<tr id="nid4">
+<td>4</td>
+<td>Full font name that reflects all family and relevant subfamily descriptors. The full font name is generally a combination of name IDs 1 and 2, or of name IDs 16 and 17, or a similar human-readable variant.
+<br><br>
+For fonts in extended typographic families (that is, families that include more than regular, italic, bold, and bold italic variants), values for name IDs 1 and 2 are normally chosen to provide compatibility with certain applications that assume a family has at most four style-linked fonts. In that case, some fonts may end up with a Subfamily name (name ID 2) of “Regular” even though the font would not be considered, typographically, a <em>regular</em> font. For such non-regular fonts in which name ID 2 is specified as “Regular”, the “Regular” descriptor would generally be omitted from name ID 4. For example, the Arial Black font has a Font Family name (name ID 1) of “Arial Black” and a Subfamily name (name ID 2) of “Regular”, but has a full font name (name ID 4) of “Arial Black”. Note that name IDs 16 and 17 should also be included in these fonts, and that name ID 4 would typically be a combination of name IDs 16 and 17, without needing any additional qualifications regarding “Regular”.</td>
+</tr>
+<tr id="nid5">
+<td>5</td>
+<td>Version string. Should begin with the pattern “Version &lt;number&gt;.&lt;number&gt;” (upper case, lower case, or mixed, with a space between “Version” and the number).
+<br><br>
+The string must contain a version number of the following form: one or more digits (0-9) of value less than 65,535, followed by a period, followed by one or more digits of value less than 65,535. Any character other than a digit will terminate the minor number. A character such as “;” is helpful to separate different pieces of version information.
+<br><br>
+The first such match in the string can be used by installation software to compare font versions. Some installers could require the string to start with “Version ”, followed by a version number as above.</td>
+</tr>
+<tr id="nid6">
+<td>6</td>
+<td>PostScript name for the font. Name ID 6 specifies a string which is used to invoke a PostScript language font that corresponds to this OpenType font. When translated to ASCII, the name string must be no longer than 63 characters and restricted to the printable ASCII subset, codes 33 to 126, except for the 10 characters '[', ']', '(', ')', '{', '}', '&lt;', '&gt;', '/', '%'.
+<br><br>
+In a CFF OpenType font, there is no requirement that this name be the same as the font name in the CFF’s Name INDEX. Thus, the same CFF may be shared among multiple font components in a Font Collection. See the <a href="recom.html#name" data-linktype="relative-path">'name' table section</a> of “Recommendations for OpenType fonts” for additional information.</td>
+</tr>
+<tr id="nid7">
+<td>7</td>
+<td>Trademark. This is used to save any trademark notice/information for this font. Such information should be based on legal advice. This is <em>distinctly</em> separate from the copyright.</td>
+</tr>
+<tr id="nid8">
+<td>8</td>
+<td>Manufacturer Name.</td>
+</tr>
+<tr id="nid9">
+<td>9</td>
+<td>Designer. Name of the designer of the typeface.</td>
+</tr>
+<tr id="nid10">
+<td>10</td>
+<td>Description. Description of the typeface. Can contain revision information, usage recommendations, history, features, etc.</td>
+</tr>
+<tr id="nid11">
+<td>11</td>
+<td>URL of Vendor. URL of font vendor (with protocol, e.g., http://, ftp://). If a unique serial number is embedded in the URL, it can be used to register the font.</td>
+</tr>
+<tr id="nid12">
+<td>12</td>
+<td>URL of Designer. URL of typeface designer (with protocol, e.g., http://, ftp://).</td>
+</tr>
+<tr id="nid13">
+<td>13</td>
+<td>License Description. Description of the license or licenses under which the font is provided. This could be a reference to a named license agreement (e.g., a common open source licenses), identification of a software-use license under which a font is bundled, information about where to locate an external license (see also name ID 14), a summary of permitted uses, or the full legal text of a license agreement. It is prudent to seek legal advice on the content of this name ID to avoid possible conflict of interpretation between it and the license(s).</td>
+</tr>
+<tr id="nid14">
+<td>14</td>
+<td>License Info URL. URL where additional licensing information can be found.</td>
+</tr>
+<tr id="nid15">
+<td>15</td>
+<td>Reserved.</td>
+</tr>
+<tr id="nid16">
+<td>16</td>
+<td>Typographic Family name. The typographic family grouping doesn’t impose any constraints on the number of faces within it, in contrast with the 4-style family grouping (ID 1), which is present both for historical reasons and to express style linking groups. If name ID 16 is absent, then name ID 1 is considered to be the typographic family name. (In earlier versions of the specification, name ID 16 was known as “Preferred Family”.)</td>
+</tr>
+<tr id="nid17">
+<td>17</td>
+<td>Typographic Subfamily name. This allows font designers to specify a subfamily name within the typographic family grouping. This string must be unique within a particular typographic family. If it is absent, then name ID 2 is considered to be the typographic subfamily name. (In earlier versions of the specification, name ID 17 was known as “Preferred Subfamily”.)</td>
+</tr>
+<tr id="nid18">
+<td>18</td>
+<td>Compatible Full (Macintosh only). On the Macintosh, the menu name is constructed using the FOND resource. This usually matches the Full Name. If you want the name of the font to appear differently than the Full Name, you can insert the Compatible Full Name in ID 18.</td>
+</tr>
+<tr id="nid19">
+<td>19</td>
+<td>Sample text. This can be the font name, or any other text that the designer thinks is the best sample to display the font in.</td>
+</tr>
+<tr id="nid20">
+<td>20</td>
+<td>PostScript CID findfont name. Its presence in a font means that the nameID 6 holds a PostScript font name that is meant to be used with the “composefont” invocation in order to invoke the font in a PostScript interpreter. See the definition of name ID 6.
+<br><br>
+The value held in the name ID 20 string is interpreted as a PostScript font name that is meant to be used with the “findfont” invocation, in order to invoke the font in a PostScript interpreter.
+<br><br>
+When translated to ASCII, this name string must be restricted to the printable ASCII subset, codes 33 through 126, except for the 10 characters: '[', ']', '(', ')', '{', '}', '&lt;', '&gt;', '/', '%'.
+<br><br>
+See <a href="recom.html" data-linktype="relative-path">“Recommendations for OTF fonts”</a> for additional information</td>
+</tr>
+<tr id="nid21">
+<td>21</td>
+<td>WWS Family Name. Used to provide a WWS-conformant family name in case the entries for IDs 16 and 17 do not conform to the WWS model. (That is, in case the entry for ID 17 includes qualifiers for some attribute other than weight, width or slope.) If bit 8 of the OS/2 fsSelection field is set, a WWS Family Name entry should not be needed and should not be included. Conversely, if an entry for this ID is included, bit 8 should not be set. (See <a href="os2.html#fsselection" data-linktype="relative-path">OS/2.fsSelection</a> field for details.) Examples of name ID 21: “Minion Pro Caption” and “Minion Pro Display”. (Name ID 16 would be “Minion Pro” for these examples.)<br><br>See additional remarks regarding IDs 21 and 22 below.</td>
+</tr>
+<tr id="nid22">
+<td>22</td>
+<td>WWS Subfamily Name. Used in conjunction with ID 21, this ID provides a WWS-conformant subfamily name (reflecting only weight, width and slope attributes) in case the entries for IDs 16 and 17 do not conform to the WWS model. As in the case of ID 21, use of this ID should correlate inversely with bit 8 of the OS/2 fsSelection field being set. Examples of name ID 22: “Semibold Italic”, “Bold Condensed”. (Name ID 17 could be “Semibold Italic Caption”, or “Bold Condensed Display”, for example.)<br><br>See additional remarks regarding IDs 21 and 22 below.
+</td>
+</tr>
+<tr id="nid23">
+<td>23</td>
+<td>Light Background Palette. This ID, if used in the CPAL table’s Palette Labels Array, specifies that the corresponding color palette in the CPAL table is appropriate to use with the font when displaying it on a light background such as white. Strings for this ID are for use as user interface strings associated with this palette.
+</td>
+</tr>
+<tr id="nid24">
+<td>24</td>
+<td>Dark Background Palette. This ID, if used in the CPAL table’s Palette Labels Array, specifies that the corresponding color palette in the CPAL table is appropriate to use with the font when displaying it on a dark background such as black. Strings for this ID are for use as user interface strings associated with this palette.
+</td>
+</tr>
+<tr id="nid25">
+<td>25</td>
+<td>Variations PostScript Name Prefix. If present in a variable font, it may be used as the family prefix in the PostScript Name Generation for Variation Fonts algorithm. The character set is restricted to ASCII-range uppercase Latin letters, lowercase Latin letters, and digits. All name strings for name ID 25 within a font, when converted to ASCII, must be identical. See <a href="https://adobe-type-tools.github.io/font-tech-notes/pdfs/5902.AdobePSNameGeneration.pdf" data-linktype="external">Adobe Technical Note #5902: “PostScript Name Generation for Variation Fonts”</a> for reasons to include name ID 25 in a font, and for examples. For general information on OpenType Font Variations, see the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</td>
+</tr>
+</tbody>
+</table>
+<p>For a typographic family that includes member faces that differ from Regular in relation to attributes other than weight, width or slope, there may also be some member faces that differ only in relation to these three attributes. For example, the Minion Pro family includes Minion Pro Display, but also includes Minion Pro Bold and Minion Pro Italic. IDs 21 and 22 should be used only in those fonts that differ from the Regular face in terms of an attribute other than weight, width or slope. For example, IDs 21 and 22 should be used in Minion Pro Display, but not in Minion Pro Bold or Minion Pro Italic.</p>
+<blockquote>
+<p><em>Note:</em> While both Apple and Microsoft support the same set of name strings, the interpretations may be somewhat different. But since name strings are stored by platform, encoding and language (placing separate strings for both Apple and MS platforms), this should not present a problem.</p>
+</blockquote>
+<p>The key information for this table for Microsoft platforms relates to the use of name IDs 1, 2, 4, 16 and 17. Note that some newer applications will use name IDs 16 and 17, while some legacy applications require name IDs 1 and 2 and also assume certain limitations on these values (see descriptions of name IDs 1 and 2 above). Fonts should include all of these strings for the broadest application compatibility. To better understand how to set values for these name IDs, some <a href="namesmp" data-linktype="relative-path">examples</a> of name usage, weight class and style flags have been created.</p>
+<p><a id="examples"></a></p>
+<h3 id="name-id-examples">Name ID examples</h3>
+<p>The following are examples of how these strings might be defined, based on Times New Roman Bold:</p>
+<dl><dd>
+0. The copyright string from the font vendor. <em>© Copyright the Monotype Corporation plc, 1990</em>
+<br><br>
+1. The name the user sees. <em>Times New Roman</em>
+<br><br>
+2. The name of the style. <em>Bold</em>
+<br><br>
+3. A unique identifier that applications can store to identify the font being used. <em>Monotype: Times New Roman Bold: 1990</em>
+<br><br>
+4. The complete, unique, human readable name of the font. This name is used by Windows. <em>Times New Roman Bold</em>
+<br><br>
+5. Release and version information from the font vendor. <em>Version 1.00 June 1, 1990, initial release</em>
+<br><br>
+6. The name the font will be known by on a PostScript printer. <em>TimesNewRoman-Bold</em>
+<br><br>
+7. Trademark string. <em>Times New Roman is a registered trademark of the Monotype Corporation.</em>
+<br><br>
+8. Manufacturer. <em>Monotype Corporation</em>
+<br><br>
+9. Designer. <em>Stanley Morison</em>
+<br><br>
+10. Description. <em>Designed in 1932 for the Times of London newspaper. Excellent readability and a narrow overall width, allowing more words per line than most fonts.</em>
+<br><br>
+11. URL of Vendor. <em>http://www.monotype.com</em>
+<br><br>
+12. URL of Designer. <em>http://www.monotype.com</em>
+<br><br>
+13. License Description. <em>This font may be installed on all of your machines and printers, but you may not sell or give these fonts to anyone else.</em>
+<br><br>
+14. License Info URL. <em>http://www.monotype.com/license/</em>
+<br><br>
+15. Reserved.
+<br><br>
+16. Preferred Family. No name string present, since it is the same as name ID 1 (Font Family name).
+<br><br>
+17. Preferred Subfamily. No name string present, since it is the same as name ID 2 (Font Subfamily name).
+<br><br>
+18. Compatible Full (Macintosh only). No name string present, since it is the same as name ID 4 (Full name).
+<br><br>
+19. Sample text. <em>The quick brown fox jumps over the lazy dog.</em>
+<br><br>
+20. PostScript CID findfont name. No name string present. Thus, the PostScript Name defined by name ID 6 should be used with the “findfont” invocation for locating the font in the context of a PostScript interpreter.
+<br><br>
+21. WWS family name: Since Times New Roman is a WWS font, this field does not need to be specified. If the font contained styles such as “caption”, “display”, “handwriting”, etc., that would be noted here.
+<br><br>
+22. WWS subfamily name: Since Times New Roman is a WWS font, this field does not need to be specified.
+<br><br>
+23. Light background palette name. No name string present, since this is not a color font.
+<br><br>
+24. Dark background palette name. No name string present, since this is not a color font.
+<br><br>
+25. Variations PostScript name prefix. No name string present, since this is not a variable font.
+</dd></dl>
+<p>The following is an example of only name IDs 6 and 20 in the CFF OpenType Japanese font Kozuka Mincho Std Regular (other name IDs are also present in this font):
+<br><br>
+6. PostScript name: <em>KozMinStd-Regular</em>. Since a name ID 20 is present in the font (see below), then the PostScript name defined by name ID 6 should be used with the “composefont” invocation for locating the font in the context of a PostScript interpreter.
+<br><br>
+20. PostScript CID findfont name: <em>KozMinStd-Regular-83pv-RKSJ-H</em>, in a name record of Platform 1 [Macintosh], Platform-specific script 1 [Japanese], Language: 0xFFFF [English]. This name string is a PostScript name that should be used with the “findfont” invocation for locating the font in the context of a PostScript interpreter, and is associated with the encoding specified by the following 'cmap' subtable, which must be present in the font: Platform: 1 [Macintosh]; Platform-specific encoding: 1 [Japanese]; Language: 0 [not language-specific].</p>
+<p>The following is an example of family/subfamily naming for an extended, WWS-only family. Consider Adobe Caslon Pro, with six members: upright and italic versions of regular, semibold and bold weights. (Bit 8 of the fsSelection field of the OS/2 table, version 4, should be set for all six fonts, and none should include 'name' entries for IDs 21 or 22.)</p>
+<ul>
+<li>Adobe Caslon Pro Regular:<br>
+Name ID 1: Adobe Caslon Pro<br>
+Name ID 2: Regular</li>
+<li>Adobe Caslon Pro Italic:<br>
+Name ID 1: Adobe Caslon Pro<br>
+Name ID 2: Italic</li>
+<li>Adobe Caslon Pro Semibold:<br>
+Name ID 1: Adobe Caslon Pro<br>
+Name ID 2: Bold<br>
+Name ID 16: Adobe Caslon Pro<br>
+Name ID 17: Semibold</li>
+<li>Adobe Caslon Pro Semibold Italic:<br>
+Name ID 1: Adobe Caslon Pro<br>
+Name ID 2: Bold Italic<br>
+Name ID 16: Adobe Caslon Pro<br>
+Name ID 17: Semibold Italic</li>
+<li>Adobe Caslon Pro Bold:<br>
+Name ID 1: Adobe Caslon Pro Bold<br>
+Name ID 2: Regular<br>
+Name ID 16: Adobe Caslon Pro<br>
+Name ID 17: Bold</li>
+<li>Adobe Caslon Pro Bold Italic:<br>
+Name ID 1: Adobe Caslon Pro Bold<br>
+Name ID 2: Italic<br>
+Name ID 16: Adobe Caslon Pro<br>
+Name ID 17: Bold Italic</li>
+</ul>
+<p>The following is an example of family/subfamily naming for an extended, non-WWS family. Consider Minion Pro Opticals, with 32 member fonts: upright and italic versions of regular, medium, semibold and bold weights in each of four optical sizes: regular, caption, display and subhead. The following show names for a sampling of the fonts in this family. (Bit 8 of the fsSelection field in the OS/2 table, version 4, should be set in those fonts that do not include 'name' entries for IDs 21 or 22, and only in those fonts.)</p>
+<ul>
+<li>Minion Pro Regular:<br>
+Name ID 1: Minion Pro<br>
+Name ID 2: Regular</li>
+<li>Minion Pro Italic:<br>
+Name ID 1: Minion Pro<br>
+Name ID 2: Italic</li>
+<li>Minion Pro Semibold:<br>
+Name ID 1: Minion Pro SmBd<br>
+Name ID 2: Regular<br>
+Name ID 16: Minion Pro<br>
+Name ID 17: Semibold</li>
+<li>Minion Pro Semibold Italic:<br>
+Name ID 1: Minion Pro SmBd<br>
+Name ID 2: Italic<br>
+Name ID 16: Minion Pro<br>
+Name ID 17: Semibold Italic</li>
+<li>Minion Pro Caption:<br>
+Name ID 1: Minion Pro Capt<br>
+Name ID 2: Regular<br>
+Name ID 16: Minion Pro<br>
+Name ID 17: Caption<br>
+Name ID 21: Minion Pro Caption<br>
+Name ID 22: Regular</li>
+<li>Minion Pro Semibold Italic Caption:<br>
+Name ID 1: Minion Pro SmBd Capt<br>
+Name ID 2: Italic<br>
+Name ID 16: Minion Pro<br>
+Name ID 17: Semibold Italic Caption<br>
+Name ID 21: Minion Pro Caption<br>
+Name ID 22: Semibold Italic</li>
+</ul>
+<p><a id="platformEncodingLanguageIds"></a></p>
+<h2 id="platform-encoding-and-language-ids">Platform, encoding and language IDs</h2>
+<p>The following sections provide details regarding platform IDs, platform-specific encoding IDs, and platform-specific language IDs used in the 'name' table. For details regarding platform, encoding or language IDs used in the 'cmap' table, see <a href="cmap.html#encoding-records-and-encodings" data-linktype="relative-path">Encoding records and encodings</a> in the 'cmap' table chapter.</p>
+<p><a id="platformIDs"></a></p>
+<h3 id="platform-ids">Platform IDs</h3>
+<p>The following platform IDs may be used in the 'name' table:</p>
+<table>
+<thead>
+<tr>
+<th>Platform&nbsp;ID</th>
+<th>Platform name</th>
+<th>Platform-specific encoding IDs</th>
+<th>Language IDs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Unicode</td>
+<td><a href="#enc0" data-linktype="self-bookmark">Various</a></td>
+<td>None</td>
+</tr>
+<tr>
+<td>1</td>
+<td>Macintosh</td>
+<td><a href="#enc1" data-linktype="self-bookmark">Script manager code</a></td>
+<td><a href="#lang1" data-linktype="self-bookmark">Various</a></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Windows</td>
+<td><a href="#enc3" data-linktype="self-bookmark">Windows encoding</a></td>
+<td><a href="#windows-language-ids" data-linktype="self-bookmark">Various</a></td>
+</tr>
+</tbody>
+</table>
+<p>Note that other platform IDs have been defined for use only in the 'cmap' table.</p>
+<p><a id="encLangIDs_platID0"></a></p>
+<h3 id="unicode-platform-platform-id--0">Unicode platform (platform ID = 0)</h3>
+<p><a id="enc0"></a></p>
+<p>The following encoding IDs for the Unicode platform may be used in the 'name' table:</p>
+<table>
+<tbody>
+<tr>
+<th>Encoding&nbsp;ID</th>
+<th>Description</th>
+</tr>
+<tr id="encID0_pid0">
+<td>0</td>
+<td>Unicode 1.0 semantics—<em>deprecated</em></td>
+</tr>
+<tr id="encID1_pid0">
+<td>1</td>
+<td>Unicode 1.1 semantics—<em>deprecated</em></td>
+</tr>
+<tr id="encID2_pid0">
+<td>2</td>
+<td>ISO/IEC 10646 semantics—<em>deprecated</em></td>
+</tr>
+<tr id="encID3_pid0">
+<td>3</td>
+<td>Unicode 2.0 and onwards semantics, Unicode BMP only</td>
+</tr>
+<tr id="encID4_pid0">
+<td>4</td>
+<td>Unicode 2.0 and onwards semantics, Unicode full repertoire</td>
+</tr>
+</tbody>
+</table>
+<p>Use of encoding IDs 0, 1 or 2 is deprecated. Either encoding ID 3 or 4 may be used for 'name' entries.</p>
+<p>Note that other platform IDs have been defined for use only in the 'cmap' table. Also note that a new encoding ID for the Unicode platform may sometimes be assigned when new 'cmap' subtable formats are defined, and these may also be appropriate for use in the 'name' table. For example, when 'cmap' subtable formats 10 and 12 were added to the specification, encoding ID 4 was added as well.</p>
+<p>There are no platform-specific language IDs defined for the Unicode platform. Language ID = 0 may be used for Unicode-platform strings, but this does not indicate any particular language. Language IDs greater than or equal to 0x8000 may be used together with language-tag records, as described above.</p>
+<p>Strings for the Unicode platform must be encoded in UTF-16BE.</p>
+<p><a id="encLangIDs_platID1"></a></p>
+<h3 id="macintosh-platform-platform-id--1">Macintosh platform (platform ID = 1)</h3>
+<p><a id="enc1"></a></p>
+<h4 id="macintosh-encoding-ids-script-manager-codes">Macintosh encoding IDs (script manager codes)</h4>
+<p>The following encoding IDs are defined for use with the Macintosh platform:</p>
+<table>
+<tbody>
+<tr>
+<th>Encoding ID</th>
+<th>Script</th>
+<th>Encoding ID</th>
+<th>Script</th>
+</tr>
+<tr id="encID0_pid1">
+<td>0</td>
+<td>Roman</td>
+<td id="encID17_pid1">17</td>
+<td>Malayalam</td>
+</tr>
+<tr id="encID1_pid1">
+<td>1</td>
+<td>Japanese</td>
+<td id="encID18_pid1">18</td>
+<td>Sinhalese</td>
+</tr>
+<tr id="encID2_pid1">
+<td>2</td>
+<td>Chinese (Traditional)</td>
+<td id="encID19_pid1">19</td>
+<td>Burmese</td>
+</tr>
+<tr id="encID3_pid1">
+<td>3</td>
+<td>Korean</td>
+<td id="encID20_pid1">20</td>
+<td>Khmer</td>
+</tr>
+<tr id="encID4_pid1">
+<td>4</td>
+<td>Arabic</td>
+<td id="encID21_pid1">21</td>
+<td>Thai</td>
+</tr>
+<tr id="encID5_pid1">
+<td>5</td>
+<td>Hebrew</td>
+<td id="encID22_pid1">22</td>
+<td>Laotian</td>
+</tr>
+<tr id="encID6_pid1">
+<td>6</td>
+<td>Greek</td>
+<td id="encID23_pid1">23</td>
+<td>Georgian</td>
+</tr>
+<tr id="encID7_pid1">
+<td>7</td>
+<td>Russian</td>
+<td id="encID24_pid1">24</td>
+<td>Armenian</td>
+</tr>
+<tr id="encID8_pid1">
+<td>8</td>
+<td>RSymbol</td>
+<td id="encID25_pid1">25</td>
+<td>Chinese (Simplified)</td>
+</tr>
+<tr id="encID9_pid1">
+<td>9</td>
+<td>Devanagari</td>
+<td id="encID26_pid1">26</td>
+<td>Tibetan</td>
+</tr>
+<tr id="encID10_pid1">
+<td>10</td>
+<td>Gurmukhi</td>
+<td id="encID27_pid1">27</td>
+<td>Mongolian</td>
+</tr>
+<tr id="encID11_pid1">
+<td>11</td>
+<td>Gujarati</td>
+<td id="encID28_pid1">28</td>
+<td>Geez</td>
+</tr>
+<tr id="encID12_pid1">
+<td>12</td>
+<td>Odia</td>
+<td id="encID29_pid1">29</td>
+<td>Slavic</td>
+</tr>
+<tr id="encID13_pid1">
+<td>13</td>
+<td>Bangla</td>
+<td id="encID30_pid1">30</td>
+<td>Vietnamese</td>
+</tr>
+<tr id="encID14_pid1">
+<td>14</td>
+<td>Tamil</td>
+<td id="encID31_pid1">31</td>
+<td>Sindhi</td>
+</tr>
+<tr id="encID15_pid1">
+<td>15</td>
+<td>Telugu</td>
+<td id="encID32_pid1">32</td>
+<td>Uninterpreted</td>
+</tr>
+<tr id="encID16_pid1">
+<td>16</td>
+<td>Kannada</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<p>Strings for the Macintosh platform (platform ID 1) use platform-specific single- or double-byte encodings according to the specified encoding ID for a given name record.</p>
+<p><a id="lang1"></a></p>
+<h4 id="macintosh-language-ids">Macintosh language IDs</h4>
+<p>For information on Macintosh platform-specific language IDs, consult <a href="https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6name.html" data-linktype="external">Apple’s TrueType Reference Manual</a>.</p>
+<h3 id="windows-platform-platform-id-3">Windows platform (platform ID= 3)</h3>
+<p><a id="enc3"></a></p>
+<h4 id="windows-encoding-ids">Windows encoding IDs</h4>
+<p>The following encoding IDs are defined for use with the Windows platform:</p>
+<table>
+<tbody>
+<tr>
+<th>Encoding ID</th>
+<th>Description</th>
+</tr>
+<tr id="encID0_pid3">
+<td>0</td>
+<td>Symbol</td>
+</tr>
+<tr id="encID1_pid3">
+<td>1</td>
+<td>Unicode BMP</td>
+</tr>
+<tr id="encID2_pid3">
+<td>2</td>
+<td>ShiftJIS</td>
+</tr>
+<tr id="encID3_pid3">
+<td>3</td>
+<td>PRC</td>
+</tr>
+<tr id="encID4_pid3">
+<td>4</td>
+<td>Big5</td>
+</tr>
+<tr id="encID5_pid3">
+<td>5</td>
+<td>Wansung</td>
+</tr>
+<tr id="encID6_pid3">
+<td>6</td>
+<td>Johab</td>
+</tr>
+<tr id="encID7_pid3">
+<td>7</td>
+<td>Reserved</td>
+</tr>
+<tr id="encID8_pid3">
+<td>8</td>
+<td>Reserved</td>
+</tr>
+<tr id="encID9_pid3">
+<td>9</td>
+<td>Reserved</td>
+</tr>
+<tr id="encID10_pid3">
+<td>10</td>
+<td>Unicode full repertoire</td>
+</tr>
+</tbody>
+</table>
+<p>Encoding IDs for platform 3 'name' entries should match the encoding IDs used for platform 3 subtables in the 'cmap' table. When building a Unicode font for Windows, the platform ID should be 3 and the encoding ID should be 1. When building a symbol font for Windows, the platform ID should be 3 and the encoding ID should be 0. If a font has records for encoding IDs 3, 4 or 5, the corresponding string data should be encoded using code pages 936, 950 and 949, respectively. Otherwise, all string data for platform 3 must be encoded in UTF-16BE.</p>
+<blockquote>
+<p><em>Note:</em> Some legacy Traditional Chinese fonts had name entries for platform 3, encoding ID 4 (Big5) with some string data encoded using code page 950 but with the string data for name ID 2 (font subfamily) encoded, instead, in UTF-16BE. For example, this was the case in the MingLi font included in the Traditional Chinese edition of Windows 95. Some older software implementations, including Windows GDI, allow for this exception.</p>
+</blockquote>
+<p><a id="encLangIDs_platID3"></a>
+<a id="lang3"></a></p>
+<h4 id="windows-language-ids">Windows language IDs</h4>
+<p>For information on Windows platform-specific language IDs and corresponding BCP 47 language tags, see <a href="/en-us/openspecs/windows_protocols/ms-lcid/70feba9f-294e-491e-b6eb-56532684c37f" data-linktype="absolute-path">[MS-LCID]: Windows Language Code Identifier (LCID) Reference</a>.</p>
+
+</body>
+</html>

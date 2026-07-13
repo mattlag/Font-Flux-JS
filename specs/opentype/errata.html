@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>errata — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/errata">https://learn.microsoft.com/en-us/typography/opentype/spec/errata</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="opentype-191-errata">OpenType 1.9.1 errata</h1>
+<!-- Entry ordering: from most recent (top) to least recent. -->
+<!-- If an error is corrected in the current version, not just listed here, then the correction should be included in the delta version of the spec, highlighted as a change from the previous version; and the correction should be added to the change history for the current version, with the notice, “(Post-release erratum.)”. -->
+<p>This page documents errors in the OpenType specification that have technical significance and could lead to incorrect implementations. The scope is limited to issues in which the OpenType 1.9.1 specification as originally published implies technical details that are contrary to the intended design. Corrections may include corrections to incorrect values related to certain table fields, incorrect formulas for computing certain values, or similar issues. Corrections will not include any changes to data structures. If the textual change required for the correction is minor, the correction will be made in the specification and also listed here. If larger textual changes are required, the issue may be described here, but actual changes may be left to a future version. In either case, the status will be indicated in the table below.</p>
+<p>Certain minor, editorial errors such as mis-spelling of words with no technical impact may on occasion be corrected silently, without notice or version update.</p>
+<table>
+<tbody>
+<tr>
+<th>Date</th>
+<th>Page</th>
+<th>Description</th>
+<th>Status</th>
+</tr>
+<tr>
+<td>9 October 2024</td>
+<td><a href="cff2.html" data-linktype="relative-path">CFF2 — Compact Font Format (CFF) Version 2</a></td>
+<td>The description of <b>StemSnapH</b> and <b>StemSnapV</b> included a statement suggesting that, if the values are blended in a variable font and the derived instance values are not in increasing order, then behavior is not defined. That is incorrect: the values are still valid.<br><br>
+Similarly, the discussion of blended stem and end hints included a statement suggesting that, if derived instance values for stems are not in order, then behavior is not defined. That is
+incorrect: the values are still valid, and the bit flag operands for <b>cntrmask</b> and <b>hintmask</b> operators reference stems in their encoded order.</td>
+<td>Corrected in 1.9.1 (2024-10-9).</td>
+</tr>
+<tr>
+<td>6 July 2024</td>
+<td><a href="chapter2.html" data-linktype="relative-path">OpenType™ Layout Common Table Formats</a></td>
+<td>In the description for the SequenceRuleSet table, the size for the seqRuleOffsets[] array incorrectly referred to a field name “posRuleCount” instead of the “seqRuleCount” field.</td>
+<td>Corrected in 1.9.1 (2024-7-6).</td>
+</tr>
+<tr>
+<td>19 March 2025</td>
+<td><a href="jstf.html" data-linktype="relative-path">JSTF — Justification Table</a></td>
+<td>The field name “gsubLookupIndices" in the JstfModList table is incorrect. In OpenType 1.9 and earlier, two justification modification list tables were documented, JstfGSUBModList and JstfGPOSModList, that were identical except for having distinct field names with “GSUB” and “GPOS”. In working drafts for ISO/IEC 14496-22 Open Font Format, 5th Edition, the separate tables were consolidated into the one JstfModList table. When incorporating a corresponding change in OpenType 1.9.1, revision of this field name was overlooked: the field name in the consolidated table should be “lookupIndices”.</td>
+<td>Corrected in 1.9.1 (2025-3-19).</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

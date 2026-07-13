@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mvar — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/mvar">https://learn.microsoft.com/en-us/typography/opentype/spec/mvar</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="mvar--metrics-variations-table">MVAR — Metrics Variations Table</h1>
+<p>The metrics variations table is used in variable fonts to provide variations for font-wide metric values found in the OS/2 table and other font tables. For a general overview of OpenType Font Variation and terminology related to variations, see the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p>The metrics variations table contains an <em>item variation store</em> structure to represent variation data. The item variation store and constituent formats are described in the chapter, <a href="otvarcommonformats.html" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>. The item variation store is also used in the <a href="hvar.html" data-linktype="relative-path">HVAR</a> and <a href="gdef.html" data-linktype="relative-path">GDEF</a> tables, but is different from the formats for variation data used in the <a href="cvar.html" data-linktype="relative-path">'cvar'</a> or <a href="gvar.html" data-linktype="relative-path">'gvar'</a> tables.</p>
+<p>The item variation store format uses <em>delta-set indices</em> to reference variation delta data for particular target font-data items to which they are applied. Data external to the item variation store identifies the delta-set index to be used for each given target item. Within the MVAR table, an array of <em>value tag</em> records identifies a set of target items, and provides the delta-set index used for each. The target items are identified by four-byte tags, with a given tag representing some font-wide value found in another table. For example, the tag 'hasc' represents the OS/2.sTypoAscender value. More details on tags are provided below.</p>
+<p>The item variation store format uses a two-level organization for variation data: a store can have multiple <em>item variation data</em> subtables, and each subtable has multiple delta-set rows. A delta-set index is a two-part index: an outer index that selects a particular item variation data subtable, and an inner index that selects a particular delta-set row within that subtable. A value record specifies both the outer and inner portions of the delta-set index.</p>
+<blockquote>
+<p><em>Note:</em> Apple platforms allow for use of a font metrics ('fmtx') table to specify various font-wide metric values by reference to the X or Y coordinates of contour points for a specified “magic” glyph. OpenType Font Variations does not use the font metrics table.</p>
+</blockquote>
+<p>The metrics variations table must be used in combination with a <a href="fvar.html" data-linktype="relative-path">font variations ('fvar')</a> table and other required or optional tables used in variable fonts. See <a href="otvaroverview.html#vartables" data-linktype="relative-path">Variation Data Tables and Miscellaneous Requirements</a> in the OpenType Font Variations Overview chapter for additional details.</p>
+<p><a name="tableFormats"></a></p>
+<h2 id="table-formats">Table Formats</h2>
+<p>The metrics variations table has the following format.</p>
+<p><a id="mvarTable"></a></p>
+<p><em>Metrics variations table:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version number of the metrics variations table — set to 1.</td>
+</tr>
+<tr id="minorVersion">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version number of the metrics variations table — set to 0.</td>
+</tr>
+<tr id="reserved">
+<td>uint16</td>
+<td>(reserved)</td>
+<td>Not used; set to 0.</td>
+</tr>
+<tr id="valueRecordSize">
+<td>uint16</td>
+<td>valueRecordSize</td>
+<td>The size in bytes of each value record — must be greater than zero.</td>
+</tr>
+<tr id="valueRecordCount">
+<td>uint16</td>
+<td>valueRecordCount</td>
+<td>The number of value records — may be zero.</td>
+</tr>
+<tr id="itemVarStoreOffset">
+<td>Offset16</td>
+<td>itemVariationStoreOffset</td>
+<td>Offset in bytes from the start of this table to the item variation store table. If valueRecordCount is zero, set to zero; if valueRecordCount is greater than zero, must be greater than zero.</td>
+</tr>
+<tr id="valueRecords">
+<td>ValueRecord</td>
+<td>valueRecords[valueRecordCount]</td>
+<td>Array of value records that identify target items and the associated delta-set index for each. The valueTag records must be in binary order of their valueTag field.</td>
+</tr>
+</tbody>
+</table>
+<p>The valueRecordSize field indicates the size of each value record. Future, minor version updates of the MVAR table may define compatible extensions to the value record format with additional fields. Implementations must use the valueRecordSize field to determine the start of each record.</p>
+<p>The valueRecords array is an array of value records that identify the target, font-wide measures for which variation adjustment data is provided (target items), and outer and inner delta-set indices for each item into the item variation store data.</p>
+<p><a id="valueRec"></a></p>
+<p><em>ValueRecord:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="valueTag">
+<td>Tag</td>
+<td>valueTag</td>
+<td>Four-byte tag identifying a font-wide measure.</td>
+</tr>
+<tr id="deltaSetOuterIndex">
+<td>uint16</td>
+<td>deltaSetOuterIndex</td>
+<td>A delta-set outer index — used to select an item variation data subtable within the item variation store.</td>
+</tr>
+<tr id="deltaSetInnerIndex">
+<td>uint16</td>
+<td>deltaSetInnerIndex</td>
+<td>A delta-set inner index — used to select a delta-set row within an item variation data subtable.</td>
+</tr>
+</tbody>
+</table>
+<p>The value records must be given in binary order of the valueTag values. Each tag identifies a font-wide measure found in some other font table. For example, if a value record has a value tag of 'hasc', this corresponds to the OS/2.sTypoAscender field. Details on the tags used within the MVAR table are provided below.</p>
+<p><a name="processing"></a></p>
+<h2 id="processing">Processing</h2>
+<p>When reading a value within a variable font, such as the OS/2.sCapHeight value (the target item), the value tags array in the metrics variations table is scanned to find the tag that corresponds to that target item. Records in the array are stored in binary order of values in the valueTag fields. If the tag does not occur in the tag array, then the item is constant across the font’s variation space. If the tag does occur, however, then the delta-set index is used to reference a set of deltas within the item variation store. The two-level organization of data within the item variation store is described in the chapter <a href="otvarcommonformats.html" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>. Each delta set includes different deltas that apply to variation instances falling within different regions of the variation space. The process by which the deltas are processed to derive an interpolated value for a given target item is described in the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p><a name="valueTags"></a></p>
+<h2 id="value-tags">Value Tags</h2>
+<p>Four-byte tags are used to represent particular metric or other values. For example, the tag 'hasc' (horizontal ascent) is used to represent the OS/2.sTypoAscender value. Tags are defined for various values found in the <a href="os2.html" data-linktype="relative-path">OS/2 and Windows metrics (OS/2)</a> table, the <a href="hhea.html" data-linktype="relative-path">horizontal header ('hhea')</a> table, the <a href="gasp.html" data-linktype="relative-path">grid-fitting and scan-conversion ('gasp')</a> table, the <a href="post.html" data-linktype="relative-path">PostScript ('post')</a> table, and the <a href="vhea.html" data-linktype="relative-path">vertical metrics header ('vhea')</a> table.</p>
+<blockquote>
+<p><em>Note:</em> The OS/2.usWeightClass, OS/2.usWidthClass and post.italicAngle values are not supported by variation data in the MVAR table. This is because values for these three fields correspond directly to input axis values for the 'wght', 'wdth' and 'slnt' variation axes. See the discussion of these axes in the <a href="dvaraxisreg.html" data-linktype="relative-path">OpenType Design-Variation Axis Tag Registry</a> for details on the relationship between these fields and the corresponding design axes.</p>
+</blockquote>
+<p>Tags in the metrics variations table are case sensitive. Tags defined in this table use only lowercase letters or digits.</p>
+<p>Tags that are used in a font’s metrics variations table should be those that are documented in this table specification. A font may also use privately-defined tags, which have semantics known only by private agreement. Private-use tags must begin with an uppercase letter and use only uppercase letters or digits. If a private-use tag is used in a given font, any application that does not recognize that tag should ignore it.</p>
+<p>The following tags are defined:</p>
+<p><a id="valueTags_logicalGrouping"></a></p>
+<p><em>Value tags, ordered by logical groupings:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Tag</th>
+<th>Mnemonic</th>
+<th>Value represented</th>
+</tr>
+<tr>
+<td>'hasc'</td>
+<td>horizontal ascender</td>
+<td>OS/2.sTypoAscender</td>
+</tr>
+<tr>
+<td>'hdsc'</td>
+<td>horizontal descender</td>
+<td>OS/2.sTypoDescender</td>
+</tr>
+<tr>
+<td>'hlgp'</td>
+<td>horizontal line gap</td>
+<td>OS/2.sTypoLineGap</td>
+</tr>
+<tr>
+<td>'hcla'</td>
+<td>horizontal clipping ascent</td>
+<td>OS/2.usWinAscent</td>
+</tr>
+<tr>
+<td>'hcld'</td>
+<td>horizontal clipping descent</td>
+<td>OS/2.usWinDescent</td>
+</tr>
+<tr>
+<td>'vasc'</td>
+<td>vertical ascender</td>
+<td>vhea.ascent</td>
+</tr>
+<tr>
+<td>'vdsc'</td>
+<td>vertical descender</td>
+<td>vhea.descent</td>
+</tr>
+<tr>
+<td>'vlgp'</td>
+<td>vertical line gap</td>
+<td>vhea.lineGap</td>
+</tr>
+<tr>
+<td>'hcrs'</td>
+<td>horizontal caret rise</td>
+<td>hhea.caretSlopeRise</td>
+</tr>
+<tr>
+<td>'hcrn'</td>
+<td>horizontal caret run</td>
+<td>hhea.caretSlopeRun</td>
+</tr>
+<tr>
+<td>'hcof'</td>
+<td>horizontal caret offset</td>
+<td>hhea.caretOffset</td>
+</tr>
+<tr>
+<td>'vcrs'</td>
+<td>vertical caret rise</td>
+<td>vhea.caretSlopeRise</td>
+</tr>
+<tr>
+<td>'vcrn'</td>
+<td>vertical caret run</td>
+<td>vhea.caretSlopeRun</td>
+</tr>
+<tr>
+<td>'vcof'</td>
+<td>vertical caret offset</td>
+<td>vhea.caretOffset</td>
+</tr>
+<tr>
+<td>'xhgt'</td>
+<td>x height</td>
+<td>OS/2.sxHeight</td>
+</tr>
+<tr>
+<td>'cpht'</td>
+<td>cap height</td>
+<td>OS/2.sCapHeight</td>
+</tr>
+<tr>
+<td>'sbxs'</td>
+<td>subscript em x size</td>
+<td>OS/2.ySubscriptXSize</td>
+</tr>
+<tr>
+<td>'sbys'</td>
+<td>subscript em y size</td>
+<td>OS/2.ySubscriptYSize</td>
+</tr>
+<tr>
+<td>'sbxo'</td>
+<td>subscript em x offset</td>
+<td>OS/2.ySubscriptXOffset</td>
+</tr>
+<tr>
+<td>'sbyo'</td>
+<td>subscript em y offset</td>
+<td>OS/2.ySubscriptYOffset</td>
+</tr>
+<tr>
+<td>'spxs'</td>
+<td>superscript em x size</td>
+<td>OS/2.ySuperscriptXSize</td>
+</tr>
+<tr>
+<td>'spys'</td>
+<td>superscript em y size</td>
+<td>OS/2.ySuperscriptYSize</td>
+</tr>
+<tr>
+<td>'spxo'</td>
+<td>superscript em x offset</td>
+<td>OS/2.ySuperscriptXOffset</td>
+</tr>
+<tr>
+<td>'spyo'</td>
+<td>superscript em y offset</td>
+<td>OS/2.ySuperscriptYOffset</td>
+</tr>
+<tr>
+<td>'strs'</td>
+<td>strikeout size</td>
+<td>OS/2.yStrikeoutSize</td>
+</tr>
+<tr>
+<td>'stro'</td>
+<td>strikeout offset</td>
+<td>OS/2.yStrikeoutPosition</td>
+</tr>
+<tr>
+<td>'unds'</td>
+<td>underline size</td>
+<td>post.underlineThickness</td>
+</tr>
+<tr>
+<td>'undo'</td>
+<td>underline offset</td>
+<td>post.underlinePosition</td>
+</tr>
+<tr>
+<td>'gsp0'</td>
+<td>gaspRange[0]</td>
+<td>gasp.gaspRange[0].rangeMaxPPEM</td>
+</tr>
+<tr>
+<td>'gsp1'</td>
+<td>gaspRange[1]</td>
+<td>gasp.gaspRange[1].rangeMaxPPEM</td>
+</tr>
+<tr>
+<td>'gsp2'</td>
+<td>gaspRange[2]</td>
+<td>gasp.gaspRange[2].rangeMaxPPEM</td>
+</tr>
+<tr>
+<td>'gsp3'</td>
+<td>gaspRange[3]</td>
+<td>gasp.gaspRange[3].rangeMaxPPEM</td>
+</tr>
+<tr>
+<td>'gsp4'</td>
+<td>gaspRange[4]</td>
+<td>gasp.gaspRange[4].rangeMaxPPEM</td>
+</tr>
+<tr>
+<td>'gsp5'</td>
+<td>gaspRange[5]</td>
+<td>gasp.gaspRange[5].rangeMaxPPEM</td>
+</tr>
+<tr>
+<td>'gsp6'</td>
+<td>gaspRange[6]</td>
+<td>gasp.gaspRange[6].rangeMaxPPEM</td>
+</tr>
+<tr>
+<td>'gsp7'</td>
+<td>gaspRange[7]</td>
+<td>gasp.gaspRange[7].rangeMaxPPEM</td>
+</tr>
+<tr>
+<td>'gsp8'</td>
+<td>gaspRange[8]</td>
+<td>gasp.gaspRange[8].rangeMaxPPEM</td>
+</tr>
+<tr>
+<td>'gsp9'</td>
+<td>gaspRange[9]</td>
+<td>gasp.gaspRange[9].rangeMaxPPEM</td>
+</tr>
+</tbody>
+</table>
+<p><a id="valueTags_alphabetical"></a></p>
+<p><em>Value tags, in alphabetical order of tags:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Tag</th>
+<th>Mnemonic</th>
+<th>Value represented</th>
+</tr>
+<tr id="cpht">
+<td>'cpht'</td>
+<td>cap height</td>
+<td>OS/2.sCapHeight</td>
+</tr>
+<tr id="gsp0">
+<td>'gsp0'</td>
+<td>gaspRange[0]</td>
+<td>gasp.gaspRange[0].rangeMaxPPEM</td>
+</tr>
+<tr id="gsp1">
+<td>'gsp1'</td>
+<td>gaspRange[1]</td>
+<td>gasp.gaspRange[1].rangeMaxPPEM</td>
+</tr>
+<tr id="gsp2">
+<td>'gsp2'</td>
+<td>gaspRange[2]</td>
+<td>gasp.gaspRange[2].rangeMaxPPEM</td>
+</tr>
+<tr id="gsp3">
+<td>'gsp3'</td>
+<td>gaspRange[3]</td>
+<td>gasp.gaspRange[3].rangeMaxPPEM</td>
+</tr>
+<tr id="gsp4">
+<td>'gsp4'</td>
+<td>gaspRange[4]</td>
+<td>gasp.gaspRange[4].rangeMaxPPEM</td>
+</tr>
+<tr id="gsp5">
+<td>'gsp5'</td>
+<td>gaspRange[5]</td>
+<td>gasp.gaspRange[5].rangeMaxPPEM</td>
+</tr>
+<tr id="gsp6">
+<td>'gsp6'</td>
+<td>gaspRange[6]</td>
+<td>gasp.gaspRange[6].rangeMaxPPEM</td>
+</tr>
+<tr id="gsp7">
+<td>'gsp7'</td>
+<td>gaspRange[7]</td>
+<td>gasp.gaspRange[7].rangeMaxPPEM</td>
+</tr>
+<tr id="gsp8">
+<td>'gsp8'</td>
+<td>gaspRange[8]</td>
+<td>gasp.gaspRange[8].rangeMaxPPEM</td>
+</tr>
+<tr id="gsp9">
+<td>'gsp9'</td>
+<td>gaspRange[9]</td>
+<td>gasp.gaspRange[9].rangeMaxPPEM</td>
+</tr>
+<tr id="hasc">
+<td>'hasc'</td>
+<td>horizontal ascender</td>
+<td>OS/2.sTypoAscender</td>
+</tr>
+<tr id="hcla">
+<td>'hcla'</td>
+<td>horizontal clipping ascent</td>
+<td>OS/2.usWinAscent</td>
+</tr>
+<tr id="hcld">
+<td>'hcld'</td>
+<td>horizontal clipping descent</td>
+<td>OS/2.usWinDescent</td>
+</tr>
+<tr id="hcof">
+<td>'hcof'</td>
+<td>horizontal caret offset</td>
+<td>hhea.caretOffset</td>
+</tr>
+<tr id="hcrn">
+<td>'hcrn'</td>
+<td>horizontal caret run</td>
+<td>hhea.caretSlopeRun</td>
+</tr>
+<tr id="hcrs">
+<td>'hcrs'</td>
+<td>horizontal caret rise</td>
+<td>hhea.caretSlopeRise</td>
+</tr>
+<tr id="hdsc">
+<td>'hdsc'</td>
+<td>horizontal descender</td>
+<td>OS/2.sTypoDescender</td>
+</tr>
+<tr id="hlgp">
+<td>'hlgp'</td>
+<td>horizontal line gap</td>
+<td>OS/2.sTypoLineGap</td>
+</tr>
+<tr id="sbxo">
+<td>'sbxo'</td>
+<td>subscript em x offset</td>
+<td>OS/2.ySubscriptXOffset</td>
+</tr>
+<tr id="sbxs">
+<td>'sbxs'</td>
+<td>subscript em x size</td>
+<td>OS/2.ySubscriptXSize</td>
+</tr>
+<tr id="sbyo">
+<td>'sbyo'</td>
+<td>subscript em y offset</td>
+<td>OS/2.ySubscriptYOffset</td>
+</tr>
+<tr id="sbys">
+<td>'sbys'</td>
+<td>subscript em y size</td>
+<td>OS/2.ySubscriptYSize</td>
+</tr>
+<tr id="spxo">
+<td>'spxo'</td>
+<td>superscript em x offset</td>
+<td>OS/2.ySuperscriptXOffset</td>
+</tr>
+<tr id="spxs">
+<td>'spxs'</td>
+<td>superscript em x size</td>
+<td>OS/2.ySuperscriptXSize</td>
+</tr>
+<tr id="spyo">
+<td>'spyo'</td>
+<td>superscript em y offset</td>
+<td>OS/2.ySuperscriptYOffset</td>
+</tr>
+<tr id="spys">
+<td>'spys'</td>
+<td>superscript em y size</td>
+<td>OS/2.ySuperscriptYSize</td>
+</tr>
+<tr id="stro">
+<td>'stro'</td>
+<td>strikeout offset</td>
+<td>OS/2.yStrikeoutPosition</td>
+</tr>
+<tr id="strs">
+<td>'strs'</td>
+<td>strikeout size</td>
+<td>OS/2.yStrikeoutSize</td>
+</tr>
+<tr id="undo">
+<td>'undo'</td>
+<td>underline offset</td>
+<td>post.underlinePosition</td>
+</tr>
+<tr id="unds">
+<td>'unds'</td>
+<td>underline size</td>
+<td>post.underlineThickness</td>
+</tr>
+<tr id="vasc">
+<td>'vasc'</td>
+<td>vertical ascender</td>
+<td>vhea.ascent</td>
+</tr>
+<tr id="vcof">
+<td>'vcof'</td>
+<td>vertical caret offset</td>
+<td>vhea.caretOffset</td>
+</tr>
+<tr id="vcrn">
+<td>'vcrn'</td>
+<td>vertical caret run</td>
+<td>vhea.caretSlopeRun</td>
+</tr>
+<tr id="vcrs">
+<td>'vcrs'</td>
+<td>vertical caret rise</td>
+<td>vhea.caretSlopeRise</td>
+</tr>
+<tr id="vdsc">
+<td>'vdsc'</td>
+<td>vertical descender</td>
+<td>vhea.descent</td>
+</tr>
+<tr id="vlgp">
+<td>'vlgp'</td>
+<td>vertical line gap</td>
+<td>vhea.lineGap</td>
+</tr>
+<tr id="xght">
+<td>'xhgt'</td>
+<td>x height</td>
+<td>OS/2.sxHeight</td>
+</tr>
+</tbody>
+</table>
+<p>Note that the tags 'gsp0' to 'gsp9' are used to provide variation data for the rangeMaxPPEM member of records in a <a href="gasp.html" data-linktype="relative-path">grid-fitting and scan-conversion procedure ('gasp')</a> table. The last 'gasp' table entry always uses a rangeMaxPPEM value of 0xFFFF. The maximum number of value records for 'gasp' entries must never be more than one less the number of entries in the 'gasp' table.</p>
+
+</body>
+</html>

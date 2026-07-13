@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>eblc — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/eblc">https://learn.microsoft.com/en-us/typography/opentype/spec/eblc</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="eblc--embedded-bitmap-location-table">EBLC — Embedded Bitmap Location Table</h1>
+<p>The EBLC provides embedded bitmap locators. It is used together with the <a href="ebdt.html" data-linktype="relative-path">EBDT</a> table, which provides embedded, monochrome or grayscale bitmap glyph data, and the <a href="ebsc.html" data-linktype="relative-path">EBSC</a> table, which provided embedded bitmap scaling information.</p>
+<p>OpenType embedded bitmaps are called “sbits” (for “scaler bitmaps”). A set of bitmaps for a face at a given size is called a strike.</p>
+<p>The EBLC table identifies the sizes and glyph ranges of the sbits, and has offsets to glyph bitmap data within the EBDT table. The EBDT table then stores the glyph bitmap data, using a number of different possible formats. Glyph metrics information may be stored in either the EBLC or EBDT table, depending upon the formats used in each table. The EBSC table identifies sizes that will be handled by scaling up or scaling down other sbit sizes.</p>
+<h2 id="table-structure">Table structure</h2>
+<p>The EBLC table begins with a header containing the table version and number of strikes. An OpenType font may have one or more strikes embedded in the EBDT table.</p>
+<p><a id="header"></a></p>
+<p><em>EBLC Header</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version of the EBLC table, = 2.</td>
+</tr>
+<tr id="minorVersion">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version of the EBLC table, = 0.</td>
+</tr>
+<tr id="numSizes">
+<td>uint32</td>
+<td>numSizes</td>
+<td>Number of BitmapSize records.</td>
+</tr>
+<tr>
+<td>BitmapSize</td>
+<td>bitmapSizes[numSizes]</td>
+<td>BitmapSize records array.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em> The first version of the EBLC table is 2.0.</p>
+</blockquote>
+<p>Each strike is defined by one BitmapSize record.</p>
+<p><a id="bitmapsize-record"></a></p>
+<p><em>BitmapSize record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="indexSubTableListOffset">
+<td>Offset32</td>
+<td>indexSubtableListOffset</td>
+<td>Offset to IndexSubtableList, from beginning of EBLC.</td>
+</tr>
+<tr id="indexSubtableArraySize">
+<td>uint32</td>
+<td>indexSubtableListSize</td>
+<td>Total size in bytes of the IndexSubtableList including its array of IndexSubtables.</td>
+</tr>
+<tr id="numberOfIndexSubTables">
+<td>uint32</td>
+<td>numberOfIndexSubtables</td>
+<td>Number of IndexSubtables in the IndexSubtableList.</td>
+</tr>
+<tr id="colorRef">
+<td>uint32</td>
+<td>colorRef</td>
+<td>Not used; set to 0.</td>
+</tr>
+<tr id="hori">
+<td>SbitLineMetrics</td>
+<td>hori</td>
+<td>Line metrics for text rendered horizontally.</td>
+</tr>
+<tr id="vert">
+<td>SbitLineMetrics</td>
+<td>vert</td>
+<td>Line metrics for text rendered vertically.</td>
+</tr>
+<tr id="startGlyphIndex">
+<td>uint16</td>
+<td>startGlyphIndex</td>
+<td>Lowest glyph index for this size.</td>
+</tr>
+<tr id="endGlyphIndex">
+<td>uint16</td>
+<td>endGlyphIndex</td>
+<td>Highest glyph index for this size.</td>
+</tr>
+<tr id="ppemX">
+<td>uint8</td>
+<td>ppemX</td>
+<td>Horizontal pixels per em.</td>
+</tr>
+<tr id="ppemY">
+<td>uint8</td>
+<td>ppemY</td>
+<td>Vertical pixels per em.</td>
+</tr>
+<tr id="bitDepth_bst">
+<td>uint8</td>
+<td>bitDepth</td>
+<td>bit depth: 1, 2, 4, or 8.</td>
+</tr>
+<tr id="flags">
+<td>int8</td>
+<td>flags</td>
+<td>Vertical or horizontal (see <a href="#bitmapFlags" data-linktype="self-bookmark">Bitmap Flags</a>, below).</td>
+</tr>
+</tbody>
+</table>
+<p>The indexSubtableListOffset is the offset from the beginning of the EBLC table to an IndexSubtableList. The indexSubtableListSize is the total size in bytes of the IndexSubtableList data, including the array of IndexSubtables. Each strike has an IndexSubtableList to support various formats and discontiguous ranges of bitmaps. Each IndexSubtable provides the locations of the bitmap data for one or more glyphs within the EBDT table, and may optionally provide glyph metrics to use for that set of glyphs.</p>
+<p>The horizontal and vertical line metrics contain the ascender, descender, linegap, and advance information for the strike. The line metrics format is as follows:</p>
+<p><a id="sbitLineMetrics"></a></p>
+<p><em>SbitLineMetrics record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+</tr>
+<tr id="ascender">
+<td>int8</td>
+<td>ascender</td>
+</tr>
+<tr id="descender">
+<td>int8</td>
+<td>descender</td>
+</tr>
+<tr id="widthMax">
+<td>uint8</td>
+<td>widthMax</td>
+</tr>
+<tr id="caretSlopeNumerator">
+<td>int8</td>
+<td>caretSlopeNumerator</td>
+</tr>
+<tr id="caretSlopeDenominator">
+<td>int8</td>
+<td>caretSlopeDenominator</td>
+</tr>
+<tr id="caretOffset">
+<td>int8</td>
+<td>caretOffset</td>
+</tr>
+<tr id="minOriginSB">
+<td>int8</td>
+<td>minOriginSB</td>
+</tr>
+<tr id="minAdvanceSB">
+<td>int8</td>
+<td>minAdvanceSB</td>
+</tr>
+<tr id="maxBeforeBL">
+<td>int8</td>
+<td>maxBeforeBL</td>
+</tr>
+<tr id="minAfterBL">
+<td>int8</td>
+<td>minAfterBL</td>
+</tr>
+<tr id="pad1">
+<td>int8</td>
+<td>pad1</td>
+</tr>
+<tr id="pad2">
+<td>int8</td>
+<td>pad2</td>
+</tr>
+</tbody>
+</table>
+<p>The caret slope determines the angle at which the caret is drawn, and the offset is the number of pixels (+ or -) to move the caret. This is a signed integer since we are dealing with integer metrics. The minOriginSB, minAdvanceSB , maxBeforeBL, and minAfterBL are described in the diagrams below. The main need for these numbers is for scalers that may need to pre-allocate memory and/or need more metric information to position glyphs. All of the line metrics are one byte in length. The line metrics are not used directly by the rasterizer, but are available to applications that want to parse the EBLC table.</p>
+<p>The startGlyphIndex and endGlyphIndex describe the minimum and maximum glyph IDs in the strike, but a strike does not necessarily contain bitmaps for all glyph IDs in this range. The IndexSubtables determine which glyphs are actually present in the EBDT table.</p>
+<p>The ppemX and ppemY fields describe the size of the strike in pixels per Em. The ppem measurement is equivalent to point size on a 72 dots per inch device. Typically, ppemX will be equal to ppemY for devices with “square” pixels. To accommodate devices with rectangular pixels, and to allow for bitmaps with other aspect ratios, ppemX and ppemY may differ.</p>
+<p><a id="bitDepth"></a></p>
+<p><strong>Bit depth</strong></p>
+<p>The bitDepth field of the BitmapSize record is used to specify the number of levels of gray used in the embedded bitmaps. The following bit depths are supported:</p>
+<table>
+<tbody>
+<tr>
+<th>Value</th>
+<th>Description</th>
+</tr>
+<tr id="bitDepth1">
+<td>1</td>
+<td>black/white</td>
+</tr>
+<tr id="bitDepth2">
+<td>2</td>
+<td>4 levels of gray</td>
+</tr>
+<tr id="bitDepth4">
+<td>4</td>
+<td>16 levels of gray</td>
+</tr>
+<tr id="bitDepth8">
+<td>8</td>
+<td>256 levels of gray</td>
+</tr>
+</tbody>
+</table>
+<p><a id="bitmapFlags"></a></p>
+<p><strong>Bitmap flags</strong></p>
+<p>The flags field of the BitmapSize record uses the following flags to indicate the direction of small glyph metrics: horizontal or vertical. The remaining bits are reserved.</p>
+<p><em>Bitmap flags enumeration</em></p>
+<table>
+<tbody>
+<tr>
+<th>Mask</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="bitmapFlags1">
+<td>0x01</td>
+<td>HORIZONTAL_METRICS</td>
+<td>Horizontal</td>
+</tr>
+<tr id="bitmapFlags2">
+<td>0x02</td>
+<td>VERTICAL_METRICS</td>
+<td>Vertical</td>
+</tr>
+<tr>
+<td>0xFC</td>
+<td>Reserved</td>
+<td>For future use — set to 0.</td>
+</tr>
+</tbody>
+</table>
+<p>The colorRef and bitDepth fields are reserved for future enhancements. For monochrome bitmaps they should have the values colorRef=0 and bitDepth=1.</p>
+<p>Associated with the image data for every glyph in a strike is a set of glyph metrics. These glyph metrics describe bounding box height and width, as well as side bearing and advance width information. The following figures illustrate different metric values used for horizontal or vertical layout.</p>
+<figure><img alt="Glyph line-direction and cross-stream metrics for horizontal text" src="media/img00283.gif" data-linktype="relative-path"><figcaption>Metrics in horizontal text</figcaption></figure>
+<figure><img alt="Glyph line-direction and cross-stream metrics for vertical text" src="media/img00284.gif" data-linktype="relative-path"><figcaption>Metrics in vertical text</figcaption></figure>
+<p>Glyph metrics can be found in one of two places. For ranges of glyphs (not necessarily the whole strike) whose metrics may be different for each glyph, the glyph metrics are stored along with the glyph image data in the EBDT table. Details of how this is done are described in the <a href="ebdt.html" data-linktype="relative-path">EBDT</a> table chapter. For ranges of glyphs whose metrics are identical for every glyph, significant space can be saved by storing a single copy of the glyph metrics in the IndexSubTable in the EBLC.</p>
+<p>There are also two different formats for glyph metrics: big glyph metrics and small glyph metrics. Big glyph metrics define metrics information for both horizontal and vertical layouts. This is important in fonts (such as Kanji) where both types of layout may be used. Small glyph metrics define metrics information for one layout direction only. Which direction applies, horizontal or vertical, is determined by the flags field in the BitmapSize record.</p>
+<p><a id="bigGlyphMetrics"></a></p>
+<p><em>BigGlyphMetrics record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="height_bgm">
+<td>uint8</td>
+<td>height</td>
+<td>Number of rows in the bitmap.</td>
+</tr>
+<tr id="width_bgm">
+<td>uint8</td>
+<td>width</td>
+<td>Number of columns in the bitmap.</td>
+</tr>
+<tr id="horiBearingX_bgm">
+<td>int8</td>
+<td>horiBearingX</td>
+<td>Distance in pixels from the horizontal origin to the left edge of the bitmap.</td>
+</tr>
+<tr id="horiBearingY_bgm">
+<td>int8</td>
+<td>horiBearingY</td>
+<td>Distance in pixels from the horizontal origin to the top edge of the bitmap.</td>
+</tr>
+<tr id="horiAdvance_bgm">
+<td>uint8</td>
+<td>horiAdvance</td>
+<td>Horizontal advance width in pixels.</td>
+</tr>
+<tr id="vertBearingX_bgm">
+<td>int8</td>
+<td>vertBearingX</td>
+<td>Distance in pixels from the vertical origin to the left edge of the bitmap.</td>
+</tr>
+<tr id="vertBearingY_bgm">
+<td>int8</td>
+<td>vertBearingY</td>
+<td>Distance in pixels from the vertical origin to the top edge of the bitmap.</td>
+</tr>
+<tr id="vertAdvance_bgm">
+<td>uint8</td>
+<td>vertAdvance</td>
+<td>Vertical advance width in pixels.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="smallGlyphMetrics"></a></p>
+<p><em>SmallGlyphMetrics record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="height_sgm">
+<td>uint8</td>
+<td>height</td>
+<td>Number of rows in the bitmap.</td>
+</tr>
+<tr id="width_sgm">
+<td>uint8</td>
+<td>width</td>
+<td>Number of columns in the bitmap.</td>
+</tr>
+<tr id="bearingX_sgm">
+<td>int8</td>
+<td>bearingX</td>
+<td>Distance in pixels from the horizontal origin to the left edge of the bitmap (for horizontal text); or distance in pixels from the vertical origin to the top edge of the bitmap (for vertical text).</td>
+</tr>
+<tr id="bearingY_sgm">
+<td>int8</td>
+<td>bearingY</td>
+<td>Distance in pixels from the horizontal origin to the top edge of the bitmap (for horizontal text); or distance in pixels from the vertical origin to the left edge of the bitmap (for vertical text).</td>
+</tr>
+<tr id="advance_sgm">
+<td>uint8</td>
+<td>advance</td>
+<td>Horizontal or vertical advance width in pixels.</td>
+</tr>
+</tbody>
+</table>
+<p>The following figure illustrates the meaning of the glyph metrics.</p>
+<br>
+<img alt="Details of glyph position, bearing, and advance in relation to the pen position" src="media/img00285.gif" data-linktype="relative-path">
+<h2 id="indexsubtablelist">IndexSubtableList</h2>
+<p>The BitmapSize record for each strike contains the offset to an IndexSubtableList. This contains records that specify a glyph ID range and an offset to an IndexSubTable for that range. This allows a strike to contain multiple glyph ID ranges and to be represented in multiple index formats if desirable.</p>
+<p><a id="indexSubTableArray"></a></p>
+<p><em>IndexSubtableList table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>IndexSubtableRecord</td>
+<td>indexSubtableRecords[<i>numberOfIndexSubtables </i>]</td>
+<td>Array of IndexSubtableRecords.</td>
+</tr>
+</tbody>
+</table>
+<p>The number of IndexSubtableRecord elements is specified by the numberOfIndexSubtables field in the BitmapSize record.</p>
+<p><em>IndexSubtableRecord</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="firstGlyphIndex">
+<td>uint16</td>
+<td>firstGlyphIndex</td>
+<td>First glyph ID of this range.</td>
+</tr>
+<tr id="lastGlyphIndex">
+<td>uint16</td>
+<td>lastGlyphIndex</td>
+<td>Last glyph ID of this range (inclusive).</td>
+</tr>
+<tr id="additionalOffset">
+<td>Offset32</td>
+<td>indexSubtableOffset</td>
+<td>Offset to an IndexSubtable from the start of the IndexSubtableList.</td>
+</tr>
+</tbody>
+</table>
+<p>Records must be sorted by firstGlyphIndex, and records should not have overlapping glyph ID ranges.</p>
+<p>After determining the strike, the rasterizer searches this array for the range containing the given glyph ID. When the range is found, the indexSubtableOffset provides the location of the IndexSubtable. This can be added to the indexSubtableListOffset from the BitmapSize record to obtain the offset of the IndexSubtable within the EBLC table.</p>
+<p>The IndexSubtableList for the first strike is located after the bitmapSizes records array. The IndexSubtables for that strike follow the IndexSubtableList header. Another IndexSubtableList (if more than one strike) and its IndexSubtables are next. The EBLC continues with an IndexSubtableList and associate IndexSubtables for each strike.</p>
+<h2 id="indexsubtable-formats">IndexSubtable formats</h2>
+<p>There are different formats for IndexSubtables. All formats begin with an <em>IndexSubHeader</em> which identifies the IndexSubtable format, the format of the EBDT image data, and the offset from the beginning of the EBDT table to the beginning of the image data for the specified glyph range.</p>
+<p><a id="indexSubHeader"></a></p>
+<p><em>IndexSubHeader record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="indexFormat">
+<td>uint16</td>
+<td>indexFormat</td>
+<td>Format of the IndexSubtable.</td>
+</tr>
+<tr id="imageFormat">
+<td>uint16</td>
+<td>imageFormat</td>
+<td>Format of EBDT image data.</td>
+</tr>
+<tr id="imageDataOffset">
+<td>Offset32</td>
+<td>imageDataOffset</td>
+<td>Offset to image data in EBDT table.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="indexSubtables"></a></p>
+<p>There are five different formats used for the IndexSubtable, depending upon the size and type of bitmap data used for a given glyph ID range. The choice of format that is used should be made with the aim of minimizing the size of the font file. Ranges of glyphs with variable metrics — that is, where glyphs may differ from each other in bounding box height, width, side bearings or advance — require the use of formats 1, 3 or 4, which require glyph metrics information to be included along with the bitmap data in the EBDT table. Ranges of glyphs with constant metrics can save space by using format 2 or 5, which keep a single copy of the metrics information in the IndexSubtable rather than a copy per glyph in the EBDT table. In some monospaced fonts it makes sense to store extra white space around some of the glyphs to keep all metrics identical, thus permitting the use of format 2 or 5.</p>
+<p>Structures for each IndexSubtable format are listed below.</p>
+<p><a id="indexSubTable1"></a></p>
+<p><em>IndexSubtableFormat1 table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="header_ist1">
+<td>IndexSubHeader</td>
+<td>header</td>
+<td>Header info.</td>
+</tr>
+<tr id="offsetArray_ist1">
+<td>Offset32</td>
+<td>sbitOffsets[numOffsets]</td>
+<td>Offsets to bitmap data for each glyph in the range.</td>
+</tr>
+</tbody>
+</table>
+<p>Format 1 can be used when glyphs have variable metrics. Offsets for the bitmap data are 4-byte aligned. The number of offsets required is determined from the lastGlyphIndex and  firstGlyphIndex fields in the IndexSubtableRecord. One extra entry is required to provide the size of data for the last glyph. Thus, <em>numOffsets = lastGlyphIndex – firstGlyphIndex + 2</em>.</p>
+<p><a id="indexSubTable2"></a></p>
+<p><em>IndexSubtableFormat2 table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="header_ist2">
+<td>IndexSubHeader</td>
+<td>header</td>
+<td>Header info.</td>
+</tr>
+<tr id="imageSize_ist2">
+<td>uint32</td>
+<td>imageSize</td>
+<td>All the glyphs are of the same size.</td>
+</tr>
+<tr id="bigMetrics_ist2">
+<td>BigGlyphMetrics</td>
+<td>bigMetrics</td>
+<td>All glyphs have the same metrics; glyph data may be compressed, byte-aligned, or bit-aligned.</td>
+</tr>
+</tbody>
+</table>
+<p>Format 2 can be used when glyphs have identical metrics. The bitmap data for all glyphs will be the same size, so an array of offsets is not required.</p>
+<p><a id="indexSubTable3"></a></p>
+<p><em>IndexSubtableFormat3 table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="header_ist3">
+<td>IndexSubHeader</td>
+<td>header</td>
+<td>Header info.</td>
+</tr>
+<tr id="offsetArray_ist3">
+<td>Offset16</td>
+<td>sbitOffsets[numOffsets]</td>
+<td>Offsets to bitmap data for each glyph in the range.</td>
+</tr>
+</tbody>
+</table>
+<p>Format 3 can be used when glyphs have variable metrics. Offsets for the bitmap data are 2-byte aligned. The number of offsets required is determined from the lastGlyphIndex and  firstGlyphIndex fields in the IndexSubtableRecord. One extra entry is required to provide the size of data for the last glyph. Thus, <em>numOffsets = lastGlyphIndex – firstGlyphIndex + 2</em>.</p>
+<p><a id="indexSubTable4"></a></p>
+<p><em>IndexSubtableFormat4 table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="header_ist4">
+<td>IndexSubHeader</td>
+<td>header</td>
+<td>Header info.</td>
+</tr>
+<tr id="numGlyphs_ist4">
+<td>uint32</td>
+<td>numGlyphs</td>
+<td>Array length.</td>
+</tr>
+<tr id="glyphArray_ist4">
+<td>GlyphIdOffsetPair</td>
+<td>glyphArray[numGlyphs + 1]</td>
+<td>One per glyph.</td>
+</tr>
+</tbody>
+</table>
+<p>Format 4 can be used when glyphs have variable metrics and when the glyph IDs are sparse, not in a contiguous range. Format 4 uses an array of GlyphIdOffsetPair records. One extra record is stored to represent the size of the image data for the last glyph.
+<a id="codeOffsetPair"></a></p>
+<p><em>GlyphIdOffsetPair record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="glyphID">
+<td>uint16</td>
+<td>glyphID</td>
+<td>Glyph ID of glyph present.</td>
+</tr>
+<tr id="offset_cop">
+<td>Offset16</td>
+<td>sbitOffset</td>
+<td>Location in EBDT.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="indexSubTable5"></a></p>
+<p><em>IndexSubtableFormat5 table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="header_ist5">
+<td>IndexSubHeader</td>
+<td>header</td>
+<td>Header info.</td>
+</tr>
+<tr id="imageSize_ist5">
+<td>uint32</td>
+<td>imageSize</td>
+<td>All glyphs have the same data size.</td>
+</tr>
+<tr id="bigMetrics_ist5">
+<td>BigGlyphMetrics</td>
+<td>bigMetrics</td>
+<td>All glyphs have the same metrics.</td>
+</tr>
+<tr id="numGlyphs_ist5">
+<td>uint32</td>
+<td>numGlyphs</td>
+<td>Array length.</td>
+</tr>
+<tr id="glyphCodeArray_ist5">
+<td>uint16</td>
+<td>glyphIdArray[numGlyphs]</td>
+<td>One per glyph, sorted by glyph ID.</td>
+</tr>
+</tbody>
+</table>
+<p>Format 5 can be used when glyphs have identical metrics, but the glyph IDs are sparse, not in a contiguous range.</p>
+<p>The size of the EBDT image data can be calculated from the IndexSubtable information. For the constant-metrics formats (2 and 5) the image data size is constant, and is given in the imageSize field. For the variable metrics formats (1, 3, and 4) image data must be stored contiguously and in glyph ID order, so the image data size may be calculated by subtracting the offset for the current glyph from the offset of the next glyph. Because of this, it is necessary to store one extra element in the sbitOffsets array pointing just past the end of the range’s image data. This will allow the correct calculation of the image data size for the last glyph in the range.</p>
+<p>Contiguous, or nearly contiguous, ranges of glyph IDs are handled best by formats 1, 2, and 3 which store an offset for every glyph ID in the range. Very sparse ranges of glyph IDs should use format 4 or 5 which explicitly call out the glyph IDs represented in the range. A small number of missing glyphs can be efficiently represented in formats 1 or 3 by having the offset for the missing glyph be followed by the same offset for the next glyph, thus indicating a data size of zero.</p>
+<p>The only difference between formats 1 and 3 is the size of the sbitOffsets array elements: format 1 uses uint32s while format 3 uses uint16s. Therefore format 1 can cover a greater range (&gt; 64k bytes) while format 3 saves more space in the EBLC table. Since the sbitOffsets elements are added to the imageDataOffset base address in the IndexSubHeader, a very large set of glyph bitmap data could be addressed by splitting it into multiple ranges, each less than 64k bytes in size, allowing the use of the more efficient format 3.</p>
+<p>The EBLC table specification requires 32-bit alignment for all subtables. This occurs naturally for IndexSubTable formats 1, 2, and 4, but might not for formats 3 and 5, since they include arrays of type uint16. When there is an odd number of elements in these arrays it is necessary to add an extra padding element to maintain proper alignment.</p>
+
+</body>
+</html>

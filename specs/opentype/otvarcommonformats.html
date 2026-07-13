@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>otvarcommonformats — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/otvarcommonformats">https://learn.microsoft.com/en-us/typography/opentype/spec/otvarcommonformats</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="opentype-font-variations-common-table-formats">OpenType Font Variations Common Table Formats</h1>
+<p>OpenType Font Variations allow continuous variation along one or more design axes, such as weight or width. An overview of OpenType Font Variations and a specification of the algorithm for interpolating variation instance values is provided in the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>; that chapter should be read first. This chapter documents the formats for variation data that are used in various font tables, such as the <a href="gvar.html" data-linktype="relative-path">'gvar'</a> or <a href="mvar.html" data-linktype="relative-path">MVAR</a> tables.</p>
+<p><a name="overview" id="overview"></a></p>
+<h2 id="overview">Overview</h2>
+<p>A font has many different data items found in several different font tables that provide values that are specific to a particular font face. Examples include glyph-specific values, such as the positions of glyph outline points and glyph advance widths, and face-wide values, such as a sub-family name, a weight class, or ascender and descender values. In a variable font, most or all of these values may need to vary for different variation instances. When an application selects a variation instance within the font’s variation space, new values for such items appropriate to that instance need to be derived. This is done using delta adjustment values.</p>
+<p>For example, the OS/2 table of a font may provide a default sxHeight value of 970. The MVAR table might provide a delta value of +50 that is used for weight-axis values from the default to the heaviest-supported weight. For a particular instance, the interpolation process might scale that delta with a scalar co-efficient of 0.4, deriving an instance sxHeight value of 990.</p>
+<p>These concepts and the interpolation algorithm for deriving instance values are described in detail in the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p>The variation data for a font consists of a number of delta adjustment values. Each individual delta applies to a particular, target data item; for instance, the X coordinate of a point in a glyph outline, or the font’s sTypoAscender. Each delta is also associated with a specific region within the font’s design variation space over which it is applicable. Thus, a given delta is logically keyed by the target data item and the applicable region.</p>
+<p>The variation data for a font consists of a number of delta adjustment values. Each individual delta applies to a particular, target data item; for instance, the X coordinate of a point in a glyph outline, or the font’s sTypoAscender. Each delta is also associated with a specific region within the font’s design variation space over which it is applicable. Thus, a given delta is logically keyed by the target data item and the applicable region.</p>
+<p>A variable font includes many deltas. At the highest level, deltas are organized into collections for different target item sets:</p>
+<ul>
+<li>Deltas for positions of points of a <a href="glyf.html" data-linktype="relative-path">'glyf'</a> table are stored in a <a href="gvar.html" data-linktype="relative-path">'gvar'</a> table.</li>
+<li>Deltas for positions of points of a <a href="cff2.html" data-linktype="relative-path">CFF2</a> table are stored within the CFF2 table.</li>
+<li>Deltas for CVT values in the <a href="cvt.html" data-linktype="relative-path">'cvt '</a> table are stored in a <a href="cvar.html" data-linktype="relative-path">'cvar'</a> table.</li>
+<li>Deltas for glyph metrics in an <a href="hmtx.html" data-linktype="relative-path">'hmtx'</a> table are stored in an <a href="hvar.html" data-linktype="relative-path">HVAR</a> table; and deltas for glyph metrics in a <a href="vmtx.html" data-linktype="relative-path">'vmtx'</a> or <a href="vorg.html" data-linktype="relative-path">VORG</a> table are stored in a <a href="vvar.html" data-linktype="relative-path">VVAR</a> table.</li>
+<li>Deltas for anchor positions in GPOS lookups and other items used in <a href="gdef.html" data-linktype="relative-path">GDEF</a>, <a href="gpos.html" data-linktype="relative-path">GPOS</a> or <a href="jstf.html" data-linktype="relative-path">JSTF</a> tables are stored within variation data contained in the GDEF table.</li>
+<li>Deltas for font-wide metrics and other items from the <a href="os2.html" data-linktype="relative-path">OS/2</a>, <a href="hhea.html" data-linktype="relative-path">'hhea'</a>, <a href="gasp.html" data-linktype="relative-path">'gasp'</a>, <a href="post.html" data-linktype="relative-path">'post'</a> or <a href="vhea.html" data-linktype="relative-path">'vhea'</a> tables are stored in an <a href="mvar.html" data-linktype="relative-path">MVAR</a> table.</li>
+<li>Deltas for values in other tables are stored in the respective table: deltas for baseline metrics in the <a href="base.html" data-linktype="relative-path">BASE</a> table and for various items in the <a href="colr.html" data-linktype="relative-path">COLR</a> table are stored in each table.</li>
+</ul>
+<p>In a variable font, the largest group of deltas are for the positions of glyph outline points. For TrueType outlines in a 'glyf' table, the deltas are stored within the 'gvar' table, with a second level of organization grouping deltas by glyph ID. See the <a href="gvar.html" data-linktype="relative-path">'gvar'</a> table specification for details.</p>
+<p>Below these higher levels of organization, most variation data is organized in one of two ways. (Variation data for CFF2 outlines is a partial exception — see below.)</p>
+<ul>
+<li>Organize sets of deltas for several target items into groupings by the variation-space region over which they apply. Since regions are defined using n-tuples (or “tuples”), such data sets will be referred to as <em>tuple variation stores</em>.</li>
+<li>Organize sets of deltas associated with different regions into groupings by the target items to which they apply. Such data sets will be referred to as <em>item variation stores</em>.</li>
+</ul>
+<p>The two formats have different ways of representing n-tuples that define regions of applicability, and different ways of associating deltas with target font-data items. The tuple variation store format is optimized for compact representation of glyph outline variation data that is all processed for a given variation instance. The ItemVariationStore format, on the other hand, is designed to allow direct access to variation data for arbitrary target items, allowing more efficient processing in contexts that do not require interpolated values for all items to be computed. (Additional details are provided below.) The 'gvar' and 'cvar' tables use the tuple variation store format, while variation data in most other tables, including the MVAR, HVAR and GDEF tables, use the ItemVariationStore format.</p>
+<p>Variation data for CFF2 outlines are handled slightly differently than other cases. The deltas for glyph outline descriptions are interleaved directly within the outline descriptions in the <a href="cff2.html" data-linktype="relative-path">Compact Font Format 2 (CFF2)</a> table. But the sets of regions that are associated with the delta sets are defined in an item variation store, contained as a subtable within the CFF2 table.</p>
+<p><a name="TVS" id="TVS"></a></p>
+<h2 id="tuple-variation-store">Tuple Variation Store</h2>
+<p>Tuple variation stores are used in the 'gvar' and 'cvar' tables, and organize sets of variation data into groupings, each of which is associated with a region of applicability within the variation space. Within the 'gvar' table, there is a separate variation store for each glyph. Within the 'cvar' table, there is one variation store providing variations for all CVT values.</p>
+<p>There is a minor difference in the top-level structure of the store in these two contexts. Within the 'cvar' table, it is the entire 'cvar' table that comprises the specific variation store format, with a header that begins with major/minor version fields. The specific variation store format for glyph-specific data within the 'gvar' table is the <em>GlyphVariationData</em> table (one per glyph ID), which does not include any version fields. In other respects, the 'cvar' table and GlyphVariationData table formats are the same. There is also a minor difference in certain data that can occur in a GlyphVariationData table versus a 'cvar' table. Differences between the 'gvar' and 'cvar' tables will be summarized later in this section.</p>
+<p>In terms of logical information content, the GlyphVariationData and 'cvar' tables consist of a set of logical, tuple variation data tables, each for a different region of the variation space. In physical layout, however, the logical tuple variation tables are divided into separate parts that get stored separately: a header portion, and a serialized-data portion.</p>
+<p>In terms of overall structure, the GlyphVariationData table and the 'cvar' table each begin with a header, which is followed by serialized data. The header includes an array with the tuple variation headers. The serialized data includes deltas and other data that will be explained below.</p>
+<figure><img src="media/otvctf_fig1.png" alt="Block diagram of tuple variation store data" data-linktype="relative-path"><figcaption>Figure: High-level organization of tuple variation stores </figcaption></figure>
+<p><a name="TupleRecords" id="TupleRecords"></a></p>
+<h3 id="tuple-records">Tuple Records</h3>
+<p>The tuple variation store formats reference regions within the font’s variation space using tuple records. A tuple record identifies a position in terms of normalized coordinates, which use F2DOT14 values.</p>
+<p><em>Tuple record:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>coordinates[axisCount]</td>
+<td>Coordinate array specifying a position within the font’s variation space. The number of elements must match the axisCount specified in the 'fvar' table.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em> The Tuple record and <a href="fvar.html#instancerecord" data-linktype="relative-path">UserTuple record</a> (used in the 'fvar' table) both describe a position in the variation space but are distinct: UserTuple uses Fixed values to represent user scale coordinates, while Tuple record uses F2DOT14 values to represent normalized coordinates.</p>
+</blockquote>
+<p><a name="TVSHeader" id="TVSHeader"></a></p>
+<h3 id="tuple-variation-store-header">Tuple Variation Store Header</h3>
+<p>The two variants of a tuple variation store header, the GlyphVariationData table header and the 'cvar' header, are only slightly different. The formats of each are as follows:</p>
+<p><em>GlyphVariationData header:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>uint16</td>
+<td>tupleVariationCount</td>
+<td>A packed field. The high 4 bits are flags (see below), and the low 12 bits are the number of tuple variation tables for this glyph. The count can be any number between 1 and 4095.</td>
+</tr>
+<tr>
+<td>Offset16</td>
+<td>dataOffset</td>
+<td>Offset from the start of the GlyphVariationData table to the serialized data.</td>
+</tr>
+<tr>
+<td>TupleVariationHeader</td>
+<td>tupleVariationHeaders[tupleVariationCount]</td>
+<td>Array of tuple variation headers.</td>
+</tr>
+</tbody>
+</table>
+<p><em>'cvar' table header:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version number of the 'cvar' table — set to 1.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version number of the 'cvar' table — set to 0.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>tupleVariationCount</td>
+<td>A packed field. The high 4 bits are flags (see below), and the low 12 bits are the number of tuple variation tables. The count can be any number between 1 and 4095.</td>
+</tr>
+<tr>
+<td>Offset16</td>
+<td>dataOffset</td>
+<td>Offset from the start of the 'cvar' table to the serialized data.</td>
+</tr>
+<tr>
+<td>TupleVariationHeader</td>
+<td>tupleVariationHeaders[tupleVariationCount]</td>
+<td>Array of tuple variation headers.</td>
+</tr>
+</tbody>
+</table>
+<p>The tupleVariationCount field contains a packed value that includes flags and the number of logical tuple variation tables — which is also the number of physical tuple variation headers. The format of the tupleVariationCount value is as follows:</p>
+<table>
+<tbody>
+<tr>
+<th>Mask</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>0x8000</td>
+<td>SHARED_POINT_NUMBERS</td>
+<td>Flag indicating that some or all tuple variation tables reference a shared set of “point” numbers. These shared numbers are represented as packed point number data at the start of the serialized data.</td>
+</tr>
+<tr>
+<td>0x7000</td>
+<td>Reserved</td>
+<td>Reserved for future use — set to 0.</td>
+</tr>
+<tr>
+<td>0x0FFF</td>
+<td>COUNT_MASK</td>
+<td>Mask for the low bits to give the number of tuple variation tables.</td>
+</tr>
+</tbody>
+</table>
+<p>If the SHARED_POINT_NUMBERS flag is set, then the serialized data following the header begins with packed “point” number data. In the context of a GlyphVariationData table within the 'gvar' table, these identify outline point numbers for which deltas are explicitly provided. In the context of the 'cvar' table, these are interpreted as CVT indices rather than point indices. The format of packed point number data is described below.</p>
+<p><a name="TVHeader" id="TVHeader"></a></p>
+<h3 id="tuplevariationheader">TupleVariationHeader</h3>
+<p>The GlyphVariationData and 'cvar' header formats include an array of tuple variation headers. The TupleVariationHeader format is as follows.</p>
+<p><em>TupleVariationHeader:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>uint16</td>
+<td>variationDataSize</td>
+<td>The size in bytes of the serialized data for this tuple variation table.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>tupleIndex</td>
+<td>A packed field. The high 4 bits are flags (see below). The low 12 bits are an index into a shared tuple records array.</td>
+</tr>
+<tr>
+<td>Tuple</td>
+<td>peakTuple</td>
+<td>Peak tuple record for this tuple variation table — optional, determined by flags in the tupleIndex value.
+<br><br>
+Note that this must always be included in the 'cvar' table.</td>
+</tr>
+<tr>
+<td>Tuple</td>
+<td>intermediateStartTuple</td>
+<td>Intermediate start tuple record for this tuple variation table — optional, determined by flags in the tupleIndex value.</td>
+</tr>
+<tr>
+<td>Tuple</td>
+<td>intermediateEndTuple</td>
+<td>Intermediate end tuple record for this tuple variation table — optional, determined by flags in the tupleIndex value.</td>
+</tr>
+</tbody>
+</table>
+<p>Note that the size of the TupleVariationHeader is variable, depending on whether peak or intermediate tuple records are included. (See below for more information.)</p>
+<p>The variationDataSize value indicates the size of serialized data for the given tuple variation table that is contained in the serialized data. It does not include the size of the TupleVariationHeader.</p>
+<p>Every tuple variation table has an associated peak tuple record. Most tuple variation tables use non-intermediate regions, and so require only the peak tuple record to define the region. In the 'cvar' table, there is only one variation store, and so any given region will only need to be referenced once. Within the 'gvar' table, however, there is a GlyphVariationData table for each glyph ID, and so any region may be referenced numerous times; in fact, most regions will be referenced within the GlyphVariationData tables for most glyphs. To provide a more efficient representation, the tuple variation store formats allow for an array of tuple records, stored outside the tuple variation store structures, that can be shared across many tuple variation stores. This is used only within the 'gvar' table; it is not needed or supported in the 'cvar' table. The formats alternately allow for a peak tuple record that is non-shared, specific to the given tuple variation table, to be embedded directly within a TupleVariationHeader. This is optional within the 'gvar' table, but required in the 'cvar' table, which does not use shared peak tuple records.</p>
+<p>See the <a href="gvar.html" data-linktype="relative-path">'gvar'</a> chapter for details on the representation of shared tuple records within that table.</p>
+<p>The tupleIndex field contains a packed value that includes flags and an index into a shared tuple records array (not used in the 'cvar' table). The format of the tupleIndex field is as follows.</p>
+<p><em>tupleIndex format:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Mask</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>0x8000</td>
+<td>EMBEDDED_PEAK_TUPLE</td>
+<td>Flag indicating that this tuple variation header includes an embedded peak tuple record, immediately after the tupleIndex field. If set, the low 12 bits of the tupleIndex value are ignored.
+<br><br>
+Note that this must always be set within the 'cvar' table.</td>
+</tr>
+<tr>
+<td>0x4000</td>
+<td>INTERMEDIATE_REGION</td>
+<td>Flag indicating that this tuple variation table applies to an intermediate region within the variation space. If set, the header includes the two intermediate-region, start and end tuple records, immediately after the peak tuple record (if present).</td>
+</tr>
+<tr>
+<td>0x2000</td>
+<td>PRIVATE_POINT_NUMBERS</td>
+<td>Flag indicating that the serialized data for this tuple variation table includes packed “point” number data. If set, this tuple variation table uses that number data; if clear, this tuple variation table uses shared number data found at the start of the serialized data for this glyph variation data or 'cvar' table.</td>
+</tr>
+<tr>
+<td>0x1000</td>
+<td>Reserved</td>
+<td>Flag reserved for future use — set to 0.</td>
+</tr>
+<tr>
+<td>0x0FFF</td>
+<td>TUPLE_INDEX_MASK</td>
+<td>Mask for the low 12 bits to give the shared tuple records index.</td>
+</tr>
+</tbody>
+</table>
+<p>Note that the INTERMEDIATE_REGION flag is independent of the EMBEDDED_PEAK_TUPLE flag or the shared tuple records index. Every tuple variation table has a peak n-tuple indicated either by an embedded tuple record (always true in the 'cvar' table) or by an index into a shared tuple records array (only in the 'gvar' table). An intermediate-region tuple variation table additionally has start and end n-tuples that also get used in the interpolation process; these are always represented using embedded tuple records.</p>
+<p>Also note that the PRIVATE_POINT_NUMBERS flag is independent of the SHARED_POINT_NUMBERS flag in the tupleVariationCount field of the GlyphVariationData or 'cvar' header. A GlyphVariationData or 'cvar' table may have shared point number data used by multiple tuple variation tables, but any given tuple variation table may have private point number data that it uses instead.</p>
+<p>As noted, the size of tuple variation headers is variable. The next TupleVariationHeader can be calculated as follows:</p>
+<pre><code>const TupleVariationHeader*
+NextHeader( const TupleVariationHeader* currentHeader, int axisCount )
+{
+    int bump = 2 * sizeof( uint16 );
+    int tupleIndex = currentHeader-&gt;tupleIndex;
+    if ( tupleIndex &amp; embeddedPeakTuple )
+        bump += axisCount * sizeof( F2DOT14 );
+    if ( tupleIndex &amp; intermediateRegion )
+        bump += 2 * axisCount * sizeof( F2DOT14 );
+    return (const TupleVariationHeader*)((char*)currentHeader + bump);
+}
+</code></pre>
+<p><a name="SerializedData" id="SerializedData"></a></p>
+<h3 id="serialized-data">Serialized Data</h3>
+<p>After the GlyphVariationData or 'cvar' header (including the TupleVariationHeader array) is a block of serialized data. The offset to this block of data is provided in the header.</p>
+<p>The serialized data block begins with shared “point” number data, followed by the variation data for the tuple variation tables. The shared point number data is optional: it is present if the corresponding flag is set in the tupleVariationCount field of the header. If present, the shared number data is represented as packed point numbers, described below.</p>
+<figure><img src="media/otvctf_fig2.png" alt="Block diagram of serialized data" data-linktype="relative-path"><figcaption>Figure: Organization of serialized data </figcaption></figure>
+<p>The remaining data contains runs of data specific to individual tuple variation tables, in order of the tuple variation headers. Each TupleVariationHeader indicates the data size for the corresponding run of data for that tuple variation table.</p>
+<p>The per-tuple-variation-table data optionally begins with private “point” numbers, present if the privatePointNumbers flag is set in the tupleIndex field of the TupleVariationHeader. Private point numbers are represented as packed point numbers, described below.</p>
+<p>After the private point number data (if present), the tuple variation data will include packed delta data. The format for packed deltas is given below. Within the 'gvar' table, there are packed deltas for X coordinates, followed by packed deltas for Y coordinates.</p>
+<figure><img src="media/otvctf_fig3.png" alt="Block diagram of per-tuple variation data in the gvar table" data-linktype="relative-path"><figcaption>Figure: Organization 'gvar' per-tuple variation data </figcaption></figure>
+<p>Within the 'cvar' table, there is one set of packed deltas.</p>
+<figure><img src="media/otvctf_fig4.png" alt="Block diagram of per-tuple variation data in the cvar table" data-linktype="relative-path"><figcaption>Figure: Organization 'cvar' per-tuple variation data </figcaption></figure>
+<p>The data size indicated in the TupleVariationHeader includes the size of the private point number data, if present, plus the size of the packed deltas.</p>
+<p><a name="PackedPointNumbers" id="PackedPointNumbers"></a></p>
+<h3 id="packed-point-numbers">Packed “Point” Numbers</h3>
+<p>Tuple variation data specify deltas to be applied to specific items: X and Y coordinates for glyph outline points within the 'gvar' table, and CVT values in the 'cvar' table. For a given glyph, deltas may be provided for any or all of a glyph’s points, including “phantom” points generated within the rasterizer that represent glyph side bearing points. (See the chapter <a href="tt_instructing_glyphs.html#phantoms" data-linktype="relative-path">Instructing TrueType Glyphs</a> for more background on phantom points.) Similarly, within the 'cvar' table, deltas may be provided for any or all CVTs. The set of glyph points or CVTs for which deltas are provided is specified by packed point numbers.</p>
+<blockquote>
+<p><em>Note:</em> If a glyph is a composite glyph, then “point” numbers are interpreted as indices for the components that make up the composite glyph. See the 'gvar' table chapter for complete details. Likewise, in the context of the 'cvar' table, “point” numbers are indices for CVT entries.</p>
+<p><em>Note:</em> Within the 'gvar' table, if deltas are not provided explicitly for some points, then inferred delta values may need to be calculated — see the 'gvar' table chapter for details. This does not apply to the 'cvar' table, however: if deltas are not provided for some CVT values, then no adjustments are made to those CVTs in connection with the particular tuple variation table.</p>
+</blockquote>
+<p>Packed point numbers are stored as a count followed by one or more runs of point number data.</p>
+<p>The count may be stored in one or two bytes. After reading the first byte, the need for a second byte can be determined. The count bytes are processed as follows:</p>
+<ul>
+<li>If the first byte is 0, then a second count byte is not used. This value has a special meaning: the tuple variation data provides deltas for all glyph points (including the “phantom” points), or for all CVTs.</li>
+<li>If the first byte is non-zero and the high bit is clear (value is 1 to 127), then a second count byte is not used. The point count is equal to the value of the first byte.</li>
+<li>If the high bit of the first byte is set, then a second byte is used. The count is read from interpreting the two bytes as a big-endian uint16 value with the high-order bit masked out.</li>
+</ul>
+<p>Thus, if the count fits in 7 bits, it is stored in a single byte, with the value 0 having a special interpretation. If the count does not fit in 7 bits, then the count is stored in the first two bytes with the high bit of the first byte set as a flag that is not part of the count — the count uses 15 bits.</p>
+<p>For example, a count of 0x00 indicates that deltas are provided for all point numbers / all CVTs, with no additional point number data required; a count of 0x32 indicates that there are a total of 50 point numbers specified; a count of 0x81 0x22 indicates that there are a total of 290 (= 0x0122) point numbers specified.</p>
+<p>Point number data runs follow after the count. Each data run begins with a control byte that specifies the number of point numbers defined in the run, and a flag bit indicating the format of the run data. The control byte’s high bit specifies whether the run is represented in 8-bit or 16-bit values. The low 7 bits specify the number of elements in the run minus 1. The format of the control byte is as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Mask</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0x80</td>
+<td>POINTS_ARE_WORDS</td>
+<td>Flag indicating the data type used for point numbers in this run. If set, the point numbers are stored as unsigned 16-bit values (uint16); if clear, the point numbers are stored as unsigned bytes (uint8).</td>
+</tr>
+<tr>
+<td>0x7F</td>
+<td>POINT_RUN_COUNT_MASK</td>
+<td>Mask for the low 7 bits of the control byte to give the number of point number elements, minus 1.</td>
+</tr>
+</tbody>
+</table>
+<p>For example, a control byte of 0x02 indicates that the run has three elements represented as uint8 values; a control byte of 0xD4 indicates that the run has 0x54 + 1 = 85 elements represented as uint16 values.</p>
+<p>In the first point run, the first point number is represented directly (that is, as a difference from zero). Each subsequent point number in that run is stored as the difference between it and the previous point number. In subsequent runs, all elements, including the first, represent a difference from the last point number.</p>
+<p>Since the values in the packed data are all unsigned, point numbers will be given in increasing order. Since the packed representation can include zero values, it is possible for a given point number to be repeated in the derived point number list. In that case, there will be multiple delta values in the deltas data associated with that point number. All of these deltas must be applied cumulatively to the given point.</p>
+<p><a name="PackedDeltas" id="PackedDeltas"></a></p>
+<h3 id="packed-deltas">Packed Deltas</h3>
+<p>Tuple variation data specify deltas to be applied to glyph point coordinates or to CVT values. As in the case of point number data, deltas are stored in a packed format.</p>
+<p>Packed delta data does not include the total number of delta values within the data. Logically, there are deltas for every point number or CVT index specified in the point-number data. Thus, the count of logical deltas is equal to the count of point numbers specified for that tuple variation table. But since the deltas are represented in a packed format, the actual count of stored values is typically less than the logical count. The data is read until the expected logic count of deltas is obtained.</p>
+<blockquote>
+<p><em>Note:</em> In the 'gvar' table, there will be two logical deltas for each point number: one that applies to the X coordinate, and one that applies to the Y coordinate. Therefore, the total logical delta count is two times the point number count. The packed deltas are arranged with the deltas for X coordinates first, followed by the deltas for Y coordinates.</p>
+</blockquote>
+<p>Packed deltas are stored as a series of runs. Each delta run consists of a control byte followed by the actual delta values of that run. The control byte is a packed value with flags in the high two bits and a count in the low six bits. The flags specify the data size of the delta values in the run. The format of the control byte is as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Mask</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0x80</td>
+<td>DELTAS_ARE_ZERO</td>
+<td>Flag indicating that this run contains no data (no explicit delta values are stored), and that all of the deltas for this run are zero.</td>
+</tr>
+<tr>
+<td>0x40</td>
+<td>DELTAS_ARE_WORDS</td>
+<td>Flag indicating the data type for delta values in the run. If set, the run contains 16-bit signed deltas (int16); if clear, the run contains 8-bit signed deltas (int8).</td>
+</tr>
+<tr>
+<td>0x3F</td>
+<td>DELTA_RUN_COUNT_MASK</td>
+<td>Mask for the low 6 bits to provide the number of delta values in the run, minus one.</td>
+</tr>
+</tbody>
+</table>
+<p>For example, a control byte of 0x03 indicates that there are four 8-bit signed delta values following the control byte; a control byte of 0x40 indicates that there is one 16-bit signed delta value following the control byte; a control byte of 0x94 indicates that there is no additional data for this run, and that the run represents a sequence of 0x14 + 1 = 21 deltas equal to zero.</p>
+<p>The following is an example of a block of packed delta data:</p>
+<blockquote>
+<p>03 0A 97 00 C6 87 41 10 22 FB 34</p>
+</blockquote>
+<p>This data has three runs: a run of four 8-bit values, a run interpreted as eight zeroes, and a run of two 16-bit values:</p>
+<blockquote>
+<p>Run 1: 03 0A 97 00 C6</p>
+<p>Run 2: 87</p>
+<p>Run 3: 41 10 22 FB 34</p>
+</blockquote>
+<p>This packed data would represent the following logical sequence of delta values:</p>
+<blockquote>
+<p>10, -105, 0, -58, 0, 0, 0, 0, 0, 0, 0, 0, 4130, -1228</p>
+</blockquote>
+<p><a name="TVSProcessing" id="TVSProcessing"></a></p>
+<h3 id="processing-tuple-variation-store-data">Processing Tuple Variation Store Data</h3>
+<p>When a variation instance has been selected, an application needs to process the variation store data to derive interpolated values for that instance — interpolated grid coordinates for outline points, or interpolated CVT values. In the case of the 'gvar' table, this will be done glyph-by-glyph as needed. The application can process the TupleVariationHeaders to filter the tuple variation tables that are applicable for the current instance, or to calculate a scalar for each tuple variation table directly. Scalars can then be applied to deltas in each tuple variation table, and the net adjustments applied to the target items.</p>
+<blockquote>
+<p><em>Note:</em>
+In the 'cvar' table, there is a logical delta for each CVT index given in the packed point number data. In the 'gvar' table, there are two logical deltas for each point number: one for the point’s X coordinate, and one for the Y coordinate. The delta data is organized with all of the deltas for X coordinates first, followed by deltas for Y coordinates.</p>
+<p><em>Note:</em>
+In the 'gvar' table, if the data for a given glyph lists point numbers for some points in a contour but not others, then delta values for the omitted point numbers must be inferred. See the <a href="gvar.html" data-linktype="relative-path">'gvar' table</a> chapter for details.</p>
+</blockquote>
+<p>For details on determining applicability of a given tuple variation table, and on calculation of scalars and net adjustments to target items, see the chapter <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p>Because point number and delta data are stored in a packed representation, the data must be processed from the start in order to determine the presence of any particular point number, or to retrieve the delta for a particular item. For this reason, the format is best suited to processing all the data in a given tuple variation table at once rather than processing data for individual target items. In the case of glyph outlines, this is reasonable since there is no common application scenario for interpolating an adjusted position of a single outline point.</p>
+<p>The “phantom” points, which provide side-bearing and advance width information, are a possible exception to that generalization, however. (See the chapter, <a href="tt_instructing_glyphs.html#phantoms" data-linktype="relative-path">Instructing TrueType Glyphs</a> for more background on phantom points.) In particular, some text-layout operations require glyph metrics (advance widths or side bearings) without necessarily requiring glyph outline data. Yet the tuple variation store formats used in the 'gvar' table require that interpolated outlines be computed in order to obtain the interpolated glyph metrics. The <a href="hvar.html" data-linktype="relative-path">HVAR</a> table and <a href="vvar.html" data-linktype="relative-path">VVAR</a> table provide an alternate way to represent horizontal and vertical glyph metric variation data, and these use the ItemVariationStore format which is specifically designed to be suitable for processing data for particular target items.</p>
+<p><a name="GvarCvarDifferences" id="GvarCvarDifferences"></a></p>
+<h3 id="differences-between-gvar-and-cvar-tables">Differences Between 'gvar' and 'cvar' Tables</h3>
+<p>The following is a summary of key differences between tuple variation stores in the 'gvar' and 'cvar' tables.</p>
+<ul>
+<li>The 'gvar' table is a parent table for tuple variation stores, and contains one tuple variation store (the glyph variation data table) for each glyph ID. In contrast, the entire 'cvar' table is comprised of a single, slightly extended (with version fields) tuple variation store.</li>
+<li>Because the 'gvar' table contains multiple tuple variation stores, sharing of data between tuple variation stores is possible, and is used for shared tuple records. Because the 'cvar' table has a single tuple variation store, no possibility of shared data arises.</li>
+<li>The tupleIndex field of TupleVariationHeader structures within a tuple variation store includes a flag that indicates whether the structure instance includes an embedded peak tuple record. In the 'gvar' table, this is optional. In the 'cvar' table, a peak tuple record is mandatory.</li>
+<li>The serialized data includes packed “point” numbers. In the 'gvar' table, these refer to glyph contour point numbers or, in the case of a composite glyph, to component indices. In the context of the 'cvar' table, these are indices for CVT entries.</li>
+<li>In the 'gvar' table, point numbers cover the points or components defined in a 'glyf' entry plus four additional “phantom” points that represent the glyph’s horizontal and vertical advance and side bearings. (See the chapter, <a href="tt_instructing_glyphs.html#phantoms" data-linktype="relative-path">Instructing TrueType Glyphs</a> for more background on phantom points.) The last four point numbers for any glyph, including composite glyphs, are for the phantom points.</li>
+<li>In the 'gvar' table, if deltas are not provided for some points and the point indices are not represented in the point number data, then interpolated deltas for those points will in some cases be inferred. This is not done in the 'cvar' table, however.</li>
+<li>In the 'gvar' table, the serialized data for a given region has two logical deltas for each point number: one for the X coordinate, and one for the Y coordinate. Hence the total number of deltas is twice the count of control points. In the 'cvar' table, however, there is only one delta for each point number.</li>
+</ul>
+<p><a name="IVS" id="IVS"></a></p>
+<h2 id="item-variation-store">Item Variation Store</h2>
+<p>Item variation stores are used for most variation data other than that used for TrueType glyph outlines, including the variation data in <a href="mvar.html" data-linktype="relative-path">MVAR</a>, <a href="hvar.html" data-linktype="relative-path">HVAR</a>, <a href="vvar.html" data-linktype="relative-path">VVAR</a>, <a href="base.html" data-linktype="relative-path">BASE</a>, <a href="gdef.html" data-linktype="relative-path">GDEF</a> and <a href="colr.html" data-linktype="relative-path">COLR</a> tables.</p>
+<blockquote>
+<p><em>Note:</em>
+For CFF2 glyph outlines, delta values are interleaved directly within the glyph outline description in the CFF2 table. The sets of regions which are associated with the delta sets are defined in an item variation store, contained as a subtable within the CFF2 table. See the <a href="cff2.html" data-linktype="relative-path">CFF2</a> chapter for additional details.</p>
+</blockquote>
+<p>The ItemVariationStore format organizes sets of variation data into groupings by the target items. This makes the formats well-suited to computing interpolated instance values for individual font data items. This is useful for certain text layout operations in which only certain data items are required, such as the advance widths of specific glyphs or anchor positions used in specific GPOS lookup tables.</p>
+<p>The different tables that use item variation stores have their own top-level formats. Each will include an offset to an ItemVariationStore table, containing the variation data. This chapter describes the shared formats: the ItemVariationStore and its component structures.</p>
+<h3 id="associating-target-items-to-variation-data">Associating Target Items to Variation Data</h3>
+<p>Variation data is comprised of delta adjustment values that apply to particular target items. Some mechanism is needed to associate delta values with target items. In the item variation store, a block of delta values has an implicit delta-set index, and separate data outside the item variation store is provided that indicates the delta-set index associated with a given target item. Depending on the parent table in which an item variation store is used, different means are used to provide these associations:</p>
+<ul>
+<li>In the MVAR table, an array of records identifies target data items in various other tables, along with the delta-set index for each respective item.</li>
+<li>In the HVAR and VVAR tables, the target data items are glyph metric arrays in the 'hmtx' and 'vmtx' tables. Mapping subtables in the HVAR and VVAR tables provide the mapping between the target data items and delta-set indices.</li>
+<li>In the COLR table, a mapping subtable is used, as in the HVAR and VVAR tables. Structures that support variable items provide a starting index into the mapping subtable, and use a slice of consecutive mapping entries.</li>
+<li>For the BASE, GDEF, GPOS, and JSTF tables, a target data item is associated with a delta-set index using a related <a href="chapter2.html#device-and-variationindex-tables" data-linktype="relative-path">VariationIndex table</a> within the same subtable that contains the target item.</li>
+</ul>
+<p>In the COLR, HVAR and VVAR tables, DeltaSetIndexMap tables are used to provide the mapping to delta set indices. Two formats for the DeltaSetIndexMap are defined: format 0 uses a 16-bit count field, and so is limited to 65,535 entries; format 1 uses a 32-bit count field.</p>
+<p><em>DeltaSetIndexMap format 0:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>DeltaSetIndexMap format: set to 0.</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>entryFormat</td>
+<td>A packed field that describes the compressed representation of delta-set indices. See details below.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>mapCount</td>
+<td>The number of mapping entries.</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>mapData[variable]</td>
+<td>The delta-set index mapping data. See details below.</td>
+</tr>
+</tbody>
+</table>
+<p><em>DeltaSetIndexMap format 1:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>DeltaSetIndexMap format: set to 1.</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>entryFormat</td>
+<td>A packed field that describes the compressed representation of delta-set indices. See details below.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>mapCount</td>
+<td>The number of mapping entries.</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>mapData[variable]</td>
+<td>The delta-set index mapping data. See details below.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em> In previous versions of this specification, only one format of the DeltaSetIndexMap table was defined, and it began with a single, 16-bit <em>entryFormat</em> field. That single 16-bit field has been subdivided into separate 8-bit <em>format</em> and <em>entryFormat</em> fields. In the prior definition, the high-order byte of the 16-bit field was reserved and set to zero. Thus, format 0 is backward compatible with the definition used in previous versions.</p>
+</blockquote>
+<p>The mapCount field indicates the number of delta-set index mapping entries. The logical entries in the mapData array use a base-zero index. In the context in which a DeltaSetIndexMap table is used, if an index into the mapping array is used that is greater than or equal to mapCount, then the last logical entry of the mapping array is used.</p>
+<p>Each mapping entry represents a delta-set outer-level index and inner-level index combination. Logically, each of these indices is a 16-bit, unsigned value. These are represented in a packed format that uses one, two, three or four bytes. The entryFormat field is a packed bitfield that describes the compressed representation used in the mapData field of the given DeltaSetIndexMap table. The format of the entryFormat field is as follows:</p>
+<p><em>entryFormat field masks:</em></p>
+<table>
+<thead>
+<tr>
+<th>Mask</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0x0F</td>
+<td>INNER_INDEX_BIT_COUNT_MASK</td>
+<td>Mask for the low 4 bits, which give the count of bits minus one that are used in each entry for the inner-level index.</td>
+</tr>
+<tr>
+<td>0x30</td>
+<td>MAP_ENTRY_SIZE_MASK</td>
+<td>Mask for bits that indicate the size in bytes minus one of each entry.</td>
+</tr>
+<tr>
+<td>0xC0</td>
+<td>Reserved</td>
+<td>Reserved for future use — set to 0.</td>
+</tr>
+</tbody>
+</table>
+<p>The INNER_INDEX_BIT_COUNT_MASK and MAP_ENTRY_SIZE_MASK values enable the inner index to range in size from 1 to 16 bits, and the outer index to range in size from 0 to 31 bits, with the combined size determined by the MAP_ENTRY_SIZE_MASK value. The size of each mapping entry is:</p>
+<blockquote>
+<p>entrySize = ((entryFormat &amp; MAP_ENTRY_SIZE_MASK) &gt;&gt; 4) + 1</p>
+</blockquote>
+<p>The mapCount value gives the number of logical entries in the map data array; the total size of the map data array, in bytes, is:</p>
+<blockquote>
+<p>entrySize * mapCount</p>
+</blockquote>
+<p>For a given entry, the outer-level and inner-level indices can be obtained as follows:</p>
+<pre><code>outerIndex = entry &gt;&gt; ((entryFormat &amp; INNER_INDEX_BIT_COUNT_MASK) + 1)
+
+innerIndex = entry &amp; ((1 &lt;&lt; ((entryFormat &amp; INNER_INDEX_BIT_COUNT_MASK) + 1)) - 1)
+</code></pre>
+<p>For larger sets of variation data, such as may be needed for COLR, HVAR or VVAR tables, optimization of the indices data as well as the delta data may have a significant impact on overall size. Optimizing compilers may need to consider the impact on representation of indices in tandem as it optimizes the item variation store to achieve the best overall results.</p>
+<h3 id="variation-data">Variation Data</h3>
+<p>The ItemVariationStore table includes a variation region list, which defines the different regions of the font’s variation space for which variation data is defined. It also includes a set of item variation data subtables, each of which provides a portion of the total variation data. Each subtable is associated with some subset of the defined regions, and will include deltas used for one or more target items. Conceptually, the deltas form a two-dimensional array, with delta-set rows that include a delta for each of the regions referenced by that subtable. From this perspective, the delta-set columns correspond to regions.</p>
+<p>The following figure illustrates the overall structure of the ItemVariationStore table.</p>
+<figure><img src="media/otvctf_fig5.png" alt="Block diagram of item variation store subtables" data-linktype="relative-path"><figcaption>High-level organization of ItemVariationStore table </figcaption></figure>
+<p>Note that multiple subtables are necessary only if the number of distinct delta-set data exceeds 65,536. Multiple subtables may also be used, however, to provide more compact data representation. There are different ways that the delta data can be made more compact.</p>
+<p>First, deltas with a value of zero have no impact on their target items. If there are several delta-set rows that have a zero delta for the same region, then those rows could be moved into a subtable that does not reference that region. As a result, there will be fewer delta values in each row, making the size of data for those rows smaller.</p>
+<p>Also, some delta values require 16-bit representations, but some require only 8 bits. For a given subtable, deltas in each row correspond, in order, to the regions that are referenced, but the ordering of regions has no effect. Hence, regions and corresponding deltas within each row can be re-ordered. Thus, regions that require 16-bit delta representations can be ordered together. The ItemVariationData format specifies a count of regions (columns) for which a 16-bit delta representation is used, with the remaining deltas in each row using 8 bits. By reordering columns, the size required for a given delta-set row can potentially be reduced. If a set of rows have similar requirements in regard to which columns have deltas requiring 16-bit versus 8-bit representations, then those rows can be moved into a subtable with a column order that allows a maximal number of deltas using 8-bit rather than 16-bit representations.</p>
+<p>Similarly, ItemVariationData subtables can also combine delta values with 32-bit and 16-bit representations. An optimizing compiler can organize deltas into different subtables using 32-bit and 16-bit representations in some, but 16-bit and 8-bit representations in others, with columns re-ordered in each case to provide the most efficient representation of deltas.</p>
+<p>Note that there is minimal overhead for each subtable: 10 bytes (6 bytes in the subtable header and 4 bytes for the offset in the parent table) plus 2 bytes for each region that is referenced.</p>
+<p>A complete delta-set index involves an outer-level index into the ItemVariationData subtable array, plus an inner-level index to a delta-set row within that subtable. A special meaning is assigned to a delta-set index 0xFFFF/0xFFFF (that is, outer-level and inner-level portions are both 0xFFFF): this is used to indicate that there is no variation data for a given item. Functionally, this would be equivalent to referencing delta-set data consisting of only deltas of 0 for all regions.</p>
+<p><a name="VariationRegions" id="VariationRegions"></a></p>
+<h3 id="variation-regions">Variation Regions</h3>
+<p>As noted above, variation data is comprised of delta adjustment values that have effect over particular regions within the font’s variation space. In a tuple variation store (described earlier in this chapter), the deltas are organized into groupings by region of applicability, with each grouping associated with a particular region. In contrast, the ItemVariationStore format organizes deltas into groupings by the target items to which they apply, with each grouping having deltas for several regions. Accordingly, the item variation store uses different formats for describing the regions in which a set of deltas apply.</p>
+<p>For a given item variation store, a set of regions is specified using a VariationRegionList.</p>
+<p><em>VariationRegionList:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>uint16</td>
+<td>axisCount</td>
+<td>The number of variation axes for this font. This must be the same number as axisCount in the 'fvar' table.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>regionCount</td>
+<td>The number of variation region tables in the variation region list. Must be less than 32,768.</td>
+</tr>
+<tr>
+<td>VariationRegion</td>
+<td>variationRegions[regionCount]</td>
+<td>Array of variation regions.</td>
+</tr>
+</tbody>
+</table>
+<p>The high-order bit of the regionCount field is reserved for future use and must be cleared.</p>
+<p>The regions can be in any order. Each region is defined using an array of RegionAxisCoordinates records, one for each axis defined in the 'fvar' table:</p>
+<p><em>VariationRegion record:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>RegionAxisCoordinates</td>
+<td>regionAxes[axisCount]</td>
+<td>Array of region axis coordinates records, in the order of axes given in the 'fvar' table.</td>
+</tr>
+</tbody>
+</table>
+<p>Each RegionAxisCoordinates record provides coordinate values for a region along a single axis:</p>
+<p><em>RegionAxisCoordinates record:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>startCoord</td>
+<td>The region start coordinate value for the current axis.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>peakCoord</td>
+<td>The region peak coordinate value for the current axis.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>endCoord</td>
+<td>The region end coordinate value for the current axis.</td>
+</tr>
+</tbody>
+</table>
+<p>The three values must all be within the range -1.0 to +1.0. startCoord must be less than or equal to peakCoord, and peakCoord must be less than or equal to endCoord. The three values must be either all non-positive or all non-negative with one possible exception: if peakCoord is zero, then startCoord can be negative or 0 while endCoord can be positive or zero.</p>
+<blockquote>
+<p><em>Note:</em>
+The following guidelines are used for setting the three values in different scenarios:</p>
+<ul>
+<li>In the case of a non-intermediate region for which the given axis should factor into the scalar calculation for the region, either startCoord and peakCoord are set to a negative value (typically, -1.0) and endCoord is set to zero, or startCoord is set to zero and peakCoord and endCoord are set to a positive value (typically +1.0).</li>
+<li>In the case of an intermediate region for which the given axis should factor into the scalar calculation for the region, startCoord, peakCoord and endCoord are all set to non-positive values or are all set to non-negative values.</li>
+<li>If the given axis should not factor into the scalar calculation for a region, then this is achieved by setting peakCoord to zero. In this case, startCoord can be any non-positive value, and endCoord can be any non-negative value. It is recommended either that all three be set to zero, or that startCoord be set to -1.0 and endCoord be set to +1.0.</li>
+</ul>
+</blockquote>
+<p>The full algorithm for interpolation of instance values is given in the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>. The logical algorithm involves computing per-axis scalar values for a given region and a given instance. The per-axis scalars for a region are then combined to yield an overall scalar for the region that is then applied to delta adjustment values. Given a selected variation instance, a per-axis scalar can be calculated for each RegionAxisCoordinates record. The overall scalar for a region can be calculated by combining the per-axis scalars for that region.</p>
+<p><a name="IVSHeader" id="IVSHeader"></a></p>
+<h3 id="item-variation-store-header-and-item-variation-data-subtables">Item Variation Store Header and Item Variation Data Subtables</h3>
+<p>The item variation store table has a header with the following structure.</p>
+<p><em>ItemVariationStore table:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>format</td>
+<td>Set to 1</td>
+</tr>
+<tr>
+<td>Offset32</td>
+<td>variationRegionListOffset</td>
+<td>Offset in bytes from the start of the item variation store to the variation region list.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>itemVariationDataCount</td>
+<td>The number of item variation data subtables.</td>
+</tr>
+<tr>
+<td>Offset32</td>
+<td>itemVariationDataOffsets[itemVariationDataCount]</td>
+<td>Offsets in bytes from the start of the item variation store to each item variation data subtable.</td>
+</tr>
+</tbody>
+</table>
+<p>The item variation store includes an offset to a variation region list and an array of offsets to item variation data subtables. A NULL offset in the array indicates that there is no item variation data subtable for that index into the array.</p>
+<blockquote>
+<p><em>Note:</em> Indices into the itemVariationDataOffsets array are stored in parent tables as delta-set “outer” indices with each such index having a corresponding “inner” index. If the outer index points to a NULL offset, then any inner index will be invalid and can be ignored: items associated with this index do not have any variation.</p>
+</blockquote>
+<p>Each item variation data subtable includes deltas for some number of items, and some subset of regions. The regions are indicated by an array of indices into the variation region list.</p>
+<p><em>ItemVariationData subtable:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>itemCount</td>
+<td>The number of delta sets for distinct items.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>wordDeltaCount</td>
+<td>A packed field: the high bit is a flag—see details below.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>regionIndexCount</td>
+<td>The number of variation regions referenced.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>regionIndexes[regionIndexCount]</td>
+<td>Array of indices into the variation region list for the regions referenced by this item variation data table.</td>
+</tr>
+<tr>
+<td>DeltaSet</td>
+<td>deltaSets[itemCount]</td>
+<td>Delta-set rows.</td>
+</tr>
+</tbody>
+</table>
+<p>The wordDeltaCount field contains a packed value that includes a flag and a “word” delta count. The format of this value is as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Mask</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0x8000</td>
+<td>LONG_WORDS</td>
+<td>Flag indicating that “word” deltas are long (int32)</td>
+</tr>
+<tr>
+<td>0x7FFF</td>
+<td>WORD_DELTA_COUNT_MASK</td>
+<td>Count of “word” deltas</td>
+</tr>
+</tbody>
+</table>
+<p>The representation of delta values uses a mix of long types (“words”) and short types. If the LONG_WORDS flag is set, deltas are represented using a mix of int32 and int16 values. If the flag is not set, deltas are presented using a mix of int16 and int8 values. See the description of the DeltaSet record below for additional details.</p>
+<p>The LONG_WORDS flag should only be used in top-level tables that include 32-bit values that can be variable — currently, only the <a href="colr.html" data-linktype="relative-path">COLR</a> table.</p>
+<p>The count value indicated by WORD_DELTA_COUNT_MASK is a count of the number of deltas that use the long (“word”) representation, and must be less than or equal to regionIndexCount.</p>
+<p>The deltaSets array represents a logical two-dimensional table of delta values with itemCount rows and regionIndexCount columns. Rows in the table provide sets of deltas for particular target items, and columns correspond to regions of the variation space. Each DeltaSet record in the array represents one row of the delta-value table — one delta set.</p>
+<p><em>DeltaSet record:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>int16 and int8<br><em>or</em><br>int32 and int16</td>
+<td>deltaData​[regionIndexCount]</td>
+<td>Variation delta values.</td>
+</tr>
+</tbody>
+</table>
+<p>Logically, each DeltaSet record has regionIndexCount number of elements. The elements are represented using long and short types, as described above. These are either int16 and int8, or int32 and int16, according to whether the LONG_WORDS flag is set. The delta array has a sequence of deltas using the long type followed by a sequence of deltas using the short type. The count of deltas using the long type is derived using WORD_DELTA_COUNT_MASK. The remaining elements use the short type. The length of the data for each row, in bytes, is regionIndexCount + (wordDeltaCount &amp; WORD_DELTA_COUNT_MASK) if the LONG_WORDS flag is not set, or 2 x that amount if the flag is set.</p>
+<blockquote>
+<p><em>Note:</em> Delta values are each represented directly. They are not packed as in the tuple variation store.</p>
+</blockquote>
+<p>In general, variation deltas are, logically, signed 16-bit integers, and in most cases, they are applied to signed 16-bit values (FWORDs) or unsigned 16-bit values (UFWORDs). In the COLR table, however, scaled deltas can be applied to F2DOT14 or Fixed items, which are fixed-size floating types.</p>
+<p>When applying scaled deltas to an F2DOT14 value, the F2DOT14 value is treated like a 16-bit integer. (In this sense, the delta and the F2DOT14 value can be viewed as integer values in units of 1/16384ths.) In some contexts in which F2DOT14 is used, values may be constrained to a certain range, such as [0, 1]. If the context constrains the valid range for values, then any variations by applying deltas are clamped to that range.</p>
+<p>Fixed is a 32-bit (16.16) type and, in the general case, requires 32-bit deltas. As described above, the DeltaSet record can accommodate deltas that are, logically, either 16-bit or 32-bit. When scaled deltas are applied to Fixed values, the Fixed value is treated like a 32-bit integer. (In this sense, the delta and the Fixed value can be viewed as integer values in units of 1/65536ths.)</p>
+<p><a name="IVSProcessing" id="IVSProcessing"></a></p>
+<h3 id="processing-item-variation-store-data">Processing Item Variation Store Data</h3>
+<p>When a particular variation instance has been selected, an application needs to process the variation store data associated with particular target items to derive interpolated values for those items and that instance.</p>
+<p>To compute the interpolated instance value for a given target item, the application first obtains the delta-set index for that item. It uses the outer-level index portion to select an item variation data subtable within the item variation store, and the inner-level index portion to select a delta-set row within that subtable. The delta set contains one delta for each region referenced by the subtable, in order of the region indices given in the regionIndices array. The application uses the regionIndices array for that subtable to identify applicable regions and to compute a scalar for each of these regions based on the selected instance. Each of the scalars is then applied to the corresponding delta within the delta set to derive a scaled adjustment. The scaled adjustments for the row are then combined to obtain the overall adjustment for the item.</p>
+<p>Complete details on the interpolation algorithm logic are provided in the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p>For a given variation instance, an application will often need to interpolate values for several items that may use deltas in different item variation data subtables. The subtables will reference region definitions in the shared variation region list. When the instance has been selected, applications can pre-compute and cache a scalar for that instance for each region in the region list. Then when processing different target items, the cached scalar array can be used without needing to re-compute region scalars for each target item.</p>
+
+</body>
+</html>

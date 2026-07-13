@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ebsc — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc">https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="ebsc--embedded-bitmap-scaling-table">EBSC — Embedded Bitmap Scaling Table</h1>
+<p>The EBSC table provides a mechanism for describing embedded bitmaps which are created by scaling other embedded bitmaps. While this is the sort of thing that outline font technologies were invented to avoid, there are cases (small sizes of Kanji, for example) where scaling a bitmap produces more legible glyphs than scan-converting an outline. For this reason, the EBSC table allows a font to define a bitmap strike as a scaled version of another strike.</p>
+<p>The EBSC table is used together with the <a href="ebdt.html" data-linktype="relative-path">EBDT</a> table, which provides embedded monochrome or grayscale bitmap data, and the <a href="eblc.html" data-linktype="relative-path">EBLC</a> table, which provides embedded bitmap locators.</p>
+<p><a name="header"></a></p>
+<h2 id="formats">Formats</h2>
+<p>The EBSC table has the following format:</p>
+<p><em>EBSC table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version of the EBSC table, = 2.</td>
+</tr>
+<tr id="minorVersion">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version of the EBSC table, = 0.</td>
+</tr>
+<tr id="numSizes">
+<td>uint32</td>
+<td>numSizes</td>
+<td> </td>
+</tr>
+<tr>
+<td>BitmapScale</td>
+<td>strikes[numSizes]</td>
+<td>Array of BitmapScale records, one for each strike.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em> The first version of the EBSC table is 2.0.</p>
+</blockquote>
+<p>The numSizes field indicates the number of BitmapScale records in the array. Each strike is defined by one BitmapScale record.</p>
+<p><a name="bitmapScaleTable"></a></p>
+<p><em>BitmapScale record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="hori">
+<td>SbitLineMetrics</td>
+<td>hori</td>
+<td>line metrics</td>
+</tr>
+<tr id="vert">
+<td>SbitLineMetrics</td>
+<td>vert</td>
+<td>line metrics</td>
+</tr>
+<tr id="ppemX">
+<td>uint8</td>
+<td>ppemX</td>
+<td>target horizontal pixels per Em</td>
+</tr>
+<tr id="ppemY">
+<td>uint8</td>
+<td>ppemY</td>
+<td>target vertical pixels per Em</td>
+</tr>
+<tr id="substitutePpemX">
+<td>uint8</td>
+<td>substitutePpemX</td>
+<td>use bitmaps of this size</td>
+</tr>
+<tr id="substitutePpemY">
+<td>uint8</td>
+<td>substitutePpemY</td>
+<td>use bitmaps of this size</td>
+</tr>
+</tbody>
+</table>
+<p>The line metrics have the same format and meaning as those in the <a href="eblc.html#bitmapsize-record" data-linktype="relative-path">BitmapSize record</a> in the EBLC table, and refer to font wide metrics after scaling. The ppemX and ppemY values describe the size of the font after scaling. The substitutePpemX and substitutePpemY values describe the size of a strike that exists as an sbit in the EBLC and EBDT, and that will be scaled up or down to generate the new strike.</p>
+<p>Scaling in the x direction is independent of scaling in the y direction, and their scaling values may differ. A square aspect-ratio strike could be scaled to a non-square aspect ratio. Glyph metrics are scaled by the same factor as the pixels per Em (in the appropriate direction), and are rounded to the nearest integer pixel.</p>
+
+</body>
+</html>

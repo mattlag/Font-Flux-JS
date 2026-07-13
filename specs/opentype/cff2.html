@@ -1,0 +1,2733 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cff2 — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/cff2">https://learn.microsoft.com/en-us/typography/opentype/spec/cff2</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="cff2--compact-font-format-cff-version-2">CFF2 — Compact Font Format (CFF) Version 2</h1>
+<p><a id="intro"></a></p>
+<h2 id="introduction">Introduction</h2>
+<p>The Compact Font Format table, version 2 (CFF2), is used for describing glyphs in an OpenType font. It is an alternative to the <a href="glyf.html" data-linktype="relative-path">'glyf'</a> table using an efficient format to represent glyph outlines that has origins in the Adobe® Postscript® language.</p>
+<p>In the CFF2 table, sequences of cubic (3<sup>rd</sup>-order) Bézier curves and straight lines are used to define glyph outlines. CFF2 data can also include “blend” operations, controlled by <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations</a> mechanisms to change the shapes of glyphs. A rasterization fill rule is used to provide the opaque, monochrome shape of each glyph. CFF2 data can include “hint” operations that influence this rasterization. When combined with the <a href="colr.html" data-linktype="relative-path">COLR</a> and <a href="cpal.html" data-linktype="relative-path">CPAL</a> tables, the CFF2 table can be used to represent multi-color glyphs.</p>
+<p>CFF2 is a successor to and refinement of the <a href="cff.html" data-linktype="relative-path">'CFF '</a> table and glyph format. Because of the origins of CFF in the Postscript language, the data in a complete 'CFF ' table can be used as a stand-alone font. When used within an OpenType font, however, that aspect of CFF results in redundancy. CFF2 avoids redundancy by relying on data in other font tables. CFF2 also adds new operators used in variable fonts and uses a new CFF2 CharString specification.</p>
+<p>See <a href="glyphformatcomparison.html" data-linktype="relative-path">Comparison of 'glyf', 'CFF ' and CFF2 tables</a> for a summary of significant differences between the 'glyf', 'CFF ' and 'CFF2' tables.</p>
+<p><a id="dataLayout"></a></p>
+<h2 id="organization-of-the-cff2-table">Organization of the CFF2 table</h2>
+<p>The CFF2 table is comprised of various required and optional subtables. The following description summarizes the overall structure of the CFF2 table.</p>
+<p>Two common, generic structures are used for various subtables:</p>
+<ul>
+<li><p>A <em>DICT</em> structure is a binary dictionary format with one or more key-value pairs. This format is used for TopDICT, FontDICT and PrivateDICT subtables.</p>
+</li>
+<li><p>An <em>INDEX</em> structure contains an array of one or more data objects of various types. This format is used for CharStringINDEX, GlobalSubrINDEX, LocalSubrINDEX and FontDICTINDEX subtables.</p>
+</li>
+</ul>
+<blockquote>
+<p><em>Note:</em> the terms <em>local</em> and <em>private</em> are used in names for different structures or operators with the same meaning: data applicable to a specific scope, as opposed to global scope.</p>
+</blockquote>
+<p>The DICT and INDEX formats and the various subtables that use them are described in subsequent parts of this document.</p>
+<p>The CFF2 table begins with a short header. The header is followed by the <em>TopDICT</em> subtable, which stores offsets to other subtables. The TopDICT subtable is followed by the <em>GlobalSubrINDEX</em> subtable, which stores <em>CharString</em> data (see below) that can be re-used in multiple glyph descriptions.</p>
+<p>The first three structures—Header, TopDICT and GlobalSubrINDEX—must occur in that order at the start of the CFF2 table. Other subtables may occur in any order at offsets indicated in the TopDICT subtable and elsewhere.</p>
+<p>A <em>CharStringINDEX</em> subtable stores CharString data. A CharString is an encoded representation of a glyph, including the glyph outline data as well as hinting and variation data specific to the glyph. Within the CharStringINDEX, there is one CharString for each glyph in the font.</p>
+<p>CharStrings that have encoded data in common with other CharStrings may use <em>subroutines</em> to save space. Subroutines can be stored in the GlobalSubrINDEX subtable or in a <em>LocalSubrINDEX</em> subtable within a <em>PrivateDICT</em> table. Subroutines stored within the GlobalSubrINDEX can be used by any CharString. Subroutines stored within a PrivateDICT can only be used by CharStrings associated with that PrivateDICT.</p>
+<p>Each CharString is dependent on metadata related to hinting that is also stored in a PrivateDICT.</p>
+<p>Each PrivateDICT has a corresponding FontDICT that provides the location of the PrivateDICT. A CFF2 table requires only a single FontDICT / PrivateDICT pair, though multiple FontDICT / PrivateDICT pairs may be used. In particular, if some CharStrings require a different set of metadata from other CharStrings, then multiple FontDICT / PrivateDICT pairs may be defined. In such cases, a <em>FontDICTSelect</em> subtable is included to specify which FontDICT / PrivateDICT pair is used by each CharString.</p>
+<p>Metadata relating to Font Variations is stored in a <em>VariationStore</em> subtable. If the font does not support Font Variations, then the VariationStore must be omitted.</p>
+<p>The following table illustrates the organization of the various subtables that can occur in a CFF2 table. Required subtables are shown in <strong>bold type</strong>.</p>
+<p><a id="Table1"></a></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Data block</th>
+<th style="text-align: left;">Required</th>
+<th style="text-align: left;">Offset from start of CFF2 table</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Header</strong></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TopDICT</strong></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">5</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>GlobalSubrINDEX</strong></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">5 + Header.topDICTSize</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>CharStringINDEX</strong></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">TopDICT: CharStringINDEXOffset</td>
+</tr>
+<tr>
+<td style="text-align: left;">FontDICTSelect</td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">TopDICT: FontDICTSelectOffset</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FontDICTINDEX</strong></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">TopDICT: FontDICTINDEXOffset</td>
+</tr>
+<tr>
+<td style="text-align: left;">&nbsp;&nbsp; <strong>FontDICT#0</strong></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">&nbsp;&nbsp; +FontDICTINDEX.offsets[0]</td>
+</tr>
+<tr>
+<td style="text-align: left;">&nbsp;&nbsp; FontDICT#1</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">&nbsp;&nbsp; +FontDICTINDEX.offsets[1]</td>
+</tr>
+<tr>
+<td style="text-align: left;">&nbsp;&nbsp; …</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">&nbsp;&nbsp; FontDICT#<em>n</em></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">&nbsp;&nbsp; +FontDICTINDEX.offsets[<em>n</em>]</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>PrivateDICT#0</strong></td>
+<td style="text-align: left;">Yes</td>
+<td style="text-align: left;">FontDICT#0: PrivateDICTOffset</td>
+</tr>
+<tr>
+<td style="text-align: left;">PrivateDICT#1</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">FontDICT#1: PrivateDICTOffset</td>
+</tr>
+<tr>
+<td style="text-align: left;">…</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">PrivateDICT#<em>n</em></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">FontDICT#<em>n</em>: PrivateDICTOffset</td>
+</tr>
+<tr>
+<td style="text-align: left;">VariationStore</td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">TopDICT: VariationStoreOffset</td>
+</tr>
+</tbody>
+</table>
+<p>An annotated example of a CFF2 table is shown at the end of this chapter.</p>
+<p>Subtables and data types used within a CFF2 table are not subject to any byte-alignment requirements.</p>
+<p>DICT and CharString data are structured, binary data that use certain encoded representations for numbers, along with certain <em>operators</em> that determine the interpretation of the numeric values. For each operator, there is a defined syntactic sequence for numeric arguments. A <em>stack</em> is used by a CFF2 decoder for processing the binary operator/argument data in DICT and CharString data blocks. The various DICT and CharString operators are described in the sections below that describe those two types of structured data. The encoded representations of numbers and the decoding stack are described in separate sections that follow.</p>
+<p><a id="dataTypes"></a></p>
+<h2 id="encoded-numbers">Encoded numbers</h2>
+<h3 id="encoded-number-formats">Encoded number formats</h3>
+<p>Various CFF2 structures represent numeric values using the standard OpenType data types, such as uint8 and Fixed (see <a href="otff.html#data-types" data-linktype="relative-path">Data Types</a>). DICT and CharString data (including CharString subroutines) use special encoded representations for numbers.</p>
+<p>During decoding, byte sequences representing numbers or operators are encountered. Numbers have various encodings that use one or more bytes to represent a numeric value, depending on their magnitude and whether they are integers. The initial bytes used for encoding of numbers do not overlap with the inital bytes used for operators. Hence, for all number encodings, a byte sequence can be identified as being a number by the initial byte of the encoded representation.</p>
+<p>Most number encodings may be used in both DICT and Charstring data, though there are exceptions. The following table shows how numbers are encoded based on an initial byte, and also indicates whether each encoding is used in DICT or CharString data only, or both. Each encoding uses an initial byte, <strong>b0</strong>, interpreted as uint8, and possible subsequent bytes <strong>b1</strong>, <strong>b2</strong>, <strong>b3</strong>, etc. In the 2-byte formats, <strong>b1</strong> is also interpreted as uint8.</p>
+<p><em>Numerical value encoding</em></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Initial byte b0</th>
+<th style="text-align: left;">Value range</th>
+<th style="text-align: left;">Value calculation</th>
+<th style="text-align: left;">Size in bytes</th>
+<th style="text-align: left;">Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">32 to 246</td>
+<td style="text-align: left;">-107 to 107</td>
+<td style="text-align: left;">b0 - 139</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">both</td>
+</tr>
+<tr>
+<td style="text-align: left;">247 to 250</td>
+<td style="text-align: left;">108 to 1131</td>
+<td style="text-align: left;">(b0 - 247) * 256 + b1 + 108</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">both</td>
+</tr>
+<tr>
+<td style="text-align: left;">251 to 254</td>
+<td style="text-align: left;">-1131 to -108</td>
+<td style="text-align: left;">-(b0 - 251) * 256 - b1 - 108</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">both</td>
+</tr>
+<tr>
+<td style="text-align: left;">28</td>
+<td style="text-align: left;">-32768 to 32767</td>
+<td style="text-align: left;">interpret b1 and b2 as int16</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">both</td>
+</tr>
+<tr>
+<td style="text-align: left;">255</td>
+<td style="text-align: left;">-32768 to (32768 - 1/65536)</td>
+<td style="text-align: left;">interpret b1 to b4 as Fixed</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;"><em>CharString</em> only</td>
+</tr>
+<tr>
+<td style="text-align: left;">29</td>
+<td style="text-align: left;">-(2^31) to (2^31 - 1)</td>
+<td style="text-align: left;">interpret b1 to b4 as int32</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;"><em>DICT</em> only</td>
+</tr>
+<tr>
+<td style="text-align: left;">30</td>
+<td style="text-align: left;">any real number</td>
+<td style="text-align: left;">following bytes are <em>binary coded decimal</em> (see below)</td>
+<td style="text-align: left;">unlimited</td>
+<td style="text-align: left;"><em>DICT</em> only</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em> For some of these encodings, <strong>b0</strong> serves only to indicate the encoding used. For some, however, <strong>b0</strong> is used both to indicate the encoding used and also in the calculation of the numeric value.</p>
+</blockquote>
+<p>The Usage column indicates whether each encoded format may be used in DICT data, in CharString data, or in both. Numbers encoded as int32 (<strong>b0</strong> = 29) or binary coded decimal (<strong>b0</strong> = 30) are only permitted in DICT data. Numbers encoded as Fixed (<strong>b0</strong> = 255) are only permitted in <em>CharString</em> data. It is not possible to represent numbers &gt;= 32768 or &lt; -32768 in <em>CharString</em> data.</p>
+<p>If an initial byte <strong>b0</strong> has a value not in this list, then either the byte encodes an operator, or the data is invalid.</p>
+<h3 id="binary-coded-decimal">Binary coded decimal</h3>
+<p>Real numeric values of arbitrary precision can be represented in a binary coded decimal form. This representation uses a binary encoding of a decimal numeric expression, such as “123.456”. The numeric expression can optionally use decimal exponential notation, such as “1.23456E2” (equivalent to “1.23456 × 10<sup>2</sup>”). Binary coded decimal numbers may only be used in DICT data.</p>
+<p>The representation of binary coded decimal numbers begins with a prefix byte (<strong>b0</strong>) value of 30. This is followed by a byte sequence in which each 4-bit nibble represents an element. The two nibbles of each byte are interpreted in big-endian order: the first element is stored in the most significant 4 bits, and the second element is stored in the least significant 4 bits. The sequence is terminated with a nibble value of 0xf (hexadecimal). If the terminating 0xf nibble is the first nibble of a byte, then an additional 0xf nibble must be appended (hence, the byte is 0xff) so that the encoded representation is always a whole number of bytes.</p>
+<p>After the prefix byte of 30 is recognized, the value of the binary coded decimal number is obtained by stepping through the nibbles, building up the decimal expression of the number, until the termination nibble is encountered. Each nibble value is interpreted according to the following table. Converted to ASCII, the string can then be converted to a high-precision floating point number using standard functions in most programming languages.</p>
+<table>
+<thead>
+<tr>
+<th>Nibble value</th>
+<th>Nibble value (hex)</th>
+<th>Represents in ASCII</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0 to 9</td>
+<td>0 to 9</td>
+<td>0 to 9</td>
+</tr>
+<tr>
+<td>10</td>
+<td>a</td>
+<td>. (decimal point)</td>
+</tr>
+<tr>
+<td>11</td>
+<td>b</td>
+<td>E</td>
+</tr>
+<tr>
+<td>12</td>
+<td>c</td>
+<td>E-</td>
+</tr>
+<tr>
+<td>13</td>
+<td>d</td>
+<td>(reserved)</td>
+</tr>
+<tr>
+<td>14</td>
+<td>e</td>
+<td>- (minus)</td>
+</tr>
+<tr>
+<td>15</td>
+<td>f</td>
+<td>end of number</td>
+</tr>
+</tbody>
+</table>
+<p>Negative exponents, as in the example “3E-5” (=0.00003), must be represented using the nibble value 0xc, not by the nibble sequence 0xb followed by 0xe.</p>
+<p>While the binary encoded decimal format can represent values with arbitrary precision, the maximum degree of effective precision obtainable is implementation dependent.</p>
+<p><em>Examples:</em></p>
+<ul>
+<li>the value -2.25 is encoded by the byte 30 (decimal) followed by the byte sequence 0xe2 0xa2 0x5f (hexadecimal)</li>
+<li>the value 0.140541E-3 is encoded by 30 (decimal) followed by the byte sequence 0x0a 0x14 0x05 0x41 0xc3 0xff (hexadecimal)</li>
+</ul>
+<p>The following regular expression (using POSIX ERE or Perl Compatible RE syntax) validates a binary coded decimal value represented as ASCII:</p>
+<pre><code> -?([1-9][0-9]*|0)?(\.[0-9]*)?(E-?[1-9][0-9]*)?
+</code></pre>
+<p>The following table shows some edge cases (represented as ASCII) and their decoded values:</p>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[empty]</td>
+<td>0</td>
+</tr>
+<tr>
+<td>.</td>
+<td>0</td>
+</tr>
+<tr>
+<td>.5</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>2.</td>
+<td>2</td>
+</tr>
+<tr>
+<td>E5</td>
+<td><em>invalid</em></td>
+</tr>
+<tr>
+<td>05</td>
+<td><em>invalid</em></td>
+</tr>
+<tr>
+<td>E05</td>
+<td><em>invalid</em></td>
+</tr>
+</tbody>
+</table>
+<h2 id="decoding-dict-and-charstring-data-using-a-stack">Decoding DICT and CharString data using a stack</h2>
+<p>Two fundamental encoded data formats in the CFF2 table are the DICT and the CharString. Each is a binary data block that represents a sequence of encoded numbers and operators. In order to interpret those sequences, CFF2 decoders use a <em>stack</em>.</p>
+<p>A stack is an array conceived as a physical stack of items, which can be manipulated in only two ways:</p>
+<ul>
+<li>place one new item on the top (“push an item onto the stack”)</li>
+<li>remove one item from the top (“pop an item from the stack”)</li>
+</ul>
+<p>When an item is popped from the stack, the item removed must be the last item that was added.</p>
+<h3 id="stack-based-cff2-decoding">Stack-based CFF2 decoding</h3>
+<p>A CFF2 decoder is expected to implement a stack in a suitable manner. The CFF2 stack stores only numbers.</p>
+<p>Starting with an empty stack, a decoder of DICT and CharString data processes bytes sequentially from the start to the end, decoding numbers and operators.</p>
+<p>Numbers in DICT and CharString data are represented using an encoding scheme of one or more bytes, as described in the previous section. Decoded numbers are immediately pushed to the stack, ready for use as operands for operators that follow.</p>
+<p>Operators are encoded with one or two bytes. The byte ranges used for operators do not overlap with the encodings used for numbers. All two-byte operators begin with 0x0c. A few operators also encode data in succeeding bytes.</p>
+<p>Decoded operators pop one or more numbers from the stack, then store or process them, and in some cases push new numbers back onto the stack. The maximum number of operands on the CFF2 stack is 513.</p>
+<p>Different operators are defined for use in the different types of DICT table and for use in CharStrings. In any of these contexts, if an unrecognized operator is encountered while decoding, it is ignored and the stack is cleared.</p>
+<p>The function of operators in a DICT subtable is to create key-value pairs. During decoding, the DICT key is identified by the operator, and the DICT value is obtained by popping items (one or more numbers) from the stack. In well-formed CFF2 data, the number of operands preceding a DICT key operator must be exactly the number required for that operator; hence, the stack will be empty after the operator is processed. The DICT <strong>blend</strong> operator is exceptional, neither creating a key-value pair nor leaving the stack empty. Instead, its function is to modify operand values before they are assigned to keys. See <a href="#opentype-font-variations-in-cff2" data-linktype="self-bookmark">OpenType Font Variations in CFF2</a>, below, for details on the <strong>blend</strong> operator.</p>
+<p>The function of operators in CharString data is the representation of glyph outlines, hints and variations. During decoding, and assuming valid CharString data, most CharString operators pop all the numbers on the stack and do not push any new numbers to the stack. Thus, in CharString decoding, most operators will leave the stack empty. There are three exceptions:</p>
+<ul>
+<li><strong>blend</strong>: Pops operands from the stack (but not necessarily all the operands on the stack) and pushes processed numbers back to the stack.</li>
+<li><strong>callsubr</strong>: Pops a number from the stack and invokes a local subroutine.</li>
+<li><strong>callgsubr</strong>: Pops a number from the stack and invokes a global subroutine.</li>
+</ul>
+<p><a href="#subroutines" data-linktype="self-bookmark">Subroutines</a> are not restricted regarding the state of the stack. When the <strong>callsubr</strong> or <strong>callgsubr</strong> operator is processed, the stack may have one operand or many operands. After the subroutine is processed, the stack may be empty or may contain any number of operands.</p>
+<p>These operators are described in detail below (see <a href="#charstring" data-linktype="self-bookmark">CharString</a>).</p>
+<p><a id="dictData"></a></p>
+<h3 id="stack-notation">Stack notation</h3>
+<p>In specifications for <em>DICT</em> and <em>CharString</em> that follow, the following notation is used to describe the state of the stack when particular operators are encountered.</p>
+<ul>
+<li><code>[</code> — represents the bottom of the stack</li>
+<li><code>]</code> — represents the top of the stack</li>
+<li><code>x</code>, <code>dx</code>, etc. — values on the stack referred to in the description</li>
+<li><code>&lt;number&gt;</code> — a number, either an integer or real number</li>
+<li><code>&lt;integer&gt;</code> — an integer</li>
+<li><code>(</code> <code>)</code> — delimiters for a group of items that is repeated or optional</li>
+<li><code>*</code> — an item or group occurs 0 or more times</li>
+<li><code>+</code> — an item or group occurs 1 or more times</li>
+<li><code>…</code> — items at the bottom of the stack that are not involved in the current operation</li>
+</ul>
+<p>The following are some expressions using this notation:</p>
+<ul>
+<li><p><code>[ &lt;number&gt; ]</code> — the stack contains one number</p>
+</li>
+<li><p><code>[ &lt;integer&gt; ]</code> — the stack contains one integer</p>
+</li>
+<li><p><code>[ &lt;number&gt;+ ]</code> — the stack contains one or more numbers</p>
+</li>
+<li><p><code>[ (&lt;number&gt; &lt;number&gt;)+ ]</code> —&nbsp;the stack contains an even number of numbers (using the regular expression-style parentheses for grouping)</p>
+</li>
+<li><p><code>[… &lt;number&gt;* &lt;integer&gt; ]</code> —&nbsp;at the top of the stack are 0 or more numbers, followed by an integer</p>
+</li>
+</ul>
+<p>This notation is similarly used to describe the operands interpreted by operators. For example:</p>
+<ul>
+<li>The stack notation specified for the CharString <strong>hmoveto</strong> operator is <code>[ dx ]</code>, indicating that a single operand, <em>dx</em>, is expected.</li>
+<li>The stack notation specified for the CharString <strong>rlineto</strong> operator is <code>[ (dx dy)+ ]</code>, indicating that one or more pairs of operands, <em>dx dy</em>, are expected.</li>
+</ul>
+<h2 id="common-formats-dict-and-index">Common formats: DICT and INDEX</h2>
+<p>DICT and INDEX are two common, generic structures that are used for various subtables. This section describes the generic specifications common across various subtables; details specific to particular subtables will follow in later sections.</p>
+<h3 id="dict-data">DICT data</h3>
+<p>A DICT subtable defines a dictionary data structure consisting of key-value pairs. DICTs are used in CFF2 to store offsets to other data blocks, and metadata used across multiple glyphs. In each key-value pair:</p>
+<ul>
+<li><p>The <em>key</em> is a string from a predefined vocabulary encoded as an operator of one or two bytes. Each type of DICT subtable has a different set of valid keys. A given key must not be defined more than once in any DICT.</p>
+</li>
+<li><p>The <em>value</em> is a number or a sequence of numbers.</p>
+</li>
+</ul>
+<p>DICT data is decoded using a stack, as described above. Starting from the beginning of the DICT data, numbers and operators are parsed from the data sequentially until the end of DICT data is reached. Decoded numbers are pushed onto the stack. DICT operators pop numeric operands from the stack and assign those numbers as values for the key identified by the operator itself. The number of operands that are popped is specific to each operator.</p>
+<p>With the exception of the <strong>blend</strong> operator, after a DICT operator and its values have been decoded, the stack must be empty. If it is not empty, the subtable is invalid.</p>
+<p>While decoding a DICT, if an operator is encountered that is not defined for the current DICT type, the behavior is unspecified.</p>
+<p>The DICT format is used for <a href="#topdict" data-linktype="self-bookmark"><em>TopDICT</em></a>, <a href="#fontdict" data-linktype="self-bookmark"><em>FontDICT</em></a> and <a href="#privatedict" data-linktype="self-bookmark"><em>PrivateDICT</em></a> subtables. In general, the key-value pairs for a DICT may be specified in any order. However, some ordering rules are specified for the PrivateDICT subtable. For each subtable type, default values are specified for certain keys. For keys that have a specified default value, that default value must be used if the corresponding operator for the key is not present with the DICT. Details for each of these subtables is provided below.</p>
+<p>Multiple DICT subtables may share encoded data with overlapping byte ranges within the CFF2 table. In this way, one DICT could represent a subset of the data of another DICT.</p>
+<p><a id="idxData"></a></p>
+<h3 id="index-data">INDEX data</h3>
+<p>An INDEX is an array of data objects of some type. Objects in the array are accessed using a 0-based index. Objects in the array are stored contiguously and in order. An offset array provides the location and size of each object, which may be of arbitrary size.</p>
+<p>The INDEX format is used in <a href="#charstringindex" data-linktype="self-bookmark"><em>CharStringINDEX</em></a>, <a href="#subroutines" data-linktype="self-bookmark"><em>GlobalSubrINDEX</em> and <em>LocalSubrINDEX</em></a>, and <a href="#fontdictindex" data-linktype="self-bookmark"><em>FontDICTINDEX</em></a> subtables. These are described below.</p>
+<p>The format of an INDEX is as follows.</p>
+<p><a id="idxFormat"></a>
+<a id="Table7"></a></p>
+<p><em>INDEX table</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint32</td>
+<td>count</td>
+<td>Number of objects stored in INDEX</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>offsetSize</td>
+<td>Offset array element size</td>
+</tr>
+<tr>
+<td>Offset8 <em>or</em> Offset16 <em>or</em> Offset24 <em>or</em> Offset32</td>
+<td>offsets[count+1]</td>
+<td>Array of offsets — offsets are from byte preceding object data</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>data[<em>variable</em>]</td>
+<td>Object data—total length is the last offset - 1</td>
+</tr>
+</tbody>
+</table>
+<p>The offsetSize field specifies the number of bytes used to store each offset: 1 for Offset8, 2 for Offset16, 3 for Offset24, or 4 for Offset32.</p>
+<p>The offsets array specifies the starting location for each data object according to its index. Offsets in the offset array are relative to the byte that precedes the object data. The first element of the offset array must always be 1. Data objects are stored contiguously and in order, therefore each offset must be less than or equal to the following offset.</p>
+<p>An object is retrieved by using the object index to look up an offset in the <em>offsets</em> array and fetching the binary data at the specified offset. The size for each object is determined by subtracting the offset for a given object from the next offset in the offset array. The offset array has <em>count</em> + 1 elements, which provides a length for the last object. Hence, every object has a non-zero offset and a size (which may be zero).</p>
+<p>An empty INDEX is represented by a <em>count</em> field with a 0 value and no additional fields. Thus, the total size of an empty INDEX is 4 bytes.</p>
+<p>The total size of a non-empty INDEX is:</p>
+<pre><code>4 + 1 + offsetSize × (count + 1) + offsets[count] - 1
+</code></pre>
+<p>When creating INDEX data blocks, the smallest possible representation for offsets should be used. For example, if <em>offsets</em>[<em>count</em>] is greater than 255 and less than 65536, then all offsets can be represented as Offset16, and so <em>offsetSize</em> should be set to 2.</p>
+<p><a id="header"></a></p>
+<h2 id="header">Header</h2>
+<p>The CFF2 table begins with a header having the following format.</p>
+<p><a id="cf2header"></a></p>
+<p><em>CFF2 Header</em></p>
+<p><a id="Table8"></a>
+<a id="headerFormat"></a></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion">
+<td>uint8</td>
+<td>majorVersion</td>
+<td>Format major version (set to 2).</td>
+</tr>
+<tr id="minorVersion">
+<td>uint8</td>
+<td>minorVersion</td>
+<td>Format minor version (set to 0).</td>
+</tr>
+<tr id="headerSize">
+<td>uint8</td>
+<td>headerSize</td>
+<td>Header size (set to 5).</td>
+</tr>
+<tr id="topDictLength">
+<td>uint16</td>
+<td>topDICTSize</td>
+<td>Length of TopDICT subtable.</td>
+</tr>
+</tbody>
+</table>
+<p>The TopDICT subtable must always start immediately after the header—for this version, at offset 5 from the start of the CFF2 table. The headerSize field must be used when locating the start of the TopDICT subtable. It is provided so that future versions of the format can introduce additional data between the <em>topDICTSize</em> field and the TopDICT subtable in a manner that is compatible with older implementations.</p>
+<p>The sum <em>headerSize + topDICTSize</em> is the location within the CFF2 table of the required GlobalSubrINDEX subtable.</p>
+<p><a id="topDict"></a>
+<a id="section7"></a></p>
+<h2 id="topdict">TopDICT</h2>
+<p>The TopDICT subtable is a <a href="#dict-data" data-linktype="self-bookmark">DICT</a> that provides offsets to various subtables within the CFF2 table. It also provides values relating to the <em>unitsPerEm</em> value in the <a href="head.html" data-linktype="relative-path">'head'</a> table. The TopDICT subtable immediately follows the CFF2 Header. Every CFF2 table requires one TopDICT subtable.</p>
+<h3 id="topdict-operator-summary">TopDICT operator summary</h3>
+<p>The following table lists the five operators allowed in the TopDICT subtable,  the bytes by which they are encoded in DICT data (hexadecimal and decimal), and whether or not they are required.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Hex</th>
+<th style="text-align: left;">Dec</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Required</th>
+<th style="text-align: left;">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">0x11</td>
+<td style="text-align: left;">17</td>
+<td style="text-align: left;"><strong>CharStringINDEXOffset</strong></td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x18</td>
+<td style="text-align: left;">24</td>
+<td style="text-align: left;"><strong>VariationStoreOffset</strong></td>
+<td style="text-align: left;">only for fonts with variations</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0c24</td>
+<td style="text-align: left;">12,36</td>
+<td style="text-align: left;"><strong>FontDICTINDEXOffset</strong></td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0c25</td>
+<td style="text-align: left;">12,37</td>
+<td style="text-align: left;"><strong>FontDICTSelectOffset</strong></td>
+<td style="text-align: left;">no&nbsp;</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0c07</td>
+<td style="text-align: left;">12,7</td>
+<td style="text-align: left;"><strong>FontMatrix</strong></td>
+<td style="text-align: left;">no</td>
+<td style="text-align: left;">0.001 0 0 0.001 0 0</td>
+</tr>
+</tbody>
+</table>
+<h3 id="topdict-operator-specifications">TopDICT operator specifications</h3>
+<p>The following specifies details for the five key operators permitted in a TopDICT.</p>
+<p><a id="charstringindexoffset"></a></p>
+<p><strong>CharStringINDEXOffset</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x11 (17)</td></tr>
+<tr><th>Stack</th><td>[&lt;integer&gt;]</td></tr>
+<tr><th>Operands</th><td>[ offset ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>
+    Specifies the offset to the CharStringINDEX subtable, from the start of the CFF2 table.
+  </td>
+</tr>
+<tr><th>Occurrence</th><td>Required</td></tr>
+</tbody></table>
+<p><a id="variationstoreoffset"></a></p>
+<p><strong>VariationStoreOffset</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x18 (24)</td></tr>
+<tr><th>Stack</th><td>[&lt;integer&gt;]</td></tr>
+<tr><th>Operands</th><td>[ offset ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>
+    Specifies the offset to the VariationStore subtable, from the start of the CFF2 table.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Required in fonts that have CFF2 glyph variations, otherwise forbidden.</td>
+</tr>
+</tbody></table>
+<p><a id="fonddictindexoffset"></a></p>
+<p><strong>FontDICTINDEXOffset</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0c24 (12, 36)</td></tr>
+<tr><th>Stack</th><td>[&lt;integer&gt;]</td></tr>
+<tr><th>Operands</th><td>[ offset ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Specifies the offset to the FontDICTINDEX subtable, from the start of the CFF2 table.</td>
+</tr>
+<tr><th>Occurrence</th><td>Required</td></tr>
+</tbody></table>
+<p><a id="fontdictselectoffset"></a></p>
+<p><strong>FontDICTSelectOffset</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0c25 (12, 37)</td></tr>
+<tr><th>Stack</th><td>[&lt;integer&gt;]</td></tr>
+<tr><th>Operands</th><td>[ offset ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>
+    Specifies the offset to the FontDICTSelect subtable, from the start of the CFF2 table.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>
+    Optional. If the CFF2 table has only one FontDICT, there is no need for a FontDICTSelect subtable, and the <b>FontDICTSelectOffset</b> operator must not be used.
+  </td>
+</tr>
+</tbody></table>
+<p><a id="fontmatrix"></a></p>
+<p><strong>FontMatrix</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0c07 (12, 7)</td></tr>
+<tr><th>Stack</th><td>[ &lt;number&gt; 0 0 &lt;number&gt; 0 0 ]</td></tr>
+<tr><th>Operands</th><td>[ scale 0 0 scale 0 0 ]</td></tr>
+<tr><th>Default</th><td>0.001 0 0 0.001 0 0</td></tr>
+<tr>
+  <th>Description</th>
+  <td>
+    Numeric operands are encoded as binary coded decimal. Specifies the scale factor for glyph coordinates within the em square, similar to the <i>unitsPerEm</i> field in the <a href="head.html" data-linktype="relative-path">'head'</a> table. However, a reciprocal value is used (thus 1 / <i>unitsPerEm</i>). This value occurs as the first and fourth operands—both scale operands must have the same value. Other operands must be zero.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>
+    Required if <i>unitsPerEm</i> is not equal to 1000. For the common case in which <i>unitsPerEm</i> is 1000, the key-value pair is created with the default value and the <b>FontMatrix</b> operator should be omitted.
+  </td></tr>
+</tbody></table>
+<blockquote>
+<p><em>Note:</em> The origin of the TopDICT <strong>FontMatrix</strong> operator is a 2×3 transformation matrix. In the CFF2 table, however, only matrices with uniform horizontal and vertical scaling without translation are permitted, hence the requirement that the 1st and 4th operands be identical and the remaining operands be zero.</p>
+</blockquote>
+<h2 id="fontdictindex-fontdictselect-and-fontdict">FontDICTINDEX, FontDICTSelect and FontDICT</h2>
+<h3 id="overview">Overview</h3>
+<p>The FontDICTINDEX subtable is used in combination with other data structures for storing metadata related to hinting, variation and subroutines for <a href="#charstring" data-linktype="self-bookmark">CharString</a> glyph descriptions. The metadata associated with a given glyph is stored in a <a href="#privatedict" data-linktype="self-bookmark">PrivateDICT</a> table. Multiple PrivateDICT tables may be used, each holding the metadata for a subset of CharStrings. For each PrivateDICT, there is a corresponding FontDICT table that provides the location of the given PrivateDICT table. The FontDICTINDEX contains the array of FontDICT tables. When multiple PrivateDICT tables are used, a FontDICTSelect table indicates which FontDICT and corresponding PrivateDICT are used for each glyph.</p>
+<h3 id="fontdictindex">FontDICTINDEX</h3>
+<p>The FontDICTINDEX is a required subtable. Its location within the CFF2 table is given by the <strong>FontDICTINDEXOffset</strong> key in the <a href="#topdict" data-linktype="self-bookmark">TopDICT</a> subtable. It uses the <a href="#index-data" data-linktype="self-bookmark">INDEX</a> format.</p>
+<p>The FontDICTINDEX must contain at least one FontDICT, but may contain multiple FontDICTs. No upper limit to the number of FontDICTs is specified. If there is more than one FontDICT, each FontDICT will be associated with some subset of glyphs. In this case, a FontDICTSelect table must be used to assign glyphs to FontDICTs.</p>
+<h3 id="fontdictselect">FontDICTSelect</h3>
+<p>The FontDICTSelect table is an optional table used when there are multiple FontDICT tables to assign each <a href="#charstring" data-linktype="self-bookmark">CharString</a> to a particular FontDICT. The location of the FontDICTSelect table is given by the <strong>FontDICTSelectOffset</strong> key in the <a href="#topdict" data-linktype="self-bookmark">TopDICT</a> subtable. A font may use one FontDICT (and corresponding <a href="#privatedict" data-linktype="self-bookmark">PrivateDICT</a>) for all CharStrings. In that case, no FontDICTSelect table is required, and the <strong>FontDICTSelectOffset</strong> entry is omitted from the TopDICT.</p>
+<p>There are three formats defined for <em>FontDICTSelect</em>: format 0, format 3 and format 4. Each format provides mappings for all glyphs (CharStrings) to a FontDICT. That is, each format provides <em>numGlyphs</em> mappings from a glyph index (or <em>glyph ID</em>) to a FontDICT index, where <em>numGlyphs</em> is the number of CharStrings in the <a href="#charstringindex" data-linktype="self-bookmark">CharStringINDEX</a>. Formats 3 and 4 map ranges of glyph IDs onto a single FontDICT index, which often makes those formats a better choice for efficiency.</p>
+<p>The first field in each format identifies the format.</p>
+<p><em>FontDICTSelectFormat0 table</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 0</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>fontDICTIDs[numGlyphs]</td>
+<td>FontDICT index array</td>
+</tr>
+</tbody>
+</table>
+<p>In format 0, each element of the fontDICTIDs array represents the index for a FontDICT in the FontDICTINDEX. This format should be used when the FontDICT indices are in a fairly random order.</p>
+<p><em>FontDICTSelectFormat3 table</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 3</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>numRanges</td>
+<td>Number of ranges</td>
+</tr>
+<tr>
+<td>Range3</td>
+<td>ranges[numRanges]</td>
+<td>Array of Range3 records (see below)</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>sentinel</td>
+<td>Sentinel glyph ID</td>
+</tr>
+</tbody>
+</table>
+<p><em>Range3 record</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>first</td>
+<td>First glyph ID in range</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>fontDICTID</td>
+<td>FontDICT index for all glyphs in range</td>
+</tr>
+</tbody>
+</table>
+<p>Each Range3 record describes a group of sequential glyph IDs that have the same FontDICT index. Each range includes glyph IDs from the <em>first</em> glyph ID in the range record up to, but not including, the <em>first</em> glyph ID of the next range record. Records in the <em>ranges</em> array must be in increasing order of <em>first</em> glyph IDs. The first range must have a <em>first</em> glyph ID of 0. The <em>sentinel</em> glyph ID provides a final range in the array, and must be set equal to <em>numGlyphs</em>, the number of glyphs in the font. That is, its value is 1 greater than the last glyph ID in the font.</p>
+<p>The <em>fontDICTID</em> in each Range3 record cannot exceed 255. For this reason, a format 3 FontDICTSelect supports at most 255 FontDICT tables in the FontDICTINDEX.</p>
+<blockquote>
+<p><em>Note:</em> The <em>sentinel</em> glyph ID is encoded as a uint16, hence cannot exceed 65,535. Since it delimits a final range in the <em>ranges</em> array, and the ending glyph ID is one less than the start of the following range, the last glyph ID that can be mapped using format 3 cannot exceed 65534.</p>
+</blockquote>
+<p><em>FontDICTSelectFormat4 table</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8</td>
+<td>format</td>
+<td>Set to 4</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>numRanges</td>
+<td>Number of ranges</td>
+</tr>
+<tr>
+<td>Range4</td>
+<td>ranges[numRanges]</td>
+<td>Array of Range4 records (see below)</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>sentinel</td>
+<td>Sentinel glyph ID</td>
+</tr>
+</tbody>
+</table>
+<p><em>Range4 record</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint32</td>
+<td>first</td>
+<td>First glyph ID in range</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>fontDICTID</td>
+<td>FontDICT index for all glyphs in range</td>
+</tr>
+</tbody>
+</table>
+<p>Format 4 is similar to format 3 except that it accommodates more than 65,534 glyphs by using a uint32 type for the <em>numRanges</em> and <em>sentinel</em> fields, and a Range4 record array, which accommodates up to 65,535 FontDICT tables in the FontDICTINDEX.</p>
+<blockquote>
+<p><em>Note:</em> While FontDICTSelect format 4 allows for more than 65,535 glyphs, other parts of the OpenType format, such as the <em>numGlyphs</em> field of the 'maxp' table, are still constrained to 65,535 glyphs.</p>
+</blockquote>
+<h3 id="fontdict">FontDICT</h3>
+<p>A FontDICT is a <a href="#dict-data" data-linktype="self-bookmark">DICT</a> that provides the offset to a corresponding <a href="#privatedict" data-linktype="self-bookmark">PrivateDICT</a>. Since it exists only to point to a PrivateDICT, it uses only one key operator, <strong>PrivateDICTOffset</strong>.</p>
+<p><a id="privatedictoffset"></a></p>
+<p><strong>PrivateDICTOffset</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x12 (18)</td></tr>
+<tr><th>Stack</th><td>[ &lt;integer&gt; &lt;integer&gt; ]</td></tr>
+<tr><th>Operands</th><td>[ size offset ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>The two operands are the size and offset of the corresponding PrivateDICT table. The offset is from the start of the CFF2 table. If the corresponding PrivateDICT is empty, then the numbers <code>0 0</code> must be specified.</td>
+</tr>
+<tr><th>Occurrence</th><td>Required.</td></tr>
+</tbody></table>
+<h2 id="privatedict">PrivateDICT</h2>
+<p>A PrivateDICT is a <a href="#dict-data" data-linktype="self-bookmark">DICT</a> subtable providing metadata relating to hinting, subroutines and variations used by one or more CharStrings. Many fonts use only one PrivateDICT, whose metadata applies to all CharStrings. A font may also have multiple PrivateDICTs used for different subsets of CharStrings, each CharString being associated with exactly one PrivateDICT.</p>
+<p>The location and size of a PrivateDICT is provided by the <strong>PrivateDICTOffset</strong> key in a FontDICT. To have multiple PrivateDICTs, a FontDICTINDEX needs to have multiple FontDICTs, one for each PrivateDICT. A FontDICTSelect table is also required to associate each CharString with a FontDICT and its corresponding PrivateDICT. See <a href="#fontdictindex-fontdictselect-and-fontdict" data-linktype="self-bookmark">FontDICTIndex, FontDICTSelect and FontDICT</a> for more information.</p>
+<p>A PrivateDICT may be empty, requiring no storage. In this case, both the size and offset given by the <strong>PrivateDICTOffset</strong> key of the FontDICT must be set to zero. If the PrivateDICT is empty, default values will be used for certain PrivateDICT keys, as set out in the description of PrivateDICT key operators below.</p>
+<p>Values for some PrivateDICT keys relating to hinting can undergo interpolation with OpenType variations using the <strong>blend</strong> operator. (This means is that the operand sequence that precedes the key operator may have one or more <strong>blend</strong> operators interspersed along with additional operands used for interpolation.) These are identified as “blendable” in the operator descriptions below.</p>
+<p>Some hinting operators—<strong>BlueValues</strong> and others—accept multiple operands. These require values to be supplied on the stack as a <em>deltaArray</em>. This is a sequence of numbers for which only the first number is expressed in absolute terms, while the second and subsequent numbers are encoded as differences between successive values. In general, the array <em>a<sub>0</sub>, a<sub>1</sub>, a<sub>2</sub>, …, a<sub>n</sub></em> is encoded as the <em>deltaArray</em> <em>a<sub>0</sub> (a<sub>1</sub> - a<sub>0</sub>) (a<sub>2</sub> - a<sub>1</sub>) … (a<sub>n</sub> - a<sub>n-1</sub>)</em>. An example of <em>deltaArray</em> encoding is given in the definition for the <strong>BlueValues</strong> operator.</p>
+<blockquote>
+<p><em>Note:</em> Some PrivateDICT operators, such as <strong>BlueScale</strong> and <strong>ExpansionFactor</strong>, take non-integer operands. These are encoded as <a href="#binary-coded-decimal" data-linktype="self-bookmark">binary coded decimal</a> byte sequences.</p>
+</blockquote>
+<p><strong>When to use multiple PrivateDICTs</strong></p>
+<p>A CFF2 table requires at least one FontDICT / PrivateDICT pair (even if the PrivateDICT is empty), and many fonts only have one pair. However, it may be beneficial to use more than one PrivateDICT (and hence more than one FontDICT) when the glyphs in the font are of multiple distinct styles. For example, if a font contains both Latin and Emoji glyphs, or Latin and Korean Hangul glyphs, the different glyphs sets may use different hint metadata. In such cases, specifying the metadata for each glyph set in separate PrivateDICTs will likely allow more compact and efficient CharString encoding. For example, there could be better use of hinting zones, smaller index values in <strong>callsubr</strong> subroutine calls, or fewer operands in <strong>blend</strong> operations,&nbsp;resulting in less data in total. For similar reasons, the ability to support multiple FontDICT / PrivateDICT pairs can allow for easier merging of multiple fonts whose glyphs already have hints, variation data and subroutines.</p>
+<h3 id="privatedict-operator-summary">PrivateDICT operator summary</h3>
+<p>The following table lists all valid PrivateDICT operators, together with their byte encoding (hexadecimal and decimal), default values, their general purpose, and whether they may be blended.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Hex</th>
+<th style="text-align: left;">Dec</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Purpose</th>
+<th style="text-align: left;">Blendable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">0x13</td>
+<td style="text-align: left;">19</td>
+<td style="text-align: left;"><strong>LocalSubrINDEXOffset</strong></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">subroutines</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x16</td>
+<td style="text-align: left;">22</td>
+<td style="text-align: left;"><strong>vsindex</strong></td>
+<td style="text-align: left;">0</td>
+<td style="text-align: left;">variation</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x17</td>
+<td style="text-align: left;">23</td>
+<td style="text-align: left;"><strong>blend</strong></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">variation</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x06</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;"><strong>BlueValues</strong></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x07</td>
+<td style="text-align: left;">7</td>
+<td style="text-align: left;"><strong>OtherBlues</strong></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x08</td>
+<td style="text-align: left;">8</td>
+<td style="text-align: left;"><strong>FamilyBlues</strong></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x09</td>
+<td style="text-align: left;">9</td>
+<td style="text-align: left;"><strong>FamilyOtherBlues</strong></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0c09</td>
+<td style="text-align: left;">12,9</td>
+<td style="text-align: left;"><strong>BlueScale</strong></td>
+<td style="text-align: left;">0.039625</td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0c0a</td>
+<td style="text-align: left;">12,10</td>
+<td style="text-align: left;"><strong>BlueShift</strong></td>
+<td style="text-align: left;">7</td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0c0b</td>
+<td style="text-align: left;">12,11</td>
+<td style="text-align: left;"><strong>BlueFuzz</strong></td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0a</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;"><strong>StdHW</strong></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0b</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: left;"><strong>StdVW</strong></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0c0c</td>
+<td style="text-align: left;">12,12</td>
+<td style="text-align: left;"><strong>StemSnapH</strong></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0c0d</td>
+<td style="text-align: left;">12,13</td>
+<td style="text-align: left;"><strong>StemSnapV</strong></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0c11</td>
+<td style="text-align: left;">12,17</td>
+<td style="text-align: left;"><strong>LanguageGroup</strong></td>
+<td style="text-align: left;">0</td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">no</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0c12</td>
+<td style="text-align: left;">12,18</td>
+<td style="text-align: left;"><strong>ExpansionFactor</strong></td>
+<td style="text-align: left;">0.06</td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">no</td>
+</tr>
+</tbody>
+</table>
+<h3 id="privatedict-subroutine-operator">PrivateDICT subroutine operator</h3>
+<p>There is one PrivateDICT operator used in relation to subroutines.</p>
+<p><a id="localsubrindexoffset"></a></p>
+<p><strong>LocalSubrINDEXOffset</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x13 (19)</td></tr>
+<tr><th>Stack</th><td>[ &lt;integer&gt; ]</td></tr>
+<tr><th>Operands</th><td>[ offset ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Specifies the offset from the start of the PrivateDICT to a LocalSubrINDEX table that stores subroutines that can be called by CharStrings associated with the same PrivateDICT.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional. If there are no local subroutines, then the <b>LocalSubrINDEXOffset</b> operator must not be used within the PrivateDICT.</td>
+</tr><tr><th>Blendable</th><td>no</td></tr>
+
+</tbody></table>
+<p>For more information on subroutines, see <a href="#charstring" data-linktype="self-bookmark">Charstring</a>.</p>
+<h3 id="privatedict-variation-operators">PrivateDICT variation operators</h3>
+<p>There are two PrivateDICT operators used in relation to variations. These depend on other parts of the CFF2 table as other tables in the OpenType font. For full details on their use, see <a href="#opentype-font-variations-in-cff2" data-linktype="self-bookmark">OpenType Font Variations in CFF2</a>.</p>
+<p><a id="pd-op-vsindex"></a></p>
+<p><strong>vsindex</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x16 (22)</td></tr>
+<tr><th>Stack</th><td>[ &lt;integer&gt; ]</td></tr>
+<tr><th>Operands</th><td>[ ivd ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>
+  Activates a particular list of variation regions from a VariationStore subtable.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional. Used only when the CFF2 table includes a VariationStore subtable.</td>
+</tr>
+<tr><th>Blendable</th><td>no</td></tr>
+</tbody></table>
+<p>The <strong>vsindex</strong> operator is used to select a set of active variation regions from the defined set of variation regions. See <a href="#opentype-font-variations-in-cff2" data-linktype="self-bookmark">OpenType Font Variations in CFF2</a> for complete details about the effect of this operator.</p>
+<p>When used within a PrivateDICT, it has effect not only for variation of values specified by PrivateDICT keys but also for variation in all CharStrings associated with that PrivateDICT. However, a <strong>vsindex</strong> operator can also be used within a CharString, taking precedence over the <strong>vsindex</strong> specified in the PrivateDICT.</p>
+<blockquote>
+<p><em>Note:</em> The PrivateDICT <strong>vsindex</strong> operator is encoded as 0x16, whereas in CharString data it is encoded as 0x0f.</p>
+</blockquote>
+<p><a id="pd-op-blend"></a></p>
+<p><strong>blend</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x17 (23)</td></tr>
+<tr><th>Stack</th><td>[ … &lt;number&gt;+ &lt;number&gt;+ &lt;integer&gt; ]</td></tr>
+<tr>
+  <th>Operands</th>
+  <td>[ … &lt;<i>n</i> default values&gt; &lt;<i>n * k</i> deltas&gt; <i>n<i> ]</i></i></td>
+</tr>
+<tr>
+  <th>Description</th>
+  <td>
+    Pops <i>n + n * k + 1</i> operands from the stack, processes them according to the OpenType variations interpolation algorithm, then pushes <i>n</i> result numbers back onto the stack.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional. Used only when the CFF2 table includes a VariationStore subtable, and only in connection with hinting values that are varied.</td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p>The <strong>blend</strong> operator may be used in a PrivateDICT to make operands of blendable key operators variable. The number of operands that are popped by the <strong>blend</strong> operator is determined by the last operand (<em>n</em>) and the number of active variation regions (<em>k</em>), with an upper limit determined by the number of operands required by the next operator in the data. See <a href="#opentype-font-variations-in-cff2" data-linktype="self-bookmark">OpenType Font Variations in CFF2</a> for complete details about the implementation of this operator and interpretation of its operands.</p>
+<blockquote>
+<p><em>Note:</em> The PrivateDICT <strong>blend</strong> operator is encoded as 0x17, whereas in CharString data it is encoded as 0x10.</p>
+</blockquote>
+<h3 id="privatedict-hinting-operators">PrivateDICT hinting operators</h3>
+<p>There are 13 PrivateDICT operators used in relation to hinting.</p>
+<p><a id="bluevalues"></a></p>
+<p><strong>BlueValues</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x06 (6)</td></tr>
+<tr><th>Stack</th><td>[ (&lt;integer&gt; &lt;integer&gt;)+ ] (numbers are a deltaArray)</td></tr>
+<tr><th>Operands</th><td>[ (y1 y2)+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Vertical alignment zones—see below.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional.</td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p>The value represented by <strong>BlueValues</strong> is an array containing an even number of integers taken in pairs and which, when decoded out of deltaArray format into a list of integers, follow certain rules:</p>
+<ul>
+<li>The first integer in each pair must be less than or equal to the second integer in that pair. In a variable font, if either integer is blended, the first must remain less than or equal to the second for all variation instances.</li>
+<li>The first pair is the baseline overshoot position and the baseline. This is a bottom-zone.</li>
+<li>All subsequent pairs describe top zones, that is, alignment zones for the tops of glyph features. For example: x-height and x-height overshoot position, ascender-height and ascender-height overshoot position, cap-height and cap-height overshoot position, figure-height and figure-height overshoot position.</li>
+<li>Up to seven pairs may be given in the <strong>BlueValues</strong> array; the first pair must be the baseline pair.</li>
+<li>Different pairs must be at least 3 font units apart from each other and from pairs in <strong>OtherBlues</strong>, as described below. (This minimum distance can be modified by the optional <strong>BlueFuzz</strong> entry in the PrivateDICT; see the definition of <strong>BlueFuzz</strong>, below.)</li>
+<li>The maximum difference between values in one pair is constrained as described under the description of <strong>BlueScale</strong>, given below.</li>
+</ul>
+<p>Despite the names often given to the various alignment zones described for <strong>BlueValues</strong>, renderers have no built-in notions of which parameters apply to which glyphs. Each zone helps to control the alignment of any or all glyphs with glyph-level hints that fall within the zone.</p>
+<p><strong>Example</strong></p>
+<p>Consider the following array that represents three alignment zones in a typeface, being baseline (at 0 with negative overshoot at -15), cap-height (at 700 with overshoot at 715) and x-height (at 547 with overshoot at 559):</p>
+<p><code>[-15 0 700 715 547 559]</code></p>
+<p>This needs to be stored as a <em>deltaArray</em>. Hence, the sequence of encoded numbers in the PrivateDICT would, in fact, be:</p>
+<p><code>[-15 15 700 15 -168 12]</code></p>
+<p>Use of the deltaArray saves 2 bytes compared with storing the absolute numbers. This is because smaller numbers are encoded using fewer bytes in DICT data.</p>
+<p><a id="otherblues"></a></p>
+<p><strong>OtherBlues</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x07 (7)</td></tr>
+<tr><th>Stack</th><td>[ (&lt;integer&gt; &lt;integer&gt;)+ ] (numbers are a deltaArray)</td></tr>
+<tr><th>Operands</th><td>[ (y1 y2)+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Additional bottom vertical alignment zones.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional.</td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p>The optional <strong>OtherBlues</strong> entry in the PrivateDICT is associated with an array of pairs of integers similar to the <strong>BlueValues</strong> array. However, the <strong>OtherBlues</strong> array describes bottom-zones only. For example, these can include descender-depth overshoot position and descender-depth, superior baseline overshoot position and superior baseline, and ordinal baseline overshoot position and ordinal baseline. Up to five pairs (10 integers) may be specified in the <strong>OtherBlues</strong> array. When decoded out of deltaArray format, numbers in a pair must be in ascending order; in a variable font, blended values must remain in ascending order for all instances. Pairs must be at least 3 units apart from all other pairs, including those in the <strong>BlueValues</strong> array. (This minimum distance can be modified by the optional <strong>BlueFuzz</strong> entry in the PrivateDICT.) The restriction for the <strong>BlueValues</strong> array on the maximum difference in a pair also applies to the <strong>OtherBlues</strong> array.</p>
+<p><a id="familyblues"></a></p>
+<p><strong>FamilyBlues</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x08 (8)</td></tr>
+<tr><th>Stack</th><td>[ (&lt;integer&gt; &lt;integer&gt;)+ ] (numbers are a deltaArray)</td></tr>
+<tr><th>Operands</th><td>[ (y1 y2)+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Family-wide vertical alignment zones.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional.</td>
+</tr>
+<tr><th>Blendable</th><td>no</td></tr>
+</tbody></table>
+<p>When different styles of the same font family are mixed in text, it is often desirable to coordinate their x-heights, cap-heights, and other alignments so that they will be the same at small sizes. For example, at 72 pixels per inch, the x-height of a 10-point roman face might be 5.4 pixels while the boldface x-height might be 5.6 pixels. If the roman face is the regular for the family, the renderer can render both faces with an x-height of 5 pixels instead of letting the boldface jump to 6 while the roman is still at 5. However, at 100 points, the roman x-height will be 54 pixels and the bold x-height will be 56.</p>
+<p>A font designer can include information about the dominant alignment zones in a font family so that this consistency can be enforced. When enabled, if the difference between a font’s alignment and its family’s standard alignment is less than 1 pixel, then the renderer will use the standard alignment instead of the normal alignment for that font. Thus at 10 points in the previous example, the difference is 5.6 − 5.4 = 0.2 pixels, so the family x-height is used. At 100 points, the difference is 56 − 54 = 2, so the specific x-height for the font is used. Family alignment values are identical to individual font alignment values; that is, they are things like x-height, x-height overshoot, etc.</p>
+<p>Two PrivateDICT entries for family alignment zones can be used:</p>
+<ul>
+<li>The value associated with <strong>FamilyBlues</strong> is an array containing an even number of integers taken in pairs. The rules governing the contents of this array are analogous to those of the <strong>BlueValues</strong> array.</li>
+<li>The value associated with <strong>FamilyOtherBlues</strong> (described next) is an array containing an even number of integers taken in pairs. The rules governing the contents of this array are analogous to those of the <strong>OtherBlues</strong> array.</li>
+</ul>
+<p>Typically, the <strong>FamilyBlues</strong> and <strong>FamilyOtherBlues</strong> entries will simply be copied from the <strong>BlueValues</strong> and <strong>OtherBlues</strong> of the regular face in the family. Each font in a family (except the regular) must have these entries if it is to have family alignment properties. Of course, if these entries are not present, then only a font’s own alignment hints will be considered.</p>
+<p><a id="familyotherblues"></a></p>
+<p><strong>FamilyOtherBlues</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x09 (9)</td></tr>
+<tr><th>Stack</th><td>[ (&lt;integer&gt; &lt;integer&gt;)+ ] (numbers are a deltaArray)</td></tr>
+<tr><th>Operands</th><td>[ (y1 y2)+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Family-wide bottom alignment zones. See <b>FamilyBlues</b>, above, for more information.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional.</td>
+</tr>
+<tr><th>Blendable</th><td>no</td></tr>
+</tbody></table>
+<p><a id="bluescale"></a></p>
+<p><strong>BlueScale</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0c09 (12,9)</td></tr>
+<tr><th>Stack</th><td>[ &lt;number&gt; ]</td></tr>
+<tr><th>Operands</th><td>[ yPix ]</td></tr>
+<tr><th>Default</th><td>0.039625</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Text size at which to deactivate overshoot suppression.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional. The default value is used if omitted.</td>
+</tr>
+<tr><th>Blendable</th><td>no</td></tr>
+</tbody></table>
+<p>The optional <strong>BlueScale</strong> entry in the PrivateDICT controls the text size (“point size”) at which overshoot suppression ceases. This size varies with the number of device pixels per inch available on the device where the font is being rendered.</p>
+<ul>
+<li>For point sizes that occupy fewer device pixels than the <strong>BlueScale</strong> value results in for a given device, overshoot suppression is performed. All features falling in an alignment zone are rendered at the same pixel height.</li>
+<li>For point sizes that occupy the same or a greater number of device pixels than the <strong>BlueScale</strong> value results in, overshoot suppression is turned off, thus allowing overshoots to occur.</li>
+</ul>
+<p>(This behavior may be modified by the optional <strong>BlueShift</strong> setting—see below.)</p>
+<p>The <strong>BlueScale</strong> value is a number directly related to the number of pixels tall that one glyph space unit will be before overshoot suppression is turned off. The default value of <strong>BlueScale</strong> is 0.039625, which corresponds to 10 points at 300 dpi. (Thus if that value is acceptable, a PrivateDICT does not need to define <strong>BlueScale</strong>.) A simple formula that relates point size as rendered on a 300-dpi device to the <strong>BlueScale</strong> value is:</p>
+<blockquote>
+<p><strong>BlueScale</strong> = (<em>pointsize</em> − 0.49) / 240</p>
+</blockquote>
+<p>The formula provides a convenient number that font producers can use to determine at what integer point size overshoot suppression should be off. However, the exact point size at which overshoot suppression ceases is actually 0.49 points less (at 9.51 points using the default value of <strong>BlueScale</strong>) than the value of <em>pointsize</em> used in the formula. The adjustment shown in the formula is recommended so that the change in overshoot suppression behavior occurs at an exact point size unlikely to be used in practice.</p>
+<p>For example, if you wish overshoot suppression to turn off at 11 points on a 300-dpi device, you should set <strong>BlueScale</strong> to (11 − 0.49) / 240, or 0.04379. With this one setting of <strong>BlueScale</strong>, overshoot suppression will turn off at proportionately smaller point sizes on higher resolution output devices or larger point sizes on lower-resolution devices such as displays.</p>
+<p><a id="blueshift"></a></p>
+<p><strong>BlueShift</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0c0a (12,10)</td></tr>
+<tr><th>Stack</th><td>[ &lt;integer&gt; ]</td></tr>
+<tr><th>Operands</th><td>[ dy ]</td></tr>
+<tr><th>Default</th><td>7</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Overshoot enforcement.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional, but relevant even if CharString flex operators are not used.</td>
+</tr>
+<tr><th>Blendable</th><td>no</td></tr>
+</tbody></table>
+<p>The optional <strong>BlueShift</strong> entry in the PrivateDICT adds another capability to the treatment of overshoot behavior. The value of <strong>BlueShift</strong> is an integer that indicates a glyph space distance beyond the flat position of alignment zones at which overshoot enforcement for glyph features occurs. The default value of <strong>BlueShift</strong> is 7. The single setting of <strong>BlueShift</strong> applies to all alignment zones, regardless of where their overshoot positions lie.</p>
+<p>When a glyph’s size is less than that expressed by <strong>BlueScale</strong>, glyph features that fall within alignment zones have their overshoots suppressed. For glyphs larger than the <strong>BlueScale</strong> size, glyph features that fall beyond the flat position of an alignment zone (above for top zones, below for bottom-zones) by a glyph space distance equal to or greater than the value of <strong>BlueShift</strong> will overshoot, while glyph features closer to the flat position than the <strong>BlueShift</strong> value will overshoot only if their device space distance is at least one-half pixel.</p>
+<p>If one or more flex operators occurs in any CharStrings using the current PrivateDICT (that is, any of <strong>flex</strong>, <strong>hflex</strong>, <strong>hflex1</strong>, <strong>flex1</strong>), then the <strong>BlueShift</strong> value must be greater than <em>flex depth</em>. Since the default value of <strong>BlueShift</strong> is 7, this entry must be set explicitly if <em>flex depth</em> is greater than than 6. For example, if <em>flex depth</em> is 8, then set <strong>BlueShift</strong> to 9. If <em>flex depth</em> is 6 or less, then <strong>BlueShift</strong> can be omitted.</p>
+<p><a id="bluefuzz"></a></p>
+<p><strong>BlueFuzz</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0c0b (12,11)</td></tr>
+<tr><th>Stack</th><td>[ &lt;integer&gt; ]</td></tr>
+<tr><th>Operands</th><td>[ dy ]</td></tr>
+<tr><th>Default</th><td>1</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Extends the range of alignment zones.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional.</td>
+</tr>
+<tr><th>Blendable</th><td>no</td></tr>
+</tbody></table>
+<p>The optional <strong>BlueFuzz</strong> entry in the PrivateDICT is an integer value that specifies the number of glyph space units to extend (in both directions) the effect of an alignment zone on a horizontal stem. If the top of a horizontal stem is within <strong>BlueFuzz</strong> units (in glyph space) outside of a top zone, the interpreter will act as if the stem top were actually within the zone; the same holds for the bottoms of horizontal stems in bottom-zones. The default value of <strong>BlueFuzz</strong> is 1.</p>
+<p><strong>BlueFuzz</strong> has been a convenient means for compensating for slightly inaccurate coordinate data. The effect of a non-zero value for <strong>BlueFuzz</strong> can usually be better achieved by adjusting the sizes of the alignment zones. New fonts should not rely on it and disable the feature by explicitly setting <strong>BlueFuzz</strong> to 0 in the PrivateDICT.</p>
+<p>Because a non-zero value for <strong>BlueFuzz</strong> extends the range of alignment zones, alignment zones will be declared at least (2 × <strong>BlueFuzz</strong> + 1) units apart from each other. Therefore, a default <strong>BlueFuzz</strong> value of 1 implies that alignment zones should be at least 3 units apart from each other.</p>
+<p><a id="stdhw"></a></p>
+<p><strong>StdHW</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0a (10)</td></tr>
+<tr><th>Stack</th><td>[ &lt;number&gt; ]</td></tr>
+<tr><th>Operands</th><td>[ dx ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Dominant horizontal stem width.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional.</td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="stdvw"></a></p>
+<p><strong>StdVW</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0b (11)</td></tr>
+<tr><th>Stack</th><td>[ &lt;number&gt; ]</td></tr>
+<tr><th>Operands</th><td>[ dy ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Dominant vertical stem width.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional.</td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="stemsnaph"></a></p>
+<p><strong>StemSnapH</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0c0c (12,12)</td></tr>
+<tr><th>Stack</th><td>[ &lt;number&gt;+ ] (numbers are a deltaArray)</td></tr>
+<tr><th>Operands</th><td>[ dx+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Array of common horizontal stem widths.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional.</td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="stemsnapv"></a></p>
+<p><strong>StemSnapV</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0c0d (12,13)</td></tr>
+<tr><th>Stack</th><td>[ &lt;number&gt;+ ] (numbers are a deltaArray)</td></tr>
+<tr><th>Operands</th><td>[ dy+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Array of common vertical stem widths.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional.</td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p>Stem Width Information, controlled by these 4 operators, is a mechanism to tell the renderer about standard stem widths in a font so that the renderer can ensure consistency at small sizes. If a particular stem is slightly wider or narrower than standard, either by design or as a result of a small error in creating the font, then at small sizes where a single pixel difference would be very noticeable, the renderer can render the stem as though it had the standard width. However, at large sizes where a single pixel difference will produce only a subtle visual effect, the stem will be allowed to deviate from the standard.</p>
+<p>When the difference between a standard stem width and a particular stem width is small, the standard width is used. For example, if at 10 points a standard stem width corresponds to 1.4 pixels wide and a particular stem is 1.6 pixels wide, both can be rendered as a 1-pixel wide stem. However, at 100 points the standard stem would be rendered as 14 pixels wide and the particular stem would be rendered as 16 pixels wide. The information that the renderer needs appears in the following PrivateDICT entries.</p>
+<ul>
+<li><strong>StdHW</strong> takes a number expressing the dominant width of horizontal stems (measured vertically in font design units). The operand (including a blended value in a variable font) must be non-negative.</li>
+<li><strong>StdVW</strong> takes a number expressing the dominant width of vertical stems (measured horizontally in font design units). The operand (including a blended value in a variable font) must be non-negative. Typically, this will be the width of straight stems in lower case letters. (For an italic font, give the width of the vertical stem measured at an angle perpendicular to the stem direction.)</li>
+<li><strong>StemSnapH</strong> is an array of up to 12 numbers of the most common widths (including the dominant width given in <strong>StdHW</strong>) for horizontal stems (measured vertically). These widths must be sorted in increasing order.</li>
+<li><strong>StemSnapV</strong> is an array of up to 12 numbers of the most common widths (including the dominant width given in the <strong>StdVW</strong>) for vertical stems (measured horizontally). These widths must be sorted in increasing order. For example, a designer might include widths for straight and curved stems in uppercase and lowercase letters. For an italic font, this array should be empty.</li>
+</ul>
+<blockquote>
+<p><em>Note:</em> The ordering requirement for <strong>StemSnapH</strong> and <strong>StemSnapV</strong> applies to the values encoded as operands. The order is not semantically significant, but some implementations could expect values to be ordered for searching purposes. In a variable font, if the operand values are blended, blending could potentially result in derived values that are not in increasing order for some variation instances. If an implementation requires stem width values in its memory representation to be sorted, it could be necessary to re-sort the stems after blended values are obtained.</p>
+</blockquote>
+<p>If these Stem Width Information hints are not present in the PrivateDICT, then each stem is rendered according to its own definition in the CharString (as modified by any other CharString hints).</p>
+<p><a id="languagegroup"></a></p>
+<p><strong>LanguageGroup</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0c11 (12,17)</td></tr>
+<tr><th>Stack</th><td>[ &lt;integer&gt; ]</td></tr>
+<tr><th>Operands</th><td>[ group ]</td></tr>
+<tr><th>Default</th><td>0</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Identifies the language group of glyphs.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional. Default to zero if omitted.</td>
+</tr>
+<tr><th>Blendable</th><td>no</td></tr>
+</tbody></table>
+<p>Certain groups of written languages share broad aesthetic characteristics. Identification of such language groups can prove useful for accurate glyph rendering.</p>
+<p>The value of the entry <strong>LanguageGroup</strong> is an integer that indicates the language group of the CharStrings (glyphs) using this PrivateDICT. If the PrivateDICT does not contain this entry, or if the given value is not recognized, then the value of LanguageGroup defaults to zero.</p>
+<p>Two language groups are defined:</p>
+<ul>
+<li>Group 0 consists of languages that use Latin, Greek, Cyrillic, and similar scripts. Since the value of the <strong>LanguageGroup</strong> entry defaults to 0, a PrivateDICT containing glyphs corresponding to one of these languages does not need to contain this entry.</li>
+<li>Group 1 consists of Chinese ideographs and similar character sets, including Japanese Kanji and Korean Hangul. A PrivateDICT that contains glyphs corresponding to one of these languages should define <strong>LanguageGroup</strong>.</li>
+</ul>
+<p><a id="expansionfactor"></a></p>
+<p><strong>ExpansionFactor</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0c12 (12,18)</td></tr>
+<tr><th>Stack</th><td>[ &lt;number&gt; ]</td></tr>
+<tr><th>Operands</th><td>[ dSize ]</td></tr>
+<tr><th>Default</th><td>0.06</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Provides control over rendering of counters.
+  </td>
+</tr>
+<tr>
+  <th>Occurrence</th>
+  <td>Optional.</td>
+</tr>
+<tr><th>Blendable</th><td>no</td></tr>
+</tbody></table>
+<p>The optional <strong>ExpansionFactor</strong> entry is a real number that gives a limit for changing the size of a glyph bounding box during the processing that adjusts the sizes of counters in glyphs of <strong>LanguageGroup</strong> 1. The default value of <strong>ExpansionFactor</strong> is 0.06. At small point sizes or low resolutions, the system may have to accept irregular counters rather than violate this limit. Bar code fonts or logos that need counter control could benefit by setting <strong>LanguageGroup</strong> to 1 and increasing the <strong>ExpansionFactor</strong> limit to a larger amount such as 0.5 or more.</p>
+<h3 id="operator-ordering-restrictions">Operator ordering restrictions</h3>
+<p>The <strong>OtherBlues</strong> operator, if used, must occur after the <strong>BlueValues</strong> operator.</p>
+<p>The <strong>FamilyOtherBlues</strong> operator, if used, must occur after the <strong>FamilyBlues</strong> operator.</p>
+<hr>
+<p><a id="charStrings"></a></p>
+<h2 id="charstring">CharString</h2>
+<h3 id="overview-1">Overview</h3>
+<p>The CharString format provides a method for compact encoding of glyphs, including path data, hint data and variation data. The CFF2 CharString specification updates previous definitions of CharString, including that used for the <a href="cff.html" data-linktype="relative-path">'CFF ' table</a>, and is intended for use only within a CFF2 table in an OpenType font file. See <a href="glyphformatcomparison.html" data-linktype="relative-path">Comparison of 'glyf', 'CFF ' and CFF2 tables</a> for a summary of differences between CFF and CFF2 CharStrings.</p>
+<p>A CharString is a binary data block, similar to a <a href="#dict-data" data-linktype="self-bookmark">DICT</a> in that it consists of a sequence of encoded numbers and operators to be decoded using a stack. (See <a href="#decoding-dict-and-charstring-data-using-a-stack" data-linktype="self-bookmark">Decoding DICT and CharString data using a stack</a> for details.) The maximum length of a CharString is 65535 bytes.</p>
+<p>There is one CharString for each glyph in a font. The CharStrings for a font are stored in a CharStringINDEX table. Some data used by CharStrings is stored in other parts of the CFF2 table. In particular:</p>
+<ul>
+<li>Hinting metadata is stored in one or more PrivateDICT tables. See <a href="#privatedict" data-linktype="self-bookmark">PrivateDICT</a> for more information.</li>
+<li>Encoded data common to multiple CharStrings can be implemented as subroutines. Subroutines are stored either in the GlobalSubrINDEX or in a LocalSubrINDEX within a PrivateDICT. See <a href="#subroutines" data-linktype="self-bookmark">Subroutines</a> for more information.</li>
+</ul>
+<p>Horizontal and vertical glyph metrics are stored in the <a href="hmtx.html" data-linktype="relative-path">'hmtx'</a> and <a href="vmtx.html" data-linktype="relative-path">'vmtx'</a> tables. In a variable font, glyph metrics can undergo variations using the <a href="hvar.html" data-linktype="relative-path">HVAR</a> and <a href="vvar.html" data-linktype="relative-path">VVAR</a> tables.</p>
+<blockquote>
+<p><em>Note:</em> CFF2 CharStrings are different from the 'CFF ' table in this regard: in the 'CFF ' table, glyph metrics can be specified within each CharString.</p>
+</blockquote>
+<h3 id="charstringindex">CharStringINDEX</h3>
+<p>The CharStringINDEX is an <a href="#index-data" data-linktype="self-bookmark">INDEX</a> that contains the CharStrings for all CFF2 glyphs in the font. The location of the CharStringINDEX is specified by the <strong>CharStringINDEXOffset</strong> key in the <a href="#topdict" data-linktype="self-bookmark">TopDICT table</a>. Each CharString is accessed by glyph ID. The first CharString (glyph ID 0) must be the .notdef glyph. The number of glyphs defined in the CFF2 table can be determined from the CharStringINDEX count field. The value of this field must match the value of the numGlyphs field in the <a href="maxp.html" data-linktype="relative-path">'maxp'</a> table.</p>
+<p><strong>Non-printing glyphs</strong></p>
+<p>Non-printing glyphs, such as the space character, require no path, hinting or variation data. Therefore, no CharString data is stored. In the CharStringINDEX, the offset for such an empty CharString is identical to the offset for the subsequent CharString.</p>
+<h3 id="charstring-concepts">CharString concepts</h3>
+<h4 id="hints">Hints</h4>
+<p>CFF2 hints aid the rasterizer in recognizing and controlling stems and counter areas within a glyph to provide a more consistent appearance at different sizes. The effects of hint operators in a CharString are also conditioned by hinting metadata in a PrivateDICT (see <a href="#privatedict-hinting-operators" data-linktype="self-bookmark">PrivateDICT hinting operators</a>).</p>
+<p>Hint operators in a CharString specify horizontal and vertical regions that require special treatment. Hint stem operators (<strong>hstem</strong>, <strong>vstem</strong>, <strong>hstemhm</strong> and <strong>vstemhm</strong>) define horizontal or vertical hints for stems and edges. A hint counter operator (<strong>cntrmask</strong>) defines gaps between stems, specified in terms of horizontal or vertical stems on opposite sides of the counter.</p>
+<p>Hints must be specified at the start of a CharString in the following order:</p>
+<ul>
+<li>horizontal stems and edges using <strong>hstem</strong> or <strong>hstemhm</strong> operators</li>
+<li>vertical stems and edges using <strong>vstem</strong> or <strong>vstemhm</strong> operators</li>
+<li>counters using the <strong>cntrmask</strong> operator</li>
+</ul>
+<p>One or more operators of each type may be used, and each type is optional. If a counter is specified, however, it requires two stems of the same orientation to be defined.</p>
+<p><strong>Overlapping stems</strong></p>
+<p>In some glyphs, two or more stems can overlap. This is illustrated in the following figure.</p>
+<figure id="Figure5"><img src="media/cff2-svg-5.png" alt="Outline with two overlapping horizontal stems" data-linktype="relative-path"><figcaption>Overlapping horizontal stems</figcaption></figure>
+<p>If overlapping stems are defined, it could cause problems for a rasterizer as it decides how to control points on the pixel grid. For such cases, the <strong>hintmask</strong> operator is used to specify which stems are active for subsequent path construction operations. If stems overlap but these zones are not controlled using <strong>hintmask</strong>, the results are undefined.</p>
+<p>If the <strong>hintmask</strong> operator is used within a CharString, then stems must be defined using the <strong>hstemhm</strong> and <strong>vstemhm</strong> operators, rather than <strong>hstem</strong> and <strong>vstem</strong>.</p>
+<p>See <a href="#charstring-hint-operators" data-linktype="self-bookmark">Hint operators</a> for more information and examples.</p>
+<p><strong>Stem hint encoding</strong></p>
+<p>Stems are features with two edges. Stem hints are, accordingly, defined by pairs of numbers: the bottom edge followed by the top edge for a horizontal stem, and the left edge followed by the right edge for a vertical stem. When encoding multiple stems, they must be encoded in ascending order as follows:</p>
+<ul>
+<li>Sort the pairs by the position of the first edge in each pair: bottom for horizontal stems, and left for vertical stems.</li>
+<li>Concatenate the pairs into a sequence of numbers.</li>
+<li>Represent the numbers using relative values: the first number is relative to 0, and all subsequence numbers are relative to the previous number.</li>
+</ul>
+<p>For example, consider a sans-serif glyph “E” with cap-height of 700 and with three horizontal stems whose y coordinates are: 0 and 80, 310 and 390, 620 and 700. These stems can be defined as:</p>
+<blockquote>
+<p>0 80 230 80 230 80 <strong>hstem</strong></p>
+</blockquote>
+<p>Notice that the second number in each pair represents a stem width greater than zero.</p>
+<p>In a variable font, the values that define a stem may be blended, but additional considerations apply. See <a href="#blended-stem-and-edge-hints" data-linktype="self-bookmark">Blended stem and edge hints</a> for more information.</p>
+<p><strong>Edge hints</strong></p>
+<p>In some situations, a glyph may have an edge that is not part of a stem but that needs to align with a stem in other glyphs. For example, consider the glyph for a sans-serif “E”, with three horizontal stems as described above. In the same font, we want to control features in other glyphs that align vertically with the stems of the “E” but do not have a suitable horizontal stem. For example, the glyph “L”: it has a lower stem as for “E”, but has a top edge without a stem that should align with the top edge of the top stem of “E”. Likewise, “F” has a bottom edge that would benefit by alignment with the bottom edge of the bottom stem of “E”.</p>
+<p>For such cases, an <em>edge</em> hint can be used. An edge hint is defined using the stem operators but by specifying a special negative width:</p>
+<ul>
+<li>a width of -21 defines a left edge or a bottom edge;</li>
+<li>a width of -20 defines a right edge or a top edge.</li>
+</ul>
+<p>If interpreted as a pair of edges, a negative width would imply that the second edge of the pair is lower or farther left than the first edge of the pair. When deriving the coordinates of an edge, the leftmost or lowest implied edges are used for left and bottom edges, while the rightmost or highest implied edges are used for right and top edge. Thus, for a left or bottom edge, the initial edge value <em>and</em> the negative width value are combined to derive the edge hint coordinate, while for a right or top edge, only the initial edge value is used. So, for example, to define a bottom edge at 100, the encoded representation would use the values <em>121 -21</em>; to define a top edge at 700, the encoded representation would be <em>700 -20</em>.</p>
+<p>Because the width value of an edge hint represents <em>left</em>, <em>bottom</em>, <em>top</em> or <em>right</em> rather than an actual measurement, edge hints are never considered to overlap other stems.</p>
+<p>Edge hints are encoded together with stems, in ascending order. For purposes of sorting, left and bottom edges are sorted based on the actual edge coordinate, not the first value used to encode the edge hint (for instance, <em>100</em> in the previous bottom edge example, not <em>121</em>).</p>
+<p><em>Example</em></p>
+<p>Consider the following figure.</p>
+<figure id="Figure4"><img src="media/cff2-svg-4.png" alt="Top and bottom edge hints for a stroke" data-linktype="relative-path"><figcaption>Encoding of edge hints</figcaption></figure>
+<p>The glyph in this figure has a bottom edge at 100 and top edge at 500. To specify edge hints for these two edges, the encoding would be:</p>
+<blockquote>
+<p>121 -21 400 -20 <strong>hstem</strong></p>
+</blockquote>
+<p><em>Example</em></p>
+<p>Consider the case mentioned earlier with sans-serif “E”, “L” and “F”. The bottom stem and top edge of “L” can be specified as follows:</p>
+<blockquote>
+<p>0 80 620 -20  <strong>hstem</strong></p>
+</blockquote>
+<p>Likewise, the bottom edge and top stem of “F” can be specified as follows:</p>
+<blockquote>
+<p>21 -21 620 80 <strong>hstem</strong></p>
+</blockquote>
+<p>In a variable font, the first value of an edge may be blended, but the special "width" operands must not be blended. See <a href="#blended-stem-and-edge-hints" data-linktype="self-bookmark">Blended stem and edge hints</a> for more information.</p>
+<p><strong>Implied vertical stem operators</strong></p>
+<p>The <strong>vstem</strong> and <strong>vstemhm</strong> operators have the unusual property that, in special cases, they may be omitted from a CharString to save one byte of data. These cases (which are in fact relatively common in fonts) require both horizontal and vertical stems to be defined, and for those definitions to be followed immediately by a <strong>cntrmask</strong> or <strong>hintmask</strong> operator.</p>
+<h4 id="paths">Paths</h4>
+<p>Path data in a CharString describes the glyph outline in terms of one or more contours, where each contour has a start point followed by one or more line segments and cubic Bézier curves. The number of contours in a glyph and the number of line and curve segments within each contour are limited only by the maximum CharString length (65535) and the maximum number of operands on the stack (513).</p>
+<p>Several path operators are defined and are of three types:</p>
+<ul>
+<li><em>moveto</em> operators start a new contour at a specified point;</li>
+<li><em>lineto</em> operators append a line segment to the current contour from the current point to a specified end point;</li>
+<li><em>curveto</em> operators append a cubic Bézier curve to the current contour from the current point to a specified end point, with two specified off-curve control points.</li>
+</ul>
+<p>The number of items on the stack can trigger multiple sequential path operations of the same type; for example, a single lineto operator can produce three line segments if the stack contains operands for three end points. Some operators combine curve and line specifications in a single operation.</p>
+<p>The current point is initially at <em>(0, 0)</em> and is updated after each path operation.</p>
+<p>All moveto, lineto and curveto operators use relative coordinates: each point is defined as a relative coordinate offset from the point before it. This rule also applies to the three points of a curve operation, where the first specified point is relative to the current point, the second is relative to the first, and the third is relative to the second. After any path construction operation, the current point is then set to the last of the given points.</p>
+<p>Coordinates for path operations are typically integers. Fixed 16.16 format coordinates are permitted but require significantly more CharString data.</p>
+<p><strong>Closing contours</strong></p>
+<p>All contours must be closed with a lineto operation. If the current contour is open when a moveto operation is encountered, the path will be closed with an implicit lineto operation to draw a line segment to the position specified by the previous moveto operation that started the contour. Similarly, if the last explicit operation is a curveto operation, an implicit lineto operation will be inserted, even if the ending position for the curve was the starting position of the contour. The implicit lineto operation does not change the current position.</p>
+<blockquote>
+<p><em>Note:</em> In a variable font, care is needed when the start position of a contour is blended (varied using a <strong>blend</strong> operator) and the contour is explicitly closed with a final curveto operator. If the final explicit position does not vary in exactly the same way as the starting position, then a line segment will be inserted into the contour, connecting the last point to the start point.</p>
+</blockquote>
+<p><strong>Path direction</strong></p>
+<p>A contour that is to be filled must be defined in a counterclockwise orientation. A contour that is to be left unfilled must be defined in a clockwise orientation. If you imagine walking along a contour in the direction it is defined, then the filled area will be on your left.</p>
+<blockquote>
+<p><em>Note:</em> These orientations are opposite to those used for TrueType outlines in the <a href="glyf.html" data-linktype="relative-path">'glyf' table</a>.</p>
+</blockquote>
+<p>Unlike CharStrings in the 'CFF ' table, overlapping contours are supported in CFF2 CharStrings. CFF2 renderers must use a non-zero winding rule (see below), not an even-odd rule as used for CFF CharStrings. Thus, for example, a counterclockwise contour completely inside another counterclockwise contour does not introduce any transparency; both contours are filled. This behavior is necessary to support variable font data, where the use of overlapping contours is common. Care is required, therefore, when converting CFF2 CharString data into CFF CharStrings (or any other outline format that uses the even-odd rule), such as by using an overlap removal operation.</p>
+<p>The non-zero winding rule is used to determine which areas of the surface are filled as follows: For a given point on the surface, draw a ray from that point toward infinity in any direction. Then follow that ray from the point noting when a glyph contour line is crossed. Starting with a count of zero, add one each time the ray crosses a contour line that goes in a clockwise direction, and subtract one each time it crosses a contour line that goes counterclockwise. If the final count is non-zero, the point is within an area that is filled.</p>
+<p><strong>Flex</strong></p>
+<p>The <em>flex</em> mechanism is provided to improve the rendering of shallow curves at small sizes, causing them to appear as line segments rather than resulting in small humps or dents in the glyph shape. The flex mechanism can be used for curved glyph features, in any orientation or depth, that meet the following requirements:</p>
+<ul>
+<li>The curved feature can be represented as exactly two curves, drawn by two <strong>rrcurveto</strong> operators.</li>
+<li>The curves must meet at a common point (the <em>joining</em> point).</li>
+<li>The length of the combined curve must exceed its depth.</li>
+</ul>
+<p>See the <a href="#flex" data-linktype="self-bookmark"><strong>flex</strong></a>, <a href="#flex-mechanism-operators" data-linktype="self-bookmark"><strong>flex1</strong></a>, <a href="#hflex" data-linktype="self-bookmark"><strong>hflex</strong></a> and <a href="#hflex1" data-linktype="self-bookmark"><strong>hflex1</strong></a> operator descriptions for more information and examples.</p>
+<p><a id="subrs"></a></p>
+<h4 id="subroutines">Subroutines</h4>
+<p>A <em>subroutine</em> is a portion of CharString data that can be invoked (or “called”) from within other CharString data. Multiple CharStrings can efficiently call the same subroutine, thereby achieving significant data size savings.</p>
+<p>An example of a subroutine could be data that describes a diacritic or serif shape that is identical in multiple glyphs. In practice, the identification of portions of CharString data suitable for becoming subroutines is usually automated. There are no restrictions on how CharString data may be split into subroutines; subroutines do not need to represent complete contours, or even a complete set of operands with their operator.</p>
+<p>CFF2 compilers use subroutines to minimize file size. Use of subroutines is not mandatory, however. Faster compilation could be possible by avoiding subroutines, and in some situations could even result in a smaller file size in subsequent file compression steps.</p>
+<p>There are two types of subroutines:</p>
+<ul>
+<li>Global subroutines are stored in the GlobalSubrINDEX and may be called by any CharString or subroutine.</li>
+<li>Local subroutines are stored in a LocalSubrINDEX within a PrivateDICT and may only be called by CharStrings that have access to that PrivateDICT, or by subroutines within the same LocalSubrINDEX.</li>
+</ul>
+<p>Any CharString may use both types of subroutine.</p>
+<p>Nesting of subroutines (one subroutine calling another subroutine) is allowed up to a maximum of 10 levels. Recursion (one subroutine calling itself, or being called by any subroutine in its nested subroutine chain) is not allowed.</p>
+<p>The GlobalSubrINDEX and LocalSubrINDEX structures use the INDEX format—see <a href="#index-data" data-linktype="self-bookmark">INDEX data</a>.</p>
+<p>Every CFF2 table includes a GlobalSubrINDEX, which is at a fixed location immediately following the TopDICT subtable. (See <a href="#organization-of-the-cff2-table" data-linktype="self-bookmark">Organization of the CFF2 table</a>.) If there are no global subroutines to be stored, then an empty GlobalSubrINDEX is required (that is, the count of elements is zero).</p>
+<p>A LocalSubrINDEX is contained within a PrivateDICT at a location specified by the <strong>LocalSubrINDEXOffset</strong> key—see <a href="#privatedict-subroutine-operator" data-linktype="self-bookmark">PrivateDICT subroutine operator</a>.</p>
+<p><strong>Calling subroutines and subroutine bias</strong></p>
+<p>Local subroutines are invoked using the <strong>callsubr</strong> operator; global subroutines are invoked using the <strong>callgsubr</strong> operator. Both operators take a single operand that is a <em>biased</em> index into the subroutine array of the corresponding INDEX. The operand must be added to a <em>subroutine bias</em> value to derive the array index. The <em>bias</em> is calculated for each subroutine INDEX based on <em>nSubrs</em>—the number of subroutines (the INDEX count) in the given INDEX—as follows:</p>
+<ul>
+<li>If <em>nSubrs</em> is in the range [0,1239], then <em>bias</em> = 107.</li>
+<li>If <em>nSubrs</em> is in the range [1240,33899], then <em>bias</em> = 1131.</li>
+<li>If <em>nSubrs</em> is &gt;= 33900, then <em>bias</em> = 32768.</li>
+</ul>
+<p>This technique allows subroutine identifiers to be specified using negative as well as positive numbers, efficiently utilizing the available number ranges to reduce the size of data.</p>
+<p><strong>Subroutines and the stack</strong></p>
+<p>Unlike most operators, the <strong>callsubr</strong> and <strong>callgsubr</strong> operators do not clear the stack. For example, a subroutine could be called to push certain operands onto the stack; then, after the subroutine returns, a subsequent path drawing operator could use the operands placed on the stack by the subroutine.</p>
+<p><strong>Implementing subroutines with a “return stack”</strong></p>
+<p>A CFF2 decoder must keep track of the location within CharString data to which a subroutine returns after it is completed. The return location is the byte immediately after the <strong>callsubr</strong> or <strong>callgsubr</strong> operator that called the subroutine. Because of potential nesting, this could be within CharString data in the CharStringINDEX, or within a segment of CharString data in another subroutine. It is recommended to implement a “return stack” so that a chain of multiple return locations can be tracked. Care is required to check whether the return location is beyond the end of the CharString or subroutine data from which the subroutine was called. If so, the decoder must perform one or more extra “return” steps (if the subroutine was called from another subroutine) or terminate decoding (if the subroutine was called from a CharString).</p>
+<h3 id="charstring-organization">CharString organization</h3>
+<p>A complete CharString has the following structure:</p>
+<p><i>hs* vs* cm* hm* {mt &lt;path constructing data&gt;}*</i></p>
+<p>That is,</p>
+<ul>
+<li>zero or more horizontal stem hints (using <strong>hstem</strong> or <strong>hstemhm</strong> operators), followed by</li>
+<li>zero or more vertical stem hints (using <strong>vstem</strong> or <strong>vstemhm</strong> operators), followed by</li>
+<li>zero or more counter hints (using the <strong>cntrmask</strong> operator), followed by</li>
+<li>zero or more <strong>hintmask</strong> operations, followed by</li>
+<li>path data for zero or more contours.</li>
+</ul>
+<p>The data for each contour beings with a moveto operation followed by any number of line or curve operations. Within the path constructing data, there can be any number of <strong>hintmask</strong> operations to control which stems are active.</p>
+<p>In a variable font, the <strong>blend</strong> operator may be used in any of the path constructing operations, or in any of the hint operations except <strong>hintmask</strong> or <strong>cntrmask</strong>. Only one set of variation regions (specified using a <strong>vsindex</strong> operator) is used for a given CharString. (See <a href="#variation-operators" data-linktype="self-bookmark">Variation operators</a> for other restrictions on the <strong>blend</strong> and <strong>vsindex</strong> operators.)</p>
+<p>Any portion of the CharString data may be packaged as a subroutine.</p>
+<h3 id="charstring-operators">CharString operators</h3>
+<h4 id="charstring-operator-summary">CharString operator summary</h4>
+<p>The following table lists all valid CharString operators, together with their byte encoding (hexadecimal and decimal), their general purpose, whether their operands may be blended (variable), and whether they clear the stack.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Hex</th>
+<th style="text-align: left;">Dec</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Purpose</th>
+<th style="text-align: left;">Blendable</th>
+<th style="text-align: left;">Clears stack</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">0x15</td>
+<td style="text-align: left;">21</td>
+<td style="text-align: left;"><strong>rmoveto</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x16</td>
+<td style="text-align: left;">22</td>
+<td style="text-align: left;"><strong>hmoveto</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x04</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;"><strong>vmoveto</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x05</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;"><strong>rlineto</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x06</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;"><strong>hlineto</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x07</td>
+<td style="text-align: left;">7</td>
+<td style="text-align: left;"><strong>vlineto</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x08</td>
+<td style="text-align: left;">8</td>
+<td style="text-align: left;"><strong>rrcurveto</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x1b</td>
+<td style="text-align: left;">27</td>
+<td style="text-align: left;"><strong>hhcurveto</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x1a</td>
+<td style="text-align: left;">26</td>
+<td style="text-align: left;"><strong>vvcurveto</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x1f</td>
+<td style="text-align: left;">31</td>
+<td style="text-align: left;"><strong>hvcurveto</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x1e</td>
+<td style="text-align: left;">30</td>
+<td style="text-align: left;"><strong>vhcurveto</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x18</td>
+<td style="text-align: left;">24</td>
+<td style="text-align: left;"><strong>rcurveline</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x19</td>
+<td style="text-align: left;">25</td>
+<td style="text-align: left;"><strong>rlinecurve</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0c 0x23</td>
+<td style="text-align: left;">12 35</td>
+<td style="text-align: left;"><strong>flex</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0c 0x22</td>
+<td style="text-align: left;">12 34</td>
+<td style="text-align: left;"><strong>hflex</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0c 0x24</td>
+<td style="text-align: left;">12 36</td>
+<td style="text-align: left;"><strong>hflex1</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0c 0x25</td>
+<td style="text-align: left;">12 37</td>
+<td style="text-align: left;"><strong>flex1</strong></td>
+<td style="text-align: left;">paths</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x01</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;"><strong>hstem</strong></td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x03</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;"><strong>vstem</strong></td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x12</td>
+<td style="text-align: left;">18</td>
+<td style="text-align: left;"><strong>hstemhm</strong></td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x17</td>
+<td style="text-align: left;">23</td>
+<td style="text-align: left;"><strong>vstemhm</strong></td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x13</td>
+<td style="text-align: left;">19</td>
+<td style="text-align: left;"><strong>hintmask</strong></td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;"><strong>no</strong></td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x14</td>
+<td style="text-align: left;">20</td>
+<td style="text-align: left;"><strong>cntrmask</strong></td>
+<td style="text-align: left;">hinting</td>
+<td style="text-align: left;"><strong>no</strong></td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0a</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;"><strong>callsubr</strong></td>
+<td style="text-align: left;">subroutines</td>
+<td style="text-align: left;"><strong>no</strong></td>
+<td style="text-align: left;"><strong>no</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">0x1d</td>
+<td style="text-align: left;">29</td>
+<td style="text-align: left;"><strong>callgsubr</strong></td>
+<td style="text-align: left;">subroutines</td>
+<td style="text-align: left;"><strong>no</strong></td>
+<td style="text-align: left;"><strong>no</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">0x0f</td>
+<td style="text-align: left;">15</td>
+<td style="text-align: left;"><strong>vsindex</strong></td>
+<td style="text-align: left;">variation</td>
+<td style="text-align: left;"><strong>no</strong></td>
+<td style="text-align: left;">yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">0x10</td>
+<td style="text-align: left;">16</td>
+<td style="text-align: left;"><strong>blend</strong></td>
+<td style="text-align: left;">variation</td>
+<td style="text-align: left;">yes</td>
+<td style="text-align: left;"><strong>no</strong></td>
+</tr>
+</tbody>
+</table>
+<h4 id="charstring-path-operators">CharString path operators</h4>
+<p>The operands for all path operators may be integer or real values.</p>
+<h5 id="operators-that-move-the-current-point-and-start-a-new-contour">Operators that move the current point and start a new contour</h5>
+<p><a id="rmoveto"></a></p>
+<p><strong>rmoveto</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x15 (21)</td></tr>
+<tr><th>Stack operands</th><td>[ dx1 dy1 ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Moves the current point to a position at the relative coordinates <i>(dx1, dy1)</i> and starts a new contour.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="hmoveto"></a></p>
+<p><strong>hmoveto</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x16 (22)</td></tr>
+<tr><th>Stack operands</th><td>[ dx ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Moves the current point <i>dx</i> units in the horizontal direction and starts a new contour.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="vmoveto"></a></p>
+<p><strong>vmoveto</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x04 (4)</td></tr>
+<tr><th>Stack operands</th><td>[ dy ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Moves the current point <i>dy</i> units in the vertical direction and starts a new contour.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<h5 id="path-operators-that-draw-line-segments">Path operators that draw line segments</h5>
+<p><a id="rlineto"></a></p>
+<p><strong>rlineto</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x05 (5)</td></tr>
+<tr><th>Stack operands</th><td>[ (dx dy)+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Appends a line segment from the current point to a position at the relative coordinates <i>(dx, dy)</i>. Additional <b>rlineto</b> operations are performed for all subsequent argument pairs. The number of arguments must be even, and the number of lines is determined from the number of arguments on the stack.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="hlineto"></a></p>
+<p><strong>hlineto</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x06 (6)</td></tr>
+<tr><th>Stack operands</th><td>[ d+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Appends a horizontal line segment from the current point to a position at the relative coordinates <i>(d, 0)</i>. When multiple arguments are used, additional line segments are appended in alternating vertical and horizontal orientations. Thus, the second argument appends a vertical line from the end of the previous line to the relative coordinates <i>(0, d)</i>, the third argument appends a horizontal line to the relative coordinates <i>(d, 0)</i>, and so on. The number of line segments is determined from the number of arguments on the stack. <br><br>A contour that consists of only horizontal and vertical lines can be constructed using one of the moveto operators and a single <b>hlineto</b> operator, with the number of line segments limited only by the size of the stack.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="vlineto"></a></p>
+<p><strong>vlineto</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x07 (7)</td></tr>
+<tr><th>OperStack operands</th><td>[ d+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Appends a vertical line segment from the current point to a position at the relative coordinates <i>(0, d)</i>. As with <b>hlineto</b>, when multiple arguments are used, the orientation alternates for each additional argument.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<h5 id="path-operators-that-draw-curves">Path operators that draw curves</h5>
+<p><a id="rrcurveto"></a></p>
+<p><strong>rrcurveto</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x08 (8)</td></tr>
+<tr><th>Stack operands</th><td>[ (dxa dya dxb dyb dxc dyc)+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Appends a cubic Bézier curve, defined by the points <i>p0</i>, <i>p1</i>, <i>p2</i>, <i>p3</i> where <i>p0</i> is located at the current point, <i>p1</i> is the first off-curve point given by the relative coordinates <i>(dxa, dya)</i>, <i>p2</i> is the second off-curve point given by the relative coordinates <i>(dxb, dyb)</i> and <i>p3</i> is the end point given by the relative coordinates <i>(dxc, dyc)</i>. The location of each point is defined relative to the preceding one. For each subsequent set of six arguments, an additional curve is appended to the previous curve segment. The number of curve segments is determined from the number of arguments on the stack and is limited only by the size of the stack.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="hhcurveto"></a></p>
+<p><strong>hhcurveto</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x1b (27)</td></tr>
+<tr><th>Stack</th><td>[ &lt;number&gt;+ ]</td></tr>
+<tr><th>Stack operands</th><td>[ dya? {dxa dxb dyb dxc}+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Appends one or more Bézier curves starting from the current point, as described by the <i>dxa…dxc</i> set(s) of arguments. If the argument count is a multiple of four, the curve starts and ends with horizontal tangents. For each curve segment, the first off-curve point is given by relative coordinates <i>(dxa, 0)</i>, the second off-curve point is given by relative coordinates <i>(dxb, dyb)</i>, and the end point is given by relative coordinates <i>(dxc, 0)</i>
+  <br><br>
+  If the argument count is one more than a multiple of four, the first curve does not begin with a horizontal tangent and <i>dya</i> is given by the first argument; thus the first off-curve point is at <i>(dxa, dya)</i> relative to the current point. This option is available only for the first curve segment.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="vvcurveto"></a></p>
+<p><strong>vvcurveto</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x1b (27)</td></tr>
+<tr><th>Stack operands</th><td>[ dxa? {dya dxb dyb dyc}+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Appends one or more Bézier curves starting from the current point, as described by the <i>dya…dyc</i> set(s) of arguments. This operator is the vertical counterpart to <b>hhcurveto</b>. If the argument count is a multiple of four, the curve starts and ends vertical. If the argument count is one more than a multiple of four, the first curve segement does not begin with a vertical tangent and its <i>dxa</i> value is given by the first argument.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="hvcurveto"></a></p>
+<p><strong>hvcurveto</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x1f (31)</td></tr>
+<tr>
+  <th>Stack operands</th>
+  <td>
+  [ dx1 dx2 dy2 dy3 dx3? ]<br>
+  [ (dxa dxb dyb dyc dyd dxe dye dxf)+ dyf? ]<br>
+  [ dx1 dx2 dy2 dy3 (dya dxb dyb dxc dxd dxe dye dyf)* dxf? ]
+  </td>
+</tr>
+<tr>
+  <th>Description</th>
+  <td>Appends one or more Bézier curves starting from the current point with start/end tangents that alternate between horizontal and vertical: in the first curve segment, the starting tangent is horizontal, and the ending tangent is vertical; if a second curve segment is defined, it begins vertical and ends horizontal; if a third segment is defined, it begins horizontal and ends vertical; and so on. If the argument count is a multiple of four, the curve always begins horizontal and ends either vertical or horizontal. If the argument count is one more than a multiple of four, then the tangent of the final segment is overridden, with the optional extra argument defining a non-zero coordinate.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="vhcurveto"></a></p>
+<p><strong>vhcurveto</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x1e (30)</td></tr>
+<tr>
+  <th>Stack operands</th>
+  <td>
+  [ dy1 dx2 dy2 dx3 dy3? ]<br>
+  [ (dya dxb dyb dxc dxd dxe dye dyf)+ dxf? ]<br>
+  [ dy1 dx2 dy2 dx3 (dxa dxb dyb dyc dyd dxe dye dxf)* dyf? ]
+  </td>
+</tr>
+<tr>
+  <th>Description</th>
+  <td>Appends one or more Bézier curves starting from the current point with start/end tangents that alternate between vertical and horizontal. This operator is a vertical counterpart to <b>hvcurveto</b>: it always starts vertical and (with a multiple of four arguments) ends either horizontal or vertical. An optional extra argment may be used to override the orientation of the final tangent.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="rcurveline"></a></p>
+<p><strong>rcurveline</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x18 (24)</td></tr>
+<tr><th>Stack operands</th><td>[ (dxa dya dxb dyb dxc dyc)+ dxd dyd ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Appends a sequence of Bézier curves followed by a line. This is equivalent to one <b>rrcurveto</b> for each set of six arguments <i>dxa…dyc</i>, followed by exactly one <b>rlineto</b> using the <i>dxd, dyd</i> arguments. The number of curve segments is determined from the count of arguments on the stack.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="rlinecurve"></a></p>
+<p><strong>rlinecurve</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x19 (25)</td></tr>
+<tr><th>Stack operands</th><td>[ (dxa dya)+ dxb dyb dxc dyc dxd dyd  ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Appends a sequence of lines followed by a Bézier curve. This is equivalent to one <b>rlineto</b> for each pair of <i>dxa, dya</i> arguments preceding the six arguments <i>dxb…dyd</i> needed for one <b>rrcurveto</b> operation. The number of line segments is determined from the count of arguments on the stack.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="flex-mechanism-operators"></a></p>
+<p><strong>Flex mechanism operators</strong></p>
+<p>Flex operators define two connected Bézier curve segments that will be rendered as a straight line at small sizes when the <em>flex depth</em> is below a certain threshold value. The flex depth is the distance from the joining point to a line drawn from the starting point of the first curve to the ending point of the second curve, as shown in the following figure.</p>
+<figure><img src="media/cff2-svg-2.png" alt="Two connecting Bezier curves and the flex depth of the connecting point" data-linktype="relative-path"><figcaption>Curves constructed with a flex operator</figcaption></figure>
+<p>If the combined curve is not exactly horizontal or vertical, determination of the flex depth uses a method that depends on whether the curve is more horizontal or more vertical, as illustrated in the following figure.</p>
+<figure><img src="media/cff2-svg-3.png" alt="Two connected Bezier curves and flex depth based on dx and dy" data-linktype="relative-path"><figcaption>Flex depth calculations</figcaption></figure>
+<p>A fully qualified list of operands for flex operations would comprise the 12 coordinates <em>dx1…dy6</em> plus a flex depth threshold operand <em>fd</em>. Some flex operators omit some of these operands and can be used in cases where some of the points have the same x or y coordinate. The preceding figure can be referenced when reading the descriptions for the operators.</p>
+<p><a id="flex"></a></p>
+<p><strong>flex</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0c 0x23 (12,35)</td></tr>
+<tr><th>Stack operands</th><td>[ dx1 dy1 dx2 dy2 dx3 dy3 dx4 dy4 dx5 dy5 dx6 dy6 fd ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Appends two Bézier curves described by <i>dx1…dy6</i>. The operand <i>fd</i> specifies a flex depth threshold in 1/100ths of a device pixel. The curves must be rendered as a straight line when the flex depth is less than <i>fd/100</i> device pixels, and as curved lines when the flex depth is greater than or equal to <i>fd/100</i> device pixels.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="hflex"></a></p>
+<p><strong>hflex</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0c 0x22 (12,34)</td></tr>
+<tr><th>Stack operands</th><td>[ dx1 dx2 dy2 dx3 dx4 dx5 dx6 ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Appends two Bézier curves described by <i>dx1…dx6</i>. The curves must be rendered as a straight line when the flex depth is less than 0.5 device pixels (threshold <i>fd = 50</i> is implicit), and as curves when the flex depth is greater than or equal to 0.5 device pixels.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p>The <strong>hflex</strong> operator assumes a horizontal orientation and omits several coordinates from its operands. It can be used when the following are all true:</p>
+<ul>
+<li>The starting point, ending point, first control point and last control point all have the same y coordinate.</li>
+<li>The joining point and neighboring control points have the same y coordinate.</li>
+<li>The flex depth threshold is 50.</li>
+</ul>
+<p><a id="hflex1"></a></p>
+<p><strong>hflex1</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0c 0x24 (12,36)</td></tr>
+<tr><th>Stack operands</th><td>[ dx1 dy1 dx2 dy2 dx3 dx4 dx5 dy5 dx6 ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Appends two Bézier curves described by <i>dx1…dx6</i>. The curves must be rendered as a straight line when the flex depth is less than 0.5 device pixels (threshold <i>fd = 50</i> is implicit), and as curves when the flex depth is greater than or equal to 0.5 device pixels.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p>The <strong>hflex1</strong> operator is similar to <strong>hflex</strong> in assuming a horizontal orientation but does not constrain the starting and ending tangents to be horizontal. It can be used when the following are all true:</p>
+<ul>
+<li>The starting and ending points have the same y coordinate.</li>
+<li>The joining point and neighboring control points have the same y coordinate.</li>
+<li>The flex depth threshold is 50.</li>
+</ul>
+<p><a id="flex1"></a></p>
+<p><strong>flex1</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0c 0x25 (12,37)</td></tr>
+<tr><th>Stack operands</th><td>[ dx1 dy1 dx2 dy2 dx3 dy3 dx4 dy4 dx5 dy5 d6 ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Appends two Bézier curves described by <i>dx1…d6</i>. The <i>d6</i> operand will be interpreted as either a <i>dx</i> or <i>dy</i> value depending on the combined curve—see details below. The curves must be rendered as a straight line when the flex depth is less than 0.5 device pixels (threshold <i>fd = 50</i> is implicit), and as curves when the flex depth is greater than or equal to 0.5 device pixels.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p>The interpretation of <em>d6</em> as either <em>dx6</em> or <em>dy6</em> depends on the overall horizontal or vertical orientation of the combined curve. This is determined by computing the vector from the starting point <em>(x,y)</em> to the last control point specified by <em>(dx5,dy5)</em>: sum the x arguments <em>dx1, dx2…dx5</em> and the y arguments <em>dy1, dy2…dy5</em> to obtain the vector <em>(dx, dy)</em>. If <em>abs(dx) &gt; abs(dy)</em>, then <em>d6</em> is interpreted as <em>dx6</em>. Else, <em>d6</em> is interpreted as <em>dy6</em>.</p>
+<h4 id="charstring-hint-operators">CharString hint operators</h4>
+<p>See CharString concepts: <a href="#hints" data-linktype="self-bookmark">Hints</a> for an overview of hints as well as key concepts, including the encoding of stem and edge hints.</p>
+<p><a id="hstem"></a></p>
+<p><strong>hstem</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x01 (1)</td></tr>
+<tr><th>Stack</th><td>[ (&lt;number&gt; &lt;number&gt;)+ ]</td></tr>
+<tr><th>Operands</th><td>[ (y1 y2)+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Defines a sequence of non-overlapping horizontal stems for the CharString using pairs of numbers, <i>dy1, dy2</i>, where <i>dy1</i> is the bottom edge and <i>dy2</i> is the width.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="vstem"></a></p>
+<p><strong>vstem</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x03 (3)</td></tr>
+<tr><th>Stack</th><td>[ (&lt;number&gt; &lt;number&gt;)+ ]</td></tr>
+<tr><th>Operands</th><td>[ (dx1 dx2)+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Defines a sequence of non-overlapping vertical stems for the CharString using pairs of numbers, <i>dx1, dx2</i>, where <i>dx1</i> is the left edge and <i>dx2</i> is the width.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p>Stems defined using one or more <strong>hstem</strong> or <strong>vstem</strong> operators must not overlap and cannot be used in conjunction with the <strong>hintmask</strong> operator.</p>
+<p><a id="hstemhm"></a></p>
+<p><strong>hstemhm</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x012 (18)</td></tr>
+<tr><th>Stack</th><td>[ (&lt;number&gt; &lt;number&gt;)+ ]</td></tr>
+<tr><th>Operands</th><td>[ (dy1 dy2)+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Defines a sequence of horizontal stems for the CharString using pairs of numbers, <i>dy1, dy2</i>, where <i>dy1</i> is the bottom edge and <i>dy2</i> is the width. Stems defined using this operator may overlap.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p><a id="vstemhm"></a></p>
+<p><strong>vstemhm</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x017 (23)</td></tr>
+<tr><th>Stack</th><td>[ (&lt;number&gt; &lt;number&gt;)+ ]</td></tr>
+<tr><th>Operands</th><td>[ (dx1 dx2)+ ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Defines a sequence of vertical stems for the CharString using pairs of numbers, <i>dx1, dx2</i>, where <i>dx1</i> is the left edge and <i>dx2</i> is the width. Stems defined using this operator may overlap.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p>Stems defined using one or more <strong>hstemhm</strong> or <strong>vstemhm</strong> operators may overlap and should be used in conjunction with the <strong>hintmask</strong> operator.</p>
+<p><a id="hintmask"></a></p>
+<p><strong>hintmask</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x013 (19)</td></tr>
+<tr><th>Stack</th><td>[ - ]</td></tr>
+<tr><th>Operands</th><td>See below.</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Activates and deactivates stem hints within this CharString.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>no</td></tr>
+</tbody></table>
+<p>If any horizontal stems overlap or any vertical stems overlap, the <strong>hintmask</strong> operator must be used to establish a non-overlapping subset of hints for a portion of the CharString data. Rendering for path operators occurring after a hintmask is influenced by the new set of active hints. The hintmask operator may be used any number of times within a CharString.</p>
+<p>The <strong>hintmask</strong> operator is exceptional in that it does not pop operands from the stack but consumes bytes that come after it in the CharString data. The byte sequence is interpreted as a bit field that flags each stem as active or inactive. The number of bytes used depends on the total number of horizontal and vertical stem hints, <em>numStems</em>, that were defined using the <strong>hstemhm</strong> and <strong>vstemhm</strong> operators. A whole number of bytes is consumed; hence, there can be extra bits at the end of the bitfield that are unused. The number of bytes used is <em>1 + floor( (numStems - 1) /8 )</em>. The bytes are treated in big-endian order: the high-order bit is a flag for the first stem hint, and so on. A stem hint is active if the corresponding bit is 1, and inactive if the bit is 0. All unused bits must be 0.</p>
+<p>The <strong>hintmask</strong> operator must not be used unless the CharString also defines stems using <strong>hstemhm</strong> or <strong>vstemhm</strong>.</p>
+<p><em>Example</em></p>
+<p>Suppose a CharString has 17 hints in total. Three bytes are consumed by each use of <strong>hintmask</strong>. To activate hints 1, 3 and 9 while deactivating other hints, the bit field required is: 01010000 01000000 00000000; thus, the three bytes 0x404000 immediately follow the <strong>hintmask</strong> operator in the data.</p>
+<p><em>Example</em></p>
+<p>Consider the following figure that shows part of a glyph with horizontal and vertical stems with the horizontal stems overlapping.</p>
+<figure id="Figure6"><img src="media/cff2-svg-6.png" alt="Outline with two overlapping horizontal stems and a vertical stem" data-linktype="relative-path"><figcaption>Stems with overlaps</figcaption></figure>
+<p>The horizontal stems are from 280 to 380 (<em>hstem1</em>) and from 310 to 350 (<em>hstem2</em>). Because they overlap, they must be defined using <strong>hstemhm</strong>, and use of the <strong>hintmask</strong> operator will be required to select one or the other as active. The glyph also has a vertical stem, from 400 to 450 (<em>vstem1</em>). Because <strong>hintmask</strong> will be used, the vertical stem must be defined using <strong>vstemhm</strong>, even though this stem does not overlap another vertical stem.</p>
+<p>Suppose only these three stems are defined. They will be defined in the order <em>hstem1</em>, <em>hstem2</em>, then <em>vstem1</em>. The <strong>hintmask</strong> operator will require a bit field of three bits and so will consume one byte that follows it in the data.</p>
+<p>Now suppose the outline is being constructed in a counterclockwise direction starting with the horizontal line segment ending at (400, 310). The first group of stem hints that need to be active are those for <em>hstem2</em> and <em>vstem1</em>. The bit field data required to select those hints will be 01100000 (padded with five extra bits), hence a byte 0x60. The stem hint and hint mask encoding will be as follows.</p>
+<blockquote>
+<p>280 100 -70 40 <strong>hstemhm</strong> 400 50 <strong>vstemhm</strong> <strong>hintmask</strong> 0x60</p>
+</blockquote>
+<p>Since both horizontal and vertical stems are defined and the <strong>hintmask</strong> operator is used, the <strong>vstemhm</strong> operator can be invoked implicitly and omitted from the CharString, shortening this portion of the CharString to the following.</p>
+<blockquote>
+<p>280 100 -70 40 <strong>hstemhm</strong> 400 50 <strong>hintmask</strong> 0x60</p>
+</blockquote>
+<p><a id="cntrmask"></a></p>
+<p><strong>cntrmask</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x014 (20)</td></tr>
+<tr><th>Stack</th><td>[ - ]</td></tr>
+<tr><th>Operands</th><td>See below.</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Specifies the counter spaces to be controlled, and their relative priority.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>no</td></tr>
+</tbody></table>
+<p>Counter definitions depend on stem definitions (already defined using <strong>hstem</strong>, <strong>vstem</strong>, <strong>hstemhm</strong> or <strong>vstemhm</strong>). A counter is defined by specifying a group of stems that delimit the counter. Two stems are required to define a counter. When <strong>cntrmask</strong> is used, more than two stems may be specified in order to define multiple counters.</p>
+<p>Multiple <strong>cntrmask</strong> operators can be used in a CharString when sets of counters are to be treated with different priority. Counters defined by the first <strong>cntrmask</strong> have top priority; subsequent <strong>cntrmask</strong> operators specify lower priority counters.</p>
+<p>As with <strong>hintmask</strong>, the <strong>cntrmask</strong> operator does not pop operands from the stack. Instead, it consumes bytes that come after it in the data that are interpreted as a bit field of flags indicating which stems from the complete list of stems are used. See the [<strong>hintmask</strong>] operator description for details on how these bytes are encoded. The set of hints selected must not overlap.</p>
+<p><em>Example</em></p>
+<p>Consider the following figure, showing a glyph with multiple stems and counters.</p>
+<figure id="Figure1"><img src="media/cff2-svg-1.png" alt="Glyph outline showing hints for a number of horizontal and vertical stems. The stems delimit several counters." data-linktype="relative-path"><figcaption>Horizontal and vertical stems that delimit counters</figcaption></figure>
+<p>Horizontal stems must be defined before vertical stems, and in each case must be defined in increasing upward or rightward order. Thus, the complete list of stems would be:</p>
+<blockquote>
+<p>H1 H2 H3 H4 H5 H6 H7 H8 V1 V2 V3 V4 V5</p>
+</blockquote>
+<p>With 13 stems defined, the <strong>cntrmask</strong> operator will evaluate a bit field of 13 bits; the data consumed will be extended to two bytes with three additional bits unused.</p>
+<p>A designer could wish to assert that the counters in the right half of the glyph should maintain their vertical proportions as far as possible, and that the two principal horizontal counter widths should also maintain their relative proportion. These counters are represented by selecting the following set of stems:</p>
+<blockquote>
+<p>H1 H3 H4 H6 H8 V1 V2 V3 V5</p>
+</blockquote>
+<p>One could also wish to assert that the counters in the left half of the glyph should maintain their vertical proportions as far as possible, but not at the cost of affecting previously defined counters. That second set of counters would be represented by selecting the following stems:</p>
+<blockquote>
+<p>H2 H5 H7</p>
+</blockquote>
+<p>Stem V4 in this example does not delimit a useful counter space and, so, is not referenced.</p>
+<p>The following <strong>cntrmask</strong> commands would be used to encode these requirements:</p>
+<blockquote>
+<p><strong>cntrmask</strong> 0xB5 0xE8<br>
+<strong>cntrmask</strong> 0x4A 0x00</p>
+</blockquote>
+<h4 id="charstring-subroutine-operators">CharString subroutine operators</h4>
+<p><strong>callsubr</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0a (10)</td></tr>
+<tr><th>Stack</th><td>[ … &lt;integer&gt; ]</td></tr>
+<tr><th>Operands</th><td>[ … subr# ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Calls the subroutine in LocalSubrINDEX with the index determined by <i>subr#</i>. This operand must be added to the subroutine bias number before being used as the index. See <a href="#subroutines" data-linktype="self-bookmark">CharString concepts: Subroutines</a> for details on calculation of the subroutine bias.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>no</td></tr>
+</tbody></table>
+<p><strong>callgsubr</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x1d (29)</td></tr>
+<tr><th>Stack</th><td>[ … &lt;integer&gt; ]</td></tr>
+<tr><th>Operands</th><td>[ … subr# ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Calls the subroutine in GlobalSubrINDEX with the index determined by <i>subr#</i>. This operand must be added to the subroutine bias number before being used as the index. See <a href="#subroutines" data-linktype="self-bookmark">CharString concepts: Subroutines</a> for details on calculation of the subroutine bias.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>no</td></tr>
+</tbody></table>
+<p>The <strong>callsubr</strong> and <strong>callgsubr</strong> operators pop the <em>subr#</em> operand from the stack, and otherwise leave the stack unchanged. The subroutine itself may pop or push operands, leaving fewer or more operands on the stack when the subroutine returns.</p>
+<h4 id="charstring-variation-operators">CharString variation operators</h4>
+<p><strong>vsindex</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x0f (15)</td></tr>
+<tr><th>Stack</th><td>[ &lt;integer&gt; ]</td></tr>
+<tr><th>Operands</th><td>[ ivd ]</td></tr>
+<tr>
+  <th>Description</th>
+  <td>Activates a particular list of variation regions from a VariationStore subtable. May only be used once in a CharString and must precede the first use of the <b>blend</b> operator.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>no</td></tr>
+</tbody></table>
+<p>The <strong>vsindex</strong> operator is used to select a set of active variation regions from the defined set of variation regions. When used in a CharString, it takes precedence over a <strong>vsindex</strong> key set in the associated PrivateDICT. See <a href="#opentype-font-variations-in-cff2" data-linktype="self-bookmark">OpenType Font Variations in CFF2</a> for complete details about the effect of this operator.</p>
+<blockquote>
+<p><em>Note:</em> The CharString <strong>vsindex</strong> operator is encoded as 0x0f, whereas the PrivateDICT key operator is encoded as 0x16.</p>
+</blockquote>
+<p><strong>blend</strong></p>
+<table>
+<tbody><tr><th>Encoding</th><td>0x010 (16)</td></tr>
+<tr><th>Stack</th><td>[ … &lt;number&gt;+ &lt;number&gt;+ &lt;integer&gt; ]</td></tr>
+<tr>
+  <th>Operands</th>
+  <td>[ … &lt;<i>n</i> default values&gt; &lt;<i>n * k</i> deltas&gt; <i>n<i> ]</i></i></td>
+</tr>
+<tr>
+  <th>Description</th>
+  <td>Pops <i>n + n * k + 1</i> operands from the stack, processes them according to the OpenType variations interpolation algorithm, then pushes <i>n</i> result numbers back onto the stack.
+  </td>
+</tr>
+<tr><th>Blendable</th><td>yes</td></tr>
+</tbody></table>
+<p>The <strong>blend</strong> operator may be used in CharStrings to make operands of blendable CharString operators variable. The number of operands that are popped by the blend operator is determined by the last operand (<em>n</em>) and the number of active variation regions (<em>k</em>), with an upper limit determined by the number of operands required by the next operator in the data. See <a href="#opentype-font-variations-in-cff2" data-linktype="self-bookmark">OpenType Font Variations in CFF2</a> for complete details about the implementation of this operator and interpretation of its operands.</p>
+<blockquote>
+<p><em>Note:</em> The CharString <strong>blend</strong> operator is encoded as 0x10, whereas in PrivateDICT data it is encoded as 0x17.</p>
+</blockquote>
+<p>Different ItemVariationData tables can have different numbers of active variation regions. Because the number of active regions (<em>k</em>) affects the number of operands popped by the <strong>blend</strong> operator (<em>n + n * k + 1</em>), the list of regions selected by a <strong>vsindex</strong> operator needs to be coordinated with the encoding of <strong>blend</strong> operands in the CharString. This has implications for the use of these operators in subroutines. Because subroutines can be shared by different CharStrings, care is needed to ensure a list of active regions set by <strong>vsindex</strong> in a subroutine is compatible with any subsequent <strong>blend</strong> operations in any CharStrings that call the subroutine. Similarly, if a <strong>blend</strong> operator is used in a subroutine, care is needed to ensure that it is compatible with the count of active regions in any CharStrings that call that subroutine. Within a PrivateDICT, it will not be problematic to ensure that use of <strong>blend</strong> in local subroutines is coordinated with a <strong>vsindex</strong> key set in the PrivateDICT. If the <strong>vsindex</strong> operator is used within a CharString, care will be needed if the number of activated regions is different from the default set in the associated PrivateDICT. Extra care will be needed if either operator is used in a global subroutine.</p>
+<p><a id="variations"></a></p>
+<h2 id="opentype-font-variations-in-cff2">OpenType Font Variations in CFF2</h2>
+<h3 id="overview-2">Overview</h3>
+<p>The CFF2 table supports font variations as described in the chapter <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>, and this section assumes familiarity with that chapter. In CFF2 tables, variation data may adjust:</p>
+<ul>
+<li>positions of outline points defined in CharStrings,</li>
+<li>hinting values defined in CharStrings, and</li>
+<li>hinting values defined in PrivateDICTs.</li>
+</ul>
+<p>In general, to support variation of glyphs or other font data, font variations require a set of default values for particular data items, a set of delta adjustment values used to modify the default values, and a set of regions within the font’s variation space over which the different delta values apply. In CFF2, interpolation of new values for a particular variation instance—based on default values, delta values, regions and current axis settings—is called <em>blending</em>.</p>
+<p>Blending is defined only for CharString and PrivateDICT data. In each case, two operators control variation:</p>
+<ul>
+<li><strong>vsindex</strong> selects an active list of variation regions.</li>
+<li><strong>blend</strong> performs a blending operation, updating numbers on the stack using delta values also provided on the stack.</li>
+</ul>
+<p>CFF2 glyph data in a variable font is structured much the same as in a non-variable font, with the same structures and operators as would be used in the default design. However, wherever a value occurs in the default design, a <strong>blend</strong> operator can be added along with a set of deltas to make that value variable. Different glyphs can use different sets of variation regions for variation operations; the <strong>vsindex</strong> operator can be used to select the appropriate set of regions for a glyph. Other details about the function of these operators is explained below.</p>
+<p>A CFF2 table supporting font variations requires a VariationStore structure. This defines a global list of all the variation regions used in the font, and also multiple subsets of that list.</p>
+<h3 id="variationstore">VariationStore</h3>
+<p>The VariationStore starts with a length field followed by an <em>ItemVariationStore</em> table of that length.</p>
+<p><em>VariationStore table</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>length</td>
+<td>length of the ItemVariationStore</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>data[length]</td>
+<td>ItemVariationStore data</td>
+</tr>
+</tbody>
+</table>
+<p>The location of the VariationStore in the CFF2 table is given by the <strong>VariationStoreOffset</strong> key of the TopDICT. If there is no such key in a CFF2 table, then the VariationStore data block is omitted, no variations can be defined, and the <strong>blend</strong> and <strong>vsindex</strong> operators must not be used.</p>
+<p>The Item Variation Store format is specified in the chapter <a href="otvarcommonformats.html#IVS" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>. A brief description of the format as used within the CFF2 table follows.</p>
+<p>An ItemVariationStore contains two important components: a <em>VariationRegionList</em>, and an array of <em>ItemVariationData</em> structures.</p>
+<p>The VariationRegionList is an array of <em>VariationRegion</em> structures. Each specifies a portion of the design variation space in which particular variation values (deltas) will have effect. In the CFF2 table, the VariationRegionList defines all of the VariationRegions used in the CFF2 table, even if a given region is used only in a single CharString or PrivateDict.</p>
+<p>An ItemVariationData structure defines a <em>regionIndexes</em> array. Each element in this array is a 0-based index into the VariationRegionList. This is used to associate variation delta values with a region of effect: deltas are organized into sets, and the number of deltas in each set is the length of the associated regionIndexes array. The regionIndexes array does not need to reference every region in the VariationRegionList but can select a subset of active regions. Different ItemVariationData structures can define different sets of active regions.</p>
+<blockquote>
+<p><em>Note:</em> In the discussion of the <strong>blend</strong> operator, the length of the active regionIndexes array is referred to as <em>k</em>.</p>
+</blockquote>
+<p>The ItemVariationStore contains an array of ItemVariationData structures. A CFF2 table can have only one ItemVariationData, in which case the same set of regions is used by all glyphs. Multiple ItemVariationData structures may be used, however, to allow different sets of glyphs to use different sets of regions. When multiple ItemVariationData structures are present, the <strong>vsindex</strong> operator can be used in a CharString or in a PrivateDICT to specify that a different ItemVariationData that the default (index 0) is to be used.</p>
+<blockquote>
+<p><em>Note:</em> Use of multiple ItemVariationData structures with different sets of regions can be useful in some situations to reduce data size. For example, consider a one-axis font in which most glyphs use only one region, but a special glyph required 20 intermediate regions. If only one ItemVariationData structure were used, it would need to select all 21 regions. This would require 21 delta operands for every blend operation when, for nearly all cases, only one delta would otherwise be needed. By adding a second ItemVariationData structure, glyphs can be divided into two groups according to the number of regions that need to be selected, and the corresponding number of deltas for each variable item in the glyph data.</p>
+</blockquote>
+<p>In general, the ItemVariationData structure allows the specification of delta values within itself, as well as the regionIndexes array. CFF2  does not use this facility. Instead, delta values in a CFF2 table are stored as operands to a <strong>blend</strong> operator within CharStrings or within a PrivateDICT. Only the regionIndexes array of the ItemVariationData structure is used. Therefore, the itemCount and wordDeltaCount fields in each ItemVariationData must be set to 0. Since itemCount is 0, there are no Delta Sets to store, so the deltaSets array is not stored at all.</p>
+<p>The CFF2 VariationStore structure does not share data with ItemVariationStore structures in other parts of the font. For example, if the VariationRegionList used in the CFF2 table is identical with that in the MVAR table, it needs to be specified explicitly for both.</p>
+<p>An example of a VariationStore structure in a CFF2 table can be seen in <a href="#appendixA" data-linktype="self-bookmark">Example CFF2 table</a>.</p>
+<h3 id="variation-operators">Variation operators</h3>
+<p>The <strong>vsindex</strong> and <strong>blend</strong> operators may be used in PrivateDICTs and in CharStrings. Different encodings are used in PrivateDICTs than in CharStrings, but the operand syntax and interpretation are the same for both. See <a href="#privatedict-variation-operators" data-linktype="self-bookmark">PrivateDICT variation operators</a> and <a href="#charstring-variation-operators" data-linktype="self-bookmark">CharString variation operators</a> for details on the encoding and operand syntax for these operators. The operand interpretation and implementation are described in detail below.</p>
+<p><strong>vsindex</strong></p>
+<p>When multiple ItemVariationData structures are defined, then PrivateDICTs and CharStrings need to be able to select which ItemVariationData structure and corresponding list of VariationRegions (the regionIndexes array) is used. By default, the first ItemVariationData structure (index 0) will be used. The <strong>vsindex</strong> operator can be used for glyphs that require a different list of regions. The <strong>vsindex</strong> operator takes a single operand, <em>ivd</em>, which specifies the index for the ItemVariationData structure to be used.</p>
+<p>If only one ItemVariationData structure is defined, there is no need to use the <strong>vsindex</strong> operator.</p>
+<p>The <strong>vsindex</strong> key may be used in a PrivateDICT to select a different list of regions for the group of glyphs associated with that PrivateDICT. <strong>vsindex</strong> may also be used in a CharString to select the list of regions for that glyph. When used in a CharString, it overrides a setting in the associated PrivateDICT.</p>
+<p>The number of active VariationRegions (<em>k</em>) will determine the number of delta values to be applied to a default value and, hence, the number of operands required by the <strong>blend</strong> operator—see details below.</p>
+<p>The <strong>vsindex</strong> operator may be used only once in a CharString and must precede the first use of the <strong>blend</strong> operator.</p>
+<p><strong>blend</strong></p>
+<p>The <strong>blend</strong> operator may be used in a PrivateDICT or in CharStrings to make operands of blendable operators variable—this is the mechanism in CFF2 for interpolating default values with delta values. This interpolation is affected by these factors:</p>
+<ul>
+<li>A set of normalized axis settings for a particular variation instance.</li>
+<li>An active ItemVariationData structure that provides a list of <em>k</em> VariationRegions (default, or set using <strong>vsindex</strong>).</li>
+</ul>
+<p>Based on the axis settings and the configuration of each VariationRegion, the Font Variations system supplies a scalar (a real number in the range [0,1]) for each of the <em>k</em> VariationRegions, yielding an array of <em>k</em> scalars.</p>
+<p>The blend operator pops <em>n + n * k + 1</em> arguments from the stack. These are organized in three groups.</p>
+<ul>
+<li><em>n</em> default values (the items to be varied);</li>
+<li><em>n * k</em> delta values, organized into <em>n</em> groups (one for each of the <em>n</em> default values), with <em>k</em> deltas in each group (one for each region);</li>
+<li><em>n</em> itself.</li>
+</ul>
+<p><em>n</em> will be the first argument popped from the stack, after which the number of additional arguments to be popped will be known.</p>
+<p>To calculate the blended values, the <em>n</em> default values are each treated in turn. The <em>k</em> delta values for a particular default value are respectively multiplied by the <em>k</em> scalars. These <em>k</em> products are then all added to the default value, resulting in its final blended value. Once all <em>n</em> default values have been blended, the results are pushed onto the stack for use by subsequent operators.</p>
+<p>For a detailed description of the interpolation calculation, see <a href="otvaroverview.html#algorithm-for-interpolation-of-instance-values" data-linktype="relative-path">Algorithm for interpolation of instance values</a>.</p>
+<p><em>Example</em></p>
+<p>Consider a value of 120 used as the argument of a <strong>hlineto</strong> operator. Suppose that the glyph uses an ItemVariationData with just one active region (<em>k = 1</em>), and suppose that that <strong>hlineto</strong> argument has a delta of 52 design units associated with the one active region. After the single default value (120) we also require <em>n * k</em> delta values, and finally <em>n</em> itself. Since <em>n = 1</em> and <em>k = 1</em>, the number of delta values is <em>1 * 1 = 1</em>. So, the complete sequence of numbers and operators is as follows:</p>
+<blockquote>
+<p>120 52 1 <strong>blend</strong> <strong>hlineto</strong></p>
+</blockquote>
+<p>For an instance where axis settings result in a scalar of 0.75 for the one active region, we can calculate the blended value by multiplying the delta value by that scalar (52 * 0.75 = 39), and then adding the product to the default value (39 + 120 = 159). So, for this instance, we effectively have a <strong>hlineto</strong> line segment as if a static font had the following sequence of numbers and operators:</p>
+<blockquote>
+<p>159 <strong>hlineto</strong></p>
+</blockquote>
+<p><em>Example</em></p>
+<p>Consider the previous example, with <strong>hlineto</strong> and a default operand value of 120, but after <strong>vsindex</strong> has been used to select two active regions (<em>k = 2</em>). Now two delta values are required. Including the default value for the <strong>hlineto</strong> argument and <em>n</em>, a total of four operands are required. For instance:</p>
+<blockquote>
+<p>120 52 36 1 <strong>blend</strong> <strong>hlineto</strong></p>
+</blockquote>
+<p>Suppose for a given instance the axis settings result in scalars of 0.75 and 0.50 for the two regions. The blended value is obtained by multiplying each scalar with its corresponding delta (52 &amp; 0.75 = 39, 36 * 0.50 = 18), then adding these products to the default value (39 + 18 + 120 = 177). Thus, for this instance the <strong>hlineto</strong> line segment is as if a static font had the following sequence of numbers and operators:</p>
+<blockquote>
+<p>177 <strong>hlineto</strong></p>
+</blockquote>
+<h3 id="blended-stem-and-edge-hints">Blended stem and edge hints</h3>
+<p>The stem hint operators, <strong>hstem</strong>, <strong>hstemhm</strong>, <strong>vstem</strong> and <strong>vstemhm</strong>, are blendable, meaning that the geometric regions they define can vary. As a result, stems that do not overlap by default could overlap after blending, or vice versa. Generalizing, a pair of stems could overlap in some regions of the font’s design variation space but not in other regions.</p>
+<p>Whenever stems overlap, the <strong>hintmask</strong> operator should always be used to activate only stems that do not overlap. Note that it is not possible to activate different sets of stems for different regions of the variation space: each use of <strong>hintmask</strong> will activate the same set of stems for all variation instances.</p>
+<p>Therefore, if any stems defined for a CharString overlap for any variation instance, then all stems should be defined using <strong>hstemhm</strong> or <strong>vstemhm</strong>.</p>
+<p>When defining stem hints, either the first or second value in a pair may be blended, but the blended result for the second value must always remain greater than or equal to zero.</p>
+<p>When defining edge hints, the first value in a pair may be blended, but the special “width” values used to indicate an edge (-20 and -21) must not be blended.</p>
+<p>As described above (see <a href="#charstring-concepts" data-linktype="self-bookmark">CharString concepts</a>), when multiple stems are defined, the pairs of values must be sorted in increasing order of the first value for each pair. This applies to the values encoded as operands of stem hint operators. In a variable font, if these operand values are blended, blending could potentially result in derived values such that, for some variation instances, the first values of each pair are not in increasing order. Such derived instance values are valid. The bit flag operands for the <strong>cntrmask</strong> and <strong>hintmask</strong> operators always reference stems in their encoded order, not in sorted order for a particular variation instance.</p>
+<blockquote>
+<p><em>Note:</em> If a CFF2 rasterizer implementation requires stems in its memory representation to be sorted, it could be necessary to re-sort the stems after blended values are obtained. However, re-sorting would also require maintaining the association between each stem and its corresponding <strong>cntrmask</strong> or <strong>hintmask</strong> bit flag.</p>
+</blockquote>
+<h3 id="advanced-uses-of-blend">Advanced uses of blend</h3>
+<p>The <strong>blend</strong> operator always works in conjunction with a subsequent operator expecting precalculated values (such as <strong>rlineto</strong> or <strong>BlueValues</strong>), and is ultimately required to leave operands on the stack ready for that static operator. It is not required to process all of those operands in a single blend operation, however. Thus, the number <em>n</em> in a blend may be less than the number of operands expected by the subsequent static operator, <em>nStatic</em>.</p>
+<p>When <em>n &lt; nStatic</em>, only a subset of the operands for the static operator are blended. For example, the two operands to <strong>rlineto</strong> would normally be blended in a single blend with <em>n = 2</em>, but using two separate <strong>blend</strong> operations, each with <em>n = 1</em> and each placed immediately after the relevant operand, is also valid. Also, if only one of the operands has variation deltas, then a <strong>blend</strong> with <em>n = 1</em> immediately after that operand can save some data.</p>
+<p>For example, the <strong>rrcurveto</strong> operator defines a Bézier curve using six operands. Suppose only the second and sixth operands (<em>dya</em> and <em>dyc</em>) needed to vary. A single <strong>blend</strong> operator could be used, but its effect would need to span five of the default values, <em>dya</em>…<em>dyc</em>; this would entail specifying <em>n = 5</em>, and requiring 5<em>k</em> delta operands, of which 3<em>k</em> would be zeros. A more efficient implementation would use two separate <strong>blend</strong> operators, one for <em>dya</em> and one for <em>dyc</em>, each having <em>n = 1</em> and only <em>k</em> deltas.</p>
+<p>Also, by having multiple blend operators before a static operator and also pushing additional values onto the stack, values already blended once can be blended multiple times. Only in the very last blend operation directly before the static operator are the blended offsets added to the default operands. This technique can be used to provide higher order interpolation using a single variation axis, for example to control the variation of a point along a quadratic, cubic or quartic curve rather than along a straight line.</p>
+<h3 id="comparison-of-cff2-variations-with-gvar-variations">Comparison of CFF2 variations with 'gvar' variations</h3>
+<p><strong>Variation of glyph metrics</strong></p>
+<p>The TrueType rasterizer appends four “phantom” points to the array of glyph points, based on metrics data from the <a href="hmtx.html" data-linktype="relative-path">'hmtx'</a> and <a href="vmtx.html" data-linktype="relative-path">'vmtx'</a> tables. These phantom points represent glyph metrics, and can be varied using 'gvar' variation data just as if they were regular points on the glyph outline. The CFF2 rasterizer also uses the 'hmtx' and 'vmtx' tables, but it does not create phantom points that can be manipulated in the CharString. Instead, CFF2 depends on the <a href="hvar.html" data-linktype="relative-path">HVAR</a> and <a href="vvar.html" data-linktype="relative-path">VVAR</a> tables for variation of glyph metrics.</p>
+<p><strong>Variation regions</strong></p>
+<p>In 'gvar', a global array of variation regions is defined in the <em>sharedTuples</em> array. A record for each glyph defines a custom array of regions, where each region is either selected from the global array or defined only for that glyph. CFF2, by requiring all regions to be defined globally, and also by predefining the order of regions when referenced in a blend operation, requires less data overall for specifying regions.</p>
+<p><strong>Inferred deltas</strong></p>
+<p>The 'gvar' variations mechanism includes functionality for “inferred deltas”. By moving only certain points on a glyph outline, deltas can be inferred for other points, saving data overall. (See <a href="gvar.html#inferred-deltas-for-un-referenced-point-numbers" data-linktype="relative-path">Inferred deltas for un-referenced point numbers</a>.) Inferred deltas are not supported in the CFF2 table.</p>
+<p><strong>Translating contours</strong></p>
+<p>Although CFF2 lacks functionality for inferred deltas, an entire contour can still be efficiently translated by variable x and y offsets by applying variation deltas to a single point on the contour to be moved. In gvar, any point on the contour may be chosen, the other points moving identically via inferred deltas. In CFF2, since all points of a contour are defined relative to the contour’s initial <strong>rmoveto</strong> operation, it is only the operands of that <strong>rmoveto</strong> that would need to be blended. The locations of subsequent points on the contour, having deltas of zero relative to the initial point, can avoid blend operations entirely. Care is needed to disable unintended variation on <em>subsequent contours</em> in the CharString, by means of opposing deltas on the operands of the subsequent <strong>rmoveto</strong>.</p>
+<h2 id="cff2-dependencies-on-other-font-tables">CFF2 dependencies on other font tables</h2>
+<p>An important factor in the design of the CFF2 specification was the avoidance of duplicating data already specified elsewhere in an OFF font file, which is a short-coming of fonts that use the <a href="cff.html" data-linktype="relative-path">'CFF '</a> table. Consequently, CFF2 is highly dependent on data in other OFF tables. OpenType tables that do not refer to specific glyph formats are intended to function as specified, including:</p>
+<ul>
+<li>the <a href="cmap.html" data-linktype="relative-path">'cmap'</a> table;</li>
+<li>the <a href="hhea.html" data-linktype="relative-path">'hhea'</a> table;</li>
+<li>the <a href="name.html" data-linktype="relative-path">'name'</a> table;</li>
+<li>the <a href="post.html" data-linktype="relative-path">'post'</a> table;</li>
+<li>the <a href="os2.html" data-linktype="relative-path">'OS/2'</a> table;</li>
+<li>advanced layout tables—<a href="gdef.html" data-linktype="relative-path">GDEF</a>, <a href="gpos.html" data-linktype="relative-path">GPOS</a> and <a href="gsub.html" data-linktype="relative-path">GSUB</a>;</li>
+<li>color tables—<a href="colr.html" data-linktype="relative-path">COLR</a> and <a href="cpal.html" data-linktype="relative-path">CPAL</a>; and</li>
+<li>variation tables—<a href="fvar.html" data-linktype="relative-path">'fvar'</a>, <a href="avar.html" data-linktype="relative-path">'avar'</a>, <a href="stat.html" data-linktype="relative-path">STAT</a>, <a href="mvar.html" data-linktype="relative-path">MVAR</a>, <a href="hvar.html" data-linktype="relative-path">HVAR</a> and <a href="vvar.html" data-linktype="relative-path">VVAR</a>.</li>
+</ul>
+<p>Here follow some requirements and considerations for specific tables.</p>
+<h3 id="sfnt-header">SFNT header</h3>
+<p><strong>sfntVersion</strong>
+The sfntVersion field, the first four bytes of an OpenType font file, must be 0x4F54544F (“OTTO”) for OpenType fonts with glyphs defined in a CFF2 table.</p>
+<h3 id="maxp-table">'maxp' table</h3>
+<p><strong>version</strong></p>
+<p>CFF2 fonts must use version 0.5 (encoded as 0x00005000). (This is only 6 bytes long and omits values not required for CFF2.)</p>
+<p><strong>numGlyphs</strong></p>
+<p>This must be identical to the number of CharStrings in the CFF2 table (the number of items in CharStringsINDEX).</p>
+<h3 id="head-table">'head' table</h3>
+<p>The specification should be followed for all fields, with the following notes.</p>
+<p><strong>unitsPerEm</strong></p>
+<p>This is respected and must correspond with the value of the TopDICT <strong>FontMatrix</strong> key in the CFF2 table. <strong>FontMatrix</strong> uses the reciprocal of unitsPerEm in a specific sequence of operands. For example, if unitsPerEm is 2000, having reciprocal 1/2000 = 0.0005, then <strong>FontMatrix</strong> must be set to 0.0005 0 0 0.0005 0 0. If unitsPerEm is equal to 1000, then the <strong>FontMatrix</strong> key may be omitted from the TopDICT.</p>
+<p><strong>indexToLocFormat</strong></p>
+<p>Set to 0.</p>
+<p><strong>glyphDataFormat</strong></p>
+<p>Set to 0.</p>
+<h3 id="hmtx-and-hvar-tables">'hmtx' and HVAR tables</h3>
+<p>Horizontal metrics for each glyph are stored in the <a href="hmtx.html" data-linktype="relative-path">'hmtx'</a> table. Variation of horizontal metrics is controlled by the <a href="hvar.html" data-linktype="relative-path">HVAR</a> table.</p>
+<h3 id="vmtx-and-vvar-tables">'vmtx' and VVAR tables</h3>
+<p>Vertical metrics for each glyph are stored in the <a href="vmtx.html" data-linktype="relative-path">'vmtx'</a> table. Variation of vertical metrics is controlled by the <a href="vvar.html" data-linktype="relative-path">VVAR</a> table.</p>
+<h3 id="fvar-table">'fvar' table</h3>
+<p>An <a href="fvar.html" data-linktype="relative-path">'fvar'</a> table is required if a CFF2 table uses font variations. In other words, if a <a href="#variationstore" data-linktype="self-bookmark">VariationStore</a> structure is defined within the CFF2 table, an 'fvar' table must also be defined. This table specifies the number of axes, axisCount, as well as their order. For each axis it specifies the fields axisTag, nameID, defaultValue, minValue, and maxValue, which are all necessary for any implementation of font variations.</p>
+<p>The CFF2 VariationStore data structure and the <strong>blend</strong> operators refer to variation axes according to their ordering in the 'fvar' table.</p>
+<h3 id="gvar-table">'gvar' table</h3>
+<p>The <a href="gvar.html" data-linktype="relative-path">'gvar'</a> table is not used in OpenType fonts with CFF2-encoded glyphs. Variation in glyph outlines and glyph hinting are controlled directly in CharString data. Variation of glyph metrics is controlled in the <a href="hvar.html" data-linktype="relative-path">HVAR</a> and <a href="vvar.html" data-linktype="relative-path">VVAR</a> tables.</p>
+<p><a id="appendixA"></a></p>
+<h2 id="example-cff2-table">Example CFF2 table</h2>
+<p>This section illustrates the CFF2 format with an example CFF2 table.</p>
+<p>Binary dump (226 bytes):</p>
+<pre>0000: 02 00 05 00 07 CF 0C 24 C3 11 9B 18 00 00 00 00
+0010: 00 26 00 01 00 00 00 0C 00 01 00 00 00 1C 00 01
+0020: 00 02 C0 00 E0 00 00 00 C0 00 C0 00 E0 00 00 00
+0030: 00 00 00 02 00 00 00 01 00 00 00 02 01 01 03 05
+0040: 20 0A 20 0A 00 00 00 01 01 01 05 F7 06 DA 12 77
+0050: 9F F8 6C 9D AE 9A F4 9A 95 9F B3 9F 8B 8B 8B 8B
+0060: 85 9A 8B 8B 97 73 8B 8B 8C 80 8B 8B 8B 8D 8B 8B
+0070: 8C 8A 8B 8B 97 17 06 FB 8E 95 86 9D 8B 8B 8D 17
+0080: 07 77 9F F8 6D 9D AD 9A F3 9A 95 9F B3 9F 08 FB
+0090: 8D 95 09 1E A0 37 5F 0C 09 8B 0C 0B C2 6E 9E 8C
+00A0: 17 0A DB 57 F7 02 8C 17 0B B3 9A 77 9F 82 8A 8D
+00B0: 17 0C 0C DB 95 57 F7 02 85 8B 8D 17 0C 0D F7 06
+00C0: 13 00 00 00 01 01 01 1B BD BD EF 8C 10 8B 15 F8
+00D0: 88 27 FB 5C 8C 10 06 F8 88 07 FC 88 EF F7 5C 8C
+00E0: 10 06
+</pre>
+<p>Analysis:</p>
+<table>
+<tbody>
+<tr>
+<th>Hex data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td></td>
+<td><b>Header</b></td>
+<td>CFF2 offsets: 0000 to 0004</td>
+</tr>
+<tr>
+<td>02</td>
+<td>majorVersion</td>
+<td>= 2</td>
+</tr>
+<tr>
+<td>00</td>
+<td>minorVersion</td>
+<td>= 0</td>
+</tr>
+<tr>
+<td>05</td>
+<td>headerSize</td>
+<td>= 5</td>
+</tr>
+<tr>
+<td>00 07</td>
+<td>topDictSize</td>
+<td>= 7</td>
+</tr>
+<tr>
+<td></td>
+<td><b>TopDICT</b></td>
+<td>CFF2 offsets: 0005 to 000B</td>
+</tr>
+<tr>
+<td>CF 0C 24</td>
+<td>[ offset ] <b>FontDICTINDEXOffset</b></td>
+<td>
+= 68 <b>FontDICTINDEXOffset</b><br>
+The bytes 0C 24 represent the <b>FontDICTINDEXOffset</b> operator. The operand byte is hex CF = decimal 207, which is decoded using the rule for byte values from 32 to 246 (see <a href="#encoded-number-formats" data-linktype="self-bookmark">Encoded number formats</a>): b0 - 139.<br>
+This gives the offset of the FontDICTINDEX: decimal 68 = hex 44.  
+</td>
+</tr>
+<tr>
+<td>C3 11</td>
+<td>[ offset ] <b>CharStringINDEXOffset</b></td>
+<td>
+= 56 <b>CharStringINDEXOffset</b><br>
+The byte 11 represents the <b>CharStringINDEXOffset</b> operator. The operand byte is hex C3, which is the encoded representation of the value 56.<br>
+This gives the offset of the CharStringINDEX: decimal 56 = hex 38.
+</td>
+</tr>
+<tr>
+<td>9B 18</td>
+<td>[ offset ] <b>VariationStoreOffset</b></td>
+<td>
+= 16 <b>VariationStoreOffset</b><br>
+The byte 18 represents the <b>VariationStoreOffset</b> operator. The operand byte is hex 9B, which is the encoded representation of the value 16.<br>
+This gives the offset of the VariationStore: decimal 16 = hex 10.
+</td>
+</tr>
+<tr>
+<td></td>
+<td><b>GlobalSubrINDEX</b></td>
+<td>CFF2 offsets: 000C to 000F</td>
+</tr>
+<tr>
+<td>00 00 00 00</td>
+<td>count</td>
+<td>= empty INDEX; no additional fields represented.</td>
+</tr>
+<tr>
+<td></td>
+<td><b>VariationStore</b></td>
+<td>CFF2 offsets: 0010 to 0037</td>
+</tr>
+<tr>
+<td>00 26</td>
+<td>length</td>
+<td>= 38 — length in bytes of the ItemVariationStore structure that follows.</td>
+</tr>
+<tr>
+<td></td>
+<td><b>ItemVariationStore</b></td>
+<td>CFF2 offsets: 0012 to 0037</td>
+</tr>
+<tr>
+<td>00 01</td>
+<td>format</td>
+<td>= 1</td>
+</tr>
+<tr>
+<td>00 00 00 0C</td>
+<td>variationRegionListOffset</td>
+<td>= 12 — offset in bytes from the start of the ItemVariationStore.</td>
+</tr>
+<tr>
+<td>00 01</td>
+<td>itemVariationDataCount</td>
+<td>= 1 — number of ItemVariationData subtables.</td>
+</tr>
+<tr>
+<td>00 00 00 1C</td>
+<td>itemVariationDataOffsets[0]</td>
+<td>= 28 — offset in bytes from start of the ItemVariationStore to ItemVariationData subtable 0.</td>
+</tr>
+<tr>
+<td></td>
+<td><b>VariationRegionList</b></td>
+<td>CFF2 offsets: 001E to 002D</td>
+</tr>
+<tr>
+<td>00 01</td>
+<td>axisCount</td>
+<td>= 1</td>
+</tr>
+<tr>
+<td>00 02</td>
+<td>regionCount</td>
+<td>= 2</td>
+</tr>
+<tr>
+<td></td>
+<td><b>variationRegions[0]</b></td>
+<td>CFF2 offsets: 0022 to 0027</td>
+</tr>
+<tr>
+<td></td>
+<td><b>regionAxes[0]</b></td>
+<td>CFF2 offsets: 0022 to 0027</td>
+</tr>
+<tr>
+<td>C0 00</td>
+<td>startCoord</td>
+<td>= -1.0 (F2DOT14 value)</td>
+</tr>
+<tr>
+<td>E0 00</td>
+<td>peakCoord</td>
+<td>= -0.5 (F2DOT14 value)</td>
+</tr>
+<tr>
+<td>00 00</td>
+<td>endCoord</td>
+<td>= 0.0 (F2DOT14 value)</td>
+</tr>
+<tr>
+<td></td>
+<td><b>variationRegions[1]</b></td>
+<td>CFF2 offsets: 0028 to 002D</td>
+</tr>
+<tr>
+<td></td>
+<td><b>regionAxes[0]</b></td>
+<td>CFF2 offsets: 0028 to 002D</td>
+</tr>
+<tr>
+<td>C0 00</td>
+<td>startCoord</td>
+<td>= -1.0 (F2DOT14 value)</td>
+</tr>
+<tr>
+<td>C0 00</td>
+<td>peakCoord</td>
+<td>= -1.0 (F2DOT14 value)</td>
+</tr>
+<tr>
+<td>E0 00</td>
+<td>endCoord</td>
+<td>= -0.5 (F2DOT14 value)</td>
+</tr>
+<tr>
+<td></td>
+<td><b>ItemVariationData subtable 0</b></td>
+<td>CFF2 offsets: 002E to 0037</td>
+</tr>
+<tr>
+<td>00 00</td>
+<td>itemCount</td>
+<td>= 0</td>
+</tr>
+<tr>
+<td>00 00</td>
+<td>shortDeltaCount</td>
+<td>= 0</td>
+</tr>
+<tr>
+<td>00 02</td>
+<td>regionIndexCount</td>
+<td>= 2</td>
+</tr>
+<tr>
+<td>00 00 00 01</td>
+<td>regionIndexes[]</td>
+<td>= {0, 1}</td>
+</tr>
+<tr>
+<td></td>
+<td><b>CharStringINDEX</b></td>
+<td>CFF2 offsets: 0038 to 0043</td>
+</tr>
+<tr>
+<td>00 00 00 02</td>
+<td>count</td>
+<td>= 2</td>
+</tr>
+<tr>
+<td>01</td>
+<td>offsetSize</td>
+<td>= 1</td>
+</tr>
+<tr>
+<td>01 03 05</td>
+<td>offsets[]</td>
+<td>= {1, 3, 5} (number of elements is count + 1)</td>
+</tr>
+<tr>
+<td></td>
+<td><b>CharString 0</b></td>
+<td>CFF2 offsets: 0040 to 0041</td>
+</tr>
+<tr>
+<td>20 0A</td>
+<td>[ subr# ] <b>callsubr</b></td>
+<td>
+= -107 <b>callsubr</b><br>
+The byte 0A represents the <b>callsubr</b> operator. The operand byte is 20, which is the encoded representation of the value -107.
+</td>
+</tr>
+<tr>
+<td></td>
+<td><b>CharString 1</b></td>
+<td>CFF2 offsets: 0042 to 0043</td>
+</tr>
+<tr>
+<td>20 0A</td>
+<td>[ subr# ] <b>callsubr</b></td>
+<td>
+= -107 <b>callsubr</b><br>
+The byte 0A represents the <b>callsubr</b> operator. The operand byte is 20, which is the encoded representation of the value -107.
+</td>
+</tr>
+<tr>
+<td></td>
+<td><b>FontDICTINDEX</b></td>
+<td>CFF2 offsets: 0044 to 004E</td>
+</tr>
+<tr>
+<td>00 00 00 01</td>
+<td>count</td>
+<td>= 1</td>
+</tr>
+<tr>
+<td>01</td>
+<td>offsetSize</td>
+<td>= 1</td>
+</tr>
+<tr>
+<td>01 05</td>
+<td>offsets[]</td>
+<td>= {1, 5} (number of elements is count + 1)</td>
+</tr>
+<tr>
+<td></td>
+<td><b>FontDICT 0</b></td>
+<td>CFF2 offsets: 004B to 004E</td>
+</tr>
+<tr>
+<td>F7 06 DA 12</td>
+<td>[ size offset ] <b>PrivateDICTOffset</b></td>
+<td>
+= 114 79 <b>PrivateDICTOffset</b><br>
+The byte 12 represents the <b>PrivateDICTOffset</b> operator. The operand bytes F7 06 are the encoded representation of the value 114. The operand byte DA is the encoded representation of the value 79.<br>
+This gives the size and offset of a PrivateDICT: size is 114 bytes, offset (from start of CFF2 table) is 79 bytes (hex 4F).
+</td>
+</tr>
+<tr>
+<td></td>
+<td><b>PrivateDICT</b></td>
+<td>CFF2 offset: 004F to 00C0</td>
+</tr>
+<tr>
+<td>77 9F F8 6C 9D AE 9A F4 9A 95 9F B3 9F 8B 8B 8B 8B 85 9A 8B 8B 97 73 8B 8B 8C 80 8B 8B 8B 8D 8B 8B 8C 8A 8B 8B 97 17 06</td>
+<td>[ num* ] <b>blend</b> <b>BlueValues</b></td>
+<td>
+= -20 20 472 18 35 15 105 15 10 20 40 20 0 0 0 0 -6 15 0 0 12 -24 0 0 1 -11 0 0 0 2 0 0 1 -1 0 0 12 <b>blend</b> <b>BlueValues</b><br>
+The byte 06 represents the <b>BlueValues</b> operator. The byte 17 represents the blend operator. The operand bytes 77… 97 are the encoded representation of the values -20… 12.
+</td>
+</tr>
+<tr>
+<td>FB 8E 95 86 9D 8B 8B 8D 17 07</td>
+<td>[ num* ] <b>blend</b> <b>OtherBlues</b></td>
+<td>
+= -250 10 -5 18 0 0 2 <b>blend</b> <b>OtherBlues</b><br>
+The byte 07 represents the <b>OtherBlues</b> operator. The byte 17 represents the <b>blend</b> operator. The operand bytes FB… 8D are the encoded representation of the values -250… 2.
+</td>
+</tr>
+<tr>
+<td>77 9F F8 6D 9D AD 9A F3 9A 95 9F B3 9F 08</td>
+<td>[ num* ] <b>FamilyBlues</b></td>
+<td>
+= -20 20 473 18 34 15 104 15 10 20 40 20 <b>FamilyBlues</b><br>
+The byte 08 represents the operator <b>FamilyBlues</b>. The operand bytes 77… 9F are the encoded representation of the values -20… 20.
+</td>
+</tr>
+<tr>
+<td>FB 8D 95 09</td>
+<td>[ num* ] <b>FamilyOtherBlues</b></td>
+<td>
+= -249 10 <b>FamilyOtherBlues</b><br>
+The byte 09 represents the FamilyOtherBlues operator. The operand bytes FB 8D are the encoded representation of the value -249. The operand byte 95 is the encoded representation of the value 10.
+</td>
+</tr>
+<tr>
+<td>1E A0 37 5F 0C 09</td>
+<td>[ num ] <b>BlueScale</b></td>
+<td>
+= 0.0375 <b>BlueScale</b><br>
+The bytes 0C 09 represent the <b>BlueScale</b> operator. The operand bytes 1E A0 37 5F are the encoded representation of the value 0.0375.
+</td>
+</tr>
+<tr>
+<td>8B 0C 0B</td>
+<td>[ num ] <b>BlueFuzz</b></td>
+<td>
+= 0 <b>BlueFuzz</b><br>
+The bytes 0C 0B represents the <b>BlueFuzz</b> operator. The operand byte 8B is the encoded representation of the value 0.
+</td>
+</tr>
+<tr>
+<td>C2 6E 9E 8C 17 0A</td>
+<td>[ num* ] <b>blend</b> <b>StdHW</b></td>
+<td>
+= 55 -29 19 1 <b>blend</b> <b>StdHW</b><br>
+The byte 0A represents the <b>StdHW</b> operator. The byte 17 represents the <b>blend</b> operator. The operand bytes C2 6E 9E 8C are the encoded representation of the values 55 -29 19 1.
+</td>
+</tr>
+<tr>
+<td>DB 57 F7 02 8C 17 0B</td>
+<td>[ num* ] <b>blend</b> <b>StdVW</b></td>
+<td>
+= 80 -52 110 1 <b>blend</b> <b>StdVW</b><br>
+The byte 0B represents the <b>StdVW</b> operator. The byte 17 represents the <b>blend</b> operator. The operand bytes DB 57 F7 02 8C are the encoded representation of the values 80 -52 110 1.
+</td>
+</tr>
+<tr>
+<td>B3 9A 77 9F 82 8A 8D 17 0C 0C</td>
+<td>[ num* ] <b>blend</b> <b>StemSnapH</b></td>
+<td>
+= 40 15 -20 20 -9 -1 2 <b>blend</b> <b>StemSnapH</b><br>
+The bytes 0C 0C represent the <b>StemSnapH</b> operator. The byte 17 represents the <b>blend</b> operator. The operand bytes B3 9A 77 9F 82 8A 8D are the encoded representation of the values 40 15 -20 20 -9 -1 2.
+</td>
+</tr>
+<tr>
+<td>DB 95 57 F7 02 85 8B 8D 17 0C 0D</td>
+<td>[ num* ] <b>blend</b> <b>StemSnapV</b></td>
+<td>
+= 80 10 -52 110 -6 0 2 <b>blend</b> <b>StemSnapV</b><br>
+The bytes 0C 0D represent the <b>StemSnapV</b> operator. The byte 17 represents the <b>blend</b> operator. The operand bytes DB 95 57 F7 02 85 8B 8D are the encoded representation of the values 80 10 -52 110 -6 0 2.
+</td>
+</tr>
+<tr>
+<td>F7 06 13</td>
+<td>[ num ] <b>LocalSubrINDEXOffset</b></td>
+<td>
+= 114 <b>Subrs</b><br>
+The byte 13 represents the <b>LocalSubrINDEXOffset</b> operator. The operand bytes F7 06 are the encoded representation of the value 114.<br>
+This gives the offset (from the start of the PrivateDICT) to the LocalSubrINDEX: 114 bytes (hex 72).
+</td>
+</tr>
+<tr>
+<td></td>
+<td><b>LocalSubrINDEX</b></td>
+<td>CFF2 offsets: 00C1 to 00E1</td>
+</tr>
+<tr>
+<td>00 00 00 01</td>
+<td>count</td>
+<td>= 1</td>
+</tr>
+<tr>
+<td>01</td>
+<td>offsetSize</td>
+<td>= 1</td>
+</tr>
+<tr>
+<td>01 1B</td>
+<td>offsets[]</td>
+<td>= {1, 27} (number of elements is count + 1)</td>
+</tr>
+<tr>
+<td></td>
+<td><b>subr 0</b></td>
+<td>CFF2 offsets: 00C8 to 00E1</td>
+</tr>
+<tr>
+<td>BD BD EF 8C 10 8B 15</td>
+<td>[ num* ] <b>blend</b> num <b>rmoveto</b></td>
+<td>
+= 50 50 100 1 <b>blend</b> 0 <b>rmoveto</b><br>
+The byte 15 represents the <b>rmoveto</b> CharString operator. The byte 10 represents the <b>blend</b> CharString operator. The operand bytes BD BD EF 8C are the encoded representation of the values 50 50 100 1. The operand byte 8B is the encoded representation of the value 0.
+</td>
+</tr>
+<tr>
+<td>F8 88 27 FB 5C 8C 10 06</td>
+<td>[ num* ] <b>blend</b> <b>hlineto</b></td>
+<td>
+= 500 -100 -200 1 <b>blend</b> <b>hlineto</b><br>
+The byte 06 represents the <b>hlineto</b> CharString operator. The byte 10 represents the <b>blend</b> CharString operator. The operand bytes F8 88 27 FB 5C 8C are the encoded representation of the values 500 -100 -200 1.
+</td>
+</tr>
+<tr>
+<td>F8 88 07</td>
+<td>[ num ] <b>vlineto</b></td>
+<td>
+= 500 <b>vlineto</b><br>
+The byte 07 represents the <b>vlineto</b> CharString operator. The operand bytes F8 88 are the encoded representation of the value 500.
+</td>
+</tr>
+<tr>
+<td>FC 88 EF F7 5C 8C 10 06</td>
+<td>[ num* ] <b>blend</b> <b>hlineto</b></td>
+<td>
+= -500 100 200 1 <b>blend</b> <b>hlineto</b>  
+The byte 06 represents the <b>hlineto</b> CharString operator. The byte 10 represents the <b>blend</b> CharString operator. The operand bytes FC 88 EF F7 5C 8C are the encoded representation of the values -500 100 200 1.
+</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

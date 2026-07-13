@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>avar — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/avar">https://learn.microsoft.com/en-us/typography/opentype/spec/avar</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="avar--axis-variations-table">avar — Axis Variations Table</h1>
+<p>The axis variations table ('avar') is an optional table used in variable fonts. It can be used to modify aspects of how a design varies for different instances along a particular design-variation axis. Specifically, it allows modification of the coordinate normalization that is used when processing variation data for a particular variation instance.</p>
+<p>For a general overview of OpenType Font Variations and of coordinates and normalization, see the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p>The 'avar' table is used in combination with a <a href="fvar.html" data-linktype="relative-path">font variations ('fvar')</a> table and other required or optional tables used in variable fonts.</p>
+<p><a id="overview"></a></p>
+<h2 id="overview">Overview</h2>
+<p>The 'fvar' table defines a font’s axes and the numeric range for each axis supported by the font. The numeric range for each axis is defined in terms of a “user” scale appropriate to each axis. When processing a font’s variation data to derive glyph outlines or other values for an instance, the instance coordinate for each axis must be mapped from the user scale to a normalized scale. A default normalization is defined that maps the minimum, default and maximum user values int the 'fvar' table to -1, 0, and 1, respectively. (See <a href="otvaroverview.html#CSN" data-linktype="relative-path">Coordinate scales and normalization</a> in the OpenType Font Variations Overview chapter for a detailed specification.)</p>
+<pre><code>    if (userValue &lt; axisDefaultValue)
+    {
+        defaultNormalizedValue = -(axisDefault - userValue) / (axisDefault - axisMin);
+    }
+    else if (userValue &gt; axisDefaultValue)
+    {
+        defaultNormalizedValue = (userValue - axisDefault) / (axisMax - axisDefault);
+    }
+    else
+    {
+        defaultNormalizedValue = 0;
+    }
+</code></pre>
+<p>If an 'avar' table is present, then the output of the default normalization can be further modified by allowing mappings to be defined for additional positions along each scale, creating multiple segments, with other values within each segment interpolated. The following figure illustrates an example of such a modification—the blue line shows the default mapping, with two segments, and the orange line shows the modified mapping, with additional segments.</p>
+<figure><img src="media/avar_fig1.png" alt="Graph showing a default normalization of axis values and a modified normalization with additional piecewise-linear segments in the graph." data-linktype="relative-path"><figcaption>Example of 'avar'-modified normalization — horizontal axis is user scale, vertical axis is normalized scale</figcaption></figure>
+<p>The conceptual effect of these additional scale mappings is to make the variation along an axis less linear. Values change linearly within each segment, but additional segments make the way that values change across the entire axis range less linear overall. The effect might also be described as compressing some portions of the scale while making other portions less compressed.</p>
+<p>The visual effects of additional axis-value mappings in the 'avar' table are seen in how glyph outlines or other visual elements change as the user-scale values for an axis change. The same amount of change in the user-scale value may correspond to a subtle visual change in one portion of the axis range, but more dramatic changes in another portion of the axis range.</p>
+<p>Note that it may be possible to achieve the same or similar effects by adding variation data for additional regions of the variation space. That approach requires more work and more font data, however, and tedious design iteration may be needed to obtain the desired results. The 'avar' table may provide a simple and lightweight way to achieve a particular effect.</p>
+<p>Note also that the variation data created by the font designer will also have a significant effect on whether user-scale values and visual elements change uniformly. When an 'avar' table is used, the 'avar' table and the variation data are both factors in the variation behavior that the user will see.</p>
+<p><a id="tableFormats"></a></p>
+<h2 id="table-formats">Table formats</h2>
+<p>The 'avar' table is comprised of a small header plus segment maps for each axis.</p>
+<p><a id="avarTable"></a></p>
+<p><em>Axis variation table:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version number of the axis variations table — set to 1.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version number of the axis variations table — set to 0.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>(reserved)</td>
+<td>Permanently reserved; set to 0.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>axisCount</td>
+<td>The number of variation axes for this font. This must be the same number as axisCount in the 'fvar' table.</td>
+</tr>
+<tr>
+<td>SegmentMaps</td>
+<td>axisSegmentMaps[axisCount]</td>
+<td>The segment maps array — one segment map for each axis, in the order of axes specified in the 'fvar' table.</td>
+</tr>
+</tbody>
+</table>
+<p>There must be one segment map for each axis defined in the 'fvar' table, and the segment maps for the different axes must be given in the order of axes specified in the 'fvar' table. The segment map for each axis is comprised of a list of axis-value mapping records.</p>
+<p><a id="segmentMapsRec"></a></p>
+<p><em>SegmentMaps record:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>positionMapCount</td>
+<td>The number of correspondence pairs for this axis.</td>
+</tr>
+<tr>
+<td>AxisValueMap</td>
+<td>axisValueMaps[positionMapCount]</td>
+<td>The array of axis value map records for this axis.</td>
+</tr>
+</tbody>
+</table>
+<p>Each axis value map record provides a single axis-value mapping correspondence.</p>
+<p><a id="axisValueMapRec"></a></p>
+<p><em>AxisValueMap record:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F2DOT14</td>
+<td>fromCoordinate</td>
+<td>A normalized coordinate value obtained using default normalization.</td>
+</tr>
+<tr>
+<td>F2DOT14</td>
+<td>toCoordinate</td>
+<td>The modified, normalized coordinate value.</td>
+</tr>
+</tbody>
+</table>
+<p>Axis value maps can be provided for any axis but are required only if the normalization mapping for an axis is being modified. If the segment map for a given axis has any value maps, then it must include at least three value maps: -1 to -1, 0 to 0, and 1 to 1. These value mappings are essential to the design of the variation mechanisms and are required even if no additional maps are specified for a given axis. If any of these is missing, then <em>no modification</em> to axis coordinate values will be made for that axis.</p>
+<p>All of the axis value map records for a given axis must have different fromCoordinate values, and axis value map records must be arranged in increasing order of the fromCoordinate value. If the fromCoordinate value of a record is less than or equal to the fromCoordinate value of a previous record in the array, then the given record may be ignored.</p>
+<p>Also, for any given record except the first, the toCoordinate value must be greater than or equal to the toCoordinate value of the preceding record. This requirement ensures that there are no retrograde behaviors as the user-scale value range is traversed. If a toCoordinate value of a record is less than that of the previous record, then the given record may be ignored.</p>
+<p><a id="processing"></a></p>
+<h2 id="processing">Processing</h2>
+<p>The complete axis coordinate normalization process, with or without an 'avar' table is described in the <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a> chapter. The process begins with a default normalization computation. Then if an 'avar' table is present, the normalized value is modified using data in this table.</p>
+<p>Each pair of consecutive AxisValueMap records for a given axis defines a segment within the range for that axis, and a mapping from default normalized values for start and end points of the given segment to the final normalized values. Within a segment, intermediate values are interpolated linearly. For complete details of the normalization process, as well as an example using 'avar' data, see <a href="otvaroverview.html#CSN" data-linktype="relative-path">Coordinate scales and normalization</a>.</p>
+
+</body>
+</html>

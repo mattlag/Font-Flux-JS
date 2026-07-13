@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>prep — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/prep">https://learn.microsoft.com/en-us/typography/opentype/spec/prep</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="prep--control-value-program">prep — Control Value Program</h1>
+<p>The Control Value (CV) Program consists of a set of TrueType instructions that can be used to make font-wide changes in the Control Value Table. Any instruction is valid in the CV Program but since no glyph is associated with it, instructions intended to move points within a particular glyph outline have no effect in the CV Program.</p>
+<p>The CV Program can potentially be executed before any glyph is processed, as determined by the rasterizer implementation. The CV Program will always be executed before the first glyph is processed after a change in font, point size, global transformation matrix, or other values that can be obtained from the <a href="tt_instructions.html#get-information" data-linktype="relative-path">GET INFOrmation instruction</a>. The CV Program is not re-executed for components in a composite glyph, including cases in which a composite glyph description applies a transform to a component.</p>
+<blockquote>
+<p><em>Note:</em> The tag 'prep' is anachronistic: in earlier specifications, the table was referred to as the <em>Pre Program</em> table.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint8[ <em>n</em> ]</td>
+<td>Set of instructions executed whenever point size or font or transformation change. <em>n</em> is the number of uint8 items that fit in the size of the table.</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

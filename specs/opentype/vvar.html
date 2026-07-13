@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vvar — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/vvar">https://learn.microsoft.com/en-us/typography/opentype/spec/vvar</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="vvar--vertical-metrics-variations-table">VVAR — Vertical Metrics Variations Table</h1>
+<p>The VVAR table is used in variable fonts to provide variations for vertical glyph metric values. This can be used to provide variation data for advance heights in the <a href="vmtx.html" data-linktype="relative-path">'vmtx'</a> table. In fonts with TrueType outlines, it can also be used to provide variation data for top and bottom side bearings obtained from the 'vmtx' table and glyph bounding boxes. In addition, it can also be used in fonts that have CFF2 outlines to provide vertical-origin variation data.</p>
+<p>For a general overview of OpenType Font Variations and terminology related to variations, see the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p>In a font with TrueType outlines, the rasterizer will generate “phantom” points that represent left, right, top and bottom side bearings. (See the chapter <a href="tt_instructing_glyphs.html#phantoms" data-linktype="relative-path">Instructing TrueType Glyphs</a> for more background on phantom points.) In a TrueType variable font, the <a href="gvar.html" data-linktype="relative-path">glyph variations ('gvar')</a> table will include variation data for the phantom points of each glyph, allowing glyph metrics to be interpolated for different variation instances as part of deriving the interpolated glyph outlines. For this reason, the VVAR table is not required in variable fonts that have TrueType outlines. For text-layout operations that require glyph metrics but not actual glyph outlines, however, there can be significant performance benefits by being able to obtain adjusted glyph metrics for an instance without needing to interpolate glyph outlines. For this reason, it is recommended that a VVAR table be included in variable fonts that have TrueType outlines and that support vertical layout.</p>
+<p>The CFF2 rasterizer does not generate phantom points as in the TrueType rasterizer. For this reason, a VVAR table is required to handle any variation in vertical glyph metrics in a variable font with CFF 2 outlines.</p>
+<p>The format and processing of the VVAR table is analogous to the <a href="hvar.html" data-linktype="relative-path">horizontal metrics variations (HVAR)</a> table.</p>
+<p><a name="relCoreqTables"></a></p>
+<h2 id="related-and-co-requisite-tables">Related and Co-Requisite Tables</h2>
+<p>The VVAR table is used only in variable fonts that support vertical layout. It must be used in combination with a <a href="vmtx.html" data-linktype="relative-path">vertical metrics ('vmtx')</a> table, and also in combination with a <a href="fvar.html" data-linktype="relative-path">font variations ('fvar')</a> table, and other required or optional tables used in variable fonts. See <a href="otvaroverview.html#vartables" data-linktype="relative-path">Variation Data Tables and Miscellaneous Requirements</a> in the OpenType Font Variations Overview chapter for general information.</p>
+<p>For variable fonts that have TrueType outlines and that support vertical layout, the VVAR table is optional but recommended. For variable fonts that have CFF2 outlines and that support vertical layout, the VVAR table is required if there is any variation in glyph advance heights across the variation space.</p>
+<blockquote>
+<p><em>Note:</em> The VDMX table is not used in variable fonts.</p>
+</blockquote>
+<p><a name="tableFormats"></a></p>
+<h2 id="table-formats">Table Formats</h2>
+<p>The vertical metrics variations table has the following format.</p>
+<p><em>Vertical metrics variations table:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version number of the vertical metrics variations table — set to 1.</td>
+</tr>
+<tr id="minorVersion">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version number of the vertical metrics variations table — set to 0.</td>
+</tr>
+<tr id="itemVariationStoreOffset">
+<td>Offset32</td>
+<td>itemVariationStoreOffset</td>
+<td>Offset in bytes from the start of this table to the item variation store table.</td>
+</tr>
+<tr id="advanceHeightMappingOffset">
+<td>Offset32</td>
+<td>advanceHeightMappingOffset</td>
+<td>Offset in bytes from the start of this table to the delta-set index mapping for advance heights (may be NULL).</td>
+</tr>
+<tr id="tsbMappingOffset">
+<td>Offset32</td>
+<td>tsbMappingOffset</td>
+<td>Offset in bytes from the start of this table to the delta-set index mapping for top side bearings (may be NULL).</td>
+</tr>
+<tr id="bsbMappingOffset">
+<td>Offset32</td>
+<td>bsbMappingOffset</td>
+<td>Offset in bytes from the start of this table to the delta-set index mapping for bottom side bearings (may be NULL).</td>
+</tr>
+<tr id="vOrgMappingOffset">
+<td>Offset32</td>
+<td>vOrgMappingOffset</td>
+<td>Offset in bytes from the start of this table to the delta-set index mapping for Y coordinates of vertical origins (may be NULL).</td>
+</tr>
+</tbody>
+</table>
+<p>The item variation store table is documented in the chapter, <a href="otvarcommonformats.html" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>.</p>
+<p>Mapping subtables are represented using a DeltaSetIndexMap table; see <a href="otvarcommonformats.html#associating-target-items-to-variation-data" data-linktype="relative-path">Associating Target Items to Variation Data</a> in the Common Table Formats chapter for the definition of this table. In the VVAR table, only format 0 of the DeltaSetIndexMap is used. Mapping subtables are optional. If a given mapping subtable is not provided, the offset is set to NULL.</p>
+<p>Variation data for advance heights is required. A delta-set index mapping subtable for advance heights can be provided, but is optional. If a mapping table is not provided, glyph indices are used as implicit delta-set indices, as in the HVAR table.</p>
+<p>Variation data for side bearings are optional. If included, mapping subtables are required to provide the delta-set index for each glyph.</p>
+<p>Mappings and variation data for vertical origins are not used in fonts with TrueType outlines, but can be included in variable fonts with CFF 2 outlines if there is variability in the Y coordinates of glyph vertical origins, the default values of which are recorded in the VORG table. A mapping subtable is required for vertical-origin variation data.</p>
+
+</body>
+</html>

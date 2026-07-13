@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sbix — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/sbix">https://learn.microsoft.com/en-us/typography/opentype/spec/sbix</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="sbix--standard-bitmap-graphics-table">sbix — Standard Bitmap Graphics Table</h1>
+<p>This table provides access to bitmap data in a standard graphics format, such as PNG, JPEG or TIFF.</p>
+<p>The 'sbix' table has functionality somewhat similar to the EBDT table in that both provide bitmap data for glyph presentation. They are different in three important respects, however. First, whereas the EBDT table supports only black/white or grayscale bitmaps, the 'sbix' table supports color bitmaps. Secondly, whereas the EBDT table uses formats specific to the OpenType specification, the 'sbix' table uses standard bitmap graphics formats that are in common use. Thirdly, whereas the EBDT table must be used in conjunction with other tables (EBLC and EBSC) for processing the bitmap data, the 'sbix' table contains complete data required for processing bitmaps.</p>
+<p>A font that includes an 'sbix' table may also include outline glyph data in a 'glyf' or 'CFF ' table. An 'sbix' table can provide bitmap data for all glyph IDs, or for only a subset of glyph IDs. A font can also include different bitmap data for different sizes (“strikes”), and the glyph coverage for one size can be different from that for another size.</p>
+<p><a name="header"></a></p>
+<h2 id="header">Header</h2>
+<p>The 'sbix' table begins with a header:</p>
+<p><em>sbixHeader</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="version">
+<td>uint16</td>
+<td>version</td>
+<td>Table version number — set to 1</td>
+</tr>
+<tr id="flags">
+<td>uint16</td>
+<td>flags</td>
+<td>Bit 0: Set to 1.<br>
+Bit 1: Draw outlines.<br>
+Bits 2 to 15: reserved (set to 0).</td>
+</tr>
+<tr id="numStrikes">
+<td>uint32</td>
+<td>numStrikes</td>
+<td>Number of bitmap strikes.</td>
+</tr>
+<tr id="strikeOffsets">
+<td>Offset32</td>
+<td>strikeOffsets[numStrikes]</td>
+<td>Offsets from the beginning of the 'sbix' table to data for each individual bitmap strike.</td>
+</tr>
+</tbody>
+</table>
+<p>For historical reasons, bit 0 of the flags field should always be set to 1.</p>
+<p>If bit 1 of the flags field is clear, then the application is instructed to draw only the bitmaps for each glyph supported in the 'sbix' table. If bit 1 is set, then the application is instructed to draw the bitmap and the outline, in that order (that is, with the outline overlaid on top of the bitmap). If the 'sbix' table does not contain bitmap data for a glyph, then the outline is always drawn, regardless of the state of bit 1.</p>
+<blockquote>
+<p><em>Note:</em> Application support for bit 1 of the flags field is optional. To ensure the best compatibility, set this bit to 0.</p>
+</blockquote>
+<p><a name="strikes"></a></p>
+<h2 id="strikes">Strikes</h2>
+<p>Each strike includes a header and the glyph bitmap data. The header has the following format:</p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="ppem">
+<td>uint16</td>
+<td>ppem</td>
+<td>The PPEM size for which this strike was designed.</td>
+</tr>
+<tr id="ppi">
+<td>uint16</td>
+<td>ppi</td>
+<td>The device pixel density (in PPI) for which this strike was designed. (E.g., 96 PPI, 192 PPI.)</td>
+</tr>
+<tr id="glyphDataOffsets">
+<td>Offset32</td>
+<td>glyphDataOffsets[numGlyphs+1]</td>
+<td>Offset from the beginning of the strike data header to bitmap data for an individual glyph ID.</td>
+</tr>
+</tbody>
+</table>
+<p>The glyphDataOffset array includes offsets for every glyph ID, plus one extra. The number of glyphs is determined from the 'maxp' table. The length of the bitmap data for each glyph is variable, and can be determined from the difference between two consecutive offsets. Hence, the length of data for glyph N is glyphDataOffset[N+1] - glyphDataOffset[N]. If this is zero, there is no bitmap data for that glyph in this strike. There is one extra offset in the array in order to provide the length of data for the last glyph.</p>
+<blockquote>
+<p><em>Note:</em> The length of data for non-printing glyphs, such as space, should always be zero.</p>
+</blockquote>
+<p>A strike does not need to include data for every glyph, and does not need to include data for the same set of glyphs as other strikes. If the application is using bitmap data to draw text and there is bitmap data for a glyph in <em>any</em> strike, then the glyph must be drawn using a bitmap from <em>some</em> strike. If the exact size is not available, implementations may choose a bitmap based on the closest available larger size, or the closest available integer-multiple larger size, or on some other basis. The only cases in which a glyph is not drawn using a bitmap are if the application has not requested that text be drawn using bitmap data or if there is no bitmap data for the glyph in any strike.</p>
+<p>Each strike targets a specific PPEM size and device pixel density (PPI). Thus, a font can contain two strikes for the same PPEM but different pixel densities, or two strikes for the same pixel density but different PPEMs. Note that some platforms might not support selection of strikes for particular pixel densities.</p>
+<p><a name="glyphData"></a></p>
+<h2 id="glyph-data">Glyph data</h2>
+<p>The data for each glyph includes a header and the actual, embedded graphic data, with the following format:</p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="originOffsetX">
+<td>int16</td>
+<td>originOffsetX</td>
+<td>The horizontal (x-axis) position of the left edge of the bitmap graphic in relation to the glyph design space origin.</td>
+</tr>
+<tr id="originOffsetY">
+<td>int16</td>
+<td>originOffsetY</td>
+<td>The vertical (y-axis) position of the bottom edge of the bitmap graphic in relation to the glyph design space origin.</td>
+</tr>
+<tr id="graphicType">
+<td>Tag</td>
+<td>graphicType</td>
+<td>Indicates the format of the embedded graphic data: one of 'jpg ', 'png ' or 'tiff', or the special format 'dupe'.</td>
+</tr>
+<tr id="data">
+<td>uint8</td>
+<td>data[]</td>
+<td>The actual embedded graphic data. The total length is inferred from sequential entries in the glyphDataOffsets array and the fixed size (8 bytes) of the preceding fields.</td>
+</tr>
+</tbody>
+</table>
+<p>The originOffsetX and originOffsetY values give the placement of the bitmap graphic in relation to the standard coordinate system of the glyph design space. For example, if originOffsetX equals 20, the left edge of the bitmap is placed 20 units to the right of the origin; if originOffsetY equals -30, then the bottom edge of the graphic is 30 units below the origin.</p>
+<p>When placing the graphic within the line of text, the placement depends upon whether there are contours in the <a href="glyf.html" data-linktype="relative-path">'glyf'</a> table for the current glyph ID:</p>
+<ul>
+<li><p>If there is no glyph contour, the glyph design space origin for the graphic is placed at the starting drawing position for this glyph. The lsb value for the current glyph ID from the 'hmtx' table has no effect.</p>
+</li>
+<li><p>If there is a glyph contour, the glyph design space origin for the graphic is placed at the lower left corner of the glyph bounding box (xMin, yMin).</p>
+</li>
+</ul>
+<p>The graphicType field indicates the format of the embedded graphic data. Three standard formats are supported: JPEG, PNG and TIFF; these are indicated using tag values 'jpg ', 'png ' and 'tiff', respectively.</p>
+<p>The special graphicType of 'dupe' indicates that the data field contains a uint16, big-endian glyph ID. The bitmap data for the indicated glyph must be used for the current glyph.</p>
+<blockquote>
+<p><em>Note:</em> Apple’s specification for TrueType fonts allows for a graphicType tag value of 'pdf ' or 'mask'. These values are not supported in the OpenType specification, however.</p>
+</blockquote>
+<p><a name="tableDependencies"></a></p>
+<h2 id="table-dependencies">Table dependencies</h2>
+<p>The glyph count is derived from the <a href="maxp.html" data-linktype="relative-path">'maxp' table</a>. Advance and side-bearing glyph metrics are stored in the <a href="hmtx.html" data-linktype="relative-path">'hmtx' table</a> for horizontal layout, and the <a href="vmtx.html" data-linktype="relative-path">'vmtx' table</a> for vertical layout.</p>
+
+</body>
+</html>

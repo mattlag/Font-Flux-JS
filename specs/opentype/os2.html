@@ -1,0 +1,3418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>os2 — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/os2">https://learn.microsoft.com/en-us/typography/opentype/spec/os2</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="os2--os2-and-windows-metrics-table">OS/2 — OS/2 and Windows Metrics Table</h1>
+<p>The OS/2 table consists of a set of metrics and other data that are required in OpenType fonts.</p>
+<h2 id="os2-table-formats">OS/2 Table Formats</h2>
+<p>Six versions of the OS/2 table have been defined: versions 0 to 5. All versions are supported, but use of version 4 or later is strongly recommended.</p>
+<h3 id="version-5">Version 5</h3>
+<p>The format of version 5 is as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Comments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td><a href="#version" data-linktype="self-bookmark">version</a></td>
+<td>0x0005</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#xavgcharwidth" data-linktype="self-bookmark">xAvgCharWidth</a></td>
+<td></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#usweightclass" data-linktype="self-bookmark">usWeightClass</a></td>
+<td></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#uswidthclass" data-linktype="self-bookmark">usWidthClass</a></td>
+<td></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#fstype" data-linktype="self-bookmark">fsType</a></td>
+<td></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#ysubscriptxsize" data-linktype="self-bookmark">ySubscriptXSize</a></td>
+<td></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#ysubscriptysize" data-linktype="self-bookmark">ySubscriptYSize</a></td>
+<td></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#ysubscriptxoffset" data-linktype="self-bookmark">ySubscriptXOffset</a></td>
+<td></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#ysubscriptyoffset" data-linktype="self-bookmark">ySubscriptYOffset</a></td>
+<td></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#ysuperscriptxsize" data-linktype="self-bookmark">ySuperscriptXSize</a></td>
+<td></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#ysuperscriptysize" data-linktype="self-bookmark">ySuperscriptYSize</a></td>
+<td></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#ysuperscriptxoffset" data-linktype="self-bookmark">ySuperscriptXOffset</a></td>
+<td></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#ysuperscriptyoffset" data-linktype="self-bookmark">ySuperscriptYOffset</a></td>
+<td></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#ystrikeoutsize" data-linktype="self-bookmark">yStrikeoutSize</a></td>
+<td></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#ystrikeoutposition" data-linktype="self-bookmark">yStrikeoutPosition</a></td>
+<td></td>
+</tr>
+<tr>
+<td>int16</td>
+<td><a href="#sfamilyclass" data-linktype="self-bookmark">sFamilyClass</a></td>
+<td></td>
+</tr>
+<tr>
+<td>uint8</td>
+<td><a href="#panose" data-linktype="self-bookmark">panose[10]</a></td>
+<td></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange1</a></td>
+<td>Bits 0 – 31</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange2</a></td>
+<td>Bits 32 – 63</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange3</a></td>
+<td>Bits 64 – 95</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange4</a></td>
+<td>Bits 96 – 127</td>
+</tr>
+<tr>
+<td>Tag</td>
+<td><a href="#achvendid" data-linktype="self-bookmark">achVendID</a></td>
+<td></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#fsselection" data-linktype="self-bookmark">fsSelection</a></td>
+<td></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#usfirstcharindex" data-linktype="self-bookmark">usFirstCharIndex</a></td>
+<td></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#uslastcharindex" data-linktype="self-bookmark">usLastCharIndex</a></td>
+<td></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#stypoascender" data-linktype="self-bookmark">sTypoAscender</a></td>
+<td></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#stypodescender" data-linktype="self-bookmark">sTypoDescender</a></td>
+<td></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#stypolinegap" data-linktype="self-bookmark">sTypoLineGap</a></td>
+<td></td>
+</tr>
+<tr>
+<td>UFWORD</td>
+<td><a href="#uswinascent" data-linktype="self-bookmark">usWinAscent</a></td>
+<td></td>
+</tr>
+<tr>
+<td>UFWORD</td>
+<td><a href="#uswindescent" data-linktype="self-bookmark">usWinDescent</a></td>
+<td></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#cpr" data-linktype="self-bookmark">ulCodePageRange1</a></td>
+<td>Bits 0 – 31</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#cpr" data-linktype="self-bookmark">ulCodePageRange2</a></td>
+<td>Bits 32 – 63</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#sxheight" data-linktype="self-bookmark">sxHeight</a></td>
+<td></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#scapheight" data-linktype="self-bookmark">sCapHeight</a></td>
+<td></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#usdefaultchar" data-linktype="self-bookmark">usDefaultChar</a></td>
+<td></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#usbreakchar" data-linktype="self-bookmark">usBreakChar</a></td>
+<td></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#usmaxcontext" data-linktype="self-bookmark">usMaxContext</a></td>
+<td></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#lps" data-linktype="self-bookmark">usLowerOpticalPointSize</a></td>
+<td></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#ups" data-linktype="self-bookmark">usUpperOpticalPointSize</a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="version-4">Version 4</h3>
+<p>Version 4 was defined in OpenType 1.5. Version 4 has two fewer fields than version 5, and the same fields as in version 3. Although new fields were not added beyond those in version 3, the specification of certain fields was revised. The format of version 4 is as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td><a href="#ver" data-linktype="self-bookmark">version</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#acw" data-linktype="self-bookmark">xAvgCharWidth</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#wtc" data-linktype="self-bookmark">usWeightClass</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#wdc" data-linktype="self-bookmark">usWidthClass</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#fst" data-linktype="self-bookmark">fsType</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#subxs" data-linktype="self-bookmark">ySubscriptXSize</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#subys" data-linktype="self-bookmark">ySubscriptYSize</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#subxo" data-linktype="self-bookmark">ySubscriptXOffset</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#subyo" data-linktype="self-bookmark">ySubscriptYOffset</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#supxs" data-linktype="self-bookmark">ySuperscriptXSize</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#supys" data-linktype="self-bookmark">ySuperscriptYSize</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#supxo" data-linktype="self-bookmark">ySuperscriptXOffset</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#supyo" data-linktype="self-bookmark">ySuperscriptYOffset</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#ss" data-linktype="self-bookmark">yStrikeoutSize</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#sp" data-linktype="self-bookmark">yStrikeoutPosition</a></td>
+</tr>
+<tr>
+<td>int16</td>
+<td><a href="#fc" data-linktype="self-bookmark">sFamilyClass</a></td>
+</tr>
+<tr>
+<td>uint8</td>
+<td><a href="#pan" data-linktype="self-bookmark">panose[10]</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange1</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange2</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange3</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange4</a></td>
+</tr>
+<tr>
+<td>Tag</td>
+<td><a href="#vendid" data-linktype="self-bookmark">achVendID</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#fss" data-linktype="self-bookmark">fsSelection</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#fci" data-linktype="self-bookmark">usFirstCharIndex</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#lci" data-linktype="self-bookmark">usLastCharIndex</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#sta" data-linktype="self-bookmark">sTypoAscender</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#std" data-linktype="self-bookmark">sTypoDescender</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#tlg" data-linktype="self-bookmark">sTypoLineGap</a></td>
+</tr>
+<tr>
+<td>UFWORD</td>
+<td><a href="#wa" data-linktype="self-bookmark">usWinAscent</a></td>
+</tr>
+<tr>
+<td>UFWORD</td>
+<td><a href="#wd" data-linktype="self-bookmark">usWinDescent</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#cpr" data-linktype="self-bookmark">ulCodePageRange1</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#cpr" data-linktype="self-bookmark">ulCodePageRange2</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#sxheight" data-linktype="self-bookmark">sxHeight</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#scapheight" data-linktype="self-bookmark">sCapHeight</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#usdefaultchar" data-linktype="self-bookmark">usDefaultChar</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#usbreakchar" data-linktype="self-bookmark">usBreakChar</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#usmaxcontext" data-linktype="self-bookmark">usMaxContext</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="version-3">Version 3</h3>
+<p>Version 3 was defined in OpenType 1.4. Version 3 has the same fields as in version 4, and as in version 2. Although new fields were not added beyond those in version 2, the specification of certain fields was revised to reflect changes in Unicode 3.2. The format of version 3 is identical to the format for version 4, given above.</p>
+<h3 id="version-2">Version 2</h3>
+<p>Version 2 was defined in OpenType 1.1. Version 2 has the same fields as in version 3, and five additional fields beyond those in version 1. The format of version 2 is identical to the format for version 4, given above.</p>
+<h3 id="version-1">Version 1</h3>
+<p>Version 1 was defined in TrueType revision 1.66. Version 1 has five fewer fields than version 2, and two additional fields beyond those in version 0. The format of version 1 is as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td><a href="#ver" data-linktype="self-bookmark">version</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#acw" data-linktype="self-bookmark">xAvgCharWidth</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#wtc" data-linktype="self-bookmark">usWeightClass</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#wdc" data-linktype="self-bookmark">usWidthClass</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#fst" data-linktype="self-bookmark">fsType</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#subxs" data-linktype="self-bookmark">ySubscriptXSize</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#subys" data-linktype="self-bookmark">ySubscriptYSize</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#subxo" data-linktype="self-bookmark">ySubscriptXOffset</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#subyo" data-linktype="self-bookmark">ySubscriptYOffset</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#supxs" data-linktype="self-bookmark">ySuperscriptXSize</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#supys" data-linktype="self-bookmark">ySuperscriptYSize</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#supxo" data-linktype="self-bookmark">ySuperscriptXOffset</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#supyo" data-linktype="self-bookmark">ySuperscriptYOffset</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#ss" data-linktype="self-bookmark">yStrikeoutSize</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#sp" data-linktype="self-bookmark">yStrikeoutPosition</a></td>
+</tr>
+<tr>
+<td>int16</td>
+<td><a href="#fc" data-linktype="self-bookmark">sFamilyClass</a></td>
+</tr>
+<tr>
+<td>uint8</td>
+<td><a href="#pan" data-linktype="self-bookmark">panose[10]</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange1</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange2</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange3</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange4</a></td>
+</tr>
+<tr>
+<td>Tag</td>
+<td><a href="#vendid" data-linktype="self-bookmark">achVendID</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#fss" data-linktype="self-bookmark">fsSelection</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#fci" data-linktype="self-bookmark">usFirstCharIndex</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#lci" data-linktype="self-bookmark">usLastCharIndex</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#sta" data-linktype="self-bookmark">sTypoAscender</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#std" data-linktype="self-bookmark">sTypoDescender</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#tlg" data-linktype="self-bookmark">sTypoLineGap</a></td>
+</tr>
+<tr>
+<td>UFWORD</td>
+<td><a href="#wa" data-linktype="self-bookmark">usWinAscent</a></td>
+</tr>
+<tr>
+<td>UFWORD</td>
+<td><a href="#wd" data-linktype="self-bookmark">usWinDescent</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#cpr" data-linktype="self-bookmark">ulCodePageRange1</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#cpr" data-linktype="self-bookmark">ulCodePageRange2</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="version-0">Version 0</h3>
+<p>Version 0 was defined in TrueType revision 1.5. The format of version 0 is as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td><a href="#ver" data-linktype="self-bookmark">version</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#acw" data-linktype="self-bookmark">xAvgCharWidth</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#wtc" data-linktype="self-bookmark">usWeightClass</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#wdc" data-linktype="self-bookmark">usWidthClass</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#fst" data-linktype="self-bookmark">fsType</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#subxs" data-linktype="self-bookmark">ySubscriptXSize</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#subys" data-linktype="self-bookmark">ySubscriptYSize</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#subxo" data-linktype="self-bookmark">ySubscriptXOffset</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#subyo" data-linktype="self-bookmark">ySubscriptYOffset</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#supxs" data-linktype="self-bookmark">ySuperscriptXSize</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#supys" data-linktype="self-bookmark">ySuperscriptYSize</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#supxo" data-linktype="self-bookmark">ySuperscriptXOffset</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#supyo" data-linktype="self-bookmark">ySuperscriptYOffset</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#ss" data-linktype="self-bookmark">yStrikeoutSize</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#sp" data-linktype="self-bookmark">yStrikeoutPosition</a></td>
+</tr>
+<tr>
+<td>int16</td>
+<td><a href="#fc" data-linktype="self-bookmark">sFamilyClass</a></td>
+</tr>
+<tr>
+<td>uint8</td>
+<td><a href="#pan" data-linktype="self-bookmark">panose[10]</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange1</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange2</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange3</a></td>
+</tr>
+<tr>
+<td>uint32</td>
+<td><a href="#ur" data-linktype="self-bookmark">ulUnicodeRange4</a></td>
+</tr>
+<tr>
+<td>Tag</td>
+<td><a href="#vendid" data-linktype="self-bookmark">achVendID</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#fss" data-linktype="self-bookmark">fsSelection</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#fci" data-linktype="self-bookmark">usFirstCharIndex</a></td>
+</tr>
+<tr>
+<td>uint16</td>
+<td><a href="#lci" data-linktype="self-bookmark">usLastCharIndex</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#sta" data-linktype="self-bookmark">sTypoAscender</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#std" data-linktype="self-bookmark">sTypoDescender</a></td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td><a href="#tlg" data-linktype="self-bookmark">sTypoLineGap</a></td>
+</tr>
+<tr>
+<td>UFWORD</td>
+<td><a href="#wa" data-linktype="self-bookmark">usWinAscent</a></td>
+</tr>
+<tr>
+<td>UFWORD</td>
+<td><a href="#wd" data-linktype="self-bookmark">usWinDescent</a></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em> Documentation for OS/2 version 0 in <a href="https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6OS2.html" data-linktype="external">Apple’s TrueType Reference Manual</a> stops at the usLastCharIndex field and does not include the last five fields of the table as it was defined by Microsoft. Some legacy TrueType fonts could have been built with a shortened version 0 OS/2 table. Applications should check the table length for a version 0 OS/2 table before reading these fields.</p>
+</blockquote>
+<h2 id="os2-field-details">OS/2 Field Details</h2>
+<p>This section provides details covering all versions of the OS/2 table.</p>
+<p><a id="ver"></a></p>
+<h3 id="version">version</h3>
+<table>
+<tbody><tr><td>Format:</td><td>uint16</td></tr>
+<tr><td>Units:</td><td>n/a</td></tr>
+<tr><td>Title:</td><td>OS/2 table version number.</td></tr>
+<tr><td>Description:</td><td>The version number for the OS/2 table: 0x0000 to 0x0005.</td></tr>
+<tr><td>Comments:</td><td>The version number allows for identification of the precise contents and layout for the OS/2 table.</td></tr>
+</tbody></table>
+<p><a id="acw"></a></p>
+<h3 id="xavgcharwidth">xAvgCharWidth</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Average weighted escapement.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The Average Character Width field specifies the arithmetic average of the escapement (width) of all non-zero width glyphs in the font.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>The value for xAvgCharWidth is calculated by obtaining the arithmetic average of the width of all non-zero width glyphs in the font. It is strongly recommended that implementers do not rely on this value for computing layout for lines of text, especially for cases where complex scripts are used.<br><br>
+<em>Note:</em> Some fonts have xAvgCharWidth values that do not conform to this calculation. Fonts could have been originally created with a version 0 to version 2 OS/2 table using the legacy calculation described below, then later updated with a newer OS/2 table version but without changing the xAvgCharWidth value. In some CJK fonts, the xAvgCharWidth can be almost half the value that would be expected by the above calculation. Applications should not use xAvgCharWidth for determining actual glyph advance widths.
+</td>
+</tr>
+<tr>
+<td>Version differences:</td>
+<td>Versions 0 to 2: When first defined, the specification was biased toward Basic Latin characters, and it was thought that the xAvgCharWidth value could be used to estimate the average length of lines of text. The following formula for calculating xAvgCharWidth was provided: For characters given in the table below, sum the width of each character times the weight factor indicated, then divide the total by 1000. This method of calculating the value of this field was superseded with the introduction of version 3 of the OS/2 table and is deprecated.
+<!-- Embedded table -->
+<table>
+<tbody>
+<tr>
+<th>Letter</th>
+<th>Weight factor</th>
+<th>Letter</th>
+<th>Weight factor</th>
+</tr>
+<tr>
+<td>a</td>
+<td>64</td>
+<td>o</td>
+<td>56</td>
+</tr>
+<tr>
+<td>b</td>
+<td>14</td>
+<td>p</td>
+<td>17</td>
+</tr>
+<tr>
+<td>c</td>
+<td>27</td>
+<td>q</td>
+<td>4</td>
+</tr>
+<tr>
+<td>d</td>
+<td>35</td>
+<td>r</td>
+<td>49</td>
+</tr>
+<tr>
+<td>e</td>
+<td>100</td>
+<td>s</td>
+<td>56</td>
+</tr>
+<tr>
+<td>f</td>
+<td>20</td>
+<td>t</td>
+<td>71</td>
+</tr>
+<tr>
+<td>g</td>
+<td>14</td>
+<td>u</td>
+<td>31</td>
+</tr>
+<tr>
+<td>h</td>
+<td>42</td>
+<td>v</td>
+<td>10</td>
+</tr>
+<tr>
+<td>i</td>
+<td>63</td>
+<td>w</td>
+<td>18</td>
+</tr>
+<tr>
+<td>j</td>
+<td>3</td>
+<td>x</td>
+<td>3</td>
+</tr>
+<tr>
+<td>k</td>
+<td>6</td>
+<td>y</td>
+<td>18</td>
+</tr>
+<tr>
+<td>l</td>
+<td>35</td>
+<td>z</td>
+<td>2</td>
+</tr>
+<tr>
+<td>m</td>
+<td>20</td>
+<td>space</td>
+<td>166</td>
+</tr>
+<tr>
+<td>n</td>
+<td>56</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<!-- End of embedded table -->
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="wtc"></a></p>
+<h3 id="usweightclass">usWeightClass</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>uint16</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Weight class.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>Indicates the visual weight (degree of blackness or thickness of strokes) of the characters in the font. Values from 1 to 1000 are valid.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>usWeightClass values use the same scale as the 'wght' axis that is used in the <a href="fvar.html" data-linktype="relative-path">'fvar'</a> table of variable fonts and in the <a href="stat.html" data-linktype="relative-path">STAT</a> table. While integer values from 1 to 1000 are supported, some legacy platforms could have limitations on supported values. The following are commonly used values: 
+<table>
+<tbody>
+<tr>
+<th>Value</th>
+<th>Description</th>
+<th>C Definition (from windows.h)</th>
+</tr>
+<tr>
+<td>100</td>
+<td>Thin</td>
+<td>FW_THIN</td>
+</tr>
+<tr>
+<td>200</td>
+<td>Extra-light (Ultra-light)</td>
+<td>FW_EXTRALIGHT</td>
+</tr>
+<tr>
+<td>300</td>
+<td>Light</td>
+<td>FW_LIGHT</td>
+</tr>
+<tr>
+<td>400</td>
+<td>Normal (Regular)</td>
+<td>FW_NORMAL</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Medium</td>
+<td>FW_MEDIUM</td>
+</tr>
+<tr>
+<td>600</td>
+<td>Semi-bold (Demi-bold)</td>
+<td>FW_SEMIBOLD</td>
+</tr>
+<tr>
+<td>700</td>
+<td>Bold</td>
+<td>FW_BOLD</td>
+</tr>
+<tr>
+<td>800</td>
+<td>Extra-bold (Ultra-bold)</td>
+<td>FW_EXTRABOLD</td>
+</tr>
+<tr>
+<td>900</td>
+<td>Black (Heavy)</td>
+<td>FW_BLACK</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="wdc"></a></p>
+<h3 id="uswidthclass">usWidthClass</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>uint16</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Width class.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>Indicates a relative change from the normal aspect ratio (width to height ratio) as specified by a font designer for the glyphs in a font.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>
+<p>Although every glyph in a font can have a different numeric aspect ratio, each glyph in a font of normal width is considered to have a relative aspect ratio of one. When a new type style is created of a different width class (either by a font designer or by some automated means) the relative aspect ratio of the glyphs in the new font is some percentage greater or less than the corresponding glyphs in the normal font — it is this difference that this field specifies.
+<br><br>
+The valid usWidthClass values are shown in the following table. Note that the usWidthClass values are related to but distinct from the scale for the 'wdth' axis that is used in the <a href="fvar.html" data-linktype="relative-path">'fvar'</a> table of variable fonts and in the <a href="stat.html" data-linktype="relative-path">STAT</a> table. The “% of normal” column in the following table provides a mapping from usWidthClass values 1 – 9 to 'wdth' values.</p>
+<table>
+<tbody>
+<tr>
+<th>Value</th>
+<th>Description</th>
+<th>C Definition</th>
+<th>% of normal</th>
+</tr>
+<tr>
+<td>1</td>
+<td>Ultra-condensed</td>
+<td>FWIDTH_ULTRA_CONDENSED</td>
+<td>50</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Extra-condensed</td>
+<td>FWIDTH_EXTRA_CONDENSED</td>
+<td>62.5</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Condensed</td>
+<td>FWIDTH_CONDENSED</td>
+<td>75</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Semi-condensed</td>
+<td>FWIDTH_SEMI_CONDENSED</td>
+<td>87.5</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Medium (normal)</td>
+<td>FWIDTH_NORMAL</td>
+<td>100</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Semi-expanded</td>
+<td>FWIDTH_SEMI_EXPANDED</td>
+<td>112.5</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Expanded</td>
+<td>FWIDTH_EXPANDED</td>
+<td>125</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Extra-expanded</td>
+<td>FWIDTH_EXTRA_EXPANDED</td>
+<td>150</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Ultra-expanded</td>
+<td>FWIDTH_ULTRA_EXPANDED</td>
+<td>200</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="fst"></a></p>
+<h3 id="fstype">fsType</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>uint16</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Type flags.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>
+Indicates font embedding licensing rights for the font. The interpretation of flags is as follows:
+<p><a id="fst_0"></a>
+<a id="fst_bit0"></a>
+<a id="fst_bit1"></a>
+<a id="fst_bit2"></a>
+<a id="fst_bit3"></a></p><table>
+<tbody>
+<tr>
+<th>Bits</th>
+<th>Mask</th>
+<th>Description</th>
+</tr>
+
+<tr>
+<td>0 – 3</td>
+<td>0x000F</td>
+<td>
+Usage permissions. Valid fonts must set at most one of bits 1, 2 or 3; bit 0 is permanently reserved and must be zero. Valid values for this sub-field are 0, 2, 4 or 8. The meaning of these values is as follows:
+<br><br>
+<b>0:</b> Installable embedding: the font may be embedded, and may be permanently installed for use on a remote systems, or for use by other users. The user of the remote system acquires the identical rights, obligations and licenses for that font as the original purchaser of the font, and is subject to the same end-user license agreement, copyright, design patent, and/or trademark as was the original purchaser.
+<br><br>
+<b>2:</b> Restricted License embedding: the font must not be modified, embedded or exchanged in any manner without first obtaining explicit permission of the legal owner.
+<br><br>
+<b>4:</b> Preview &amp; Print embedding: the font may be embedded, and may be temporarily loaded on other systems for purposes of viewing or printing the document. Documents containing Preview &amp; Print fonts must be opened “read-only”; no edits may be applied to the document.
+<br><br>
+<b>8:</b> Editable embedding: the font may be embedded, and may be temporarily loaded on other systems. As with Preview &amp; Print embedding, documents containing Editable fonts may be opened for reading. In addition, editing is permitted, including ability to format new text using the embedded font, and changes may be saved.
+</td>
+</tr>
+<tr>
+<td>4 – 7</td>
+<td>0x00F0</td>
+<td>Reserved, must be zero.</td>
+</tr>
+<tr id="fst_bit8">
+<td>8</td>
+<td>0x0100</td>
+<td>No subsetting: When this bit is set, the font must not be subsetted prior to embedding. Other embedding restrictions specified in bits 0 – 3 and bit 9 also apply.</td>
+</tr>
+<tr id="fst_bit9">
+<td>9</td>
+<td>0x0200</td>
+<td>Bitmap embedding only: When this bit is set, only bitmaps contained in the font may be embedded. No outline data may be embedded. If there are no bitmaps available in the font, then the font is considered unembeddable and the embedding services will fail. Other embedding restrictions specified in bits 0-3 and 8 also apply.</td>
+</tr>
+<tr>
+<td>10 – 15</td>
+<td>0xFC00</td>
+<td>Reserved, must be zero.</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>
+Embeddable fonts may be stored in a document. When a document with embedded fonts is opened on a system that does not have the font installed (the remote system), the embedded font may be loaded for temporary (and in some cases, permanent) use on that system by an embedding-aware application. Embedding licensing rights are granted by the vendor of the font.
+<br><br>
+<em>Applications that implement support for font embedding must not embed fonts which are not licensed to permit embedding. Also, when embedding a font into a document, applications must not modify the embedding permissions and restrictions indicated in this field. In addition, applications loading embedded fonts for temporary use (Preview &amp; Print or Editable embedding) <b>must</b> delete the fonts when the document containing the embedded font is closed.</em>
+<br><br>
+Bits 0 to 3 (the embedding permissions sub-field) are mutually exclusive: fonts should never have more than one of these bits set. Note that, if two or more bits are set, some applications could assume the <em>least-restrictive permission indicated</em>. (See version differences for more discussion.) <em>Caution:</em> Font vendors are responsible to set these bits correctly to obtain the desired application behaviors. For Restricted License embedding to take effect, the Embedding permissions sub-field must have the value 2 (that is, only bit 1 is set).
+<br><br>
+<em>Note:</em> <a href="https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6OS2.html" data-linktype="external">Apple’s TrueType Reference Manual</a> specifies bit 1 of the fsType field, and only bit 1, as having an assigned semantic. This originated from a pre-release draft specification for the OS/2 table. However, the final specification for version 0 of the OS/2 table defined bits 0 to 3. Also, some early font implementations mistakenly used <em>the value 1</em> (bit 0 set), leading to problems of non-interoperability. For this reason, bit 0 was specified as reserved in the final specification for version 0. Bit 0 is permanently reserved, and its use is deprecated.
+</td>
+</tr>
+<tr>
+<td>Version differences:</td>
+<td><b>Versions 0 to 1:</b> only bits 0 to 3 were assigned. Applications must ignore bits 4 to 15 when reading a version 0 or version 1 table.
+<br><br>
+<b>Versions 0 to 2:</b> The specification for versions 0 to 2 did not specify that bits 0 to 3 must be mutually exclusive. Rather, those specifications stated that, in the event that more than one of bits 0 to 3 are set in a given font, then the <em>least-restrictive permission indicated take precedence</em>. In particular, some fonts using a version 0 to version 2 OS/2 table have both bit 2 and bit 3 set with the intent to indicate both preview/print and edit permissions. Applications are permitted to use this behavior for fonts with a version 0 to version 2 OS/2 table.
+<br><br>
+<b>Versions 3 and later:</b> The specification for version 3, added in OpenType 1.4, introduced the explicit requirement that bits 0 to 3 must be mutually exclusive. 
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="subxs"></a></p>
+<h3 id="ysubscriptxsize">ySubscriptXSize</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Subscript horizontal font size.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The recommended horizontal size in font design units for subscripts for this font. Should be &gt; 0.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>If a font has two recommended sizes for subscripts, e.g., numerics and other, the numeric sizes should be stressed. This size field maps to the em size of the font being used for a subscript. The horizontal font size specifies a font designer’s recommended horizontal size of subscript glyphs associated with this font. If a font does not include all required subscript glyphs for an application, and the application can substitute glyphs by scaling the glyphs of a font or by substituting glyphs from another font, this field specifies the recommended nominal width for those subscript glyphs.
+<br><br>
+For example, if the em for a font is 2048 units and ySubScriptXSize is set to 205, then the horizontal size for a simulated subscript glyph would be 1/10th the size of the normal glyph.
+<br><br><em>Note:</em> This was implemented in the OS/2 platform as a signed value, even though only values &gt; 0 would be expected.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="subys"></a></p>
+<h3 id="ysubscriptysize">ySubscriptYSize</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Subscript vertical font size.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The recommended vertical size in font design units for subscripts for this font. Should be &gt; 0.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>If a font has two recommended sizes for subscripts, e.g. numerics and other, the numeric sizes should be stressed. This size field maps to the em size of the font being used for a subscript. The vertical font size specifies a font designer’s recommendation for vertical size of subscript glyphs associated with this font. If a font does not include all required subscript glyphs for an application, and the application can substitute glyphs by scaling the glyphs in a font or by substituting glyphs from another font, this field specifies the recommended nominal height for those subscript glyphs.
+<br><br>
+For example, if the em for a font is 2048 units and ySubScriptYSize is set to 205, then the vertical size for a simulated subscript glyph would be 1/10th the size of the normal glyph.
+<br><br><em>Note:</em> This was implemented in the OS/2 platform as a signed value, even though only values &gt; 0 would be expected.
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="subxo"></a></p>
+<h3 id="ysubscriptxoffset">ySubscriptXOffset</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Subscript x offset.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The recommended horizontal offset in font design units for subscripts for this font.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>The ySubscriptXOffset field specifies a font designer’s recommended horizontal offset — from the glyph origin to the glyph origin of the subscript’s glyph — for subscript glyphs associated with this font. If a font does not include all required subscript glyphs for an application, and the application can substitute glyphs, this field specifies the recommended horizontal position from the glyph escapement point of the last glyph before the first subscript glyph. For upright glyphs, this value is usually zero; however, if the glyphs of a font have an incline (italic or slant), the reference point for subscript glyphs is usually adjusted to compensate for the angle of incline.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="subyo"></a></p>
+<h3 id="ysubscriptyoffset">ySubscriptYOffset</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Subscript y offset.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The recommended vertical offset in font design units from the baseline for subscripts for this font.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>The ySubscriptYOffset field specifies a font designer’s recommended vertical offset from the glyph baseline to the glyph baseline for subscript glyphs associated with this font. Values are expressed as a positive offset below the glyph baseline. If a font does not include all required subscript glyphs for an application, this field specifies the recommended vertical distance below the glyph baseline for alternate subscript glyphs supplied by the application.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="supxs"></a></p>
+<h3 id="ysuperscriptxsize">ySuperscriptXSize</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Superscript horizontal font size.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The recommended horizontal size in font design units for superscripts for this font. Should be &gt; 0.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>If a font has two recommended sizes for superscripts, e.g., numerics and other, the numeric sizes should be stressed. This size field maps to the em size of the font being used for a superscript. The horizontal font size specifies a font designer’s recommended horizontal size for superscript glyphs associated with this font. If a font does not include all required superscript glyphs for an application, and the application can substitute glyphs by scaling the glyphs of a font or by substituting glyphs from another font, this field specifies the recommended nominal width for those superscript glyphs.
+<br><br>
+For example, if the em for a font is 2048 units and ySuperScriptXSize is set to 205, then the horizontal size for a simulated superscript glyph would be 1/10th the size of the normal glyph.<br><br><em>Note:</em> This was implemented in the OS/2 platform as a signed value, even though only values &gt; 0 would be expected.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="supys"></a></p>
+<h3 id="ysuperscriptysize">ySuperscriptYSize</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Superscript vertical font size.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The recommended vertical size in font design units for superscripts for this font. Should be &gt; 0.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>If a font has two recommended sizes for superscripts, e.g., numerics and other, the numeric sizes should be stressed. This size field maps to the em size of the font being used for a superscript. The vertical font size specifies a font designer’s recommended vertical size for superscript glyphs associated with this font. If a font does not include all required superscript glyphs for an application, and the application can substitute glyphs by scaling the glyphs of a font or by substituting glyphs from another font, this field specifies the recommended nominal height for those superscript glyphs.
+<br><br>
+For example, if the em for a font is 2048 units and ySuperScriptYSize is set to 205, then the vertical size for a simulated superscript glyph would be 1/10th the size of the normal glyph.<br><br><em>Note:</em> This was implemented in the OS/2 platform as a signed value, even though only values &gt; 0 would be expected.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="supxo"></a></p>
+<h3 id="ysuperscriptxoffset">ySuperscriptXOffset</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Superscript x offset.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The recommended horizontal offset in font design units for superscripts for this font.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>The ySuperscriptXOffset field specifies a font designer’s recommended horizontal offset — from the glyph’s origin to the superscript glyph’s origin for the superscript glyphs associated with this font. If a font does not include all required superscript glyphs for an application, this field specifies the recommended horizontal position from the escapement point of the glyph before the first superscript glyph. For upright glyphs, this value is usually zero; however, if the glyphs of a font have an incline (italic or slant), the reference point for superscript glyphs is usually adjusted to compensate for the angle of incline.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="supyo"></a></p>
+<h3 id="ysuperscriptyoffset">ySuperscriptYOffset</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Superscript y offset.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The recommended vertical offset in font design units from the baseline for superscripts for this font.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>The ySuperscriptYOffset field specifies a font designer’s recommended vertical offset — from the glyph’s baseline to the superscript glyph’s baseline associated with this font. Values for this field are expressed as a positive offset above the glyph baseline. If a font does not include all required superscript glyphs for an application, this field specifies the recommended vertical distance above the glyph baseline for alternate superscript glyphs supplied by the application.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="ss"></a></p>
+<h3 id="ystrikeoutsize">yStrikeoutSize</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Strikeout size.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>Thickness of the strikeout stroke in font design units. Should be &gt; 0.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>This field should normally be the thickness of the em dash for the current font, and should also match the underline thickness, which is specified in the <a href="post.html#underlineThickness" data-linktype="relative-path">'post'</a> table.<br><br><em>Note:</em> This was implemented in the OS/2 platform as a signed value, even though only values &gt; 0 would be expected.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="sp"></a></p>
+<h3 id="ystrikeoutposition">yStrikeoutPosition</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Strikeout position.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The position of the top of the strikeout stroke relative to the baseline in font design units.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>Positive values represent distances above the baseline; negative values represent distances below the baseline. Aligning the strikeout position with the em dash is suggested. Note, however, that the strikeout position should not interfere with the recognition of standard characters, and therefore should not line up with crossbars in the font.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="fc"></a></p>
+<h3 id="sfamilyclass">sFamilyClass</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>int16</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Font-family class and subclass.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>This field provides a classification of font-family design.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>The family class and subclass are assigned to a font based on the family design. This field is intended for use in selecting an alternate font family when the requested font is not available.<br><br>
+The class and subclass provide a two-level classification. The high byte of this field contains the family class, while the low byte contains the family subclass. The interpretation of subclass values depends on the class value.<br><br>
+Registered class and subclass values were originally defined by IBM. For details on registered values, see <a href="ibmfc" data-linktype="relative-path">IBM Font Family Classifications</a>.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="pan"></a></p>
+<h3 id="panose">panose</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>uint8[10]</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>PANOSE classification number</td>
+</tr>
+<tr>
+<td>International:</td>
+<td>Additional specifications are required for PANOSE to classify non-Latin character sets.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>This 10-byte array of numbers is used to describe the visual characteristics of a given typeface. These characteristics are then used to associate the font with other fonts of similar appearance having different names. The variables for each digit are listed below.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>The PANOSE definition contains ten bytes, each of which can have multiple possible values. The PANOSE values are fully described in the <a href="http://www.panose.com" data-linktype="external">PANOSE Classification Metrics Guide</a>. Note that the first byte is used for a high-level classification, “Family Kind”, and that the interpretation of the remaining bytes is contingent on the value of the first byte. For example, if the Family Kind value is 2 (Latin Text), then the next byte specifies “Serif Style”; but if the Family Kind value is 3 (Latin Hand Written), then the next byte specifies “Tool Kind”. Some applications might support only certain Family Kind values. The following table gives the interpretation for the panose array when the Family Kind is Latin Text:
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+</tr>
+<tr>
+<td>uint8</td>
+<td>bFamilyType</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>bSerifStyle</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>bWeight</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>bProportion</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>bContrast</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>bStrokeVariation</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>bArmStyle</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>bLetterform</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>bMidline</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>bXHeight</td>
+</tr>
+</tbody>
+</table>
+<p>Some applications can use the PANOSE values for font selection, to select a font matching certain parameters. For example, Proportion (for Family Kind = Latin Text) might be used to determine if a font is monospaced; or Serif Style might be used to determine if a font falls into generic <em>serif</em> or <em>sans serif</em> classes. Some applications will use Family Kind = 5 (Latin Symbol) to identify symbol fonts, which might affect font selection or fallback behaviors. There are no requirements for how applications should use the PANOSE values.</p>
+<p>In a variable font that uses OpenType Font Variation mechanisms, there is no way to represent different PANOSE values for different instances supported by the font. The PANOSE values can be set based on the default instance.</p>
+</td>
+</tr>
+<tr>
+<td>Version differences:</td>
+<td>Early versions of this specification provided more details regarding PANOSE values. However, the external specification cited above is the normative source and should be referred to for such details.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="ur"></a></p>
+<h3 id="ulunicoderange">ulUnicodeRange*</h3>
+<p>ulUnicodeRange1 (bits 0 – 31)<br>
+ulUnicodeRange2 (bits 32 – 63)<br>
+ulUnicodeRange3 (bits 64 – 95)<br>
+ulUnicodeRange4 (bits 96 – 127)</p>
+<br>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>uint32[4] (128 bits total)</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Unicode Character Range</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>This field is used to specify the Unicode blocks or ranges encompassed by the font file in 'cmap' subtables for platform 3, encoding ID 1 (Microsoft platform, Unicode BMP) and platform 3, encoding ID 10 (Microsoft platform, Unicode full repertoire). If a bit is set (1), then the Unicode ranges assigned to that bit are considered functional. If the bit is clear (0), then the range is not considered functional. Each of the bits is treated as an independent flag and the bits can be set in any combination. The determination of “functional” is left up to the font designer, although character set selection should attempt to be functional by ranges if at all possible.
+<br><br>
+<b>All reserved fields must be zero.</b> Each uint32 is in Big-Endian form.
+<table>
+<tbody>
+<tr>
+<th>Bit</th>
+<th>Unicode Range</th>
+<th>Block range</th>
+<th>Notes</th>
+</tr>
+<tr>
+<td>0</td>
+<td>Basic Latin</td>
+<td>0000-007F</td>
+<td></td>
+</tr>
+<tr>
+<td>1</td>
+<td>Latin-1 Supplement</td>
+<td>0080-00FF</td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Latin Extended-A</td>
+<td>0100-017F</td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Latin Extended-B</td>
+<td>0180-024F</td>
+<td></td>
+</tr>
+<tr>
+<td>4</td>
+<td>IPA Extensions</td>
+<td>0250-02AF</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>Phonetic Extensions</td>
+<td>1D00-1D7F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td></td>
+<td>Phonetic Extensions Supplement</td>
+<td>1D80-1DBF</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Spacing Modifier Letters</td>
+<td>02B0-02FF</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>Modifier Tone Letters</td>
+<td>A700-A71F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Combining Diacritical Marks</td>
+<td>0300-036F</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>Combining Diacritical Marks Supplement</td>
+<td>1DC0-1DFF</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Greek and Coptic</td>
+<td>0370-03FF</td>
+<td></td>
+</tr>
+<tr>
+<td>8</td>
+<td>Coptic</td>
+<td>2C80-2CFF</td>
+<td>Added in OpenType 1.5 for OS/2 version 4. See below for other version differences.</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Cyrillic</td>
+<td>0400-04FF</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>Cyrillic Supplement</td>
+<td>0500-052F</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td></td>
+<td>Cyrillic Extended-A</td>
+<td>2DE0-2DFF</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td></td>
+<td>Cyrillic Extended-B</td>
+<td>A640-A69F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Armenian</td>
+<td>0530-058F</td>
+<td></td>
+</tr>
+<tr>
+<td>11</td>
+<td>Hebrew</td>
+<td>0590-05FF</td>
+<td></td>
+</tr>
+<tr>
+<td>12</td>
+<td>Vai</td>
+<td>A500-A63F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4. See below for other version differences.</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Arabic</td>
+<td>0600-06FF</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>Arabic Supplement</td>
+<td>0750-077F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>14</td>
+<td>NKo</td>
+<td>07C0-07FF</td>
+<td>Added in OpenType 1.5 for OS/2 version 4. See below for other version differences.</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Devanagari</td>
+<td>0900-097F</td>
+<td></td>
+</tr>
+<tr>
+<td>16</td>
+<td>Bangla</td>
+<td>0980-09FF</td>
+<td></td>
+</tr>
+<tr>
+<td>17</td>
+<td>Gurmukhi</td>
+<td>0A00-0A7F</td>
+<td></td>
+</tr>
+<tr>
+<td>18</td>
+<td>Gujarati</td>
+<td>0A80-0AFF</td>
+<td></td>
+</tr>
+<tr>
+<td>19</td>
+<td>Odia</td>
+<td>0B00-0B7F</td>
+<td></td>
+</tr>
+<tr>
+<td>20</td>
+<td>Tamil</td>
+<td>0B80-0BFF</td>
+<td></td>
+</tr>
+<tr>
+<td>21</td>
+<td>Telugu</td>
+<td>0C00-0C7F</td>
+<td></td>
+</tr>
+<tr>
+<td>22</td>
+<td>Kannada</td>
+<td>0C80-0CFF</td>
+<td></td>
+</tr>
+<tr>
+<td>23</td>
+<td>Malayalam</td>
+<td>0D00-0D7F</td>
+<td></td>
+</tr>
+<tr>
+<td>24</td>
+<td>Thai</td>
+<td>0E00-0E7F</td>
+<td></td>
+</tr>
+<tr>
+<td>25</td>
+<td>Lao</td>
+<td>0E80-0EFF</td>
+<td></td>
+</tr>
+<tr>
+<td>26</td>
+<td>Georgian</td>
+<td>10A0-10FF</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>Georgian Supplement</td>
+<td>2D00-2D2F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>27</td>
+<td>Balinese</td>
+<td>1B00-1B7F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4. See below for other version differences.</td>
+</tr>
+<tr>
+<td>28</td>
+<td>Hangul Jamo</td>
+<td>1100-11FF</td>
+<td></td>
+</tr>
+<tr>
+<td>29</td>
+<td>Latin Extended Additional</td>
+<td>1E00-1EFF</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>Latin Extended-C</td>
+<td>2C60-2C7F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td></td>
+<td>Latin Extended-D</td>
+<td>A720-A7FF</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>30</td>
+<td>Greek Extended</td>
+<td>1F00-1FFF</td>
+<td></td>
+</tr>
+<tr>
+<td>31</td>
+<td>General Punctuation</td>
+<td>2000-206F</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>Supplemental Punctuation</td>
+<td>2E00-2E7F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>32</td>
+<td>Superscripts And Subscripts</td>
+<td>2070-209F</td>
+<td></td>
+</tr>
+<tr>
+<td>33</td>
+<td>Currency Symbols</td>
+<td>20A0-20CF</td>
+<td></td>
+</tr>
+<tr>
+<td>34</td>
+<td>Combining Diacritical Marks For Symbols</td>
+<td>20D0-20FF</td>
+<td></td>
+</tr>
+<tr>
+<td>35</td>
+<td>Letterlike Symbols</td>
+<td>2100-214F</td>
+<td></td>
+</tr>
+<tr>
+<td>36</td>
+<td>Number Forms</td>
+<td>2150-218F</td>
+<td></td>
+</tr>
+<tr>
+<td>37</td>
+<td>Arrows</td>
+<td>2190-21FF</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>Supplemental Arrows-A</td>
+<td>27F0-27FF</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td></td>
+<td>Supplemental Arrows-B</td>
+<td>2900-297F</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td></td>
+<td>Miscellaneous Symbols and Arrows</td>
+<td>2B00-2BFF</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>38</td>
+<td>Mathematical Operators</td>
+<td>2200-22FF</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>Supplemental Mathematical Operators</td>
+<td>2A00-2AFF</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td></td>
+<td>Miscellaneous Mathematical Symbols-A</td>
+<td>27C0-27EF</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td></td>
+<td>Miscellaneous Mathematical Symbols-B</td>
+<td>2980-29FF</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td>39</td>
+<td>Miscellaneous Technical</td>
+<td>2300-23FF</td>
+<td></td>
+</tr>
+<tr>
+<td>40</td>
+<td>Control Pictures</td>
+<td>2400-243F</td>
+<td></td>
+</tr>
+<tr>
+<td>41</td>
+<td>Optical Character Recognition</td>
+<td>2440-245F</td>
+<td></td>
+</tr>
+<tr>
+<td>42</td>
+<td>Enclosed Alphanumerics</td>
+<td>2460-24FF</td>
+<td></td>
+</tr>
+<tr>
+<td>43</td>
+<td>Box Drawing</td>
+<td>2500-257F</td>
+<td></td>
+</tr>
+<tr>
+<td>44</td>
+<td>Block Elements</td>
+<td>2580-259F</td>
+<td></td>
+</tr>
+<tr>
+<td>45</td>
+<td>Geometric Shapes</td>
+<td>25A0-25FF</td>
+<td></td>
+</tr>
+<tr>
+<td>46</td>
+<td>Miscellaneous Symbols</td>
+<td>2600-26FF</td>
+<td></td>
+</tr>
+<tr>
+<td>47</td>
+<td>Dingbats</td>
+<td>2700-27BF</td>
+<td></td>
+</tr>
+<tr>
+<td>48</td>
+<td>CJK Symbols And Punctuation</td>
+<td>3000-303F</td>
+<td></td>
+</tr>
+<tr>
+<td>49</td>
+<td>Hiragana</td>
+<td>3040-309F</td>
+<td></td>
+</tr>
+<tr>
+<td>50</td>
+<td>Katakana</td>
+<td>30A0-30FF</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>Katakana Phonetic Extensions</td>
+<td>31F0-31FF</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td>51</td>
+<td>Bopomofo</td>
+<td>3100-312F</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>Bopomofo Extended</td>
+<td>31A0-31BF</td>
+<td>Added in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td>52</td>
+<td>Hangul Compatibility Jamo</td>
+<td>3130-318F</td>
+<td></td>
+</tr>
+<tr>
+<td>53</td>
+<td>Phags-pa</td>
+<td>A840-A87F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4. See below for other version differences.</td>
+</tr>
+<tr>
+<td>54</td>
+<td>Enclosed CJK Letters And Months</td>
+<td>3200-32FF</td>
+<td></td>
+</tr>
+<tr>
+<td>55</td>
+<td>CJK Compatibility</td>
+<td>3300-33FF</td>
+<td></td>
+</tr>
+<tr>
+<td>56</td>
+<td>Hangul Syllables</td>
+<td>AC00-D7AF</td>
+<td></td>
+</tr>
+<tr>
+<td>57</td>
+<td>Non-Plane 0</td>
+<td>10000-10FFFF</td>
+<td>Setting this bit implies there is at least one character beyond the Basic Multilingual Plane supported by this font. First assigned in OpenType 1.3 for OS/2 version 2.</td>
+</tr>
+<tr>
+<td>58</td>
+<td>Phoenician</td>
+<td>10900-1091F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>59</td>
+<td>CJK Unified Ideographs</td>
+<td>4E00-9FFF</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>CJK Radicals Supplement</td>
+<td>2E80-2EFF</td>
+<td>Added in OpenType 1.3 for OS/2 version 2.</td>
+</tr>
+<tr>
+<td></td>
+<td>Kangxi Radicals</td>
+<td>2F00-2FDF</td>
+<td>Added in OpenType 1.3 for OS/2 version 2.</td>
+</tr>
+<tr>
+<td></td>
+<td>Ideographic Description Characters</td>
+<td>2FF0-2FFF</td>
+<td>Added in OpenType 1.3 for OS/2 version 2.</td>
+</tr>
+<tr>
+<td></td>
+<td>CJK Unified Ideographs Extension A</td>
+<td>3400-4DBF</td>
+<td>Added in OpenType 1.3 for OS/2 version 2.</td>
+</tr>
+<tr>
+<td></td>
+<td>CJK Unified Ideographs Extension B</td>
+<td>20000-2A6DF</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td></td>
+<td>Kanbun</td>
+<td>3190-319F</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td>60</td>
+<td>Private Use Area (plane 0)</td>
+<td>E000-F8FF</td>
+<td></td>
+</tr>
+<tr>
+<td>61</td>
+<td>CJK Strokes</td>
+<td>31C0-31EF</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td></td>
+<td>CJK Compatibility Ideographs</td>
+<td>F900-FAFF</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>CJK Compatibility Ideographs Supplement</td>
+<td>2F800-2FA1F</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td>62</td>
+<td>Alphabetic Presentation Forms</td>
+<td>FB00-FB4F</td>
+<td></td>
+</tr>
+<tr>
+<td>63</td>
+<td>Arabic Presentation Forms-A</td>
+<td>FB50-FDFF</td>
+<td></td>
+</tr>
+<tr>
+<td>64</td>
+<td>Combining Half Marks</td>
+<td>FE20-FE2F</td>
+<td></td>
+</tr>
+<tr>
+<td>65</td>
+<td>Vertical Forms</td>
+<td>FE10-FE1F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td></td>
+<td>CJK Compatibility Forms</td>
+<td>FE30-FE4F</td>
+<td></td>
+</tr>
+<tr>
+<td>66</td>
+<td>Small Form Variants</td>
+<td>FE50-FE6F</td>
+<td></td>
+</tr>
+<tr>
+<td>67</td>
+<td>Arabic Presentation Forms-B</td>
+<td>FE70-FEFF</td>
+<td></td>
+</tr>
+<tr>
+<td>68</td>
+<td>Halfwidth And Fullwidth Forms</td>
+<td>FF00-FFEF</td>
+<td></td>
+</tr>
+<tr>
+<td>69</td>
+<td>Specials</td>
+<td>FFF0-FFFF</td>
+<td></td>
+</tr>
+<tr>
+<td>70</td>
+<td>Tibetan</td>
+<td>0F00-0FFF</td>
+<td>First assigned in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td>71</td>
+<td>Syriac</td>
+<td>0700-074F</td>
+<td>First assigned in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td>72</td>
+<td>Thaana</td>
+<td>0780-07BF</td>
+<td>First assigned in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td>73</td>
+<td>Sinhala</td>
+<td>0D80-0DFF</td>
+<td>First assigned in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td>74</td>
+<td>Myanmar</td>
+<td>1000-109F</td>
+<td>First assigned in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td>75</td>
+<td>Ethiopic</td>
+<td>1200-137F</td>
+<td>First assigned in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td></td>
+<td>Ethiopic Supplement</td>
+<td>1380-139F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td></td>
+<td>Ethiopic Extended</td>
+<td>2D80-2DDF</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>76</td>
+<td>Cherokee</td>
+<td>13A0-13FF</td>
+<td>First assigned in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td>77</td>
+<td>Unified Canadian Aboriginal Syllabics</td>
+<td>1400-167F</td>
+<td>First assigned in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td>78</td>
+<td>Ogham</td>
+<td>1680-169F</td>
+<td>First assigned in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td>79</td>
+<td>Runic</td>
+<td>16A0-16FF</td>
+<td>First assigned in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td>80</td>
+<td>Khmer</td>
+<td>1780-17FF</td>
+<td>First assigned in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td></td>
+<td>Khmer Symbols</td>
+<td>19E0-19FF</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>81</td>
+<td>Mongolian</td>
+<td>1800-18AF</td>
+<td>First assigned in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td>82</td>
+<td>Braille Patterns</td>
+<td>2800-28FF</td>
+<td>First assigned in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td>83</td>
+<td>Yi Syllables</td>
+<td>A000-A48F</td>
+<td>First assigned in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td></td>
+<td>Yi Radicals</td>
+<td>A490-A4CF</td>
+<td>Added in OpenType 1.3, extending OS/2 version 2.</td>
+</tr>
+<tr>
+<td>84</td>
+<td>Tagalog</td>
+<td>1700-171F</td>
+<td>First assigned in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td></td>
+<td>Hanunoo</td>
+<td>1720-173F</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td></td>
+<td>Buhid</td>
+<td>1740-175F</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td></td>
+<td>Tagbanwa</td>
+<td>1760-177F</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td>85</td>
+<td>Old Italic</td>
+<td>10300-1032F</td>
+<td>First assigned in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td>86</td>
+<td>Gothic</td>
+<td>10330-1034F</td>
+<td>First assigned in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td>87</td>
+<td>Deseret</td>
+<td>10400-1044F</td>
+<td>First assigned in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td>88</td>
+<td>Byzantine Musical Symbols</td>
+<td>1D000-1D0FF</td>
+<td>First assigned in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td></td>
+<td>Musical Symbols</td>
+<td>1D100-1D1FF</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td></td>
+<td>Ancient Greek Musical Notation</td>
+<td>1D200-1D24F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>89</td>
+<td>Mathematical Alphanumeric Symbols</td>
+<td>1D400-1D7FF</td>
+<td>First assigned in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td>90</td>
+<td>Private Use (plane 15)</td>
+<td>F0000-FFFFD</td>
+<td>First assigned in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td></td>
+<td>Private Use (plane 16)</td>
+<td>100000-10FFFD</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td>91</td>
+<td>Variation Selectors</td>
+<td>FE00-FE0F</td>
+<td>First assigned in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td></td>
+<td>Variation Selectors Supplement</td>
+<td>E0100-E01EF</td>
+<td>Added in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td>92</td>
+<td>Tags</td>
+<td>E0000-E007F</td>
+<td>First assigned in OpenType 1.4 for OS/2 version 3.</td>
+</tr>
+<tr>
+<td>93</td>
+<td>Limbu</td>
+<td>1900-194F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>94</td>
+<td>Tai Le</td>
+<td>1950-197F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>95</td>
+<td>New Tai Lue</td>
+<td>1980-19DF</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>96</td>
+<td>Buginese</td>
+<td>1A00-1A1F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>97</td>
+<td>Glagolitic</td>
+<td>2C00-2C5F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>98</td>
+<td>Tifinagh</td>
+<td>2D30-2D7F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>99</td>
+<td>Yijing Hexagram Symbols</td>
+<td>4DC0-4DFF</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>100</td>
+<td>Syloti Nagri</td>
+<td>A800-A82F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>101</td>
+<td>Linear B Syllabary</td>
+<td>10000-1007F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td></td>
+<td>Linear B Ideograms</td>
+<td>10080-100FF</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td></td>
+<td>Aegean Numbers</td>
+<td>10100-1013F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>102</td>
+<td>Ancient Greek Numbers</td>
+<td>10140-1018F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>103</td>
+<td>Ugaritic</td>
+<td>10380-1039F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>104</td>
+<td>Old Persian</td>
+<td>103A0-103DF</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>105</td>
+<td>Shavian</td>
+<td>10450-1047F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>106</td>
+<td>Osmanya</td>
+<td>10480-104AF</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>107</td>
+<td>Cypriot Syllabary</td>
+<td>10800-1083F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>108</td>
+<td>Kharoshthi</td>
+<td>10A00-10A5F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>109</td>
+<td>Tai Xuan Jing Symbols</td>
+<td>1D300-1D35F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>110</td>
+<td>Cuneiform</td>
+<td>12000-123FF</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td></td>
+<td>Cuneiform Numbers and Punctuation</td>
+<td>12400-1247F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>111</td>
+<td>Counting Rod Numerals</td>
+<td>1D360-1D37F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>112</td>
+<td>Sundanese</td>
+<td>1B80-1BBF</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>113</td>
+<td>Lepcha</td>
+<td>1C00-1C4F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>114</td>
+<td>Ol Chiki</td>
+<td>1C50-1C7F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>115</td>
+<td>Saurashtra</td>
+<td>A880-A8DF</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>116</td>
+<td>Kayah Li</td>
+<td>A900-A92F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>117</td>
+<td>Rejang</td>
+<td>A930-A95F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>118</td>
+<td>Cham</td>
+<td>AA00-AA5F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>119</td>
+<td>Ancient Symbols</td>
+<td>10190-101CF</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>120</td>
+<td>Phaistos Disc</td>
+<td>101D0-101FF</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>121</td>
+<td>Carian</td>
+<td>102A0-102DF</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td></td>
+<td>Lycian</td>
+<td>10280-1029F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td></td>
+<td>Lydian</td>
+<td>10920-1093F</td>
+<td>Added in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>122</td>
+<td>Domino Tiles</td>
+<td>1F030-1F09F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td></td>
+<td>Mahjong Tiles</td>
+<td>1F000-1F02F</td>
+<td>First assigned in OpenType 1.5 for OS/2 version 4.</td>
+</tr>
+<tr>
+<td>123-127</td>
+<td>Reserved</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>
+All available bits were exhausted as of Unicode 5.1. The bit assignments were last updated for OS/2 version 4 in OpenType 1.5. There are many additional ranges supported in the current version of Unicode that are not supported by these fields in the OS/2 table. See the 'dlng' and 'slng' tags in the <a href="meta.html" data-linktype="relative-path">'meta' table</a> for an alternate mechanism to declare what scripts or languages a font can support or is designed for.
+</td>
+</tr>
+<tr>
+<td>Version differences:</td>
+<td>
+Different versions of the OS/2 table were created when different Unicode versions were current, and the initial specification for a given version defined fewer bit assignments than for later versions. Some applications might not support all assignments for fonts that have earlier OS/2 versions.
+<br><br>
+All of the bit assignments listed above are valid for any version of the OS/2 table, though OS/2 versions 1 and 2 were specified with some assignments that did not correspond to well-defined Unicode ranges and that conflict with later assignments — see the details below. If a font has a version 1 or version 2 OS/2 table with one of these bits set, the obsolete assignment could be the intended interpretation. Because these assignments do not correspond to well-defined ranges, however, the implied character coverage is unclear.
+<br><br>
+<b>Version 0:</b> When version 0 was first specified, no bit assignments were defined. Some applications could ignore these fields in a version 0 OS/2 table.
+<br><br>
+<b>Version 1:</b>
+<br>
+Version 1 was first specified concurrent with Unicode 1.1, and bit assignments were defined for bits 0 to 69 only. With fonts that have a version 1 table, some applications might recognize only bits 0 to 69.
+<br><br>
+Also, version 1 was specified with some bit assignments that did not correspond to a well-defined Unicode range:
+<ul>
+<li>Bit 8: “Greek Symbols and Coptic” (bit 7 was specified as “Basic Greek”)</li>
+<li>Bit 12: “Hebrew Extended” (bit 11 was specified as “Basic Hebrew”)</li>
+<li>Bit 14: “Arabic Extended” (bit 13 was specified as “Basic Arabic”)</li>
+<li>Bit 27: “Georgian Extended” (bit 26 was specified as “Basic Georgian”)</li>
+</ul>
+These assignments were discontinued as of version 2.
+<br><br>
+In addition, versions 1 and 2 were defined with bit 53 specified as “CJK Miscellaneous”, which also does not correspond to any well-defined Unicode range. This assignment was discontinued as of version 3.
+<br><br>
+<b>Version 2:</b>
+<br>
+Version 2 was defined in OpenType 1.1, which was concurrent with Unicode 2.1. At that time, bit assignments were defined for bits 0 to 69 only. Bit assignments for version 2 were updated in OpenType 1.3, adding assignments for bits 70 to 83 corresponding to new blocks assigned in Unicode 2.0 and Unicode 3.0. With fonts that have a version 2 table, some applications might recognize only those bits assigned in OpenType 1.2 or OpenType 1.3.
+<br><br>
+Also, the specification for version 2 continued to use a problematic assignment for bit 53 — see details for version 1. This assignment was discontinued as of version 3.
+<br><br>
+<b>Version 3:</b> Version 3 was defined in OpenType 1.4 with assignments for bits 84 to 92 corresponding to additional ranges in Unicode 3.2. In addition, some already-assigned bits were extended to cover additional Unicode ranges for related characters; see details in the table above.
+<br><br>
+<b>Version 4:</b> Version 4 was defined in OpenType 1.5 with assignments for bit 58 and bits 93 to 122 corresponding to additional ranges in Unicode 5.1. Also, bits 8, 12, 14, 27 and 53 were re-assigned (see version 1 for previous assignments). In addition, some already-assigned bits were extended to cover additional Unicode ranges for related characters; see details in the table above.
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="vendid"></a></p>
+<h3 id="achvendid">achVendID</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>Tag</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Font Vendor Identification</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The four character identifier for the vendor of the given typeface.</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>This is not the royalty owner of the original artwork. This is the company responsible for the marketing and distribution of the typeface that is being classified. For example, there can be multiple vendors of ITC Zapf Dingbats, with some vendors providing differentiating benefits in their fonts (more kern pairs, unregularized data, hand hinted, etc.). This identifier will allow for the correct vendor’s type to be used over another, possibly inferior, font file.
+<br><br>
+A registry of vendor IDs is maintained by Microsoft. Registered IDs must be unique to a single vendor. Non-registered IDs may also be used, but are discouraged: vendors are strongly encouraged to register an ID to ensure that there are no conflicts between different vendors in use of a given ID, and that customers are able to find vendor contact information for a given font. This field can also be left blank (set to null, or a tag comprised of four space characters).
+<br><br>
+All vendor IDs use the Tag data type, which is equivalent to a four-character string composed of a limited set of ASCII characters. For details regarding the Tag data type, see <a href="otff.html#data-types" data-linktype="relative-path">Data Types</a>. By convention, only registered tags should be comprised of only uppercase letters (or space).
+<br><br>
+For a list of registered Vendor IDs, or for details on registering a vendor ID or updating vendor information, see <a href="https://www.microsoft.com/typography/links/vendorlist.aspx" data-linktype="external">Registered typography vendors</a>.
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="fss"></a></p>
+<h3 id="fsselection">fsSelection</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>uint16</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Font selection flags.</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>
+Contains information concerning the nature of the font patterns, as follows:
+<table>
+<tbody>
+<tr>
+<th>Bit #</th>
+<th>macStyle bit</th>
+<th>C definition</th>
+<th>Description</th>
+</tr>
+<tr id="fss_bit0">
+<td>0</td>
+<td>bit 1</td>
+<td>ITALIC</td>
+<td>Font contains italic or oblique glyphs, otherwise they are upright.</td>
+</tr>
+<tr id="fss_bit1">
+<td>1</td>
+<td>&nbsp;</td>
+<td>UNDERSCORE</td>
+<td>Glyphs are underscored.</td>
+</tr>
+<tr id="fss_bit2">
+<td>2</td>
+<td>&nbsp;</td>
+<td>NEGATIVE</td>
+<td>Glyphs have their foreground and background reversed.</td>
+</tr>
+<tr id="fss_bit3">
+<td>3</td>
+<td>&nbsp;</td>
+<td>OUTLINED</td>
+<td>Outline (hollow) glyphs, otherwise they are solid.</td>
+</tr>
+<tr id="fss_bit4">
+<td>4</td>
+<td>&nbsp;</td>
+<td>STRIKEOUT</td>
+<td>Glyphs are overstruck.</td>
+</tr>
+<tr id="fss_bit5">
+<td>5</td>
+<td>bit 0</td>
+<td>BOLD</td>
+<td>Glyphs are emboldened.</td>
+</tr>
+<tr id="fss_bit6">
+<td>6</td>
+<td>&nbsp;</td>
+<td>REGULAR</td>
+<td>Glyphs are in the standard weight/style for the font.</td>
+</tr>
+<tr id="fss_bit7">
+<td>7</td>
+<td>&nbsp;</td>
+<td>USE_TYPO_METRICS</td>
+<td>If set, it is strongly recommended that applications use OS/2.sTypoAscender - OS/2.sTypoDescender + OS/2.sTypoLineGap as the default line spacing for this font.</td>
+</tr>
+<tr id="fss_bit8">
+<td>8</td>
+<td>&nbsp;</td>
+<td>WWS</td>
+<td>The font has 'name' table strings consistent with a weight/width/slope family without requiring use of name IDs 21 and 22. (See a more detailed description below.)</td>
+</tr>
+<tr id="fss_bit9">
+<td>9</td>
+<td>&nbsp;</td>
+<td>OBLIQUE</td>
+<td>Font contains oblique glyphs.</td>
+</tr>
+<tr>
+<td>10–15</td>
+<td>&nbsp;</td>
+<td>Reserved</td>
+<td>Reserved; set to 0.</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+<tr>
+<td>Comments:</td>
+<td>
+All undefined bits must be zero.
+<br><br>
+The fsSelection field was originally created for compatibility with the OS/2 platform. Some style description bits, such as bit 0, are used by modern applications, while other style description bits are not.
+<br><br>
+<b>Bit 0:</b> The setting of bits 0 must match the setting of bit 1 in the <a href="head.html#macstyle" data-linktype="relative-path">macStyle</a> field of the 'head' table.
+<br><br>
+<b>Bits 1 – 4:</b> Bits 1 – 4 are rarely used bits that indicate the font is primarily a decorative or special purpose font.
+<br><br>
+<b>Bit 5:</b> The setting of bit 5 must match the settings of bit 0 in the <a href="head.html#macstyle" data-linktype="relative-path">macStyle</a> field of the 'head' table.
+<br><br>
+<b>Bit 6:</b> 
+Bit 6 is not used in widely used in modern applications. If bit 6 is set, then bits 0 and 5 must be clear, else the behavior is undefined. Note that, if both bit 0 and bit 5 are clear, that does not give any indication as to whether or not bit 6 will be clear. For example, Arial Light is not the regular style of Arial and would have all bits cleared. In extended font families, bit 6 does not need to be set for fonts other than the regular style that, nonetheless, use "Regular" for name ID 2. (See <a href="name.html#name-ids" data-linktype="relative-path">Name IDs</a> for more information.)
+<br><br>
+<b>Bit 7:</b>
+<br>
+Bit 7 was defined in version 4 and is used in many modern applications. For new fonts, vendors are encouraged to use a version 4 or later OS/2 table and to have bit 7 set.
+<br><br>
+If a font was created with an earlier version of the OS/2 table and is updated to the current version of the OS/2 table, then setting bit 7 could create potential for reflow of existing documents which use the fonts. To minimize such risk, the bit would be set only if using the OS/2.usWin* metrics for line height would yield significantly inferior results than using the OS/2.sTypo* values.
+<br><br>
+<b>Bit 8:</b>
+<br>
+If bit 8 is set, then <a href="name.html" data-linktype="relative-path">'name' table</a> strings for family and subfamily are provided that are consistent with a weight/width/slope (WWS) family model without requiring the use of name IDs 21 or 22.
+<br><br>
+Bit 8 and name IDs 21 and 22 were introduced for use by applications that assume a WWS family model, given that there exist fonts with style variants that do not fit into one of the three attributes, weight, width or slope.
+<br><br>
+Many typographic families include faces that differ only in one or more of these three attributes. In such cases, name IDs 1 and 2 or IDs 16 and 17 will not present challenges for software that assumes a WWS model. But some typographic families include faces that differ in some <i>other</i> attributes. For example, a family might include variations for “handwriting”, “caption”, “display”, “optical size”, etc. In such cases, a font could incorporate that attribute into a typographic subfamily name (ID 17 string), whereas applications that assume a WWS model would require that attribute to be incorporated into a family name (ID 1 or ID 16).
+<br><br>
+IF a face differs within its family only in terms of weight, width or slope attributes, then bit 8 should be set. This applies even if the face is part of a large family that includes <i>other</i> faces distinguished by other attributes. Setting bit 8 serves as an indicator to apps that assume the WWS model that name IDs 1 and 2 or IDs 16 and 17 are consistent with the WWS model and no further treatment is required, including checking to see whether name IDs 21 and 22 are present. Hence, when bit 8 is set, name IDs 21 and 22 are never required and should not be included.
+<br><br>
+If a face differs within its family from Regular by attributes other than weight, width or slope, then bit 8 should *not* be set, and name IDs 21 and 22 should be included. By having bit 8 not set, that serves as an indicator to apps that assume a WWS model that they should look for name IDs 21 and 22, or that some other treatment of names could be required.
+<br><br>
+The <a href="stat.html" data-linktype="relative-path">STAT</a> table was introduced in a later version of OpenType, after bit 8 and name IDs 21 and 22 were defined. The STAT table was introduced, in part, to solve the same kind of requirement but in a more general way that could be useful for applications assuming other family models. If a face has attributes other than weight, width or slope and does not have name IDs 21 and 22, some applications that assume a WWS model could be able to support that font using information in the STAT table. However, even if a STAT table is present (as is required for variable fonts), the recommendations above regarding bit 8 and name IDs 21 and 22 should still be followed.
+<br><br>
+In this context, “typographic family” is the Microsoft Unicode string for name ID 16, if present, else the Microsoft Unicode string for name ID 1; “weight” is OS/2.usWeightClass; “width” is OS/2.usWidthClass; “slope” is OS/2.fsSelection bit 0 (ITALIC) and bit 9 (OBLIQUE).
+<br><br>
+<b>Bit 9:</b>
+<br>
+If bit 9 is set, then this font is to be considered an “oblique” style by processes which make a distinction between oblique and italic styles, such as Cascading Style Sheets font matching. For example, a font created by algorithmically slanting an upright face will set this bit.
+<br><br>
+If a font has a version 4 or later OS/2 table and this bit is not set, then this font is not to be considered an “oblique” style. For example, a font that has a classic italic design will not set this bit.
+<br><br>
+This bit, unlike the ITALIC bit (bit 0), is not related to style-linking in applications that assume a four-member font-family model comprised of regular, italic, bold and bold italic. It may be set or unset independently of the ITALIC bit. In most cases, if OBLIQUE is set, then ITALIC will also be set, though this is not required.
+<br><br>
+<b>Bit 15:</b> Bit 15 is permanently reserved. It has been used in some legacy implementations and could result in special behavior in some implementations. Use of this bit is deprecated.
+</td>
+</tr>
+<tr>
+<td>Version differences:</td>
+<td>
+<b>Versions 0 to 3:</b> Only bit 0 (italic) to bit 6 (regular) are assigned. Bits 7 to 15 are reserved and must be set to 0. Applications should ignore bits 7 to 15 in a font that has a version 0 to version 3 OS/2 table.
+<br><br>
+<b>Version 4 to 5:</b> Bits 7 to 9 were defined in version 4 (OpenType 1.5). Bits 10 to 15 are reserved and must be set to 0. Applications should ignore bits 10 to 15 in a font that has a version 4 or version 5 OS/2 table.
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="fci"></a></p>
+<h3 id="usfirstcharindex">usFirstCharIndex</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>uint16</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The minimum Unicode index (character code) in this font, according to the 'cmap' subtable for platform ID 3 and platform- specific encoding ID 0 or 1. For most fonts supporting Win-ANSI or other character sets, this value would be 0x0020. This field cannot represent supplementary character values (codepoints greater than 0xFFFF). Fonts that support supplementary characters should set the value in this field to 0xFFFF if the minimum index value is a supplementary character.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="lci"></a></p>
+<h3 id="uslastcharindex">usLastCharIndex</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>uint16</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The maximum Unicode index (character code) in this font, according to the 'cmap' subtable for platform ID 3 and encoding ID 0 or 1. This value depends on which character sets the font supports. This field cannot represent supplementary character values (codepoints greater than 0xFFFF). Fonts that support supplementary characters should set the value in this field to 0xFFFF.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="sta"></a></p>
+<h3 id="stypoascender">sTypoAscender</h3>
+<p></p><table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The typographic ascender for this font. This field should be combined with the sTypoDescender and sTypoLineGap values to determine default line spacing.
+<br><br>
+<p>This field is similar to the <a href="hhea.html#ascender" data-linktype="relative-path">ascender</a> field in the 'hhea' table as well as to the <a href="#wa" data-linktype="self-bookmark">usWinAscent</a> field in this table. However, legacy platform implementations used those fields with platform-specific behaviors. As a result, those fields are constrained by backward-compatibility requirements, and they do not ensure consistent layout across implementations. The sTypoAscender, sTypoDescender and sTypoLineGap fields are intended to allow applications to lay out documents in a typographically correct and portable fashion.
+<br><br>
+The USE_TYPO_METRICS flag (bit 7) of the fsSelection field is used to choose between using sTypo* values or usWin* values for default line metrics. See <a href="#fss" data-linktype="self-bookmark">fsSelection</a> for additional details.
+<br><br>
+It is not a general requirement that sTypoAscender - sTypoDescender be equal to unitsPerEm. These values should be set to provide default line spacing appropriate for the primary languages the font is designed to support.
+<br><br>
+For CJK (Chinese, Japanese, and Korean) fonts that are intended to be used for vertical (as well as horizontal) layout, the required value for sTypoAscender is that which describes the top of the <a href="baselinetags#ideoembox" data-linktype="relative-path">ideographic em-box</a>. For example, if the ideographic em-box of the font extends from coordinates 0,-120 to 1000,880 (that is, a 1000 × 1000 box set 120 design units below the Latin baseline), then the value of sTypoAscender must be set to 880. Failing to adhere to these requirements will result in incorrect vertical layout.
+<br><br>
+Also see the <a href="recom.html#tad" data-linktype="relative-path">Recommendations Section</a> for more on this field.</p></td>
+</tr>
+</tbody>
+</table>
+<p><a id="std"></a></p>
+<h3 id="stypodescender">sTypoDescender</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The typographic descender for this font. This field should be combined with the sTypoAscender and sTypoLineGap values to determine default line spacing.
+<br><br>
+This field is similar to the <a href="hhea.html#descender" data-linktype="relative-path">descender</a> field in the 'hhea' table as well as to the <a href="#wd" data-linktype="self-bookmark">usWinDescent</a> field in this table. However, legacy platform implementations used those fields with platform-specific behaviors. As a result, those fields are constrained by backward-compatibility requirements, and they do not ensure consistent layout across implementations. The sTypoAscender, sTypoDescender and sTypoLineGap fields are intended to allow applications to lay out documents in a typographically correct and portable fashion.
+<br><br>
+The USE_TYPO_METRICS flag (bit 7) of the fsSelection field is used to choose between using sTypo* values or usWin* values for default line metrics. See <a href="#fss" data-linktype="self-bookmark">fsSelection</a> for additional details.
+<br><br>
+It is not a general requirement that sTypoAscender - sTypoDescender be equal to unitsPerEm. These values should be set to provide default line spacing appropriate for the primary languages the font is designed to support.
+<br><br>
+For CJK (Chinese, Japanese, and Korean) fonts that are intended to be used for vertical (as well as horizontal) layout, the required value for sTypoDescender is that which describes the bottom of the <a href="baselinetags#ideoembox" data-linktype="relative-path">ideographic em-box</a>. For example, if the ideographic em-box of the font extends from coordinates 0,-120 to 1000,880 (that is, a 1000 × 1000 box set 120 design units below the Latin baseline), then the value of sTypoDescender must be set to -120. Failing to adhere to these requirements will result in incorrect vertical layout.
+<br><br>
+Also see the <a href="recom.html#tad" data-linktype="relative-path">Recommendations Section</a> for more on this field.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="tlg"></a></p>
+<h3 id="stypolinegap">sTypoLineGap</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>
+The typographic line gap for this font. This field should be combined with the sTypoAscender and sTypoDescender values to determine default line spacing.
+<br><br>
+This field is similar to the <a href="hhea.html#lineGap" data-linktype="relative-path">lineGap</a> field in the 'hhea' table. However, legacy platform implementations treat that field with platform-specific behaviors. As a result, that field is constrained by backward-compatibility requirements, and does not ensure consistent layout across implementations. The sTypoAscender, sTypoDescender and sTypoLineGap fields are intended to allow applications to lay out documents in a typographically correct and portable fashion.
+<br><br>
+The USE_TYPO_METRICS flag (bit 7) of the fsSelection field is used to choose between using sTypo* values or usWin* values for default line metrics. See <a href="#fss" data-linktype="self-bookmark">fsSelection</a> for additional details.
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="wa"></a></p>
+<h3 id="uswinascent">usWinAscent</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>UFWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>
+The “Windows ascender” metric. This should be used to specify the height above the baseline for a clipping region.
+<br><br>
+This is similar to the <a href="#sta" data-linktype="self-bookmark">sTypoAscender</a> field, and also to the <a href="hhea.html#ascender" data-linktype="relative-path">ascender</a> field in the 'hhea' table. There are important differences between these, however.
+<br><br>
+In the Windows GDI implementation, the usWinAscent and usWinDescent values have been used to determine the size of the bitmap surface in the TrueType rasterizer. Windows GDI will clip any portion of a TrueType glyph outline that appears above the usWinAscent value. If any clipping is unacceptable, then the value should be set greater than or equal to yMax.
+<br><br>
+<em>Note:</em> This pertains to the default position of glyphs, not their final position in layout after data from the GPOS or 'kern' table has been applied. Also, this clipping behavior interacts with the <a href="vdmx.html" data-linktype="relative-path">VDMX table</a>: if a VDMX table is present and there is data for the current device aspect ratio and rasterization size, then the VDMX data will supersede the usWinAscent and usWinDescent values.
+<br><br>
+Some legacy applications use the usWinAscent and usWinDescent values to determine default line spacing. This is strongly discouraged. The sTypo* fields should be used for this purpose.
+<br><br>
+Note that some applications use either the usWin* values or the sTypo* values to determine default line spacing, depending on whether the USE_TYPO_METRICS flag (bit 7) of the fsSelection field is set. This could be useful to provide compatibility with legacy documents using older fonts, while also providing better and more-portable layout using newer fonts. See <a href="#fss" data-linktype="self-bookmark">fsSelection</a> for additional details.
+<br><br>
+Applications that use the sTypo* fields for default line spacing can use the usWin* values to determine the size of a clipping region. Some applications use a clipping region for editing scenarios to determine what portion of the display surface to re-draw when text is edited, or how large a selection rectangle to draw when text is selected. This is an appropriate use for the usWin* values.
+<br><br>
+Early versions of this specification suggested that the usWinAscent value be computed as the yMax for all characters in the Windows “ANSI” character set. For new fonts, the value should be determined based on the primary languages the font is designed to support, and should take into consideration additional height that could be required to accommodate tall glyphs or mark positioning. 
+</td>
+</tr>
+
+</tbody>
+</table>
+<p><a id="wd"></a></p>
+<h3 id="uswindescent">usWinDescent</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>UFWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>
+The “Windows descender” metric. This should be used to specify the vertical extent below the baseline for a clipping region.
+<br><br>
+This is similar to the <a href="#std" data-linktype="self-bookmark">sTypoDescender</a> field, and also to the <a href="hhea.html#descender" data-linktype="relative-path">descender</a> field in the 'hhea' table. There are important differences between these, however. Some of these differences are described below. In addition, the usWinDescent value treats distances below the baseline as positive values; thus, usWinDescent is usually a positive value, while sTypoDescender and hhea.descender are usually negative.
+<br><br>
+In the Windows GDI implementation, the usWinDescent and usWinAscent values have been used to determine the size of the bitmap surface in the TrueType rasterizer. Windows GDI will clip any portion of a TrueType glyph outline that appears below (-1 × usWinDescent). If any clipping is unacceptable, then the value should be set greater than or equal to (-yMin). 
+<br><br>
+<em>Note:</em> This pertains to the default position of glyphs, not their final position in layout after data from the GPOS or 'kern' table has been applied. Also, this clipping behavior interacts with the <a href="vdmx.html" data-linktype="relative-path">VDMX table</a>: if a VDMX table is present and there is data for the current device aspect ratio and rasterization size, then the VDMX data will supersede the usWinAscent and usWinDescent values.
+<br><br>
+Some legacy applications use the usWinAscent and usWinDescent values to determine default line spacing. This is strongly discouraged. The sTypo* fields should be used for this purpose.
+<br><br>
+Note that some applications use either the usWin* values or the sTypo* values to determine default line spacing, depending on whether the USE_TYPO_METRICS flag (bit 7) of the fsSelection field is set. This could be useful to provide compatibility with legacy documents using older fonts, while also providing better and more-portable layout using newer fonts. See <a href="#fss" data-linktype="self-bookmark">fsSelection</a> for additional details.
+<br><br>
+Applications that use the sTypo* fields for default line spacing can use the usWin* values to determine the size of a clipping region. Some applications use a clipping region for editing scenarios to determine what portion of the display surface to re-draw when text is edited, or how large a selection rectangle to draw when text is selected. This is an appropriate use for the usWin* values.
+<br><br>
+Early versions of this specification suggested that the usWinDescent value be computed as -yMin for all characters in the Windows “ANSI” character set. For new fonts, the value should be determined based on the primary languages the font is designed to support, and should take into consideration additional vertical extent that could be required to accommodate glyphs with low descenders or mark positioning. 
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="cpr"></a></p>
+<h3 id="ulcodepagerange">ulCodePageRange*</h3>
+<p>ulCodePageRange1 (bits 0 – 31)<br>
+ulCodePageRange2 (bits 32 – 63)</p>
+<br>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>uint32[2] (64 bits total)</td>
+</tr>
+<tr>
+<td>Title:</td>
+<td>Code Page Character Range</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>This field is used to specify the code pages encompassed by the font file in the 'cmap' subtable for platform 3, encoding ID 1 (Windows platform, Unicode BMP). If the font file is encoding ID 0, then the Symbol Character Set bit should be set.
+<br><br>
+If a given bit is set (1), then the code page is considered functional. If the bit is clear (0) then the code page is not considered functional. Each of the bits is treated as an independent flag and the bits can be set in any combination. The determination of “functional” is left up to the font designer, although character set selection should attempt to be functional by code pages if at all possible.
+<br><br>
+Symbol character sets have a special meaning. If the symbol bit (31) is set, and the font file contains a 'cmap' subtable for platform of 3 and encoding ID of 1, then all of the characters in the Unicode range 0xF000 - 0xF0FF (inclusive) will be used to enumerate the symbol character set. If the bit is not set, any characters present in that range will not be enumerated as a symbol character set.
+<br><br>
+All reserved fields must be zero. Each uint32 is in Big-Endian form.  
+<table>
+<tbody>
+<tr>
+<th>Bit</th>
+<th>Code Page</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>0</td>
+<td>1252</td>
+<td>Latin 1</td>
+</tr>
+<tr>
+<td>1</td>
+<td>1250</td>
+<td>Latin 2: Eastern Europe</td>
+</tr>
+<tr>
+<td>2</td>
+<td>1251</td>
+<td>Cyrillic</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1253</td>
+<td>Greek</td>
+</tr>
+<tr>
+<td>4</td>
+<td>1254</td>
+<td>Turkish</td>
+</tr>
+<tr>
+<td>5</td>
+<td>1255</td>
+<td>Hebrew</td>
+</tr>
+<tr>
+<td>6</td>
+<td>1256</td>
+<td>Arabic</td>
+</tr>
+<tr>
+<td>7</td>
+<td>1257</td>
+<td>Windows Baltic</td>
+</tr>
+<tr>
+<td>8</td>
+<td>1258</td>
+<td>Vietnamese</td>
+</tr>
+<tr>
+<td>9 – 15</td>
+<td></td>
+<td>Reserved for Alternate ANSI</td>
+</tr>
+<tr>
+<td>16</td>
+<td>874</td>
+<td>Thai</td>
+</tr>
+<tr>
+<td>17</td>
+<td>932</td>
+<td>JIS/Japan</td>
+</tr>
+<tr>
+<td>18</td>
+<td>936</td>
+<td>Chinese: Simplified chars—PRC and Singapore</td>
+</tr>
+<tr>
+<td>19</td>
+<td>949</td>
+<td>Korean Wansung</td>
+</tr>
+<tr>
+<td>20</td>
+<td>950</td>
+<td>Chinese: Traditional chars—Taiwan and Hong Kong SAR</td>
+</tr>
+<tr>
+<td>21</td>
+<td>1361</td>
+<td>Korean Johab</td>
+</tr>
+<tr>
+<td>22 – 28</td>
+<td></td>
+<td>Reserved for Alternate ANSI or OEM</td>
+</tr>
+<tr>
+<td>29</td>
+<td></td>
+<td>Macintosh Character Set (US Roman)</td>
+</tr>
+<tr>
+<td>30</td>
+<td></td>
+<td>OEM Character Set</td>
+</tr>
+<tr>
+<td>31</td>
+<td></td>
+<td>Symbol Character Set</td>
+</tr>
+<tr>
+<td>32 – 47</td>
+<td></td>
+<td>Reserved for OEM</td>
+</tr>
+<tr>
+<td>48</td>
+<td>869</td>
+<td>IBM Greek</td>
+</tr>
+<tr>
+<td>49</td>
+<td>866</td>
+<td>MS-DOS Russian</td>
+</tr>
+<tr>
+<td>50</td>
+<td>865</td>
+<td>MS-DOS Nordic</td>
+</tr>
+<tr>
+<td>51</td>
+<td>864</td>
+<td>Arabic</td>
+</tr>
+<tr>
+<td>52</td>
+<td>863</td>
+<td>MS-DOS Canadian French</td>
+</tr>
+<tr>
+<td>53</td>
+<td>862</td>
+<td>Hebrew</td>
+</tr>
+<tr>
+<td>54</td>
+<td>861</td>
+<td>MS-DOS Icelandic</td>
+</tr>
+<tr>
+<td>55</td>
+<td>860</td>
+<td>MS-DOS Portuguese</td>
+</tr>
+<tr>
+<td>56</td>
+<td>857</td>
+<td>IBM Turkish</td>
+</tr>
+<tr>
+<td>57</td>
+<td>855</td>
+<td>IBM Cyrillic; primarily Russian</td>
+</tr>
+<tr>
+<td>58</td>
+<td>852</td>
+<td>Latin 2</td>
+</tr>
+<tr>
+<td>59</td>
+<td>775</td>
+<td>MS-DOS Baltic</td>
+</tr>
+<tr>
+<td>60</td>
+<td>737</td>
+<td>Greek; former 437 G</td>
+</tr>
+<tr>
+<td>61</td>
+<td>708</td>
+<td>Arabic; ASMO 708</td>
+</tr>
+<tr>
+<td>62</td>
+<td>850</td>
+<td>WE/Latin 1</td>
+</tr>
+<tr>
+<td>63</td>
+<td>437</td>
+<td>US</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+<tr>
+<td>Version differences:</td>
+<td>
+<b>Version 0:</b> These fields were not defined in version 0. If the size of a version 0 OS/2 table extends beyond the usWinDescent field, additional data beyond the usWinDescent field should be ignored.
+<br><br>
+<b>Version 1:</b> Bit 8 was not assigned in version 1. All other currently assigned bits were defined in version 1.
+<br><br>
+<b>Version 2 and later:</b> All currently assigned bits were defined in version 2.
+
+</td></tr>
+</tbody>
+</table>
+<p><a id="xh"></a></p>
+<h3 id="sxheight">sxHeight</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>This metric specifies the distance between the baseline and the approximate height of non-ascending lowercase letters measured in font design units. This value would normally be specified by a type designer but in situations where that is not possible, for example when a legacy font is being converted, the value may be set equal to the top of the unscaled and unhinted glyph bounding box of the glyph encoded at U+0078 (LATIN SMALL LETTER X). If no glyph is encoded in this position the field should be set to 0.
+<br><br>
+This metric, if specified, can be used in font substitution: the xHeight value of one font can be scaled to approximate the apparent size of another.</td>
+</tr>
+<tr>
+<td>Version differences:</td>
+<td>
+<b>Version 0, version 1:</b> This field was not defined in version 0 or version 1. If the size of a version 0 OS/2 table extends beyond the usWinDescent field, or if the size of a version 1 OS/2 table extends beyond the code page range fields, this additional data should be ignored.
+<br><br>
+<b>Version 2 and later:</b> This field was defined in version 2 of the OS/2 table.
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="ch"></a></p>
+<h3 id="scapheight">sCapHeight</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>FWORD</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>Font design units</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>This metric specifies the distance between the baseline and the approximate height of uppercase letters measured in font design units. This value would normally be specified by a type designer but in situations where that is not possible, for example when a legacy font is being converted, the value may be set equal to the top of the unscaled and unhinted glyph bounding box of the glyph encoded at U+0048 (LATIN CAPITAL LETTER H). If no glyph is encoded in this position the field should be set to 0.
+<br><br>
+This metric, if specified, can be used in systems that specify type size by capital height measured in millimeters. It can also be used as an alignment metric; the top of a drop capital, for instance, can be aligned to the sCapHeight metric of the first line of text.</td>
+</tr>
+<tr>
+<td>Version differences:</td>
+<td>
+<b>Version 0, version 1:</b> This field was not defined in version 0 or version 1. If the size of a version 0 OS/2 table extends beyond the usWinDescent field, or if the size of a version 1 OS/2 table extends beyond the code page range fields, this additional data should be ignored.
+<br><br>
+<b>Version 2 and later:</b> This field was defined in version 2 of the OS/2 table.
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="dc"></a></p>
+<h3 id="usdefaultchar">usDefaultChar</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>uint16</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>This is the Unicode code point, in UTF-16 encoding, of a character that can be used for a default glyph if a requested character is not supported in the font. If the value of this field is zero, glyph ID 0 is to be used for the default character. This field cannot represent supplementary-plane character values (code points greater than 0xFFFF), and so applications are strongly discouraged from using this field.</td>
+</tr>
+<tr>
+<td>Version differences:</td>
+<td>
+<b>Version 0, version 1:</b> This field was not defined in version 0 or version 1. If the size of a version 0 OS/2 table extends beyond the usWinDescent field, or if the size of a version 1 OS/2 table extends beyond the code page range fields, this additional data should be ignored.
+<br><br>
+<b>Version 2 and later:</b> This field was defined in version 2 of the OS/2 table.
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="bc"></a></p>
+<h3 id="usbreakchar">usBreakChar</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>uint16</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>This is the Unicode code point, in UTF-16 encoding, of a character that can be used as a default break character. The break character is used to separate words and justify text. Most fonts specify U+0020 SPACE as the break character. This field cannot represent supplementary-plane character values (code points greater than 0xFFFF), and so applications are strongly discouraged from using this field.</td>
+</tr>
+<tr>
+<td>Version differences:</td>
+<td>
+<b>Version 0, version 1:</b> This field was not defined in version 0 or version 1. If the size of a version 0 OS/2 table extends beyond the usWinDescent field, or if the size of a version 1 OS/2 table extends beyond the code page range fields, this additional data should be ignored.
+<br><br>
+<b>Version 2 and later:</b> This field was defined in version 2 of the OS/2 table.
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="mc"></a></p>
+<h3 id="usmaxcontext">usMaxContext</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>uint16</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>The maximum length of a target glyph context for any feature in this font. For example, a font which has only a pair kerning feature should set this field to 2. If the font also has a ligature feature in which the glyph sequence “f f i” is substituted by the ligature “ffi”, then this field should be set to 3. This field could be useful to sophisticated line-breaking engines in determining how far they should look ahead to test whether something could change that affects the line breaking. For chaining contextual lookups, the length of the string (covered glyph) + (input sequence) + (lookahead sequence) should be considered.</td>
+</tr>
+<tr>
+<td>Version differences:</td>
+<td>
+<b>Version 0, version 1:</b> This field was not defined in version 0 or version 1. If the size of a version 0 OS/2 table extends beyond the usWinDescent field, or if the size of a version 1 OS/2 table extends beyond the code page range fields, this additional data should be ignored.
+<br><br>
+<b>Version 2 and later:</b> This field was defined in version 2 of the OS/2 table.
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="lps"></a></p>
+<h3 id="usloweropticalpointsize">usLowerOpticalPointSize</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>uint16</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>TWIPs</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>This field is used for fonts with multiple optical styles.
+<br><br>
+This value is the lower value of the size range for which this font has been designed. The units for this field are TWIPs (one-twentieth of a point, or 1440 per inch). The value is inclusive — meaning that that font was designed to work best at this point size through, but not including, the point size indicated by usUpperOpticalPointSize. When used with other optical-size-variant fonts within a typographic family that also specify usLowerOpticalPointSize and usUpperOpticalPointSize values, it would be expected that another font has the usUpperOpticalPointSize field set to the same value as the value in this field, unless this font is designed for the lowest size range among the fonts in the family. The smallest font in an optical-size set should set this value to 0. When working across multiple optical-size-variant fonts within a typographic family, there should be no intentional gaps or overlaps in the ranges.
+<br><br>
+The usLowerOpticalPointSize value must be less than usUpperOpticalPointSize. The maximum valid value is 0xFFFE.
+<br><br>
+For fonts that were not designed for multiple optical-size variants, this field should be set to 0 (zero), and usUpperOpticalPointSize should be set to 0xFFFF. <br><br>
+<em>Note:</em> Use of this field has been superseded by the STAT table. See <a href="recom.html#OptSize" data-linktype="relative-path">Recommendations Section</a> for more information.</td>
+</tr>
+<tr>
+<td>Version differences:</td>
+<td>
+<b>Versions 0 – 4:</b> This field was not defined in versions 0 – 4. If the size of an OS/2 table extends beyond the last field defined for the given version, this additional data should be ignored.
+<br><br>
+<b>Version 5:</b> This field was defined in version 5 of the OS/2 table.
+</td>
+</tr>
+</tbody>
+</table>
+<p><a id="ups"></a></p>
+<h3 id="usupperopticalpointsize">usUpperOpticalPointSize</h3>
+<table>
+<tbody>
+<tr>
+<td>Format:</td>
+<td>uint16</td>
+</tr>
+<tr>
+<td>Units:</td>
+<td>TWIPs</td>
+</tr>
+<tr>
+<td>Description:</td>
+<td>This field is used for fonts with multiple optical styles.
+<br><br>
+This value is the upper value of the size range for which this font has been designed. The units for this field are TWIPs (one-twentieth of a point, or 1440 per inch). The value is exclusive — meaning that that font was designed to work best below this point size down to the usLowerOpticalPointSize threshold. When used with other optical-size-variant fonts within a typographic family that also specify usLowerOpticalPointSize and usUpperOpticalPointSize values, it would be expected that another font has the usLowerOpticalPointSize field set to the same value as the value in this field, unless this font is designed for the highest size range among the fonts in the family. The largest font in an optical-size set should set this value to 0xFFFF, which is interpreted as infinity. When working across multiple optical-size-variant fonts within a typographic family, there should be no intentional gaps or overlaps left in the ranges. 
+<br><br>
+The usUpperOpticalPointSize value must be greater than usLowerOpticalPointSize. The minimum valid value for this field is 2 (two). The largest possible inclusive point size represented by this field is 3276.65 points; any higher values would be represented as infinity.
+<br><br>
+For fonts that were not designed for multiple optical-size variants, this field should be set to 0xFFFF, and usLowerOpticalPointSize should be set to 0 (zero). <br><br>
+<em>Note:</em> Use of this field has been superseded by the STAT table. See <a href="recom.html#OptSize" data-linktype="relative-path">Recommendations Section</a> for more information.</td>
+</tr>
+<tr>
+<td>Version differences:</td>
+<td>
+<b>Versions 0 – 4:</b> This field was not defined in versions 0 – 4. If the size of an OS/2 table extends beyond the last field defined for the given version, this additional data should be ignored.
+<br><br>
+<b>Version 5:</b> This field was defined in version 5 of the OS/2 table.
+</td>
+</tr>
+</tbody>
+</table>
+<h2 id="os2-table-and-opentype-font-variations">OS/2 Table and OpenType Font Variations</h2>
+<p>In variable fonts, default line metrics should always be set using the sTypoAscender, sTypoDescender and sTypoLineGap values, and the USE_TYPO_METRICS flag in the fsSelection field should be set. The ascender, descender and lineGap fields in the 'hhea' table should be set to the same values as sTypoAscender, sTypoDescender and sTypoLineGap. The usWinAscent and usWinDescent fields should be used to specify a recommended clipping rectangle.</p>
+<p>In a variable font, various font-metric values within the OS/2 table might need to be adjusted for different variation instances. Variation data for OS/2 entries can be provided in the <a href="mvar.html" data-linktype="relative-path">metrics variations (MVAR)</a> table. Different OS/2 entries are associated with particular variation data in the MVAR table using value tags, as follows:</p>
+<table>
+<tbody>
+<tr>
+<th>OS/2 entry</th>
+<th>Tag</th>
+</tr>
+<tr id="cpht">
+<td>sCapHeight</td>
+<td>'cpht'</td>
+</tr>
+<tr id="hasc">
+<td>sTypoAscender</td>
+<td>'hasc'</td>
+</tr>
+<tr id="hdsc">
+<td>sTypoDescender</td>
+<td>'hdsc'</td>
+</tr>
+<tr id="hlgp">
+<td>sTypoLineGap</td>
+<td>'hlgp'</td>
+</tr>
+<tr id="xhgt">
+<td>sxHeight</td>
+<td>'xhgt'</td>
+</tr>
+<tr id="hcla">
+<td>usWinAscent</td>
+<td>'hcla'</td>
+</tr>
+<tr id="hcld">
+<td>usWinDescent</td>
+<td>'hcld'</td>
+</tr>
+<tr id="stro">
+<td>yStrikeoutPosition</td>
+<td>'stro'</td>
+</tr>
+<tr id="strs">
+<td>yStrikeoutSize</td>
+<td>'strs'</td>
+</tr>
+<tr id="sbxo">
+<td>ySubscriptXOffset</td>
+<td>'sbxo'</td>
+</tr>
+<tr id="sbxs">
+<td>ySubScriptXSize</td>
+<td>'sbxs'</td>
+</tr>
+<tr id="sbyo">
+<td>ySubscriptYOffset</td>
+<td>'sbyo'</td>
+</tr>
+<tr id="sbys">
+<td>ySubscriptYSize</td>
+<td>'sbys'</td>
+</tr>
+<tr id="spxo">
+<td>ySuperscriptXOffset</td>
+<td>'spxo'</td>
+</tr>
+<tr id="spxs">
+<td>ySuperscriptXSize</td>
+<td>'spxs'</td>
+</tr>
+<tr id="spyo">
+<td>ySuperscriptYOffset</td>
+<td>'spyo'</td>
+</tr>
+<tr id="spys">
+<td>ySuperscriptYSize</td>
+<td>'spys'</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em> The usWeightClass and usWidthClass values are not adjusted by variation data since these correspond to 'wght' and 'wdth' variation axes that can be used to define a font’s variation space. Appropriate usWeightClass and usWidthClass values for a variation instance can be derived from 'wght' and 'wdth' user coordinates that are used to select a particular variation instance. For 'wdth' values greater than 200, the usWidthClass value is clamped to 9. See the discussion of the 'wght' and 'wdth' axes in the <a href="dvaraxisreg.html" data-linktype="relative-path">OpenType Design-Variation Axis Tag Registry</a> for details on the relationship between these OS/2 fields and the corresponding design axes.</p>
+</blockquote>
+<blockquote>
+<p><em>Note:</em> The usLowerOpticalPointSize and usUpperOpticalPointSize values are not adjusted by variation data. These values (now superseded by the STAT table) are used to indicate a range of sizes for which a given font has been designed. It is assumed that variation that targets different sizes will be implemented using the 'opsz' variation axis. If a variable font supports 'opsz' as an axis of variation, then the usLowerOpticalPointSize and usUpperOpticalPointSize fields can be set to the same values as the minValue and maxValue fields for the 'opsz' axis in the 'fvar' table.</p>
+</blockquote>
+<p>To have variable line metrics in a variable font, the 'hasc', 'hdsc' and 'hlgp' value tags should be used in the MVAR table to vary the ascender, descender and line gap values from defaults specified in the sTypoAscender, sTypoDescender and sTypoLineGap fields. The 'hcla' and 'hcld' value tags can be used in addition to vary the size of a clipping region from the default specified in the winAscent and winDescent fields. Other metrics can be varied using value tags listed above.</p>
+<p>For general information on OpenType Font Variations, see the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+
+</body>
+</html>

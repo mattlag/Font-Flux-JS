@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>loca — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/loca">https://learn.microsoft.com/en-us/typography/opentype/spec/loca</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="loca--index-to-location">loca — Index to Location</h1>
+<p>The index to location ('loca') table stores an array of offsets to the locations of glyph descriptions in the <a href="glyf.html" data-linktype="relative-path">'glyf'</a> table, relative to the beginning of that table. Offsets in the array are referenced by corresponding glyph IDs.</p>
+<p>Offsets must be in ascending order, with loca[<em>n</em>] &lt;= loca[<em>n+1</em>]. The length of each glyph description is determined by the difference between two consecutive entries: loca[<em>n+1</em>] - loca[<em>n</em>]. To compute the length of the last glyph description, there is an extra entry in the offsets array after the entry for the last valid glyph ID. Thus, the number of elements in the offsets array is numGlyphs + 1.</p>
+<p>By definition, glyph index zero points to the “missing character” glyph, which is the glyph that is displayed if a character is not found in the font’s <a href="cmap.html" data-linktype="relative-path">'cmap'</a> table. A missing character is commonly represented by a blank box or a space. If the font does not contain an outline for this glyph, then the first and second offsets should have the same value. This also applies to any other glyphs without an outline, such as the glyph for the space character: if a glyph has no outline or instructions, then loca[<em>n</em>] = loca[<em>n+1</em>].</p>
+<p>There are two formats of this table: a short format, and a long format. The format is specified by the indexToLocFormat entry in the <a href="head.html" data-linktype="relative-path">'head'</a> table.</p>
+<p><em>Short format</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Offset16</td>
+<td>offsets[numGlyphs + 1]</td>
+<td>The local offset divided by 2 is stored.</td>
+</tr>
+</tbody>
+</table>
+<p><em>Long format</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Offset32</td>
+<td>offsets[numGlyphs + 1]</td>
+<td>The actual local offset is stored.</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

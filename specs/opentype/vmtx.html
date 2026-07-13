@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vmtx — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/vmtx">https://learn.microsoft.com/en-us/typography/opentype/spec/vmtx</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="vmtx--vertical-metrics-table">vmtx — Vertical Metrics Table</h1>
+<h2 id="overview">Overview</h2>
+<p>The vertical metrics table allows you to specify the vertical spacing for each glyph in a vertical font. This table consists of either one or two arrays that contain metric information (the advance heights and top sidebearings) for the vertical layout of each of the glyphs in the font. The vertical metrics coordinate system is shown below.</p>
+<p><img src="media/img00287.gif" alt="Lowercase b glyph with ascent, descent, top side bearing, and advance height metrics" data-linktype="relative-path"></p>
+<p>OpenType™ vertical fonts require both a vertical header table (<a href="vhea.html" data-linktype="relative-path">'vhea'</a>) and the vertical metrics table. The vertical header table contains information that is general to the font as a whole. The vertical metrics table contains information that pertains to specific glyphs. The formats of these tables are similar to those for horizontal metrics, <a href="hhea.html" data-linktype="relative-path">'hhea'</a> and <a href="hmtx.html" data-linktype="relative-path">'hmtx'</a>.</p>
+<p>See the section <a href="recom.html#cjk" data-linktype="relative-path">OpenType CJK Font Guidelines</a> for more information about constructing CJK (Chinese, Japanese, and Korean) fonts.</p>
+<p><strong>Vertical origin and advance height</strong></p>
+<p>The <em>y coordinate of a glyph’s vertical origin</em> is specified as the sum of the glyph’s top side bearing (recorded in the 'vmtx' table) and the top (i.e. maximum y) of the glyph’s bounding box.</p>
+<p>OpenType fonts that use TrueType outlines contain glyph bounding box information in the Glyph Data ('glyf') table. Fonts that use CFF outlines do not contain glyph bounding box information, and so for these fonts the top of the glyph’s bounding box can only be calculated from the CharString data in the 'CFF ' or CFF2 table. The optional <a href="vorg.html" data-linktype="relative-path">Vertical Origin (VORG) table</a> can be used in fonts that use CFF glyph data to record the y coordinate of glyphs’ vertical origins directly, thus obviating the need to calculate bounding boxes as an intermediate step. This improves accuracy and efficiency for applications.</p>
+<p>The <em>x coordinate of a glyph’s vertical origin</em> is not specified in the 'vmtx' table. Vertical writing implementations may make use of the baseline values in the Baseline (BASE) table, if present, in order to align the glyphs in the x direction as appropriate to the desired vertical baseline.</p>
+<p>The <em>advance height of a glyph</em> starts from the y coordinate of the glyph’s vertical origin and advances downwards. Its endpoint is at the y coordinate of the vertical origin of the next glyph in the run, by default. Metric-adjustment OpenType layout features such as Vertical Kerning ('vkrn') could modify the vertical advances in a manner similar to kerning in horizontal mode.</p>
+<h2 id="table-formats">Table formats</h2>
+<p>The overall structure of the vertical metrics table consists of two arrays shown below: the vMetrics array followed by an array of top side bearings. The top side bearing is measured relative to the top of the origin of glyphs, for vertical composition of ideographic glyphs.</p>
+<p>This table does not have a header, but does require that the number of glyphs included in the two arrays equals the total number of glyphs in the font.</p>
+<p>The number of entries in the vMetrics array is determined by the value of the numOfLongVerMetrics field of the vertical header table.</p>
+<p>The vMetrics array contains two values for each entry. These are the advance height and the top sidebearing for each glyph included in the array.</p>
+<p>In monospaced fonts, such as Courier or Kanji, all glyphs have the same advance height. If the font is monospaced, only one entry need be in the first array, but that one entry is required.</p>
+<p>The format of an entry in the vertical metrics array is given below.</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UFWORD</td>
+<td>advanceHeight</td>
+<td>The advance height of the glyph, in font design units.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>topSideBearing</td>
+<td>The top sidebearing of the glyph, in font design units.</td>
+</tr>
+</tbody>
+</table>
+<p>The second array is optional and generally is used for a run of monospaced glyphs in the font. Only one such run is allowed per font, and it must be located at the end of the font. This array contains the top sidebearings of glyphs not represented in the first array, and all the glyphs in this array must have the same advance height as the last entry in the vMetrics array. All entries in this array are therefore monospaced.</p>
+<p>The number of entries in this array is calculated by subtracting the value of numOfLongVerMetrics from the number of glyphs in the font. The sum of glyphs represented in the first array plus the glyphs represented in the second array therefore equals the number of glyphs in the font. The format of the top sidebearing array is given below.</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FWORD</td>
+<td>topSideBearing[]</td>
+<td>The top sidebearing of the glyph, in font design units.</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

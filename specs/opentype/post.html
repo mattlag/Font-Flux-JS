@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>post — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/post">https://learn.microsoft.com/en-us/typography/opentype/spec/post</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="post--postscript-table">post — PostScript Table</h1>
+<h2 id="overview">Overview</h2>
+<p>This table contains additional information needed to use OpenType™ fonts on PostScript printers. This includes certain data found in the FontInfo dictionary of Type 1 fonts and the PostScript names of all the glyphs. For more information about PostScript names, see the <a href="https://github.com/adobe-type-tools/agl-specification" data-linktype="external">Adobe Glyph List Specification</a>.</p>
+<p>Versions 1.0, 2.0, and 2.5 of the 'post' table are used only in fonts with TrueType or CFF version 2 outline data. Fonts with TrueType or CFF version 2 data may also use a version 3.0 'post' table. OpenType fonts with CFF version 1 outline data must only use a version 3.0 'post' table.</p>
+<h2 id="header">Header</h2>
+<p>The table begins as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a id="version"></a> Version16Dot16</td>
+<td>version</td>
+<td>0x00010000 for version 1.0<br>0x00020000 for version 2.0<br>0x00025000 for version 2.5 <em>(deprecated)</em><br>0x00030000 for version 3.0</td>
+</tr>
+<tr>
+<td><a id="italicAngle"></a> Fixed</td>
+<td>italicAngle</td>
+<td>Italic angle in counter-clockwise degrees from the vertical. Zero for upright text, negative for text that leans to the right (forward).</td>
+</tr>
+<tr>
+<td><a id="underlinePosition"></a> FWORD</td>
+<td>underlinePosition</td>
+<td>Suggested y-coordinate of the top of the underline.</td>
+</tr>
+<tr>
+<td><a id="underlineThickness"></a> FWORD</td>
+<td>underlineThickness</td>
+<td>Suggested values for the underline thickness. In general, the underline thickness should match the thickness of the underscore character (U+005F LOW LINE), and should also match the strikeout thickness, which is specified in the <a href="os2.html#ss" data-linktype="relative-path">OS/2</a> table.</td>
+</tr>
+<tr>
+<td><a id="isFixedPitch"></a> uint32</td>
+<td>isFixedPitch</td>
+<td>Set to 0 if the font is proportionally spaced, non-zero if the font is not proportionally spaced (i.e. monospaced).</td>
+</tr>
+<tr>
+<td><a id="minMemType42"></a> uint32</td>
+<td>minMemType42</td>
+<td>Minimum memory usage when an OpenType font is downloaded.</td>
+</tr>
+<tr>
+<td><a id="maxMemType42"></a> uint32</td>
+<td>maxMemType42</td>
+<td>Maximum memory usage when an OpenType font is downloaded.</td>
+</tr>
+<tr>
+<td><a id="minMemType1"></a> uint32</td>
+<td>minMemType1</td>
+<td>Minimum memory usage when an OpenType font is downloaded as a Type 1 font.</td>
+</tr>
+<tr>
+<td><a id="maxMemType1"></a> uint32</td>
+<td>maxMemType1</td>
+<td>Maximum memory usage when an OpenType font is downloaded as a Type 1 font.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em> The PostScript language defines the UnderLinePosition FontInfo key as specifying the distance from the baseline to the center of the underline. This definition is not used in the 'post' table.</p>
+</blockquote>
+<p>The last four entries in the table are present because PostScript drivers can do better memory management if the virtual memory (VM) requirements of a downloadable OpenType font are known before the font is downloaded. This information should be supplied if known. If it is not known, set the value to zero. The driver will still work but will be less efficient.</p>
+<p>Maximum memory usage is minimum memory usage plus maximum runtime memory use. Maximum runtime memory use depends on the maximum band size of any bitmap potentially rasterized by the font scaler. Runtime memory usage could be calculated by rendering characters at different point sizes and comparing memory use.</p>
+<p>If the version is 1.0 or 3.0, the table ends here. The additional entries for versions 2.0 and 2.5 are shown below. A version 4.0 is defined by Apple for use in their platforms (see <a href="https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6post.html" data-linktype="external">Apple’s specification</a>), but is not supported in OpenType.</p>
+<h2 id="version-10">Version 1.0</h2>
+<p>This version is used in order to supply PostScript glyph names when the font file contains exactly the 258 glyphs in the standard Macintosh TrueType font file (see 'post' Format 1 in <a href="https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6post.html" data-linktype="external">Apple’s specification</a> for a list of the 258 Macintosh glyph names), and the font does not otherwise supply glyph names. As a result, the glyph names are taken from the system with no storage required by the font.</p>
+<h2 id="version-20">Version 2.0</h2>
+<p>Version 2.0 is used for fonts that use glyph names that are not in the set of Macintosh glyph names. A given font may map some of its glyphs to the standard Macintosh glyph names, and some to its own custom names. A version 2.0 'post' table can be used in fonts with TrueType or CFF version 2 outlines.</p>
+<p>For version 2.0, the following fields are appended at the end of the header:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>numGlyphs</td>
+<td>Number of glyphs (this should be the same as numGlyphs in 'maxp' table).</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>glyphNameIndex[numGlyphs]</td>
+<td>Array of indices into the string data. See below for details.</td>
+</tr>
+<tr>
+<td>uint8</td>
+<td>stringData[variable]</td>
+<td>Storage for the string data.</td>
+</tr>
+</tbody>
+</table>
+<p>This font file contains glyphs not in the standard Macintosh set, or the ordering of the glyphs in the font file differs from the standard Macintosh set. The glyphNameIndex array maps glyph IDs to a glyph name index. If the glyph name index is between 0 and 257 (inclusive), treat that index as a glyph index in the Macintosh standard glyph set and use the Macintosh glyph name. If the glyph name index is between 258 and 65535, then subtract 258 and use that to index into the list of Pascal strings at the end of the table.</p>
+<p>For example, suppose glyphNameIndex[302] (for glyph ID 302) is 217: since that glyph name index is less than 258, the glyph name is the Macintosh glyph name for glyph ID 217. Suppose glyphNameIndex[408] is 262: subtracting 258, the difference is 4; the glyph name for that glyph is the fifth string (index 4, base 0) in the string data.</p>
+<p>The string data extends from the last version 2.0 header field to the end of the table. Strings are in Pascal string format, meaning that the first byte of a given string is a length: the number of characters in that string. The length byte is not included; for example, a length byte of 8 indicates that the 8 bytes following the length byte comprise the string character data. To find the string for a given glyph name index, start with the first length byte, advance that number of bytes to find the length byte for the next string entry, and so on.</p>
+<p>Glyph name strings are encoded in ASCII. Valid characters are limited to A–Z, a–z, 0–9, “.” (FULL STOP), and “_” (LOW LINE). Names must be no longer than 63 characters; some older implementations can assume a length limit of 31 characters.</p>
+<p>If you do not want to associate a PostScript name with a particular glyph, use 0, which refers to the name <em>.notdef</em>, as the glyphNameIndex entry for that glyph ID.</p>
+<h2 id="version-25">Version 2.5</h2>
+<p>Version 2.5 of the 'post' table is deprecated.</p>
+<p>This version provides a space-saving table for fonts  containing TrueType outlines which contain a pure subset of, or a simple reordering of, the standard Macintosh glyph set.</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uint16</td>
+<td>numGlyphs</td>
+<td>Number of glyphs.</td>
+</tr>
+<tr>
+<td>int8</td>
+<td>offset[numGlyphs]</td>
+<td>Difference between the glyph index and the standard order of the glyph.</td>
+</tr>
+</tbody>
+</table>
+<p>This version has been used in some legacy fonts with TrueType outlines that contain only glyphs in the standard Macintosh glyph set but that have those glyphs arranged in a non-standard order or that are missing some glyphs. The table contains one byte for each glyph in the font file. The byte is treated as a signed offset that maps the glyph index used in the font into the standard glyph index. For example, assuming that the font contains the three glyphs A, B, and C which are the 37th, 38th, and 39th glyphs in the standard ordering, the 'post' table would contain the bytes +36, +36, +36.</p>
+<h2 id="version-30">Version 3.0</h2>
+<p>This version makes it possible to create a font that is not burdened with a large set of glyph names. A version 3.0 'post' table can be used by OpenType fonts with TrueType or CFF (version 1 or 2) data.</p>
+<p>This version specifies that no PostScript name information is provided for the glyphs in this font file. The printing behavior of this version on PostScript printers is unspecified, except that it should not result in a fatal or unrecoverable error. Some drivers may print nothing; other drivers may attempt to print using a default naming scheme.</p>
+<blockquote>
+<p><em>Note:</em> Windows makes use of the italic angle value in the 'post' table but does not actually require any glyph names to be stored as Pascal strings.</p>
+</blockquote>
+<h2 id="post-table-and-opentype-font-variations">'post' Table and OpenType Font Variations</h2>
+<p>In a variable font, various font-metric values within the 'post' table may need to be adjusted for different variation instances. Variation data for 'post' entries can be provided in the <a href="mvar.html" data-linktype="relative-path">metrics variations (MVAR)</a> table. Different 'post' entries are associated with particular variation data in the MVAR table using value tags, as follows:</p>
+<table>
+<thead>
+<tr>
+<th>'post' entry</th>
+<th>Tag</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>underlinePosition</td>
+<td>'undo'</td>
+</tr>
+<tr>
+<td>underlineThickness</td>
+<td>'unds'</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em>
+The italicAngle value is not adjusted by variation data since this corresponds to the 'slnt' variation axis that can be used to define a font’s variation space. Appropriate post.italicAngle values for a variation instance can be derived from the 'slnt' user coordinates that are used to select a particular variation instance. See the discussion of the 'slnt' axis in the <a href="dvaraxisreg.html" data-linktype="relative-path">OpenType Design-Variation Axis Tag Registry</a> for details on the relationship between italicAngle and the 'slnt' axis.</p>
+</blockquote>
+<p>For general information on OpenType Font Variations, see the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+
+</body>
+</html>

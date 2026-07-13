@@ -1,0 +1,1521 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>base — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/base">https://learn.microsoft.com/en-us/typography/opentype/spec/base</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="base--baseline-table">BASE — Baseline Table</h1>
+<p><a id="overview"></a></p>
+<h2 id="overview">Overview</h2>
+<p>The Baseline table (BASE) provides information used to align glyphs of different scripts and sizes in a line of text, whether the glyphs are in the same font or in different fonts. To improve text layout, the Baseline table also provides minimum (min) and maximum (max) glyph extent values for each script, language system, or feature in a font.</p>
+<p>Lines of text composed with glyphs of different scripts and point sizes need adjustment to correct interline spacing and alignment. For example, glyphs designed to be the same point size often differ in height and depth from one font to another (see figure 5a). This variation can produce interline spacing that looks too large or too small, and diacritical marks, math symbols, subscripts, and superscripts may be clipped.</p>
+<figure><img alt="Incorrect alignment of Latin and Kanji glyphs" src="media/base_fig5a.gif" data-linktype="relative-path"><figcaption>Figure 5a. Incorrect alignment of glyphs from Latin and Kanji (Latin dominant)</figcaption></figure>
+<p>In addition, different baselines can cause text lines to waver visually as glyphs from different scripts are placed next to one another. For example, ideographic scripts position all glyphs on a low baseline. With Latin scripts, however, the baseline is higher, and some glyphs descend below it. Finally, several Indic scripts use a high “hanging baseline” to align the tops of the glyphs.</p>
+<p>To solve these composition problems, the BASE table recommends baseline positions and min/max extents for each script (see figure 5b). Script min/max extents can be modified for particular language systems or features.</p>
+<figure><img alt="Correct alignment of Latin and Kanji glyphs" src="media/base_fig5b.gif" data-linktype="relative-path"><figcaption>Figure 5b. Proper alignment of glyphs from Latin and Kanji (Latin dominant)</figcaption></figure>
+<p><a id="baselineVals"></a></p>
+<h3 id="baseline-values">Baseline values</h3>
+<p>The BASE table uses a model that assumes one script at one size is the “dominant run” during text processing—that is, all other baselines are defined in relation to this the dominant run.</p>
+<p>For example, Latin glyphs and the ideographic Kanji glyphs have different baselines. If a Latin script of a particular size is specified as the dominant run, then all Latin glyphs of all sizes will be aligned on the roman baseline, and all Kanji glyphs will be aligned on the lower ideographic baseline defined for use with Latin text. As a result, all glyphs will look aligned within each line of text.</p>
+<p>The BASE table supplies recommended baseline positions; a client can specify others. For instance, the client may want to assign baseline positions different from those in the font.</p>
+<figure><img alt="Comparing Latin and Kanji baselines" src="media/base_fig5c.png" data-linktype="relative-path"><figcaption>Figure 5c. Comparing Latin and Kanji baselines, with characters aligned according to the dominant run</figcaption></figure>
+<p>Within the BASE table, different baseline types are identified using <a href="baselinetags" data-linktype="relative-path">baseline tags</a>, described in the OpenType Layout tag registry. Positioning for each baseline type is specified on a script-by-script basis; the baseline coordinate values to be used are those for the script of the dominant run.</p>
+<p><a id="minMaxVals"></a></p>
+<h3 id="minmax-extent-values">Min/max extent values</h3>
+<p>The BASE table gives clients the option of using script, language system, or feature-specific extent values to improve composition (see figure 5c). For example, suppose a font contains glyphs in Latin and Arabic scripts, and the min/max extents defined for the Arabic script are larger than the Latin extents. The font also supports Urdu, a language system that includes specific variants of the Arabic glyphs, and some Urdu variants require larger min/max extents than the default Arabic extents. To accommodate the Urdu glyphs, the BASE table can define language-specific min/max extent values that will override the default Arabic extents-but only when rendering Urdu glyphs.</p>
+<p>The BASE table also can define feature-specific min/max values that apply only when a particular feature is enabled. Suppose that the font described earlier also supports the Farsi language system, which has one feature that requires a minor alteration of the Arabic script extents to display properly. The BASE table can specify these extent values and apply them only when that feature is enabled in the Farsi language.</p>
+<p><a id="variations"></a></p>
+<h2 id="base-table-and-opentype-font-variations">BASE table and OpenType Font Variations</h2>
+<p>OpenType Font Variations allow a single font to support many design variations along one or more axes of design variation. For example, a font with weight and width variations might support weights from thin to black, and widths from ultra-condensed to ultra-expanded. For general information on OpenType Font Variations, see the chapter <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p>When different variation instances are selected, the design of individual glyphs changes, and the metric characteristics of the font as a whole may also change. As a result, corresponding changes may also be required for metric values in the BASE table.</p>
+<p>Metrics in the BASE table are expressed directly in BaseCoord tables using explicit X or Y font-unit values. In a variable font, these X and Y values apply to the default instance and may need to be adjusted for the current variation instance. This is done using variation data with processes similar to those used for glyph outlines and other font data, as described in the <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a> chapter.</p>
+<blockquote>
+<p><em>Note:</em> Some BASE metrics can be expressed indirectly by reference to specific glyph outline points. In a variable font, use of glyph points to specify a metric value would require invoking the rasterizer to process the glyph-outline variation data in order to obtain the adjusted position of the point before the BASE metric value can be used. This may have a significant, negative impact on performance of text-layout processing. For this reason, it is recommended that, in a variable font, any BASE metric values that require adjustment for different variation instances should always be expressed directly as X and Y values.</p>
+</blockquote>
+<p>Variation data for adjustment of BASE values is stored within an <em>ItemVariationStore</em> table within the BASE table. The item variation store and constituent formats are described in the chapter, <a href="otvarcommonformats.html" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>. The item variation store is also used in the <a href="gdef.html" data-linktype="relative-path">GDEF</a> table, as well as in the <a href="mvar.html" data-linktype="relative-path">MVAR</a> and other tables, but is different from the formats for variation data used in the <a href="cvar.html" data-linktype="relative-path">'cvar'</a> or <a href="gvar.html" data-linktype="relative-path">'gvar'</a> tables.</p>
+<p>The variation data within an item variation store is comprised of a number of adjustment deltas that get applied to the default values of target items for variation instances within particular regions of the font’s variation space. The ItemVariationStore format use <em>delta-set indices</em> to reference variation delta data for particular target, font-data items to which they are applied. Data external to the item variation store identifies the delta-set index to be used for each given target item. Within the BASE table, these indices are specified within <a href="chapter2.html#device-and-variationindex-tables" data-linktype="relative-path"><em>VariationIndex</em> tables</a>, with one VariationIndex table referenced for each item that requires variation adjustment.</p>
+<p>Note that the VariationIndex table is a variant of a Device table, with a distinct format value. (For full details on the Device and VariationIndex table formats, see the OpenType Layout Common Table Formats chapter.) This is done so that the default instance of a variable font can be compatible with applications that do not support Font Variations. As a result, variable fonts cannot use device tables. A VariationIndex table will be ignored in applications that do not support Font Variations, or if the font is not a variable font.</p>
+<p>The ItemVariationStore format uses a two-level organization for variation data: a store can have multiple <em>ItemVariationData</em> subtables, and each subtable has multiple delta-set rows. A delta-set index is a two-part index: an outer index that selects a particular item variation data subtable, and an inner index that selects a particular delta-set row within that subtable. A VariationIndex table specifies both the outer and inner portions of the delta-set index.</p>
+<p><a id="organization"></a></p>
+<h2 id="base-table-organization">BASE table organization</h2>
+<p>The BASE table begins with offsets to Axis tables that describe layout data for the horizontal and vertical layout directions of text. A font can provide layout data for both text directions or for only one text direction:</p>
+<ul>
+<li>The horizontal Axis table (“HorizAxis”) defines information used to lay out text horizontally. All baseline and min/max values refer to the Y direction.</li>
+<li>The vertical Axis table (“VertAxis”) defines information used to lay out text vertically. All baseline and min/max values refer to the X direction.</li>
+</ul>
+<p>In a variable font, the offsets to axis tables may be followed by an offset to an ItemVariationStore table, which is used to provide variation data for adjustment of BASE metric values for different variation instances within the font’s variation space.</p>
+<p>Figure 5d shows how the BASE table is organized.</p>
+<figure><img alt="BASE table high-level organization" src="media/base_fig5d.png" data-linktype="relative-path"><figcaption>Figure 5d. High-level organization of BASE table</figcaption></figure>
+<p><a id="textDirection"></a></p>
+<h3 id="text-direction">Text direction</h3>
+<p>The HorizAxis and VertAxis tables organize layout information by script in BaseScriptList tables. A BaseScriptList enumerates all scripts in the font that are written in a particular direction (horizontal or vertical).</p>
+<p>For example, consider a Japanese font that contains Kanji, Kana, and Latin scripts. Because all three scripts are rendered horizontally, all three are defined in the BaseScriptList of the HorizAxis table. Kanji and Kana also are rendered vertically, so those two scripts are defined in the BaseScriptList of the VertAxis table, too.</p>
+<p>The same baseline tags may be used for both horizontal and vertical axes. For example, the 'romn' tag description used for the vertical axis would indicate the baseline of rotated Latin text.</p>
+<p><a id="baselineData"></a></p>
+<h3 id="baseline-data">Baseline data</h3>
+<p>Each Axis table also references a BaseTagList, which identifies all the baselines for all scripts written in the same direction (horizontal or vertical). The BaseTagList may also include baseline tags for scripts supported in other fonts.</p>
+<p>Each script in a BaseScriptList is represented by a BaseScriptRecord. This record references a BaseScript table, which contains layout data for the script. In turn, the BaseScript table references a BaseValues table, which contains baseline information, and several MinMax tables that define min/max extent values.</p>
+<p>The BaseValues table specifies the coordinate values for all baselines in the BaseTagList. In addition, it identifies one of these baselines as the default baseline for the script. As glyphs in a script are scaled, they grow or shrink from the script’s default baseline position. Each baseline can have unique coordinates. This contrasts with TrueType 1.0, which implies a single, fixed baseline for all scripts in a font. With the OpenType™ Layout tables, each script can be aligned independently, although more than one script may use the same baseline values.</p>
+<p>Baseline coordinates for scripts in the same font must be specified in relation to each other for correct alignment of the glyphs. Consider the font, discussed earlier, containing both Latin and Kanji glyphs. If the BaseTagList of the HorizAxis table specifies two baselines, the roman and the ideographic, then the layout data for both the Latin and Kanji scripts will specify coordinate positions for both baselines:</p>
+<ul>
+<li>The BaseValues table for the Latin script will give coordinates for both baselines and specify the roman baseline as the default.</li>
+<li>The BaseValues table for the Kanji script will give coordinates for both baselines and specify the ideographic baseline as the default.</li>
+</ul>
+<p><a id="minMaxExtents"></a></p>
+<h3 id="minmax-extents">Min/max extents</h3>
+<p>The BaseScript table can define minimum and maximum extent values for each script, language system, or feature. These values are distinct from the min/max extent values recorded for the font as a whole in the <a href="head.html" data-linktype="relative-path">'head'</a>, <a href="hhea.html" data-linktype="relative-path">'hhea'</a>, <a href="vhea.html" data-linktype="relative-path">'vhea'</a>, and <a href="os2.html" data-linktype="relative-path">OS/2</a> tables. These extent values appear in three tables:</p>
+<ul>
+<li>A default MinMax table defines the default min/max extents for the script.</li>
+<li>A script- and language-specific MinMax table, referenced through a BaseLangSys record, which specifies min/max extents to accommodate the glyphs in a specific language system.</li>
+<li>A FeatMinMax record, within a MinMax table, provides min/max extent values to support feature-specific glyph actions.</li>
+</ul>
+<blockquote>
+<p><em>Note:</em> Language-system or feature-specific extent values could be essential to define some fonts. However, the default min/max extent values specified for each script should usually be enough to support high-quality text layout.</p>
+</blockquote>
+<p>The actual baseline and min/max extent values used by the BASE table reside in BaseCoord tables. Three formats are defined for BaseCoord table data. All formats define single X or Y coordinate values in design units, but two formats support fine adjustments to these values based on a contour point or a Device table.</p>
+<p>The rest of this chapter describes all the tables defined within the BASE table. Sample tables and lists that illustrate typical data for a font are supplied at the end of the chapter.</p>
+<h2 id="base-table-structures">BASE table structures</h2>
+<p><a id="header"></a></p>
+<h3 id="base-header">BASE Header</h3>
+<p>The BASE table begins with a header that starts with a version number. Two versions are defined. Version 1.0 contains offsets to horizontal and vertical Axis tables (HorizAxis and VertAxis). Version 1.1 also includes an offset to an ItemVariationStore table.</p>
+<p>Each Axis table stores all baseline information and min/max extents for one layout direction. The HorizAxis table contains Y values for horizontal text layout; the VertAxis table contains X values for vertical text layout.</p>
+<p>A font may supply information for both layout directions. If a font has values for only one text direction, the Axis table offset value for the other direction will be set to NULL.</p>
+<p>The optional ItemVariationStore table is used in variable fonts to provide variation data for BASE metric values within the Axis tables.</p>
+<p>Example 1 at the end of this chapter shows a sample BASE Header.</p>
+<p><a id="header_10"></a></p>
+<p><em>BASE Header, version 1.0</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion_10">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version of the BASE table, = 1.</td>
+</tr>
+<tr id="minorVersion_10">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version of the BASE table, = 0&lt;./td&gt;
+</td></tr>
+<tr id="horizAxis_10">
+<td>Offset16</td>
+<td>horizAxisOffset</td>
+<td>Offset to horizontal Axis table, from beginning of BASE table (may be NULL).</td>
+</tr>
+<tr id="vertAxis_10">
+<td>Offset16</td>
+<td>vertAxisOffset</td>
+<td>Offset to vertical Axis table, from beginning of BASE table (may be NULL).</td>
+</tr>
+</tbody>
+</table>
+<p><a id="header_11"></a></p>
+<p><em>BASE Header, version 1.1</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion_11">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version of the BASE table, = 1.</td>
+</tr>
+<tr id="minorVersion_11">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version of the BASE table, = 1.</td>
+</tr>
+<tr id="horizAxis_11">
+<td>Offset16</td>
+<td>horizAxisOffset</td>
+<td>Offset to horizontal Axis table, from beginning of BASE table (may be NULL).</td>
+</tr>
+<tr id="vertAxis_11">
+<td>Offset16</td>
+<td>vertAxisOffset</td>
+<td>Offset to vertical Axis table, from beginning of BASE table (may be NULL).</td>
+</tr>
+<tr id="itemVarStore_11">
+<td>Offset32</td>
+<td>itemVarStoreOffset</td>
+<td>Offset to ItemVariationStore table, from beginning of BASE table (may be null).</td>
+</tr>
+</tbody>
+</table>
+<p><a id="axisTables"></a></p>
+<h3 id="axis-table">Axis table</h3>
+<p>An Axis table is used to render scripts either horizontally or vertically. It consists of offsets, measured from the beginning of the Axis table, to a BaseTagList and a BaseScriptList:</p>
+<ul>
+<li>The BaseScriptList enumerates all scripts rendered in the text layout direction.</li>
+<li>The BaseTagList enumerates all baselines used to render the scripts in the text layout direction. If no baseline data is available for a text direction, the offset to the corresponding BaseTagList may be set to NULL.</li>
+</ul>
+<p>Example 1 at the end of this chapter shows an example of an Axis table.</p>
+<p><a id="axisTable"></a></p>
+<p><em>Axis table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="baseTagListOffset">
+<td>Offset16</td>
+<td>baseTagListOffset</td>
+<td>Offset to BaseTagList table, from beginning of Axis table (may be NULL).</td>
+</tr>
+<tr id="baseScriptListOffset">
+<td>Offset16</td>
+<td>baseScriptListOffset</td>
+<td>Offset to BaseScriptList table, from beginning of Axis table.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="baseTagList"></a></p>
+<h3 id="basetaglist-table">BaseTagList table</h3>
+<p>The BaseTagList table identifies the baselines for all scripts in the font that are rendered in the same text direction. Each baseline is identified with a 4-byte baseline tag. The <a href="baselinetags" data-linktype="relative-path">Baseline Tags</a> section of the OpenType Layout Tag Registry lists currently registered baseline tags. The BaseTagList can define any number of baselines, and it may include baseline tags for scripts supported in other fonts.</p>
+<p>Each script in the BaseScriptList table must designate one of these BaseTagList baselines as its default, which a layout engine uses to align all glyphs in the script. Even though the BaseScriptList and the BaseTagList are defined independently of one another, the BaseTagList typically includes a tag for each different default baseline needed to render the scripts in the layout direction. If some scripts use the same default baseline, the BaseTagList needs to list the common baseline tag only once.</p>
+<p>The BaseTagList table consists of an array of baseline identification tags (baselineTags), listed alphabetically, and a count of the total number of baseline Tags in the array (baseTagCount).</p>
+<p>Example 1 at the end of this chapter shows a sample BaseTagList table.</p>
+<p><a id="baseTagListTable"></a></p>
+<p><em>BaseTagList table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="baseTagCount">
+<td>uint16</td>
+<td>baseTagCount</td>
+<td>Number of baseline identification tags in this text direction — may be zero (0).</td>
+</tr>
+<tr id="baselineTags">
+<td>Tag</td>
+<td>baselineTags[baseTagCount]</td>
+<td>Array of 4-byte baseline identification tags — must be in alphabetical order.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="baseScriptList"></a></p>
+<h3 id="basescriptlist-table">BaseScriptList table</h3>
+<p>The BaseScriptList table identifies all scripts in the font that are rendered in the same layout direction. If a script is not listed here, then the text-processing client will render the script using the layout information specified for the entire font.</p>
+<p>For each script listed in the BaseScriptList table, a BaseScriptRecord must be defined that identifies the script and references its layout data. BaseScriptRecords are stored in the baseScriptRecords array, ordered alphabetically by the baseScriptTag in each record. The baseScriptCount specifies the total number of BaseScriptRecords in the array.</p>
+<p>Example 1 at the end of this chapter shows a sample BaseScriptList table.</p>
+<p><a id="baseScriptListTable"></a></p>
+<p><em>BaseScriptList table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="baseScriptCount">
+<td>uint16</td>
+<td>baseScriptCount</td>
+<td>Number of BaseScriptRecords defined.</td>
+</tr>
+<tr id="baseScriptRecords">
+<td>BaseScriptRecord</td>
+<td>baseScriptRecords[baseScriptCount]</td>
+<td>Array of BaseScriptRecords, in alphabetical order by baseScriptTag.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="baseScriptRec"></a></p>
+<p>A BaseScriptRecord contains a script identification tag (baseScriptTag), which must be identical to the ScriptTag used to define the script in the ScriptList of a GSUB or GPOS table. Each record also must include an offset to a BaseScript table that defines the baseline and min/max extent data for the script.</p>
+<p>Example 1 at the end of this chapter shows a sample BaseScriptRecord.</p>
+<p><a id="baseScriptRecord"></a></p>
+<p><em>BaseScriptRecord</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="baseScriptTag">
+<td>Tag</td>
+<td>baseScriptTag</td>
+<td>4-byte script identification tag.</td>
+</tr>
+<tr id="baseScript">
+<td>Offset16</td>
+<td>baseScriptOffset</td>
+<td>Offset to BaseScript table, from beginning of BaseScriptList.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="baseScriptTable"></a></p>
+<h3 id="basescript-table">BaseScript table</h3>
+<p>A BaseScript table organizes and specifies the baseline data and min/max extent data for one script. Within a BaseScript table, the BaseValues table contains baseline information, and one or more MinMax tables contain min/max extent data.</p>
+<p>The BaseValues table identifies the default baseline for the script and lists coordinate positions for each baseline named in the corresponding BaseTagList. Each script can assign a different position to each baseline, so each script can be aligned independently in relation to any other script. (For more details, see the BaseValues table description later in this chapter.)</p>
+<p>The default MinMax table defines the default min/max extent values for the script. (For details, see the MinMax table description below.) If no language system or feature defined for the script has an effect on the script’s default min/max extents, the layout engine uses the default min/max values for the script.</p>
+<p>Sometimes language-specific overrides for min/max extents are needed to properly render the glyphs in a specific language system. For example, a glyph substitution required in a language system can result in a glyph whose extents exceed the script’s default min/max extents. For each language system requiring different min/max extent values, a BaseLangSys record is required. The record should identify the language system (baseLangSysTag) and contain an offset to a MinMax table of language-specific extent coordinates.</p>
+<p>Feature-specific overrides for min/max extents also could be needed to accommodate the effects of glyph actions used to implement a specific feature. For example, superscript or subscript features may require changes to the default script or language system extents. Feature-specific extent values not limited to a specific language system may be specified in the default MinMax table. However, extent values used for a specific language system require a BaseLangSys record and a MinMax table. In addition to specifying coordinate data, the MinMax table may contain one or more FeatMinMax records that define the feature-specific min/max data.</p>
+<p>A BaseScript table has four components:</p>
+<ul>
+<li>An offset to a BaseValues table (baseValuesOffset). If no baseline data is defined for the script or the corresponding BaseTagList is set to NULL, the offset to the BaseValues table may be set to NULL.</li>
+<li>An offset to the default MinMax table. If no default min/max extent data is defined for the script, this offset may be set to NULL.</li>
+<li>An array of BaseLangSys records (baseLangSysRecords). The individual records stored in the BaseLangSys record array are listed alphabetically by baseLangSysTag.</li>
+<li>A count of the BaseLangSys records is included (baseLangSysCount). If no language system or language-specific feature min/max values are defined, the baseLangSysCount may be set to zero (0).</li>
+</ul>
+<p>Example 2 at the end of this chapter shows a sample BaseScript table.</p>
+<p><a id="baseScriptTable_format"></a></p>
+<p><em>BaseScript table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="baseValuesOffset">
+<td>Offset16</td>
+<td>baseValuesOffset</td>
+<td>Offset to BaseValues table, from beginning of BaseScript table (may be NULL).</td>
+</tr>
+<tr id="defaultMinMax">
+<td>Offset16</td>
+<td>defaultMinMaxOffset</td>
+<td>Offset to MinMax table, from beginning of BaseScript table (may be NULL).</td>
+</tr>
+<tr id="baseLangSysCount">
+<td>uint16</td>
+<td>baseLangSysCount</td>
+<td>Number of BaseLangSys records defined — may be zero (0).</td>
+</tr>
+<tr id="baseLangSysRecords">
+<td>BaseLangSys</td>
+<td>baseLangSysRecords[baseLangSysCount]</td>
+<td>Array of BaseLangSys records, in alphabetical order by BaseLangSysTag.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="baseLangSysRec"></a></p>
+<p>A BaseLangSys record defines min/max extents for a language system or a language-specific feature. Each record contains an identification tag for the language system (baseLangSysTag) and an offset to a MinMax table (MinMax) that defines extent coordinate values for the language system and references feature-specific extent data.</p>
+<p>Example 2 at the end of this chapter shows a BaseLangSys record.</p>
+<p><a id="baseLangSysRecord"></a></p>
+<p><em>BaseLangSys record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="baseLangSysTag">
+<td>Tag</td>
+<td>baseLangSysTag</td>
+<td>4-byte language system identification tag.</td>
+</tr>
+<tr id="minMax">
+<td>Offset16</td>
+<td>minMaxOffset</td>
+<td>Offset to MinMax table, from beginning of BaseScript table.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="baseValues"></a></p>
+<h3 id="basevalues-table">BaseValues table</h3>
+<p>For each script, a BaseValues table lists the coordinate positions of all baselines named in the baselineTags array of the corresponding BaseTagList and identifies a default baseline for that script.</p>
+<p>When the offset to the corresponding BaseTagList is NULL, a BaseValues table is not needed. However, if the offset is not NULL, then each script must specify coordinate positions for all baselines named in the BaseTagList.</p>
+<p>The default baseline of a script is the baseline used to lay out and align the glyphs for that script. The defaultBaselineIndex field in the BaseValues table identifies the default baseline for a script using an index into the baselineTags array of the BaseTagList table for the given text direction.</p>
+<p>For example, the Han and Latin scripts use different baselines to align text. If a font supports both of these scripts, the baselineTags array in the BaseTagList of the HorizAxis table will contain two tags, listed alphabetically: 'ideo' in baselineTags[0] for the Han ideographic baseline, and 'romn' in baselineTags[1] for the Latin baseline. The BaseValues table for the Latin script will specify the roman baseline as the default, so the defaultBaselineIndex in the BaseValues table for Latin will be “1” to indicate the roman baseline tag. In the BaseValues table for the Han script, the defaultBaselineIndex will be “0” to indicate the ideographic baseline tag.</p>
+<p>Two or more scripts may share a default baseline. For instance, if the font described above also supports the Cyrillic script, the baselineTags array does not need a distinct baseline tag for Cyrillic because Cyrillic and Latin share the same baseline. The defaultBaselineIndex defined in the BaseValues table for the Cyrillic script will specify “1” to indicate the roman baseline tag, listed in the second position in the baselineTags array.</p>
+<p>In addition to identifying the default baseline, the BaseValues table contains offsets to BaseCoord tables that list the coordinate positions for all baselines, including the default baseline, named in the associated baselineTags array. One BaseCoord table is defined for each baseline. The baseCoordCount field defines the total number of BaseCoord tables, which must equal the number of baseline tags in the BaseTagList table.</p>
+<p>Each baseline coordinate is defined as a single X or Y value in design units measured from the zero position on the relevant X or Y axis. For example, a BaseCoord table defined in the HorizAxis table will contain a Y value because horizontal baselines are positioned vertically. BaseCoord values may be negative. Each script may assign a different coordinate to each baseline.</p>
+<p>Offsets to each BaseCoord table are stored in the baseCoordOffsets array within the BaseValues table. The order of the stored offsets corresponds to the order of the tags listed in the baselineTags array of the BaseTagList. In other words, the first entry in the baseCoordOffsets array will define the offset to the BaseCoord table for the first baseline named in the baselineTags array, the second position will define the offset to the BaseCoord table for the second baseline named in the baselineTags array, and so on.</p>
+<p>Example 3 at the end of the chapter has two parts, one that shows a BaseValues table and one that shows a chart with different baseline positions defined for several scripts.</p>
+<p><a id="baseValues_format"></a></p>
+<p><em>BaseValues table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="defaultIndex">
+<td>uint16</td>
+<td>defaultBaselineIndex</td>
+<td>Index number of default baseline for this script — equals index position of baseline tag in baselineTags array of the BaseTagList.</td>
+</tr>
+<tr id="baseCoordCount">
+<td>uint16</td>
+<td>baseCoordCount</td>
+<td>Number of BaseCoord tables defined — should equal baseTagCount in the BaseTagList.</td>
+</tr>
+<tr id="baseCoords">
+<td>Offset16</td>
+<td>baseCoordOffsets[baseCoordCount]</td>
+<td>Array of offsets to BaseCoord tables, from beginning of BaseValues table — order matches baselineTags array in the BaseTagList.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="minMaxTable"></a></p>
+<h3 id="the-minmax-table-and-featminmax-record">The MinMax table and FeatMinMax record</h3>
+<p>The MinMax table specifies extents for scripts and language systems. It also contains an array of FeatMinMax records used to define feature-specific extents.</p>
+<p>Both the MinMax table and the FeatMinMax record define offsets to two BaseCoord tables: one that defines the mimimum extent value (minCoord), and one that defines the maximum extent value (maxCoord). Each extent value is a single X or Y value, depending upon the text direction, and is specified in design units. Coordinate values may be negative.</p>
+<p>Different tables define the min/max extent values for scripts, language systems, and features:</p>
+<ul>
+<li>Min/max extent values for a script are defined in the default MinMax table referenced in a BaseScript table.</li>
+<li>Within the default MinMax table, FeatMinMax records can specify extent values for features that apply to the entire script.</li>
+<li>Min/max extent values for a language system are defined in the MinMax table referenced in a BaseLangSys record.</li>
+<li>FeatMinMax records can be defined within the MinMax table for a language system to specify extent values for features applied within that language system.</li>
+</ul>
+<p>The FeatMinMax record contains a tag indicating a feature from the <a href="gsub.html" data-linktype="relative-path">GSUB</a> or <a href="gpos.html" data-linktype="relative-path">GPOS</a> table it relates to. Each feature that exceeds the default min/max values should have a FeatMinMax record. All FeatMinMax records are listed alphabetically by feature tag in an array (featMinMaxRecords) within the MinMax table. The featMinMaxCount field defines the total number of FeatMinMax records.</p>
+<p>Text-processing clients should use the following procedure to access the script, language system, and feature-specific extent data:</p>
+<ol>
+<li>Determine script extents in relation to the text content.</li>
+<li>Select language-specific extent values with respect to the language system in use.</li>
+<li>Have the application or user choose feature-specific extent values.</li>
+<li>If no extent values are defined for a language system or for language-specific features, use the default min/max extent values for the script.</li>
+</ol>
+<p>Example 4 at the end of this chapter has two parts. One shows MinMax tables and a FeatMinMax record for different script, language system, and feature extents. The second part shows how to define these tables when a language system needs feature-specific extent values for an obscure feature, but otherwise the language system and script extent values match.</p>
+<p><a id="minMaxTable_format"></a></p>
+<p><em>MinMax table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="minCoord_minMaxTable">
+<td>Offset16</td>
+<td>minCoordOffset</td>
+<td>Offset to BaseCoord table that defines the minimum extent value, from the beginning of MinMax table (may be NULL).</td>
+</tr>
+<tr id="maxCoord_minMaxTable">
+<td>Offset16</td>
+<td>maxCoordOffset</td>
+<td>Offset to BaseCoord table that defines maximum extent value, from the beginning of MinMax table (may be NULL).</td>
+</tr>
+<tr id="featMinMaxCount">
+<td>uint16</td>
+<td>featMinMaxCount</td>
+<td>Number of FeatMinMaxRecords — may be zero (0).</td>
+</tr>
+<tr id="featMinMaxRecords">
+<td>FeatMinMax</td>
+<td>featMinMaxRecords[featMinMaxCount]</td>
+<td>Array of FeatMinMax records, in alphabetical order by featureTag.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="featMinMaxRec_format"></a></p>
+<p><em>FeatMinMax record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="featureTableTag">
+<td>Tag</td>
+<td>featureTag</td>
+<td>4-byte feature identification tag — must match feature tag in FeatureList.</td>
+</tr>
+<tr id="minCoord_featMinMaxRec">
+<td>Offset16</td>
+<td>minCoordOffset</td>
+<td>Offset to BaseCoord table that defines the minimum extent value, from beginning of MinMax table (may be NULL).</td>
+</tr>
+<tr id="maxCoord_featMinMaxRec">
+<td>Offset16</td>
+<td>maxCoordOffset</td>
+<td>Offset to BaseCoord table that defines the maximum extent value, from beginning of MinMax table (may be NULL).</td>
+</tr>
+</tbody>
+</table>
+<p><a id="baseCoordTables"></a></p>
+<h3 id="basecoord-tables">BaseCoord tables</h3>
+<p>Within the BASE table, a BaseCoord table is used to specify a baseline, a min extent or a max extent. Each BaseCoord table defines one X or Y value:</p>
+<ul>
+<li>If defined within the HorizAxis table, then the BaseCoord table contains a Y value.</li>
+<li>If defined within the VertAxis table, then the BaseCoord table contains an X value.</li>
+</ul>
+<p>All values are defined in design units, which typically are scaled and rounded to the nearest integer when scaling the glyphs. Values may be negative.</p>
+<p>Three formats available for BaseCoord table data define single X or Y coordinate values in design units. Two of the formats also support fine adjustments to the X or Y values based on a contour point or a Device table. In a variable font, the third format uses a <a href="chapter2.html#device-and-variationindex-tables" data-linktype="relative-path"><em>VariationIndex</em> table</a> (a variant of a Device table), as needed, to reference variation data for adjustment of the X or Y values for the current variation instance.</p>
+<p><a id="baseCoordFormat1"></a></p>
+<h4 id="basecoord-format-1">BaseCoord format 1</h4>
+<p>The first BaseCoord format (BaseCoordFormat1) consists of a format identifier, followed by a single design unit coordinate that specifies the BaseCoord value. This format has the benefits of small size and simplicity, but the BaseCoord value cannot be hinted for fine adjustments at different sizes or device resolutions.</p>
+<p>Example 5 at the end of the chapter shows a sample of a BaseCoordFormat1 table.</p>
+<p><a id="basecoord_1"></a></p>
+<p><em>BaseCoordFormat1 table: Design units only</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="baseCoordFormat_1">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — format = 1.</td>
+</tr>
+<tr id="coordinate_1">
+<td>int16</td>
+<td>coordinate</td>
+<td>X or Y value, in design units.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="baseCoordFormat2"></a></p>
+<h4 id="basecoord-format-2">BaseCoord format 2</h4>
+<p>The second BaseCoord format (BaseCoordFormat2) specifies the BaseCoord value in design units, but also supplies a glyph index and a contour point for reference. During font hinting, the contour point on the glyph outline may move. The point’s final position after hinting provides the final value for rendering a given font size.</p>
+<blockquote>
+<p><em>Note:</em> Glyph positioning operations defined in the GPOS table do not affect the point’s final position.</p>
+</blockquote>
+<p>Example 6 shows a sample of a BaseCoordFormat2 table.</p>
+<p><a id="basecoord_2"></a></p>
+<p><em>BaseCoordFormat2 table: Design units plus contour point</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="baseCoordFormat_2">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — format = 2.</td>
+</tr>
+<tr id="coordinate_2">
+<td>int16</td>
+<td>coordinate</td>
+<td>X or Y value, in design units.</td>
+</tr>
+<tr id="referenceGlyph_2">
+<td>uint16</td>
+<td>referenceGlyph</td>
+<td>Glyph ID of control glyph.</td>
+</tr>
+<tr id="baseCoordPoint_2">
+<td>uint16</td>
+<td>baseCoordPoint</td>
+<td>Index of contour point on the reference glyph.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="baseCoordFormat3"></a></p>
+<h4 id="basecoord-format-3">BaseCoord format 3</h4>
+<p>The third BaseCoord format (BaseCoordFormat3) also specifies the BaseCoord value in design units, but, in a non-variable font, it uses a Device table rather than a contour point to adjust the value. This format offers the advantage of fine-tuning the BaseCoord value for any font size and device resolution. (For more information about Device tables, see the chapter, Common Table Formats.)</p>
+<p>In a variable font, BaseCoordFormat3 must be used to reference variation data to adjust the X or Y value for different variation instances, if needed. In this case, BaseCoordFormat3 specifies an offset to a <a href="chapter2.html#device-and-variationindex-tables" data-linktype="relative-path">VariationIndex table</a>, which is a variant of the Device table that is used for referencing variation data.</p>
+<blockquote>
+<p><em>Note:</em> While separate VariationIndex table references are required for each Coordinate value that requires variation, two or more values that require the same variation-data values can have offsets that point to the same VariationIndex table, and two or more VariationIndex tables can reference the same variation data entries.</p>
+</blockquote>
+<blockquote>
+<p><em>Note:</em> If no VariationIndex table is used for a particular X or Y value (the offset is zero, or a different BaseCoord format is used), then that value is used for all variation instances.</p>
+</blockquote>
+<p>Example 7 at the end of this chapter shows a sample of a BaseCoordFormat3 table.</p>
+<p><a id="baseCoord_3"></a></p>
+<p><em>BaseCoordFormat3 table: Design units plus Device or VariationIndex table</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="baseCoordFormat_3">
+<td>uint16</td>
+<td>format</td>
+<td>Format identifier — format = 3.</td>
+</tr>
+<tr id="coordinate_3">
+<td>int16</td>
+<td>coordinate</td>
+<td>X or Y value, in design units.</td>
+</tr>
+<tr id="deviceTable_3">
+<td>Offset16</td>
+<td>deviceOffset</td>
+<td>Offset to Device table (non-variable font) / Variation Index table (variable font) for X or Y value, from beginning of BaseCoord table (may be NULL).</td>
+</tr>
+</tbody>
+</table>
+<p><a id="itemVarStore"></a></p>
+<h3 id="itemvariationstore-table">ItemVariationStore table</h3>
+<p>The format and processing of the ItemVariationStore table and its constituent formats is described in the chapter, <a href="otvarcommonformats.html" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>. Specification of the interpolation algorithm used to derive values for particular variation instances is given in the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p>The ItemVariationStore contains adjustment-delta values arranged in one or more sets of deltas that are referenced using <em>delta-set indices</em>. For values that require variation adjustment, a delta-set index is used to reference the particular variation data needed for that target value. Within the BASE table, delta-set indices are provided in <em>VariationIndex</em> tables contained within a BaseCoordFormat3 table. For a description of the VariationIndex table, see the OpenType Layout Common Table Formats chapter. For details on use of VariationIndex tables within BaseCoord tables, see discussion earlier in this chapter.</p>
+<p><a id="examples"></a></p>
+<h2 id="base-table-examples">BASE table examples</h2>
+<p>The rest of this chapter describes and illustrates examples of all the BASE tables. All the examples reflect unique parameters described below, but the samples provide a useful reference for building tables specific to other situations.</p>
+<p>Most of the examples have three columns showing hex data, source, and comments.</p>
+<p><a id="example1"></a></p>
+<h3 id="example-1-base-header-axis-basetaglist-and-basescriptlist-tables-and-basescriptrecord">Example 1: BASE Header, Axis, BaseTagList and BaseScriptList tables, and BaseScriptRecord</h3>
+<p>Example 1 describes a sample font that contains four scripts: Cyrillic, Devanagari, Han, and Latin. All four scripts are rendered horizontally; only one script, Han, is rendered vertically. As a result, the BASE header gives offsets to two Axis tables: HorizAxis and VertAxis. Example 1 only shows data defined in the HorizAxis table.</p>
+<p>In the HorizAxis table, the BaseScriptList enumerates all four scripts. The BaseTagList table names three horizontal baselines for rendering these scripts: hanging, ideographic, and roman. The hanging baseline is the default for Devanagari, the ideographic baseline is the default for Han, and the roman baseline is the default for both Latin and Cyrillic.</p>
+<p>The VertAxis table (not shown) would be defined similarly: its BaseScriptList would enumerate one script, Han, and its BaseTagList would specify the vertically centered baseline for rendering the Han script.</p>
+<p><em>Example 1</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>BASEHeader</b><br>
+TheBASEHeader</td>
+<td>BASE table header definition</td>
+</tr>
+<tr>
+<td>00010000</td>
+<td>0x00010000</td>
+<td>Version</td>
+</tr>
+<tr>
+<td>0008</td>
+<td>HorizontalAxisTable</td>
+<td>Offset to HorizAxis table</td>
+</tr>
+<tr>
+<td>010C</td>
+<td>VerticalAxisTable</td>
+<td>Offset to VertAxis table
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>Axis</b><br>
+HorizontalAxisTable</td>
+<td>Axis table definition</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>HorizBaseTagList</td>
+<td>Offset to BaseTagList table</td>
+</tr>
+<tr>
+<td>0012</td>
+<td>HorizBaseScriptList</td>
+<td>Offset to BaseScriptList table
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseTagList</b><br>
+HorizBaseTagList</td>
+<td>BaseTagList table definition</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>baseTagCount</td>
+</tr>
+<tr>
+<td>68616E67</td>
+<td>'hang'</td>
+<td>baselineTags[0], in alphabetical order</td>
+</tr>
+<tr>
+<td>6964656F</td>
+<td>'ideo'</td>
+<td>baselineTags[1]</td>
+</tr>
+<tr>
+<td>726F6D6E</td>
+<td>'romn'</td>
+<td>baselineTags[2]</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseScriptList</b><br>
+HorizBaseScriptList</td>
+<td>BaseScriptList table definition</td>
+</tr>
+<tr>
+<td>0004</td>
+<td>4</td>
+<td>baseScriptCount</td>
+</tr>
+<tr>
+<td></td>
+<td>baseScriptRecords[0]</td>
+<td>Records in alphabetical order by baseScriptTag</td>
+</tr>
+<tr>
+<td>6379726C</td>
+<td>'cyrl'</td>
+<td>baseScriptTag: Cyrillic script</td>
+</tr>
+<tr>
+<td>001A</td>
+<td>HorizCyrillicBaseScriptTable</td>
+<td>Offset to BaseScript table for Cyrillic script</td>
+</tr>
+<tr>
+<td></td>
+<td>baseScriptRecords[1]</td>
+<td></td>
+</tr>
+<tr>
+<td>6465766E</td>
+<td>'devn'</td>
+<td>baseScriptTag: Devanagari script</td>
+</tr>
+<tr>
+<td>0060</td>
+<td>HorizDevanagariBaseScriptTable</td>
+<td>Offset to BaseScript table for Devanagari script</td>
+</tr>
+<tr>
+<td></td>
+<td>baseScriptRecords[2]</td>
+<td></td>
+</tr>
+<tr>
+<td>68616E69</td>
+<td>'hani'</td>
+<td>baseScriptTag: Han script</td>
+</tr>
+<tr>
+<td>008A</td>
+<td>HorizHanBaseScriptTable</td>
+<td>Offset to BaseScript table for Han script</td>
+</tr>
+<tr>
+<td></td>
+<td>baseScriptRecords[3]</td>
+<td></td>
+</tr>
+<tr>
+<td>6C61746E</td>
+<td>'latn'</td>
+<td>baseScriptTag: Latin script</td>
+</tr>
+<tr>
+<td>00B4</td>
+<td>HorizLatinBaseScriptTable</td>
+<td>Offset to BaseScript table for Latin script</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example2"></a></p>
+<h3 id="example-2-basescript-table-and-baselangsys-record">Example 2: BaseScript table and BaseLangSys record</h3>
+<p>Example 2 shows the BaseScript table and BaseLangSys record for the Cyrillic script, one of the four scripts included in the sample font described in Example 1. The BaseScript table specifies offsets to tables that contain the baseline and min/max extent data for Cyrillic. (The BaseScript tables for the other three scripts in the font would be defined similarly.) Again, the table specifies only the horizontal text-layout information.</p>
+<p>The HorizCyrillicBaseValues table contains the baseline information for the script, and the HorizCyrillicDefaultMinMax table contains the default script extents. In addition, a BaseLangSys record defines min/max extent data for the Russian language system.</p>
+<p><em>Example 2</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseScript</b><br>
+HorizCyrillicBaseScriptTable</td>
+<td>BaseScript table definition for Cyrillic script</td>
+</tr>
+<tr>
+<td>000C</td>
+<td>HorizCyrillicBaseValuesTable</td>
+<td>Offset to BaseValues table</td>
+</tr>
+<tr>
+<td>0022</td>
+<td>HorizCyrillicDefault<br>
+MinMaxTable</td>
+<td>Offset to default MinMax table — default script extents</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>baseLangSysCount — BaseLangSys records for language-specific extents</td>
+</tr>
+<tr>
+<td></td>
+<td>baseLangSysRecords[0]</td>
+<td>Records in alphabetical order by baseLangSysTag.</td>
+</tr>
+<tr>
+<td>52555320</td>
+<td>“RUS ”</td>
+<td>BaseLangSysTag, Russian language system</td>
+</tr>
+<tr>
+<td>0030</td>
+<td>HorizRussianMinMaxTable</td>
+<td>Offset to MinMax table — language-specific extents</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example3"></a></p>
+<h3 id="example-3-basevalues-table">Example 3: BaseValues table</h3>
+<p>Example 3 extends the BASE table definition for the Cyrillic script described in Examples 1 and 2. It contains two parts:</p>
+<ul>
+<li>Example 3A illustrates a fully defined BaseValues table for Cyrillic. The table includes the corresponding BaseCoord table definitions.</li>
+<li>Example 3B shows two different sets of baseline values that can be defined for each of the four scripts in the sample font.</li>
+</ul>
+<p>The examples show only horizontal text-layout data, and the font uses 2,048 design units/em.</p>
+<p><a id="example3a"></a></p>
+<h4 id="example-3a-basevalues-table-for-cyrillic">Example 3A: BaseValues table for Cyrillic</h4>
+<p>The BaseValues table of Example 3A identifies the default baseline for Cyrillic and specifies coordinate positions for each baseline listed in the BaseTagList shown in Example 1:</p>
+<ul>
+<li>The hanging baseline is the default for the Devanagari script, and it has the highest baseline position.</li>
+<li>The ideographic baseline is the default for the Han script, and it has the lowest baseline position.</li>
+<li>The roman baseline is the default for both the Latin and Cyrillic scripts, and its position lies between the hanging and ideographic baselines.</li>
+</ul>
+<p><em>Example 3A</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td></td>
+<td><b>BaseValues</b><br>
+HorizCyrillicBaseValuesTable</td>
+<td>BaseValues table definition for Cyrillic script</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>defaultBaselineIndex: BaseTagList index for roman baseline</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>baseCoordCount, equals baseTagCount</td>
+</tr>
+<tr>
+<td>000A</td>
+<td>HorizHangingBaseCoordForCyrl</td>
+<td>baseCoordOffsets[0]: offset to BaseCoord table for hanging baseline coordinate — order matches order of baselineTags array in BaseTagList</td>
+</tr>
+<tr>
+<td>000E</td>
+<td>HorizIdeographicBaseCoordForCyrl</td>
+<td>baseCoordOffsets[1]: offset to BaseCoord table for ideographic baseline coordinate</td>
+</tr>
+<tr>
+<td>0012</td>
+<td>HorizRomanBaseCoordForCyrl</td>
+<td>baseCoordOffsets[2]: offset to BaseCoord table for roman baseline coordinate
+</td>
+</tr>
+<tr>
+<td></td>
+<td><b>BaseCoordFormat1</b><br>
+HorizHangingBaseCoordForCyrl</td>
+<td>BaseCoord table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>05DC</td>
+<td>1500</td>
+<td>coordinate — Y value, in design units
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseCoordFormat1</b><br>
+HorizIdeographicBaseCoordForCyrl</td>
+<td>BaseCoord table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>FEE0</td>
+<td>-288</td>
+<td>coordinate — Y value, in design units
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseCoordFormat1</b><br>
+HorizRomanBaseCoordinateForCyrl</td>
+<td>BaseCoord table definition</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>coordinate — Y value, in design units</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example3b"></a></p>
+<h4 id="example-3b-baseline-values-for-four-scripts">Example 3B: Baseline values for four scripts</h4>
+<p>Example 3B shows two tables that contain baseline values for each of the four scripts in the sample font described in Example 1:</p>
+<ul>
+<li>The first table shows what might happen if the baseline values in all four scripts are designed consistently. Their respective BaseValues tables list identical baseline values with the roman baseline positioned at a Y value of zero (0), the ideographic baseline at -288, and the hanging baseline at 1500.</li>
+<li>The second table shows what might happen if the baseline values in the scripts are designed differently with the default baseline for each script at the zero (0) coordinate.</li>
+</ul>
+<p>Either method of assigning baseline values can be used in the BASE table.</p>
+<p><em>Example 3B: Identical baseline values</em></p>
+<table>
+<tbody>
+<tr>
+<th>Baseline type</th>
+<th>Han</th>
+<th>Latin</th>
+<th>Cyrillic</th>
+<th>Devanagari</th>
+</tr>
+<tr>
+<td>hanging</td>
+<td>1500</td>
+<td>1500</td>
+<td>1500</td>
+<td>1500</td>
+</tr>
+<tr>
+<td>roman</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>ideographic</td>
+<td>-288</td>
+<td>-288</td>
+<td>-288</td>
+<td>-288</td>
+</tr>
+</tbody>
+</table>
+<p><em>Example 3B: Assigned baseline values with default baselines at 0</em></p>
+<table>
+<tbody>
+<tr>
+<th>Baseline type</th>
+<th>Han</th>
+<th>Latin</th>
+<th>Cyrillic</th>
+<th>Devanagari</th>
+</tr>
+<tr>
+<td>hanging</td>
+<td>1788</td>
+<td>1500</td>
+<td>1500</td>
+<td>0</td>
+</tr>
+<tr>
+<td>roman</td>
+<td>288</td>
+<td>0</td>
+<td>0</td>
+<td>-1500</td>
+</tr>
+<tr>
+<td>ideographic</td>
+<td>0</td>
+<td>-288</td>
+<td>-288</td>
+<td>-1788</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example4"></a></p>
+<h3 id="example-4-minmax-table-and-featminmax-record">Example 4: MinMax table and FeatMinMax record</h3>
+<p>Example 4 shows MinMax table and FeatMinMax record definitions for the same Cyrillic script described in the previous example. It contains two parts:</p>
+<ul>
+<li>Example 4A defines tables with different script, language system, and feature extents.</li>
+<li>Example 4B shows these same table definitions written when the language system extents match the script extents, but an obscure feature of the language system requires feature-specific extents if that feature is implemented.</li>
+</ul>
+<p>The examples show only horizontal text-layout data, and the font uses 2,048 design units/em.</p>
+<p><a id="example4a"></a></p>
+<h4 id="example-4a-minmax-extents-for-cyrillic-script-russian-language-and-russian-language-feature">Example 4A: Min/Max extents for Cyrillic script, Russian language, and Russian language feature</h4>
+<p>Example 4A shows two MinMax tables and a FeatMinMax record for the Cyrillic script, along with sample BaseCoord tables. Only the minCoord extent data is included.</p>
+<p>The default MinMax table defines the default minimum and maximum extents for the Cyrillic script. Another MinMax table defines language-specific min/max extents for the Russian language system to accommodate the height and width of certain glyphs used in Russian. Also, a FeatMinMax record is used to specify min/max extents for a single feature in the Russian language system that substitutes a tall integral math symbol when required.</p>
+<p><em>Example 4A</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>MinMax</b><br>
+HorizCyrillicDefault<br>
+MinMaxTable</td>
+<td>Default MinMax table definition, Cyrillic script</td>
+</tr>
+<tr>
+<td>0006</td>
+<td>HorizCyrillic<br>
+MinCoordTable</td>
+<td>minCoordOffset — offset to BaseCoord table</td>
+</tr>
+<tr>
+<td>000A</td>
+<td>HorizCyrillic<br>
+MaxCoordTable</td>
+<td>maxCoordOffset — offset to BaseCoord table</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>featMinMaxCount: no default feature extents<br>
+featMinMaxRecords[] — no FeatMinMax records
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseCoordFormat1</b><br>
+HorizCyrillic<br>
+MinCoordTable</td>
+<td>BaseCoord table definition, default Cyrillic min extent coordinate</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>FF38</td>
+<td>-200</td>
+<td>coordinate — Y value, in design units
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseCoordFormat1</b><br>
+HorizCyrillic<br>
+MaxCoordTable</td>
+<td>BaseCoord table definition default Cyrillic max extent coordinate</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>0674</td>
+<td>1652</td>
+<td>coordinate — Y value, in design units
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>MinMax</b><br>
+HorizRussianMinMaxTable</td>
+<td>MinMax table definition, Russian language extents</td>
+</tr>
+<tr>
+<td>000E</td>
+<td>HorizRussianLangSys<br>
+MinCoordTable</td>
+<td>minCoordOffset — offset to BaseCoord table</td>
+</tr>
+<tr>
+<td>0012</td>
+<td>HorizRussianLangSys<br>
+MaxCoordTable</td>
+<td>maxCoordOffset — offset to BaseCoord table</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>featMinMaxCount</td>
+</tr>
+<tr>
+<td></td>
+<td>featMinMaxRecords[0]</td>
+<td>Records in alphabetical order by featureTag.</td>
+</tr>
+<tr>
+<td>7469746C</td>
+<td>'titl'</td>
+<td>featureTag: Titling<br>
+Feature must be same as Tag in FeatureList</td>
+</tr>
+<tr>
+<td>0016</td>
+<td>HorizRussianFeature<br>
+MinCoordTable</td>
+<td>minCoordOffset — offset to BaseCoord table</td>
+</tr>
+<tr>
+<td>001A</td>
+<td>HorizRussianFeature<br>
+MaxCoordTable</td>
+<td>maxCoordOffset — offset to BaseCoord table
+</td>
+</tr>
+<tr>
+<td></td>
+<td><b>BaseCoordFormat1</b><br>
+HorizRussianLangSys<br>
+MinCoordTable</td>
+<td>BaseCoord table definition: Russian language min extent coordinate</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>FF08</td>
+<td>-248</td>
+<td>coordinate — Y value, in design units<br>
+Increased min extent beyond default Cyrillic min extent
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseCoordFormat1</b><br>
+HorizRussianLangSys<br>
+MaxCoordTable</td>
+<td>BaseCoord table definition: Russian language feature max extent coordinate</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>06A4</td>
+<td>1700</td>
+<td>coordinate — Y value, in design units<br>
+Increased max extent beyond default Cyrillic max extent
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseCoordFormat1</b><br>
+HorizRussianFeature<br>
+MinCoordTable</td>
+<td>BaseCoord table definition: Russian language min extent coordinate</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design Units Only</td>
+</tr>
+<tr>
+<td>FED8</td>
+<td>-296</td>
+<td>coordinate — Y value, in design units<br>
+Increased min extent beyond default Cyrillic script and Russian language min extents
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseCoordFormat1</b><br>
+HorizRussianFeature<br>
+MaxCoordTable</td>
+<td>BaseCoord table definition: Russian language feature Max extent coordinate</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>06D8</td>
+<td>1752</td>
+<td>coordinate — Y value, in design units<br>
+Increased max extent beyond default Cyrillic script and Russian language max extents</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example4b"></a></p>
+<h4 id="example-4b-minmax-extents-for-cyrillic-script-and-russian-language-feature">Example 4B: Min/Max extents for Cyrillic script and Russian language feature</h4>
+<p>A particular language system does not need to define min/max extent coordinates if its extents match the default extents defined for the script. However, an obscure or infrequently used feature within the language system may require feature-specific extent values for proper rendering.</p>
+<p>Example 4B shows the MinMax table and FeatMinMax record definitions for this situation. The example also includes a BaseScript table, but not a BaseValues table since it is not relevant in this example. The example shows horizontal text layout extents for the Cyrillic script and feature-specific extents for one feature in the Russian language system. Much of the data is repeated from Example 4A and modified here for comparison.</p>
+<p>The BaseScript table includes a DefaultMinMax table for the Cyrillic script and a BaseLangSys record that defines a BaseLangSysTag and an offset to a MinMax table for the Russian language. The MinMax table includes a FeatMinMax record and specifies a FeatMinMaxCount, but both the minCoord and maxCoord offsets in the MinMax table are set to NULL since no language-specific extent values are defined for Russian. The FeatMinMax record defines the min/max coordinates for the Russian feature and specifies the correct feature tag.</p>
+<p><em>Example 4B</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseScript</b><br>
+HorizCyrillicBaseScriptTable</td>
+<td>BaseScript table definition: Cyrillic script</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>NULL</td>
+<td>offset to BaseValues table</td>
+</tr>
+<tr>
+<td>000C</td>
+<td>HorizCyrillicDefault<br>
+MinMaxTable</td>
+<td>offset to default MinMax table for default script extents</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>baseLangSysCount</td>
+</tr>
+<tr>
+<td></td>
+<td>baseLangSysRecords[0]</td>
+<td>For Russian language-specific extents.</td>
+</tr>
+<tr>
+<td>52555320</td>
+<td>'RUS '</td>
+<td>baseLangSysTag: Russian</td>
+</tr>
+<tr>
+<td>001A</td>
+<td>HorizRussian<br>
+MinMaxTable</td>
+<td>offset to MinMax table for language-specific extents
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>MinMax</b><br>
+HorizCyrillicDefault<br>
+MinMaxTable</td>
+<td>Default MinMax table definition: Cyrillic script</td>
+</tr>
+<tr>
+<td>0006</td>
+<td>HorizCyrillic<br>
+MinCoordTable</td>
+<td>minCoordOffset — offset to BaseCoord table</td>
+</tr>
+<tr>
+<td>000A</td>
+<td>HorizCyrillic<br>
+MaxCoordTable</td>
+<td>maxCoordOffset — offset to BaseCoord table</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>0</td>
+<td>featMinMaxCount, no default feature extents<br>
+featMinMaxRecords[], no FeatMinMax records</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseCoordFormat1</b><br>
+HorizCyrillic<br>
+MinCoordTable</td>
+<td>BaseCoord table definition: default Cyrillic min extent coordinate</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>FF38</td>
+<td>-200</td>
+<td>coordinate — Y value, in design units
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseCoordFormat1</b><br>
+HorizCyrillic<br>
+MaxCoordTable</td>
+<td>BaseCoord table definition: default Cyrillic max extent coordinate</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>0674</td>
+<td>1652</td>
+<td>coordinate — Y value, in design units
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>MinMax</b><br>
+HorizRussian<br>
+MinMaxTable</td>
+<td>MinMax table definition for Russian language — no extent differences for Russian language itself</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>NULL</td>
+<td>minCoordOffset — offset to min BaseCoord table not defined, matches script default</td>
+</tr>
+<tr>
+<td>0000</td>
+<td>NULL</td>
+<td>maxCoordOffset — offset to max BaseCoord table not defined, matches script default</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>featMinMaxCount</td>
+</tr>
+<tr>
+<td></td>
+<td>featMinMaxRecords[0]</td>
+<td>Records in alphabetical order by featureTag</td>
+</tr>
+<tr>
+<td>7469746C</td>
+<td>'titl'</td>
+<td>featureTag: Titling<br>
+Feature must be same as Tag in FeatureList</td>
+</tr>
+<tr>
+<td>000E</td>
+<td>HorizRussianFeature<br>
+MinCoordTable</td>
+<td>minCoordOffset — offset to BaseCoord table</td>
+</tr>
+<tr>
+<td>0012</td>
+<td>HorizRussianFeature<br>
+MaxCoordTable</td>
+<td>maxCoordOffset — offset to BaseCoord table
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseCoordFormat1</b><br>
+HorizRussianFeature<br>
+MinCoordTable</td>
+<td>BaseCoord table definition: Russian 'titl' feature min extent coordinate</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>FED8</td>
+<td>-296</td>
+<td>coordinate — Y value, in design units<br>
+Increased min extent beyond default Cyrillic min extent</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseCoordFormat1</b><br>
+HorizRussianFeature<br>
+MaxCoordTable</td>
+<td>BaseCoord table definition: Russian 'titl' feature max extent coordinate</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>06D8</td>
+<td>1752</td>
+<td>coordinate — Y value, in design units<br>
+Increased max extent beyond default Cyrillic max extent</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example5"></a></p>
+<h3 id="example-5-basecoordformat1-table">Example 5: BaseCoordFormat1 table</h3>
+<p>Example 5 illustrates BaseCoordFormat1, which specifies single coordinate values in design units only. The font uses 2,048 design units/em. The example defines the default minimum extent coordinate for a math script.</p>
+<p><em>Example 5</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseCoordFormat1</b><br>
+HorizMathMinCoordTable</td>
+<td>Definition of BaseCoord table for Math min coordinate</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>format: design units only</td>
+</tr>
+<tr>
+<td>FEE8</td>
+<td>-280</td>
+<td>coordinate — Y value, in design units</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example6"></a></p>
+<h3 id="example-6-basecoordformat2-table">Example 6: BaseCoordFormat2 table</h3>
+<p>Example 6 illustrates the BaseCoord Format 2. Like Example 5, it specifies the minimum extent coordinate for a math script. With this format, the coordinate value depends on the final position of a specific contour point on one glyph, the integral math symbol, after hinting. Again, the value is in design units (2,048 units/em).</p>
+<p><em>Example 6</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseCoordFormat2</b><br>
+HorizMathMinCoordTable</td>
+<td>BaseCoord table definition for Math min coordinate</td>
+</tr>
+<tr>
+<td>0002</td>
+<td>2</td>
+<td>format: design units plus contour point</td>
+</tr>
+<tr>
+<td>FEE8</td>
+<td>-280</td>
+<td>coordinate — Y value, in design units</td>
+</tr>
+<tr>
+<td>0128</td>
+<td>IntegralSignGlyphID</td>
+<td>referenceGlyph: math integral sign</td>
+</tr>
+<tr>
+<td>0043</td>
+<td>67</td>
+<td>baseCoordPoint: glyph contour point index</td>
+</tr>
+</tbody>
+</table>
+<p><a id="example7"></a></p>
+<h3 id="example-7-basecoordformat3-table">Example 7: BaseCoordFormat3 table</h3>
+<p>Example 7 illustrates the BaseCoord Format 3. Like Examples 5 and 6, it specifies the minimum extent coordinate for a math script in design units (2,048 units/em). This format, however, uses a Device table to modify the coordinate value for the point size and resolution of the output font. Here, the Device table defines pixel adjustments for font sizes from 11 ppem to 15 ppem. The adjustments add one pixel at each size.</p>
+<p><em>Example 7</em></p>
+<table>
+<tbody>
+<tr>
+<th>Hex Data</th>
+<th>Source</th>
+<th>Comments</th>
+</tr>
+<tr>
+<td> </td>
+<td><b>BaseCoordFormat3</b><br>
+HorizMathMinCoordTable</td>
+<td>BaseCoord table definition for Math min coordinate</td>
+</tr>
+<tr>
+<td>0003</td>
+<td>3</td>
+<td>format: design units plus device table</td>
+</tr>
+<tr>
+<td> </td>
+<td>-280</td>
+<td>coordinate — Y value, in design units</td>
+</tr>
+<tr>
+<td>000C</td>
+<td>HorizMathMin<br>
+deviceOffset</td>
+<td>Offset to Device table
+</td>
+</tr>
+<tr>
+<td> </td>
+<td><b>DeviceTableFormat1</b><br>
+HorizMathMin<br>
+CoordDeviceTable</td>
+<td>Device table definition for MinCoord</td>
+</tr>
+<tr>
+<td>000B</td>
+<td>11</td>
+<td>startSize: 11 ppem</td>
+</tr>
+<tr>
+<td>000F</td>
+<td>15</td>
+<td>endSize: 15 ppem</td>
+</tr>
+<tr>
+<td>0001</td>
+<td>1</td>
+<td>deltaFormat: signed 2 bit value (8 values per uint16)</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>Increase 11ppem by 1 pixel</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>Increase 12ppem by 1 pixel</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>Increase 13ppem by 1 pixel</td>
+</tr>
+<tr>
+<td> </td>
+<td>1</td>
+<td>Increase 14ppem by 1 pixel</td>
+</tr>
+<tr>
+<td>5540</td>
+<td>1</td>
+<td>Increase 15ppem by 1 pixel</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

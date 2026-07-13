@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cvar — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/cvar">https://learn.microsoft.com/en-us/typography/opentype/spec/cvar</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="cvar--cvt-variations-table">cvar — CVT Variations Table</h1>
+<p>The control value table (CVT) variations table is used in variable fonts to provide variation data for CVT values. For a general overview of OpenType Font Variations, see the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p>Fonts that use the Truetype outline format for glyphs and that have hinting instructions will typically also have a CVT (the <a href="cvt.html" data-linktype="relative-path">'cvt '</a> table). The CVT table provides an indexed list of control values that can be referenced by instructions. Example values are the height of a serif, x-height, or the width of uppercase stems. When glyph outline points are adjusted by instructions to improve rasterization at a particular PPEM size, the control values may be used by the instructions to provide design-distance values for those adjustments — typically, values that need to be kept constant across all glyphs in the font for a given PPEM size.</p>
+<p>Within a variable font, the numeric value of particular control values may need to be adjusted for different variation instances, to match the changes to outlines for different instances. The CVT variations table provides variation data for that purpose. By using interpolation to derive adjusted CVT values for a particular instance, instructions can obtain instance-appropriate values, and the same instructions can be used for all variations.</p>
+<p>The CVT variations table must be used in combination with TrueType outlines and a 'cvt ' table, and also in combination with a <a href="fvar.html" data-linktype="relative-path">font variations ('fvar')</a> table and other required or optional tables used in variable fonts.</p>
+<p><a id="tblFormat"></a></p>
+<h2 id="table-format">Table Format</h2>
+<p>The 'cvar' table uses a variant of the tuple variation store format, described in the chapter, <a href="otvarcommonformats.html" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>. The 'gvar' table uses a very-slightly different variant of this format for each glyph.</p>
+<p>In terms of overall structure, the 'cvar' table begins with a header, which is followed by serialized variation data.</p>
+<figure><img src="media/cvar_fig1.png" alt="Block diagram showing organization of cvar header and serialized data." data-linktype="relative-path"><figcaption>Figure: High-level organization of the 'cvar' table</figcaption></figure>
+<p>The variation data includes logical groupings of data that apply to different regions of the variation space — <em>tuple-variation data</em> tables. These logical groupings are stored in two parts: a header, and serialized data. The 'cvar' header includes an array of tuple-variation data headers, each of which is associated with a particular portion of the serialized data.</p>
+<p>The serialized data includes adjustment delta values and also packed “point number” data that identify the CVT entries to which the deltas apply. The serialized data for a given region can include point number data that applies to that specific tuple-variation data, but there can also be a shared set of point number data, stored at the start of the serialized data, that can be used in relation to multiple tuple-variation data tables.</p>
+<p>The format of the 'cvar' header is as follows.</p>
+<p><a id="header"></a></p>
+<p><em>'cvar' table header:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version number of the CVT variations table — set to 1.</td>
+</tr>
+<tr id="minorVersion">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version number of the CVT variations table — set to 0.</td>
+</tr>
+<tr id="tupleVariationCount">
+<td>uint16</td>
+<td>tupleVariationCount</td>
+<td>A packed field. The high 4 bits are flags, and the low 12 bits are the number of tuple-variation data tables. The count can be any number between 1 and 4095.</td>
+</tr>
+<tr id="dataOffset">
+<td>Offset16</td>
+<td>dataOffset</td>
+<td>Offset from the start of the 'cvar' table to the serialized data.</td>
+</tr>
+<tr id="tupleVariationHeaders">
+<td>TupleVariationHeader</td>
+<td>tupleVariationHeaders[tupleVariationCount]</td>
+<td>Array of tuple variation headers.</td>
+</tr>
+</tbody>
+</table>
+<p>Complete details regarding the tupleVariationCount field, the flags used in the tupleVariationCount, the TupleVariationHeader format and the format of the serialized data are provided in the chapter, <a href="otvarcommonformats.html" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>. Details regarding how the data are processed to derive interpolated CVT values for particular instances are provided in that chapter and in the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p>As noted above, the format of the 'cvar' table is closely related to formats used in the 'gvar' table. The following are key differences to note:</p>
+<ul>
+<li>The TupleVariationHeader structure includes a particular field, tupleIndex. This is a packed field that includes flag bits, one of which indicates whether the structure includes an embedded peak tuple record. In the 'gvar' table, this is optional, and the flag does not always need to be set. In the 'cvar' table, however, the embedded peak tuple record is mandatory, and this flag must always be set.</li>
+<li>The serialized data includes packed “point” numbers. In the context of the 'gvar' table, these are indices for the outline points of a particular glyph. In the 'cvar' table, these are indices for CVT values within the 'cvt ' table.</li>
+<li>In the 'gvar' table, there are two logical deltas for each enumerated outline point: one for the X coordinate, and one for the Y coordinate. Hence, the total number of logical deltas is twice the count of point numbers. In the 'cvar' table, there is exactly one logical delta for each point number.</li>
+</ul>
+<p>Note that the CVT values are all FWORDs, and that the total number of CVT values is determined by the length of the 'cvt ' table. Hence, CVT index values range from 0 to floor(cvtLength / sizeof(FWORD)) - 1.</p>
+
+</body>
+</html>

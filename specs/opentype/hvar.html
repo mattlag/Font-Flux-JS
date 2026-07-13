@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hvar — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/hvar">https://learn.microsoft.com/en-us/typography/opentype/spec/hvar</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="hvar--horizontal-metrics-variations-table">HVAR — Horizontal Metrics Variations Table</h1>
+<p>The HVAR table is used in variable fonts to provide variations for horizontal glyph metrics values. This can be used to provide variation data for advance widths in the <a href="hmtx.html" data-linktype="relative-path">'hmtx'</a> table. In fonts with TrueType outlines, it can also be used to provide variation data for left and right side bearings obtained from the 'hmtx' table and glyph bounding boxes.</p>
+<p>For a general overview of OpenType Font Variations and terminology related to variations, see the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+<p>In a font with TrueType outlines, the rasterizer will generate “phantom” points that represent left, right, top and bottom side bearings. (See the chapter <a href="tt_instructing_glyphs.html#phantoms" data-linktype="relative-path">Instructing TrueType Glyphs</a> for more background on phantom points.) In a TrueType variable font, the <a href="gvar.html" data-linktype="relative-path">glyph variations ('gvar')</a> table will include variation data for the phantom points of each glyph, allowing glyph metrics to be interpolated for different variation instances as part of deriving the interpolated glyph outlines. For this reason, the HVAR table is not required in variable fonts that have TrueType outlines. For text-layout operations that require glyph metrics but not actual glyph outlines, however, there can be significant performance benefits by being able to obtain adjusted glyph metrics for an instance without needing to interpolate glyph outlines. For this reason, it is recommended that an HVAR table be included in variable fonts that have TrueType outlines.</p>
+<p>The CFF2 rasterizer does not generate phantom points as in the TrueType rasterizer. For this reason, an HVAR table is required to handle any variation in horizontal glyph metrics in a variable font with CFF2 outlines.</p>
+<p>Take note that, in a variable font with TrueType outlines, the left side bearing for each glyph must equal xMin, and bit 1 in the flags field of the 'head' table must be set.</p>
+<p>The HVAR table contains an <em>item variation store</em> table to represent variation data. The item variation store and constituent formats are described in the chapter, <a href="otvarcommonformats.html" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>. The item variation store is also used in the <a href="vvar.html" data-linktype="relative-path">VVAR</a>, <a href="gdef.html" data-linktype="relative-path">GDEF</a> and certain other tables, but is different from the formats for variation data used in the <a href="cvar.html" data-linktype="relative-path">'cvar'</a> or <a href="gvar.html" data-linktype="relative-path">'gvar'</a> tables.</p>
+<p>The item variation store format uses <em>delta-set indices</em> to reference variation delta data for particular target, font-data items to which they are applied, such as the advance width of a particular glyph. Data external to the item variation store identifies the delta-set index to be used for each given target item. Within the HVAR table, glyph IDs can be used as implicit indices for advance width variations, or an optional delta-set index mapping table can be used that explicitly provides delta-set indices for advance widths to be associated with each glyph ID.</p>
+<p>An advance width mapping subtable adds additional data within the HVAR table, but it also makes it possible to use a more compact representation of the data in the item variation store. For example, if multiple glyphs have the same advance widths, the mapping subtable allows all of them to reference a single delta set within the store. Additional optimizations within the item variation store are possible. See the Common Table Formats chapter for more discussion about size optimization. In general, inclusion of an advance width mapping subtable is recommended.</p>
+<p>Optional mapping subtables can also be used to provide delta-set indices for glyph side bearings. In variable fonts with TrueType outlines, variation data for side bearings is recommended. If variation data for side bearings is provided, it should include data for both left and right side bearings, and mapping subtables for left and right side bearings must also be included.</p>
+<p><a name="relCoreqTables"></a></p>
+<h2 id="related-and-co-requisite-tables">Related and Co-Requisite Tables</h2>
+<p>The HVAR table is used only in variable fonts. It must be used in combination with a <a href="hmtx.html" data-linktype="relative-path">horizontal metrics ('hmtx')</a> table, and also in combination with a <a href="fvar.html" data-linktype="relative-path">font variations ('fvar')</a> table, and other required or optional tables used in variable fonts. See <a href="otvaroverview.html#vartables" data-linktype="relative-path">Variation data tables and miscellaneous requirements</a> in the OpenType Font Variations Overview chapter for general information.</p>
+<p>For variable fonts that have TrueType outlines, the HVAR table is optional but recommended. For variable fonts that have CFF 2 outlines, the HVAR table is required if there is any variation in glyph advance widths across the variation space.</p>
+<blockquote>
+<p><em>Note:</em> The 'hdmx' table is not used in variable fonts.</p>
+</blockquote>
+<p><a name="tableFormats"></a></p>
+<h2 id="table-formats">Table Formats</h2>
+<p>The horizontal metrics variations table has the following format.</p>
+<p><em>Horizontal metrics variations table:</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="majorVersion">
+<td>uint16</td>
+<td>majorVersion</td>
+<td>Major version number of the horizontal metrics variations table — set to 1.</td>
+</tr>
+<tr id="minorVersion">
+<td>uint16</td>
+<td>minorVersion</td>
+<td>Minor version number of the horizontal metrics variations table — set to 0.</td>
+</tr>
+<tr id="itemVariationStoreOffset">
+<td>Offset32</td>
+<td>itemVariationStoreOffset</td>
+<td>Offset in bytes from the start of this table to the item variation store table.</td>
+</tr>
+<tr id="advanceWidthMappingOffset">
+<td>Offset32</td>
+<td>advanceWidthMappingOffset</td>
+<td>Offset in bytes from the start of this table to the delta-set index mapping for advance widths (may be NULL).</td>
+</tr>
+<tr id="lsbMappingOffset">
+<td>Offset32</td>
+<td>lsbMappingOffset</td>
+<td>Offset in bytes from the start of this table to the delta-set index mapping for left side bearings (may be NULL).</td>
+</tr>
+<tr id="rsbMappingOffset">
+<td>Offset32</td>
+<td>rsbMappingOffset</td>
+<td>Offset in bytes from the start of this table to the delta-set index mapping for right side bearings (may be NULL).</td>
+</tr>
+</tbody>
+</table>
+<p>The item variation store table is documented in the chapter, <a href="otvarcommonformats.html#item-variation-store" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>.</p>
+<p>Mapping subtables are represented using a DeltaSetIndexMap table; see <a href="otvarcommonformats.html#associating-target-items-to-variation-data" data-linktype="relative-path">Associating Target Items to Variation Data</a> in the Common Table Formats chapter for the definition of this table. In the HVAR table, only format 0 of the DeltaSetIndexMap is used. Mapping subtables are optional. If a given mapping subtable is not provided, the offset is set to NULL.</p>
+<p>Variation data for advance widths is required. A delta-set index mapping subtable for advance widths can be provided, but is optional. If a mapping subtable is not provided, glyph indices are used as implicit delta-set indices. To access the delta set for the advance of given glyph, the delta-set outer-level index is zero, and the glyph ID is used as the inner-level index.</p>
+<p>Variation data for side bearings are optional. If included, mapping tables are required to provide the delta-set index for each glyph.</p>
+<p><a name="processing"></a></p>
+<h2 id="processing">Processing</h2>
+<p>When performing text layout using a particular variation instance of a variable font, the application will need to obtain adjusted glyph metrics for that instance. The application obtains default values from the 'hmtx' and 'glyf' tables, and uses the HVAR table to obtain interpolated adjustment values that are applied to the defaults.</p>
+<p>Delta-set indices are obtained based on the glyph ID. If there is no delta-set index mapping subtable for advance widths (advanceWidthMappingOffset is NULL), then glyph IDs implicitly provide the indices: for a given glyph ID, the delta-set outer-level index is zero, and the glyph ID is the delta-set inner-level index. If a delta-set index mapping table is provided, glyph IDs are used to lookup a mapping entry, which provides the outer- and inner-level delta-set indices in a packed format. See <a href="otvarcommonformats.html#associating-target-items-to-variation-data" data-linktype="relative-path">Associating Target Items to Variation Data</a> for details.</p>
+<p>The delta-set indices are used to reference a delta set for the target advance width or side bearing within the item variation store. The two-level organization of data within the item variation store is described in the chapter <a href="otvarcommonformats.html" data-linktype="relative-path">OpenType Font Variations Common Table Formats</a>. Each delta set includes different deltas that apply to variation instances falling within different regions of the variation space. The process by which the deltas are processed to derive an interpolated value for a given target item is described in the chapter, <a href="otvaroverview.html" data-linktype="relative-path">OpenType Font Variations Overview</a>.</p>
+
+</body>
+</html>

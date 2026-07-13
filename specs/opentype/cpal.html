@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cpal — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/cpal">https://learn.microsoft.com/en-us/typography/opentype/spec/cpal</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="cpal--color-palette-table">CPAL — Color Palette Table</h1>
+<p>The palette table is a set of one or more palettes, each containing a predefined number of color records. It may also contain 'name' table IDs describing the palettes and their entries.</p>
+<p>Palettes are defined by a set of color records. Each color record specifies a color in the sRGB color space using 8-bit BGRA (blue, green, red, alpha) representation. The sRGB color space is specified in <a href="https://webstore.iec.ch/publication/6169" data-linktype="external">IEC 61966-2-1:1999 <em>Multimedia systems and equipment - Colour measurement and management - Part 2-1: Colour management - Default RGB colour space - sRGB</em></a>. Details on the specification for the sRGB color space, including the color primaries and “gamma” transfer function, are also provided in <a href="https://www.w3.org/TR/css-color-4/#predefined" data-linktype="external">CSS Color Module Level 4, section 10.2</a>.</p>
+<p>All palettes have the same number of color records, specified by numColorRecords. All color records for all palettes are arranged in a single array, and the color records for any given palette are a contiguous sequence of color records within that array. The first color record of each palette is provided in the colorRecordIndices array.</p>
+<p>Multiple colorRecordIndices may refer to the same color record, in which case multiple palettes would use the same color records; hence the number of functionally distinct palettes may be fewer than the numPalettes entry. Also, the sequence of color records for different palettes may overlap, with certain color records shared between multiple palettes. Thus, the total number of color records in the CPAL table may be less than the number of palette entries multiplied by the number of palettes.</p>
+<p>The first palette, palette index 0, is the default palette. A minimum of one palette must be provided in the CPAL table if the table is present. Palettes must have a minimum of one color record. An empty CPAL table, with no palettes and no color records is not permitted.</p>
+<p>Colors within a palette are referenced by base-zero index. The number of colors in each palette is given by numPaletteEntries. The number of color records in the color records array (numColorRecords) must be greater than or equal to max(colorRecordIndices) + numPaletteEntries.</p>
+<p><a id="cpalHeader"></a></p>
+<h2 id="palette-table-header">Palette table header</h2>
+<p>The CPAL table begins with a header that starts with a version number. Currently, only versions 0 and 1 are defined.</p>
+<p><a id="cpalHeader_0"></a></p>
+<h3 id="cpal-version-0">CPAL version 0</h3>
+<p>The CPAL header version 0 is organized as follows:</p>
+<p><em>CPAL version 0</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="version_0">
+<td>uint16</td>
+<td>version</td>
+<td>Table version number (=0).</td>
+</tr>
+<tr id="numPaletteEntries_0">
+<td>uint16</td>
+<td>numPaletteEntries</td>
+<td>Number of palette entries in each palette.</td>
+</tr>
+<tr id="numPalettes_0">
+<td>uint16</td>
+<td>numPalettes</td>
+<td>Number of palettes in the table.</td>
+</tr>
+<tr id="numColorRecords_0">
+<td>uint16</td>
+<td>numColorRecords</td>
+<td>Total number of color records, combined for all palettes.</td>
+</tr>
+<tr id="offsetFirstColorRecord_0">
+<td>Offset32</td>
+<td>colorRecordsArrayOffset</td>
+<td>Offset from the beginning of CPAL table to the first ColorRecord.</td>
+</tr>
+<tr id="colorRecordIndices_0">
+<td>uint16</td>
+<td>colorRecordIndices[numPalettes]</td>
+<td>Index of each palette’s first color record in the combined color record array.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="cpalHeader_1"></a></p>
+<h3 id="cpal-version-1">CPAL version 1</h3>
+<p>The CPAL header version 1 adds three additional fields to the end of the table header and is organized as follows:</p>
+<p><em>CPAL version1</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="version_1">
+<td>uint16</td>
+<td>version</td>
+<td>Table version number (=1).</td>
+</tr>
+<tr id="numPalettesEntries_1">
+<td>uint16</td>
+<td>numPaletteEntries</td>
+<td>Number of palette entries in each palette.</td>
+</tr>
+<tr id="numPalette_1">
+<td>uint16</td>
+<td>numPalettes</td>
+<td>Number of palettes in the table.</td>
+</tr>
+<tr id="numColorRecords_1">
+<td>uint16</td>
+<td>numColorRecords</td>
+<td>Total number of color records, combined for all palettes.</td>
+</tr>
+<tr id="offsetFirstColorRecord_1">
+<td>Offset32</td>
+<td>colorRecordsArrayOffset</td>
+<td>Offset from the beginning of CPAL table to the first ColorRecord.</td>
+</tr>
+<tr id="colorRecordIndices_1">
+<td>uint16</td>
+<td>colorRecordIndices[numPalettes]</td>
+<td>Index of each palette’s first color record in the combined color record array.</td>
+</tr>
+<tr id="offsetPaletteTypeArray_1">
+<td>Offset32</td>
+<td>paletteTypesArrayOffset</td>
+<td>Offset from the beginning of CPAL table to the Palette Types Array. Set to 0 if no array is provided.</td>
+</tr>
+<tr id="offsetPaletteLabelArray_1">
+<td>Offset32</td>
+<td>paletteLabelsArrayOffset</td>
+<td>Offset from the beginning of CPAL table to the Palette Labels Array. Set to 0 if no array is provided.</td>
+</tr>
+<tr id="offsetPaletteEntryLabelArray_1">
+<td>Offset32</td>
+<td>paletteEntryLabelsArrayOffset</td>
+<td>Offset from the beginning of CPAL table to the Palette Entry Labels Array. Set to 0 if no array is provided.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="palEntries"></a></p>
+<h2 id="palette-entries-and-color-records">Palette entries and color records</h2>
+<p>Colors defined in the CPAL table are referenced by a palette index plus a palette-entry index. Indices are base zero. For a given palette index and palette-entry index, an entry within the color records array is derived: <em>colorRecordIndex = colorRecordIndices[paletteIndex] + paletteEntryIndex</em>.</p>
+<p><a id="colorRecArray"></a></p>
+<p>The color records array is comprised of color records:</p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="colorRecs">
+<td>ColorRecord</td>
+<td>colorRecords[numColorRecords]</td>
+<td>Color records for all palettes.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="colorRec"></a></p>
+<p>Each color record has BGRA values. The color space for these values is sRGB.</p>
+<p><em>ColorRecord</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="blue">
+<td>uint8</td>
+<td>blue</td>
+<td>Blue value (B0).</td>
+</tr>
+<tr id="green">
+<td>uint8</td>
+<td>green</td>
+<td>Green value (B1).</td>
+</tr>
+<tr id="red">
+<td>uint8</td>
+<td>red</td>
+<td>Red value (B2).</td>
+</tr>
+<tr id="alpha">
+<td>uint8</td>
+<td>alpha</td>
+<td>Alpha value (B3).</td>
+</tr>
+</tbody>
+</table>
+<p>The colors in the color record should not be pre-multiplied, and the alpha value should be explicitly set for each palette entry.</p>
+<p>An alpha value of zero means no opacity (fully transparent); 255 means opaque (no transparency). The alpha value in the color record may be combined with and does not supersede alpha or opacity attributes set in higher-level contexts.</p>
+<p>When placing and registering overlapping elements, there is the possibility of “seaming”, where the edge rendering of one element interferes with another element. This could be more or less visible depending on the contrast of the colors used.</p>
+<p><a id="palTypes"></a></p>
+<h2 id="palette-types-array">Palette types array</h2>
+<p>The palette types array is an array of integer values specifying flags for each palette.</p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="palTypesArray">
+<td>uint32</td>
+<td>paletteTypes[numPalettes]</td>
+<td>Array of 32-bit flag fields that describe properties of each palette. See below for details.</td>
+</tr>
+</tbody>
+</table>
+<p>The following flags are defined:</p>
+<table>
+<tbody>
+<tr>
+<th>Mask</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>0x0001</td>
+<td>USABLE_WITH_LIGHT_BACKGROUND</td>
+<td>Bit 0: palette is appropriate to use when displaying the font on a light background such as white.</td>
+</tr>
+<tr>
+<td>0x0002</td>
+<td>USABLE_WITH_DARK_BACKGROUND</td>
+<td>Bit 1: palette is appropriate to use when displaying the font on a dark background such as black.</td>
+</tr>
+<tr>
+<td>0xFFFC</td>
+<td>Reserved</td>
+<td>Reserved for future use — set to 0.</td>
+</tr>
+</tbody>
+</table>
+<p>The USABLE_WITH_LIGHT_BACKGROUND and USABLE_WITH_DARK_BACKGROUND flags are not mutually exclusive: they may both be set.</p>
+<p><a id="palLabels"></a></p>
+<h2 id="palette-labels-array">Palette labels array</h2>
+<p>The palette labels array is an array of integer values specifying <a href="name.html" data-linktype="relative-path">'name'</a> table IDs that provide user interface strings associated with each palette. Typically, these will be IDs in the font-specific name ID range.</p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="palLabelsArray">
+<td>uint16</td>
+<td>paletteLabels[numPalettes]</td>
+<td>Array of 'name' table IDs. Use 0xFFFF for a particular palette if no string is provided.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="palEntryLabels"></a></p>
+<h2 id="palette-entry-label-array">Palette entry label array</h2>
+<p>The palette entry label array is an array of integer values specifying <a href="name.html" data-linktype="relative-path">'name'</a> table IDs that provide user interface strings associated with each palette entry. (For example, “Outline”, “Fill”.) This set of palette entry labels applies to all palettes in the font. Typically, the IDs will be in the font-specific name ID range.</p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="palEntryLabelsArray">
+<td>uint16</td>
+<td>paletteEntryLabels[numPaletteEntries]</td>
+<td>Array of 'name' table IDs. Use 0xFFFF for a particular entry if no string is provided.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="colrsvg"></a></p>
+<h2 id="relationship-to-colr-and-svg-tables">Relationship to COLR and SVG tables</h2>
+<p>Both the <a href="colr.html" data-linktype="relative-path">COLR</a> and <a href="svg.html" data-linktype="relative-path">SVG</a> tables can use CPAL to define their palettes.</p>
+<h3 id="colr-and-cpal">COLR and CPAL</h3>
+<p>In fonts that have a <a href="colr.html" data-linktype="relative-path">COLR</a> table, the CPAL table is required, and contains all the font-specified colors used by multicolored glyphs.</p>
+<p>As noted in the <a href="colr.html" data-linktype="relative-path">COLR</a> table description, the palette entry index of 0xFFFF if specified in the <a href="colr.html" data-linktype="relative-path">COLR</a> table represents the foreground color used in the system. This special value does not change across multiple palettes. The maximum palette entry index is 65535 - 1, as the 65536th position is used in the COLR table to indicate the foreground font color.</p>
+<h3 id="svg-and-cpal">SVG and CPAL</h3>
+<p>In fonts that have an <a href="svg.html" data-linktype="relative-path">SVG</a> table, the CPAL table can be used to contain the values of any color variables used by SVG glyph descriptions in the SVG table. SVG glyph descriptions can also include color specifications directly, however. Thus, the CPAL table is optional for fonts with an SVG table.</p>
+<p>Foreground color is expressed by the “currentColor” keyword in the SVG glyph descriptions.</p>
+<p>When used with an <a href="svg.html" data-linktype="relative-path">SVG</a> table, the default palette’s colors must be set to the same values as the default values for the color variables in the SVG glyph descriptions; this is for text engines that support the SVG table but not color palettes. The SVG glyph descriptions can express their own explicit or “hard-coded” colors as well. These are not related to color variables and thus do not vary by palette selection. See the SVG table specification for more details.</p>
+<h3 id="interpolation-of-colors">Interpolation of colors</h3>
+<p>The <a href="svg.html" data-linktype="relative-path">SVG</a> table and version 1 of the <a href="colr.html" data-linktype="relative-path">COLR</a> table both support color gradient fills. The gradients are defined using color stops to specify color values at specific positions along a color line, with color values for other positions on the color line derived by interpolation.</p>
+<p>When interpolating color values, linear interpolation between color stop positions is used. For example, suppose adjacent color stops are specified for positions 0.5 and 0.9 on a color line, and a color value is being calculated for position 0.8. The color value of the first color stop will contribute 75% of the value ((0.8 - 0.5) / (0.9 - 0.5)), and the color value of the second color stop will contribute 25% of the value. Interpolated values at each position of the color line are computed in this way for each of the R, G and B color components.</p>
+<p>When interpolating color values, specific aspects of the representation of colors as well as handling of alpha need to be considered.</p>
+<p>Representations of sRGB color values are expressed as levels of red, green and blue color “primaries” with specific, absolute chromaticity values, which are defined in the sRGB specification. Color-primary levels can potentially be expressed using a linear-light scale that correlates directly to light energy. (On a linear-light scale, for example, a doubling of a color value would correspond to a doubling of display luminance.) For sRGB, however, standard practice is to represent levels using a scale defined by a non-linear transfer function, sometimes referred to as “gamma”. This transfer function is also defined in the sRGB specification. (See <a href="https://www.w3.org/TR/css-color-4/#predefined" data-linktype="external">CSS Color Module Level 4, section 10.2</a> for details.) In the CPAL table, sRGB color values are always specified in terms of the non-linear, sRGB transfer function.</p>
+<blockquote>
+<p><em>Note:</em> An advantage of representing colors using a non-linear scale is that it allows more effective use of limited bit depth when color-primary levels are represented as integers: smaller differences in light energy can be represented for lower levels than for higher levels. This is beneficial since the human visual system is more sensitive to differences at low luminance levels than to differences at high luminance levels.</p>
+</blockquote>
+<p>When interpolating colors, different results will be obtained if the interpolation is computed using the non-linear scale for color levels than if using the linear-light scale. For interoperable results, whether the non-linear or linear-light scale is to be used needs to be specified.</p>
+<p>For gradient color values in the SVG table, the required interpolation behavior is defined in the <a href="http://www.w3.org/TR/SVG11" data-linktype="external">Scalable Vector Graphics 1.1 (Second Edition)</a> specification: the <a href="https://www.w3.org/TR/SVG11/painting.html#ColorInterpolationProperty" data-linktype="external">‘color-interpolation’ property</a> can be used in an SVG document to declare whether interpolation is done using the non-linear sRGB scale (the default), or using a linear-light scale by applying the inverse sRGB transfer function.</p>
+<p>For gradient color values in the COLR table, interpolation must be computed using linear-light values (i.e., after applying the inverse sRGB transfer function).</p>
+<p>After an interpolated color value is computed, whether or not the non-linear sRGB transfer function needs to be re-applied is determined by the requirements of the implementation context.</p>
+<p>For both the COLR and SVG tables, interpolation must be done with alpha pre-multiplied into each linearized R, G and B component. For alpha specified in a CPAL ColorRecord, the value is converted to a floating value in the range [0, 1.0] by dividing by 255, then multiplied into each R, G and B component. In the COLR table, color references in formats used for version 1 include a separate alpha value; that alpha value  (with variation, in a variable font) is multiplied into the R, G and B components as well. Interpolated values are then calculated by linear interpolation using these pre-multiplied, linear-light R, G and B values.</p>
+<blockquote>
+<p><em>Note:</em> Alpha components use a linear scale and can be directly interpolated apart from the R, G and B components without any linearization step.</p>
+</blockquote>
+<p>Once interpolation of the pre-multiplied red, green and blue values and of the alpha value is complete, the red, green and blue results are then un-pre-multiplied by dividing each interpolated value by the corresponding interpolated alpha.</p>
+<p>While color values are specified as 8-bit integers, the interpolation computations will require greater precision in each of the linearization, pre-multiply, and interpolation steps. Also, when rendered results are to be presented on an imaging device with known characteristics, visual banding artifacts in a gradient can be minimized by taking full advantage of the color bit depth supported by the device. For instance, if a display supports 10- or 12-bit quantization per color channel, then ideally the ramp of color values in a gradient would use that level of quantization. Other factors from the presentation context may, however, also affect the available capabilities. Therefore, no minimum level of precision is specified as a requirement.</p>
+
+</body>
+</html>

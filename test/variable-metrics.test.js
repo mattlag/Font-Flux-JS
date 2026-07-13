@@ -455,6 +455,105 @@ describe('variable font round-trip with real fonts', () => {
 });
 
 // ===========================================================================
+//  EXPANDED REAL-FONT COVERAGE (multi-axis, avar 2.0, VVAR)
+// ===========================================================================
+
+describe('expanded variable font coverage', () => {
+	it('should preserve a large multi-axis design space (Roboto Flex)', async () => {
+		const filePath = resolve(SAMPLES_DIR, 'RobotoFlex-online-test.ttf');
+		let buffer;
+		try {
+			buffer = (await readFile(filePath)).buffer;
+		} catch {
+			return;
+		}
+
+		const first = importFont(buffer);
+
+		// 13 axes including the registered wght/wdth/opsz/slnt plus GRAD.
+		const tags = first.axes.map((a) => a.tag);
+		expect(first.axes.length).toBe(13);
+		for (const tag of ['wght', 'wdth', 'opsz', 'slnt', 'GRAD']) {
+			expect(tags).toContain(tag);
+		}
+
+		// Parametric axes are marked hidden.
+		const hidden = first.axes.filter((a) => a.hidden).map((a) => a.tag);
+		expect(hidden).toContain('XOPQ');
+		expect(hidden.length).toBeGreaterThanOrEqual(8);
+
+		// Named instances and a non-identity axis mapping (avar) are present.
+		expect(first.instances.length).toBe(20);
+		expect(first.axisMapping).toBeDefined();
+
+		// Double round-trip should stabilize the whole design space.
+		const exported = exportFont(first);
+		const second = importFont(exported);
+		const exported2 = exportFont(second);
+		const third = importFont(exported2);
+
+		expect(third.axes).toEqual(second.axes);
+		expect(third.instances).toEqual(second.instances);
+		expect(third.axisMapping).toEqual(second.axisMapping);
+		expect(third.metricVariations).toEqual(second.metricVariations);
+	});
+
+	it('should preserve an avar 2.0 axis variation store (Amstelvar)', async () => {
+		const filePath = resolve(SAMPLES_DIR, 'Amstelvar-avar2-online-test.ttf');
+		let buffer;
+		try {
+			buffer = (await readFile(filePath)).buffer;
+		} catch {
+			return;
+		}
+
+		const first = importFont(buffer);
+
+		// 12-axis parametric font carrying a version 2.0 avar table.
+		expect(first.axes.length).toBe(12);
+		expect(first.tables.avar).toBeDefined();
+
+		// The avar (2.0) table must survive a double round-trip verbatim.
+		const exported = exportFont(first);
+		const second = importFont(exported);
+		const exported2 = exportFont(second);
+		const third = importFont(exported2);
+
+		expect(third.axes).toEqual(second.axes);
+		expect(third.tables.avar).toEqual(second.tables.avar);
+		expect(third.metricVariations).toEqual(second.metricVariations);
+	});
+
+	it('should preserve VVAR vertical metric variations', async () => {
+		const filePath = resolve(SAMPLES_DIR, 'VVARTest-online-test.ttf');
+		let buffer;
+		try {
+			buffer = (await readFile(filePath)).buffer;
+		} catch {
+			return;
+		}
+
+		const first = importFont(buffer);
+
+		// Vertical variable font: fvar plus VVAR alongside vhea/vmtx.
+		expect(first.axes.map((a) => a.tag)).toContain('wght');
+		expect(first.tables.VVAR).toBeDefined();
+		expect(first.tables.vhea).toBeDefined();
+		expect(first.tables.vmtx).toBeDefined();
+
+		// The vertical variation tables must survive a double round-trip.
+		const exported = exportFont(first);
+		const second = importFont(exported);
+		const exported2 = exportFont(second);
+		const third = importFont(exported2);
+
+		expect(third.tables.VVAR).toEqual(second.tables.VVAR);
+		expect(third.tables.vhea).toEqual(second.tables.vhea);
+		expect(third.tables.vmtx).toEqual(second.tables.vmtx);
+	});
+});
+
+// ===========================================================================
 //  COMBINED: all variable metrics together
 // ===========================================================================
 

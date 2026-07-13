@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hdmx — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/hdmx">https://learn.microsoft.com/en-us/typography/opentype/spec/hdmx</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="hdmx--horizontal-device-metrics">hdmx — Horizontal Device Metrics</h1>
+<p>The 'hdmx' table can be used in fonts with TrueType outlines to store integer advance widths scaled to particular pixel sizes. This allows the text layout engine to build integer width tables without calling the scaler for each glyph. Typically, this table will contain widths for only certain pixel sizes.</p>
+<p>For non-square pixel grids, the em square width (in pixels) is used to determine which device record to use. For example, a 12 point em square on a device with a resolution of 72x96 would be 12 pixels high and 16 pixels wide. The 'hdmx' device record for 16 pixels per em would be used.</p>
+<p>If bit 4 of the flags field in the <a href="head.html" data-linktype="relative-path">'head' table</a> is not set, then it is assumed that the font scales linearly; in this case an 'hdmx' table is not necessary and should not be built. If bit 4 of the flag field is set, then one or more glyphs in the font are assumed to scale nonlinearly. In this case, performance can be improved by including the 'hdmx' table with width data for important sizes. Please see the chapter <a href="recom.html#hdmx" data-linktype="relative-path">“Recommendations for OpenType Fonts”</a> for more detail.</p>
+<p>The table begins as follows:</p>
+<p><em>HdmxHeader</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="version">
+<td>uint16</td>
+<td>version</td>
+<td>Table version number—set to 0.</td>
+</tr>
+<tr id="numRecords">
+<td>uint16</td>
+<td>numRecords</td>
+<td>Number of device records.</td>
+</tr>
+<tr id="sizeDeviceRecord">
+<td>uint32</td>
+<td>sizeDeviceRecord</td>
+<td>Size of a device record, 32-bit aligned.</td>
+</tr>
+<tr id="records">
+<td>DeviceRecord</td>
+<td>records[numRecords]</td>
+<td>Array of device records.</td>
+</tr>
+</tbody>
+</table>
+<p>The records array must be sorted in increasing pixel size order. The DeviceRecord format is as follows:</p>
+<p><em>DeviceRecord</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr id="pixelSize">
+<td>uint8</td>
+<td>pixelSize</td>
+<td>Pixel size for following widths (as ppem).</td>
+</tr>
+<tr id="maxWidth">
+<td>uint8</td>
+<td>maxWidth</td>
+<td>Maximum width.</td>
+</tr>
+<tr id="widths">
+<td>uint8</td>
+<td>widths[numGlyphs]</td>
+<td>Array of widths (numGlyphs is from the 'maxp' table).</td>
+</tr>
+</tbody>
+</table>
+<p>Each DeviceRecord is padded with 0s to make it 32-bit aligned.</p>
+<p>Each value in the widths array is the width of the particular glyph, in pixels, at the pixels per em (ppem) size given in the pixelSize field.</p>
+<p>The ppem sizes are measured along the y axis.</p>
+
+</body>
+</html>

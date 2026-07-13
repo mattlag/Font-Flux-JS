@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>meta — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/meta">https://learn.microsoft.com/en-us/typography/opentype/spec/meta</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="meta--metadata-table">meta — Metadata Table</h1>
+<p>The metadata table contains various metadata values for the font. Different categories of metadata are identified by four-character tags. Values for different categories can be either binary or text.</p>
+<p><a id="formats"></a></p>
+<h2 id="table-formats">Table formats</h2>
+<p>The metadata table begins with a header, structured as follows:</p>
+<p><a id="metaTable_10"></a></p>
+<p><em>MetaHeader</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>uint32</td>
+<td>version</td>
+<td>Version number of the metadata table — set to 1.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>flags</td>
+<td>Flags — currently unused; set to 0.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>(reserved)</td>
+<td>Not used; set to 0.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>dataMapsCount</td>
+<td>The number of data maps in the table.</td>
+</tr>
+<tr>
+<td>DataMap</td>
+<td>dataMaps[dataMapsCount]</td>
+<td>Array of data map records.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><em>Note:</em>
+The reserved field was originally documented in Apple’s TrueType specification as a data offset. This was redundant: DataMap records include offsets from the start of the 'meta' table, therefore an additional offset is not used.</p>
+</blockquote>
+<p>The data map record has the following format:</p>
+<p><a id="dataMapRec"></a></p>
+<p><em>DataMap record</em></p>
+<table>
+<tbody>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>Tag</td>
+<td>tag</td>
+<td>A tag indicating the type of metadata.</td>
+</tr>
+<tr>
+<td>Offset32</td>
+<td>dataOffset</td>
+<td>Offset in bytes from the beginning of the metadata table to the data for this tag.</td>
+</tr>
+<tr>
+<td>uint32</td>
+<td>dataLength</td>
+<td>Length of the data, in bytes. The data is not required to be padded to any byte boundary.</td>
+</tr>
+</tbody>
+</table>
+<p>The data for a given record may be either textual or binary. The representation format is specified for each tag. Depending on the tag, multiple records for a given tag may be permitted, or multiple, delimited values may be permitted in the data referenced by a single record, as specified for each tag. If only one record or value is permitted for a tag, then any instances after the first may be ignored.</p>
+<p><a id="metaTags"></a></p>
+<h2 id="metadata-tags">Metadata tags</h2>
+<p>Metadata tags identify the category of information provided and representation format used for a given metadata value. A registry of commonly-used tags is maintained, but private, vendor-determined tags can also be used.</p>
+<p>Like other OpenType tags, metadata tags are four unsigned bytes that can equivalently be interpreted as a string of four ASCII characters. Metadata tags must begin with a letter (0x41 to 0x5A, 0x61 to 0x7A) and must use only letters, digits (0x30 to 0x39) or space (0x20). Space characters must only occur as trailing characters in tags that have fewer than four letters or digits.</p>
+<p>Privately-defined metadata tags must begin with an uppercase letter (0x41 to 0x5A), and must use only uppercase letters or digits. Registered metadata tags must not use that pattern, but may be any other valid pattern.</p>
+<p>Every registered tag defines the semantics of the associated metadata values, and the representation format of those values. Values for registered tags may be either textual or binary. If textual, it will be in UTF-8 encoding unless explicitly indicated otherwise.</p>
+<p>The following registered tags are defined or reserved at this time:</p>
+<table>
+<tbody>
+<tr>
+<th>Tag</th>
+<th>Name</th>
+<th>Format</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>appl</td>
+<td>(reserved)</td>
+<td></td>
+<td>Reserved — used by Apple.</td>
+</tr>
+<tr>
+<td>bild</td>
+<td>(reserved)</td>
+<td></td>
+<td>Reserved — used by Apple.</td>
+</tr>
+<tr>
+<td>dlng</td>
+<td>Design languages</td>
+<td>Text, using only Basic Latin (ASCII) characters.</td>
+<td>Indicates languages and/or scripts for the user audiences that the font was primarily designed for. Only one instance is used. See below for additional details.</td>
+</tr>
+<tr>
+<td>slng</td>
+<td>Supported languages</td>
+<td>Text, using only Basic Latin (ASCII) characters.</td>
+<td>Indicates languages and/or scripts that the font is declared to be capable of supporting. Only one instance is used. See below for additional details.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="dlng-and-slng-design-and-supported-languages">'dlng' and 'slng': design and supported languages</h2>
+<p>The values for 'dlng' and 'slng' are comprised of a series of comma-separated ScriptLangTags, which are described in detail below. Spaces may follow the comma delimiters and are ignored. Each ScriptLangTag identifies a language or script. A list of tags is interpreted to imply that all the languages or scripts are included.</p>
+<p>The 'dlng' value is used to indicate the languages or scripts of the primary user audiences for which the font was designed. This value can be useful for selecting default font formatting based on content language, for presenting filtered font options based on user language preferences, or similar applications involving the language or script of content or user settings.</p>
+<p>The 'slng' value is used to declare languages or scripts that the font is functionally capable of supporting. This value can be useful for font fallback mechanisms or other applications involving the language or script of content or user settings.</p>
+<p>'slng' values can be used to provide more insight than could otherwise be obtained by inspecting a font’s 'cmap' table. For example, a font created for displaying a large range of Unicode characters in code charts could be capable of displaying default glyphs for Latin script and Devanagari script characters, but not support correct shaping for Devanagari script. Inspection of the 'cmap' table would indicate support for both Latin and Devanagari characters, but other analysis would be needed to detect that the font functionally supports Latin script but does not functionally support Devanagari script. In this case, it would be appropriate to use 'slng' data to declare that the font functionally supports Latin script, but not Devanagari script.</p>
+<p>The Unicode range fields in the OS/2 table (see 5.1.8.18) are somewhat similar to 'slng' metadata values but operate on the level of Unicode blocks, which do not always correspond to languages or scripts, and which do not support any characters encoded in Unicode later than Unicode 5.1. Implementations that use 'slng' values in a font may ignore Unicode-range bits set in the OS/2 table.</p>
+<blockquote>
+<p><em>Note:</em> A font developer can choose not to declare that a font supports certain languages or scripts even if the font is functionally capable of doing so. For example, an operating system could include several fonts designed for different scripts and include glyphs for a basic set of Latin characters in those fonts. If the Latin support in those fonts does not add functionality for Latin script in the overall product, however, the vendor could choose not to declare support for Latin script in those fonts.</p>
+</blockquote>
+<p>'dlng' values can be used to provide further insight beyond that provided by 'slng': not only is the font functionally <em>capable</em> of supporting certain languages, but it is also <em>designed</em> to provide value for content in those scripts or languages. For example, a font designed for supporting Japanese could be functionally capable of supporting Latin script but not be a particularly useful option to offer in a font picker for French or German documents. In this case, it could be appropriate to declare Latin script as an 'slng' value but not as a 'dlng' value.</p>
+<p>In many cases, the 'dlng' and 'slng' values declared in a font could be the same, and in general the 'slng' values should be the same as or a superset of those provided by 'dlng'. Font developers should consider whether there are appropriate differences between the 'slng' and 'dlng' declarations added into a font, and applications should make appropriate use of the differences.</p>
+<p>If a font contains 'dlng' values but not 'slng' values, applications may infer that an 'slng' declaration using the 'dlng' values. The opposite should not be done, however: if a font has 'slng' values but not 'dlng' values, applications should not infer a 'dlng' declaration from the 'slng' declaration.</p>
+<p>Some additional examples will help to understand the distinction between design and supported languages:</p>
+<ul>
+<li>Consider the case of accented Latin letters: Although the accents are used in common by a number of languages, the precise shape of the accents can depend on the typographic traditions of a specific language. Polish, for example, prefers steeper accents than French. A font that was designed with accents specifically for Polish could declare Polish as a design language ('dlng'), but declare support ('slng') for any language using Latin script.</li>
+<li>Fonts designed for East Asian markets will generally include glyphs for Latin, Greek and Cyrillic because these characters are included in important East Asian character set standards, but using East Asian fonts for languages that are written with those scripts is generally unsatisfactory. Such fonts could include these scripts in the 'slng' value, but omit them from their 'dlng' value.</li>
+<li>There are some systematic differences in glyph design for the characters shared by Simplified and Traditional Chinese, such as the way the “bone” radical is drawn in all characters using it. A font specifically designed for use with Simplified Chinese could be used to display Traditional Chinese, but any character with the “bone” radical will look wrong to readers of Traditional Chinese. Such a font could include Simplified Chinese 'dlng' value, but both Simplified and Traditional Chinese in its 'slng' value.</li>
+</ul>
+<p><a id="scriptLangTag"></a></p>
+<h3 id="scriptlangtag-values">ScriptLangTag values</h3>
+<p>The 'dlng' and 'slng' metadata use ScriptLangTag values, defined here.</p>
+<p>A ScriptLangTag denotes a particular language or script associated with a font. These are adapted from the IETF BCP 47 specification, “Tags for Identifying Languages” (see <a href="https://www.rfc-editor.org/info/bcp47" data-linktype="external">https://www.rfc-editor.org/info/bcp47</a>).</p>
+<p>BCP 47 language tags can include various subtags that provide different types of qualifiers, such as language, script or region. In a BCP 47 language tag, a language subtag element is mandatory and other subtags are optional. ScriptLangTag values used for 'dlng' and 'slng' metadata values use a modification of the BCP 47 syntax: a tag must include either a language or a script subtag; other subtags are optional. The following augmented BNF syntax, adapted from BCP 47, is used:</p>
+<pre><code>    ScriptLangTag = (language | script | language "-" script)
+                    ["-" region]
+                    *("-" variant)
+                    *("-" extension)
+                    ["-" privateuse]
+</code></pre>
+<p>The expansion of the elements and the intended semantics associated with each are as defined in BCP 47. Script subtags are taken from ISO 15924. At present, no extensions are defined for use in ScriptLangTags, and any extension may be ignored. Private-use elements, which are prefixed with “-x”, are defined by private agreement between the source and recipient and may be ignored.</p>
+<p>Subtags must be valid for use in BCP 47 and contained in the Language Subtag Registry maintained by IANA. See <a href="http://www.iana.org/assignments/language-subtag-registry/language-subtag-registry" data-linktype="external">http://www.iana.org/assignments/language-subtag-registry/language-subtag-registry</a> and section 3 of BCP 47 for details.</p>
+<blockquote>
+<p><em>Note:</em>
+OpenType Layout script and language system tags are not the same as those used in BCP 47 and should not be referenced when creating or processing ScriptLangTags.</p>
+</blockquote>
+<p>A ScriptLangTag that has a language subtag without a script subtag may be used but is strongly discouraged; a ScriptLangTag should always include a script subtag. Use of a language subtag without a script subtag should only be considered if the record for the language subtag in the IANA Language Subtag Registry includes a "Suppress-Script" value (see <a href="https://www.rfc-editor.org/rfc/rfc5646.html#section-3.1.9" data-linktype="external">section 3.1.9</a> of BCP 47), in which case applications may infer that script subtag. Even in such cases, however, omission of the script subtag is not recommended. Applications may ignore tags that do not include a script subtag.</p>
+<p>Any ScriptLangTag value not conforming to these specifications must be ignored.</p>
+<p>A ScriptLangTag can denote fairly specific information; for example, “en-Latn-IN” would represent <em>Latin script as used for the English language in India</em>. In most cases, however, generic tags should be used, and it is anticipated that most tags used in 'dlng' and 'slng' metadata declarations will consist only of a script subtag. Language or other subtags may be included, however, and could be appropriate in some cases. Implementations must allow for ScriptLangTags that include additional subtags, but they may also choose to interpret only the script subtag and ignore other subtags.</p>
+<p>Examples:</p>
+<ul>
+<li>“Latn” denotes Latin script (and any language or writing system using Latin script).</li>
+<li>“Cyrl” denotes Cyrillic script.</li>
+<li>“sr-Cyrl” denotes Cyrillic script as used for writing the Serbian language; a font that has this property value might not be suitable for displaying text in Russian or other languages written using Cyrillic script.</li>
+<li>“en-Dsrt” denotes English written with the Deseret script.</li>
+<li>“Hant” denotes Traditional Chinese.</li>
+<li>“Hant-HK” denotes Traditional Chinese as used in Hong Kong SAR.</li>
+<li>“Jpan” denotes Japanese writing — ISO 15924 defines “Jpan” as an alias for Han + Hiragana + Katakana.</li>
+<li>“Kore” denotes Korean writing — ISO 15924 defines “Kore” as an alias for Hangul + Han.</li>
+<li>“Hang” denotes Hangul script (exclusively — Hanja are not implied by “Hang”).</li>
+</ul>
+<p>The Unicode Standard uses the ISO 15924 identifiers “Zinh” (inherited) and “Zyyy” (undetermined). These should not be used in ScriptLangTags. Similarly, “Zxxx” (unwritten document) and “Zzzz” (unencoded script) should never be used.</p>
+<p>On the other hand, “Zmth” (mathematical notation), “Zsym” (symbols) and “Zsye” (Symbols (Emoji variant)) are not used in the Unicode Standard, yet they can be very useful as declarations in font files.</p>
+<p>In relation to East Asian scripts, a declaration of “Jpan” can be used to cover hiragana, katakana and kanji. Similarly, “Kore” can be used to cover Hangul and hanja, though a Korean font with only Hangul support should use “Hang”. For Chinese fonts, “Hans” and “Hant” should normally be used to distinguish between Simplified and Traditional orthographies rather than the more generic declaration “Hani”. Region-specific variations such as “Hant-HK” can also be declared. In some cases, it could be appropriate to describe a font capability (but probably not design target) using the generic declaration “Hani” (denoting Han ideographs / Hanzi / Kanji / Hanja).</p>
+<p>The BCP 47 specification for region subtags allows for continental and sub-continental regions. For example, “039” can be used to denote Southern Europe. Use of such extended-region subtags in ScriptLangTag values is not recommended as software implementations might not have the logic to make appropriate correlations to more specific regions or languages associated with those regions.</p>
+
+</body>
+</html>

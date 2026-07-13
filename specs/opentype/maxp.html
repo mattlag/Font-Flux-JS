@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>maxp — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/maxp">https://learn.microsoft.com/en-us/typography/opentype/spec/maxp</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="maxp--maximum-profile">maxp — Maximum Profile</h1>
+<p>This table establishes the memory requirements for this font. Fonts with CFF or CFF2 outlines must use Version 0.5 of this table, specifying only the numGlyphs field. Fonts with TrueType outlines must use Version 1.0 of this table, where all data is required.</p>
+<p><a id="maxpHeader_05"></a>
+<em>Version 0.5</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Version16Dot16</td>
+<td>version</td>
+<td>0x00005000 for version 0.5</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>numGlyphs</td>
+<td>The number of glyphs in the font.</td>
+</tr>
+</tbody>
+</table>
+<p><a id="maxpHeader_10"></a>
+<em>Version 1.0</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Version16Dot16</td>
+<td>version</td>
+<td>0x00010000 for version 1.0.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>numGlyphs</td>
+<td>The number of glyphs in the font.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>maxPoints</td>
+<td>Maximum points in a non-composite glyph.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>maxContours</td>
+<td>Maximum contours in a non-composite glyph.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>maxCompositePoints</td>
+<td>Maximum points in a composite glyph.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>maxCompositeContours</td>
+<td>Maximum contours in a composite glyph.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>maxZones</td>
+<td>1 if instructions do not use the twilight zone (Z0), or 2 if instructions do use Z0; should be set to 2 in most cases.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>maxTwilightPoints</td>
+<td>Maximum points used in Z0.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>maxStorage</td>
+<td>Number of Storage Area locations.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>maxFunctionDefs</td>
+<td>Number of FDEFs, equal to the highest function number + 1.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>maxInstructionDefs</td>
+<td>Number of IDEFs.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>maxStackElements</td>
+<td>Maximum stack depth across Font Program (<a href="fpgm.html" data-linktype="relative-path">'fpgm' table</a>), CVT Program (<a href="prep.html" data-linktype="relative-path">'prep' table</a>) and all glyph instructions (in the <a href="glyf.html" data-linktype="relative-path">'glyf' table</a>).</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>maxSizeOfInstructions</td>
+<td>Maximum byte count for glyph instructions.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>maxComponentElements</td>
+<td>Maximum number of components referenced at “top level” for any composite glyph.</td>
+</tr>
+<tr>
+<td>uint16</td>
+<td>maxComponentDepth</td>
+<td>Maximum levels of recursion; 1 for simple components.</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hmtx — OpenType spec (offline mirror)</title>
+<style>
+ body{font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      max-width:60rem;margin:0 auto;padding:1.5rem;color:#1b1b1b;background:#fff}
+ .mirror-note{background:#fff4ce;border:1px solid #e6d27a;padding:.6rem .9rem;
+      border-radius:6px;font-size:.85rem;margin-bottom:1.5rem}
+ .mirror-note a{color:#0b5cad}
+ table{border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+ th,td{border:1px solid #ccc;padding:.35rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f3f3f3}
+ code,pre{font-family:Consolas,Menlo,monospace;background:#f5f5f5}
+ pre{padding:.8rem;overflow:auto;border-radius:6px}
+ code{padding:.1rem .3rem;border-radius:3px}
+ img{max-width:100%}
+ h1,h2,h3{line-height:1.25}
+ a{color:#0b5cad}
+</style>
+</head>
+<body>
+<div class="mirror-note">Offline mirror of
+ <a href="https://learn.microsoft.com/en-us/typography/opentype/spec/hmtx">https://learn.microsoft.com/en-us/typography/opentype/spec/hmtx</a>.
+ OpenType spec © Microsoft, CC BY 4.0. Regenerate with
+ <code>node specs/download-spec.mjs</code>. &nbsp;<a href="index.html">Spec index</a></div>
+<h1 id="hmtx--horizontal-metrics-table">hmtx — Horizontal Metrics Table</h1>
+<p>Glyph metrics used for horizontal text layout include glyph advance widths, side bearings and X-direction min and max values (xMin, xMax). These are derived using a combination of the glyph outline data ('glyf', 'CFF ' or CFF2) and the horizontal metrics table. The horizontal metrics ('hmtx') table provides glyph advance widths and left side bearings.</p>
+<p>In a font with TrueType outline data, the <a href="glyf.html" data-linktype="relative-path">'glyf'</a> table provides xMin and xMax values, but not advance widths or side bearings. The advance width is always obtained from the 'hmtx' table. In some fonts, depending on the state of flags in the <a href="head.html" data-linktype="relative-path">'head'</a> table, the left side bearings may be the same as the xMin values in the 'glyf' table, though this is not true for all fonts. (See the description of bit 1 of the flags field in the 'head' table.) For this reason, left side bearings are provided in the 'hmtx' table. The right side bearing is always derived using advance width and left side bearing values from the 'hmtx' table, plus bounding-box information in the glyph description — see below for more details.</p>
+<p>In a variable font with TrueType outline data, the left side bearing value in the 'hmtx' table must always be equal to xMin (bit 1 of the 'head' flags field must be set). Hence, these values can also be derived directly from the 'glyf' table. Note that these values apply only to the default instance of the variable font: non-default instances may have different side bearing values. These can be derived from interpolated “phantom point” coordinates using the <a href="gvar.html" data-linktype="relative-path">'gvar'</a> table (see below for additional details), or by applying variation data in the <a href="hvar.html" data-linktype="relative-path">HVAR</a> table to default-instance values from the 'glyf' or 'hmtx' table.</p>
+<p>In a font with CFF version 1 outline data, the 'CFF ' table does include advance widths. These values are used by PostScript processors, but are not used in OpenType layout. In an OpenType context, the 'hmtx' table is required and must be used for advance widths. Note that fonts in a Font Collection file that share a 'CFF ' table may specify different advance widths in font-specific 'hmtx' tables for a particular glyph index. Also note that the CFF2 table does not include advance widths. In addition, for either CFF or CFF2 data, there are no explicit xMin and xMax values; side bearings are implicitly contained within the CharString data, and can be obtained from the CFF / CFF2 rasterizer. Some layout engines may use left side bearing values in the 'hmtx' table, however; hence, font production tools should ensure that the left side bearing values in the 'hmtx' table match the implicit xMin values reflected in the CharString data. In a variable font with CFF2 outline data, left side bearing and advance width values for non-default instances should be obtained by combining information from the 'hmtx' and HVAR tables.</p>
+<p>The table uses a LongHorMetric record to give the advance width and left side bearing of a glyph. Records are indexed by glyph ID. As an optimization, the number of records can be less than the number of glyphs, in which case the advance width value of the last record applies to all remaining glyph IDs. This can be useful in monospaced fonts, or in fonts that have a large number of glyphs with the same advance width (provided the glyphs are ordered appropriately). The number of LongHorMetric records is determined by the numberOfHMetrics field in the <a href="hhea.html" data-linktype="relative-path">'hhea'</a> table.</p>
+<p>If numberOfHMetrics is less than the total number of glyphs, then the hMetrics array is followed by an array for the left side bearing values of the remaining glyphs. The number of elements in the leftSideBearings array will be derived from the numGlyphs field in the <a href="maxp.html" data-linktype="relative-path">'maxp'</a> table minus numberOfHMetrics.</p>
+<p><em>Horizontal Metrics Table:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LongHorMetric</td>
+<td>hMetrics[numberOfHMetrics]</td>
+<td>Paired advance width and left side bearing values for each glyph. Records are indexed by glyph ID.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>leftSideBearings[numGlyphs - numberOfHMetrics]</td>
+<td>Left side bearings for glyph IDs greater than or equal to numberOfHMetrics.</td>
+</tr>
+</tbody>
+</table>
+<p><em>LongHorMetric Record:</em></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UFWORD</td>
+<td>advanceWidth</td>
+<td>Advance width, in font design units.</td>
+</tr>
+<tr>
+<td>FWORD</td>
+<td>lsb</td>
+<td>Glyph left side bearing, in font design units.</td>
+</tr>
+</tbody>
+</table>
+<p>In a font with TrueType outlines, xMin and xMax values for each glyph are given in the 'glyf' table. The advance width (“aw”) and left side bearing (“lsb”) can be derived from the glyph “phantom points”, which are computed by the TrueType rasterizer; or they can be obtained from the 'hmtx' table. In a font with CFF or CFF2 outlines, xMin (= left side bearing) and xMax values can be obtained from the CFF / CFF2 rasterizer. From those values, the right side bearing (“rsb”) is calculated as follows:</p>
+<pre><code>    rsb = aw - (lsb + xMax - xMin)
+</code></pre>
+<p>If pp1 and pp2 are TrueType phantom points used to control lsb and rsb, their initial position in the X-direction is calculated as follows:</p>
+<pre><code>    pp1 = xMin - lsb
+    pp2 = pp1 + aw
+</code></pre>
+<p>If a glyph has no contours, xMax/xMin are not defined. The left side bearing indicated in the 'hmtx' table for such glyphs should be zero.</p>
+
+</body>
+</html>
