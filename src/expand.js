@@ -45,9 +45,9 @@
  */
 
 import {
-	buildNameToGlyphIdMap,
-	hexToBGRA,
-	resolvePaintGlyphNames,
+    buildNameToGlyphIdMap,
+    hexToBGRA,
+    resolvePaintGlyphNames,
 } from './color.js';
 import { cubicContourToPoints, isCubicContours } from './convert.js';
 import { normalizeComponent, resolveGlyphId } from './glyph.js';
