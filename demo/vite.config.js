@@ -59,7 +59,7 @@ export default defineConfig({
 		// brotli-wasm ships a `.wasm` asset that Vite's dep optimizer can mangle;
 		// excluding it lets the package load its WASM via its own URL resolution.
 		exclude: ['brotli-wasm'],
-		esbuildOptions: {
+		rolldownOptions: {
 			target: 'esnext',
 		},
 	},

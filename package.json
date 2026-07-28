@@ -55,12 +55,15 @@
 	"homepage": "https://www.glyphrstudio.com/fontfluxjs/",
 	"devDependencies": {
 		"@biomejs/biome": "2.4.15",
-		"vite": "^7.3.1",
-		"vitepress": "1.6.4",
-		"vitest": "^4.0.18"
+		"vite": "^8.0.0",
+		"vitepress": "^2.0.0-alpha.18",
+		"vitest": "^4.1.0"
 	},
 	"dependencies": {
 		"brotli-wasm": "^3.0.1",
 		"pako": "^2.1.0"
+	},
+	"allowScripts": {
+		"esbuild@0.21.5": true
 	}
 }
