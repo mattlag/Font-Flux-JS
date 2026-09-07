@@ -28,7 +28,7 @@ You can also construct the substitutions array directly as plain JSON and assign
 
 ## Substitution types
 
-Font Flux supports five simplified GSUB substitution types. Each type maps to one or more OpenType lookup types.
+Font Flux supports six simplified GSUB substitution types. Each type maps to one or more OpenType lookup types.
 
 ### Single substitution (GSUB type 1)
 
@@ -123,6 +123,28 @@ font.addSubstitution({
 });
 ```
 
+### Contextual substitution (GSUB types 5 and 6)
+
+Apply direct substitutions only when glyph sets match. Each position is an array because it can match any glyph in that set. `at` is the zero-based input position where the action lookup runs.
+
+```js
+font.addSubstitution({
+	type: 'contextual',
+	feature: 'calt',
+	backtrack: [['a', 'a.alt']],
+	input: [['b']],
+	lookahead: [['c']],
+	actions: [
+		{
+			at: 0,
+			substitution: { type: 'single', from: 'b', to: 'b.alt' },
+		},
+	],
+});
+```
+
+Omit `backtrack` and `lookahead` for a type 5 contextual rule. Providing either produces type 6. Font Flux emits coverage-based format 3 and creates the referenced helper lookups automatically.
+
 ## Common OpenType feature tags
 
 The `feature` field determines when the substitution is applied. Here are the most common tags:
@@ -136,7 +158,7 @@ The `feature` field determines when the substitution is applied. Here are the mo
 | `salt`        | Stylistic alternates            | alternate, single    |
 | `ss01`–`ss20` | Stylistic sets                  | single               |
 | `ccmp`        | Glyph composition/decomposition | multiple, ligature   |
-| `calt`        | Contextual alternates           | single (via context) |
+| `calt`        | Contextual alternates           | contextual           |
 | `locl`        | Localized forms                 | single               |
 | `frac`        | Fractions                       | single, ligature     |
 | `subs`        | Subscript                       | single               |
@@ -451,19 +473,19 @@ When you call `FontFlux.open()`, the GSUB table is parsed and decomposed:
 
 On export, Font Flux:
 
-1. Groups substitution rules by type + feature tag
+1. Groups substitution rules by type, feature tag, and optional lookup identity
 2. Builds one GSUB lookup per group
-3. Appends any raw lookups (types 5/6) with corrected indices
+3. Builds contextual helper lookups and remaps their action indices
 4. Constructs the complete featureList and scriptList from rule metadata
 5. Writes the binary GSUB table
 
 ### Round-trip fidelity
 
-Imported fonts round-trip correctly — all substitution rules are preserved through import → edit → export cycles. The GSUB binary structure may be reorganized (lookups reordered, coverage tables rebuilt), but the functional behavior is identical.
+Imported fonts retain lookup boundaries, flags, mark-filtering sets, required features, extension lookup preference, and FeatureVariations metadata. The GSUB binary structure may be reorganized, including normalization of contextual formats 1 and 2 to format 3, while preserving represented behavior.
 
 ## Contextual lookups (types 5 and 6)
 
-GSUB lookup types 5 and 6 (contextual substitution and chaining contextual substitution) are preserved as raw data during import because they reference other lookups by index, making simplified authoring impractical.
+GSUB lookup types 5 and 6 are normalized to `contextual` rules when every referenced helper lookup can be represented by the direct easy-mode types. Formats 1, 2, and 3 normalize to glyph-name sets. Unsupported or ambiguous helper graphs remain in `_rawGSUBLookups` and are exported unchanged.
 
 If you need to inspect or manipulate these, access them via the raw features:
 
@@ -474,7 +496,11 @@ const font = FontFlux.open(buffer);
 console.log(font._data._rawGSUBLookups?.length);
 ```
 
-For most font editing workflows (ligatures, small caps, alternates, stylistic sets), the simplified substitution types cover all common needs.
+### Optional lookup metadata
+
+Imported rules include a `lookup` object with `id`, `flags`, and, when applicable, `markFilteringSet` and `useExtension`. Keep this object when editing imported JSON to preserve lookup topology. It may be omitted in hand-authored JSON; Font Flux then groups compatible rules and chooses the lookup encoding.
+
+Top-level `substitutionMetadata` preserves GSUB version, feature order, required-feature assignments, and FeatureVariations. It is optional for fonts authored from scratch.
 
 ## Validation
 

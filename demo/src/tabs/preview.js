@@ -11,10 +11,67 @@ export const previewTab = {
 
 function render(container, fontData) {
 	const wrap = document.createElement('div');
-	wrap.className = 'overview';
+	wrap.className = 'overview preview-tab';
 
-	wrap.appendChild(buildPreviewSection(fontData));
-	wrap.appendChild(buildGlyphSample(fontData, wrap));
+	const tabList = document.createElement('div');
+	tabList.className = 'preview-subtabs';
+	tabList.setAttribute('role', 'tablist');
+	tabList.setAttribute('aria-label', 'Preview type');
+
+	const content = document.createElement('div');
+	content.className = 'preview-subtab-content';
+
+	const tabs = [
+		{
+			id: 'characters',
+			label: 'Characters',
+			render: () => [
+				buildPreviewSection(fontData),
+				buildGlyphSample(fontData),
+			],
+		},
+		{
+			id: 'ligatures',
+			label: 'Ligatures',
+			render: () => [buildLigaturePreview(fontData)],
+		},
+		{
+			id: 'kerning',
+			label: 'Kerning',
+			render: () => [buildKerningPreview(fontData)],
+		},
+	];
+
+	const buttons = new Map();
+	function selectTab(id) {
+		content.replaceChildren();
+		for (const tab of tabs) {
+			const active = tab.id === id;
+			const button = buttons.get(tab.id);
+			button.classList.toggle('active', active);
+			button.setAttribute('aria-selected', String(active));
+			button.tabIndex = active ? 0 : -1;
+			if (active) content.append(...tab.render());
+		}
+	}
+
+	for (const tab of tabs) {
+		const button = document.createElement('button');
+		button.className = 'preview-subtab';
+		button.type = 'button';
+		button.id = `preview-tab-${tab.id}`;
+		button.setAttribute('role', 'tab');
+		button.setAttribute('aria-controls', 'preview-subtab-panel');
+		button.textContent = tab.label;
+		button.addEventListener('click', () => selectTab(tab.id));
+		tabList.appendChild(button);
+		buttons.set(tab.id, button);
+	}
+
+	content.id = 'preview-subtab-panel';
+	content.setAttribute('role', 'tabpanel');
+	wrap.append(tabList, content);
+	selectTab('characters');
 
 	container.appendChild(wrap);
 }
@@ -76,7 +133,7 @@ function buildPreviewSection(fontData) {
 
 // ─── Glyph Outlines Grid ───────────────────────────────────────────────────
 
-function buildGlyphSample(fontData, wrap) {
+function buildGlyphSample(fontData) {
 	const glyphs = fontData.glyphs || [];
 	const PAGE_SIZE = 100;
 
@@ -338,6 +395,302 @@ function showGlyphDetail(panel, glyph, fontData) {
 
 	layout.appendChild(data);
 	panel.appendChild(layout);
+}
+
+// ─── Ligatures ──────────────────────────────────────────────────────────────
+
+function buildLigaturePreview(fontData) {
+	const ligatures = (fontData.substitutions || []).filter(
+		(substitution) => substitution.type === 'ligature',
+	);
+	const section = makeSection(`Ligatures (${ligatures.length})`);
+	if (ligatures.length === 0) {
+		section.appendChild(makeEmptyMessage('No ligature substitutions are defined in this font.'));
+		return section;
+	}
+
+	const glyphsByName = makeGlyphMap(fontData.glyphs);
+	const detailPanel = makeDetailPanel(section);
+	const grid = document.createElement('div');
+	grid.className = 'glyph-grid preview-rule-grid';
+	const paging = document.createElement('div');
+	paging.className = 'glyph-paging';
+	section.append(grid, paging);
+
+	buildPagedGrid(ligatures, grid, paging, (ligature) => {
+		const resultGlyph = glyphsByName.get(ligature.ligature);
+		const cell = makeRuleCell();
+		if (resultGlyph?.contours?.length) {
+			const canvas = document.createElement('canvas');
+			canvas.className = 'glyph-thumb';
+			drawGlyphTile(canvas, { glyph: resultGlyph, fontData, size: 64 });
+			cell.appendChild(canvas);
+		} else {
+			cell.appendChild(makeFontSpecimen(glyphNamesToText(ligature.components, glyphsByName)));
+		}
+		cell.appendChild(makeRuleLabel(`${ligature.components.join(' + ')} → ${ligature.ligature}`));
+		cell.addEventListener('click', () => {
+			showLigatureDetail(detailPanel, ligature, resultGlyph, fontData, glyphsByName);
+		});
+		return cell;
+	});
+	return section;
+}
+
+function showLigatureDetail(panel, ligature, resultGlyph, fontData, glyphsByName) {
+	const layout = openDetailPanel(panel);
+	const preview = document.createElement('div');
+	preview.className = 'glyph-detail-canvas-wrap rule-detail-preview';
+	if (resultGlyph?.contours?.length) {
+		const canvas = document.createElement('canvas');
+		drawGlyphTile(canvas, { glyph: resultGlyph, fontData, size: 224, showBounds: true });
+		preview.appendChild(canvas);
+	} else {
+		preview.appendChild(makeFontSpecimen(glyphNamesToText(ligature.components, glyphsByName), true));
+	}
+	layout.appendChild(preview);
+
+	const data = document.createElement('div');
+	data.className = 'glyph-detail-data';
+	const title = document.createElement('h3');
+	title.className = 'glyph-detail-title';
+	title.textContent = `${ligature.components.join(' + ')} → ${ligature.ligature}`;
+	data.append(title, makeMetricGrid([
+		['Feature', ligature.feature || '—'],
+		['Script', ligature.script || '—'],
+		['Language', ligature.language || 'Default'],
+		['Components', ligature.components.length],
+		['Result glyph', ligature.ligature],
+	]));
+	layout.appendChild(data);
+}
+
+// ─── Kerning ────────────────────────────────────────────────────────────────
+
+function buildKerningPreview(fontData) {
+	const entries = collectKerningEntries(fontData);
+	const section = makeSection(`Kerning Pairs (${entries.length})`);
+	if (entries.length === 0) {
+		section.appendChild(makeEmptyMessage('No kerning pairs are defined in this font.'));
+		return section;
+	}
+
+	const glyphsByName = makeGlyphMap(fontData.glyphs);
+	const detailPanel = makeDetailPanel(section);
+	const grid = document.createElement('div');
+	grid.className = 'glyph-grid preview-rule-grid kerning-grid';
+	const paging = document.createElement('div');
+	paging.className = 'glyph-paging';
+	section.append(grid, paging);
+
+	buildPagedGrid(entries, grid, paging, (entry) => {
+		const cell = makeRuleCell();
+		const text = glyphNamesToText([entry.displayLeft, entry.displayRight], glyphsByName);
+		cell.append(
+			makeFontSpecimen(text),
+			makeRuleLabel(`${entry.left} · ${entry.right}`),
+			makeAdjustmentLabel(entry.value),
+		);
+		cell.addEventListener('click', () => showKerningDetail(detailPanel, entry, glyphsByName));
+		return cell;
+	});
+	return section;
+}
+
+function collectKerningEntries(fontData) {
+	const entries = (fontData.kerning || []).map((pair) => ({
+		...pair,
+		displayLeft: pair.left,
+		displayRight: pair.right,
+		kind: 'Individual pair',
+	}));
+	const groups = Array.isArray(fontData.kerningClasses)
+		? fontData.kerningClasses
+		: fontData.kerningClasses
+			? [fontData.kerningClasses]
+			: [];
+	for (const group of groups) {
+		for (const pair of group.pairs || []) {
+			const left = resolveKerningSide(pair.left, group.leftClasses);
+			const right = resolveKerningSide(pair.right, group.rightClasses);
+			entries.push({
+				...pair,
+				displayLeft: left.members[0] || pair.left,
+				displayRight: right.members[0] || pair.right,
+				leftMembers: left.members,
+				rightMembers: right.members,
+				kind: 'Class pair',
+			});
+		}
+	}
+	return entries;
+}
+
+function resolveKerningSide(reference, classes = {}) {
+	if (!reference?.startsWith('@')) return { members: [reference] };
+	return { members: classes[reference.slice(1)] || [] };
+}
+
+function showKerningDetail(panel, entry, glyphsByName) {
+	const layout = openDetailPanel(panel);
+	const preview = document.createElement('div');
+	preview.className = 'glyph-detail-canvas-wrap kerning-detail-preview';
+	const text = glyphNamesToText([entry.displayLeft, entry.displayRight], glyphsByName);
+	const unkerned = makeFontSpecimen(text, true);
+	unkerned.style.fontKerning = 'none';
+	unkerned.dataset.label = 'Unkerned';
+	const kerned = makeFontSpecimen(text, true);
+	kerned.style.fontKerning = 'normal';
+	kerned.dataset.label = 'Kerned';
+	preview.append(unkerned, kerned);
+	layout.appendChild(preview);
+
+	const data = document.createElement('div');
+	data.className = 'glyph-detail-data';
+	const title = document.createElement('h3');
+	title.className = 'glyph-detail-title';
+	title.textContent = `${entry.left} · ${entry.right}`;
+	const metrics = [
+		['Adjustment', `${entry.value} font units`],
+		['Source', entry.kind],
+		['Preview glyphs', `${entry.displayLeft} + ${entry.displayRight}`],
+	];
+	if (entry.leftMembers) metrics.push(['Left class members', entry.leftMembers.join(', ') || '—']);
+	if (entry.rightMembers) metrics.push(['Right class members', entry.rightMembers.join(', ') || '—']);
+	data.append(title, makeMetricGrid(metrics));
+	layout.appendChild(data);
+}
+
+// ─── Shared Preview Helpers ─────────────────────────────────────────────────
+
+function buildPagedGrid(items, grid, paging, renderCell) {
+	const pageSize = 100;
+	let currentPage = 0;
+	const totalPages = Math.ceil(items.length / pageSize);
+	function renderPage() {
+		grid.replaceChildren();
+		const start = currentPage * pageSize;
+		for (const item of items.slice(start, start + pageSize)) grid.appendChild(renderCell(item));
+		paging.replaceChildren();
+		if (totalPages <= 1) return;
+		const previous = makePageButton('← Prev', currentPage === 0, () => {
+			currentPage--;
+			renderPage();
+		});
+		const info = document.createElement('span');
+		info.className = 'glyph-page-info';
+		info.textContent = `Page ${currentPage + 1} of ${totalPages}`;
+		const next = makePageButton('Next →', currentPage === totalPages - 1, () => {
+			currentPage++;
+			renderPage();
+		});
+		paging.append(previous, info, next);
+	}
+	renderPage();
+}
+
+function makePageButton(label, disabled, onClick) {
+	const button = document.createElement('button');
+	button.className = 'glyph-page-btn';
+	button.type = 'button';
+	button.textContent = label;
+	button.disabled = disabled;
+	button.addEventListener('click', onClick);
+	return button;
+}
+
+function makeRuleCell() {
+	const cell = document.createElement('button');
+	cell.type = 'button';
+	cell.className = 'glyph-cell preview-rule-cell';
+	return cell;
+}
+
+function makeFontSpecimen(text, large = false) {
+	const specimen = document.createElement('div');
+	specimen.className = `rule-specimen${large ? ' rule-specimen-large' : ''}`;
+	specimen.style.fontFamily = "'DemoLoadedFont', sans-serif";
+	specimen.textContent = text || '—';
+	return specimen;
+}
+
+function makeRuleLabel(text) {
+	const label = document.createElement('div');
+	label.className = 'glyph-label rule-label';
+	label.textContent = text;
+	label.title = text;
+	return label;
+}
+
+function makeAdjustmentLabel(value) {
+	const label = document.createElement('span');
+	label.className = `kerning-value ${value < 0 ? 'negative' : 'positive'}`;
+	label.textContent = value > 0 ? `+${value}` : String(value);
+	return label;
+}
+
+function makeGlyphMap(glyphs = []) {
+	return new Map(glyphs.map((glyph) => [glyph.name, glyph]));
+}
+
+function glyphNamesToText(names, glyphsByName) {
+	return names
+		.map((name) => glyphsByName.get(name)?.unicode)
+		.filter((unicode) => unicode != null)
+		.map((unicode) => String.fromCodePoint(unicode))
+		.join('');
+}
+
+function makeEmptyMessage(text) {
+	const message = document.createElement('p');
+	message.className = 'preview-empty';
+	message.textContent = text;
+	return message;
+}
+
+function makeDetailPanel(section) {
+	const panel = document.createElement('div');
+	panel.className = 'glyph-detail-panel';
+	panel.hidden = true;
+	section.appendChild(panel);
+	return panel;
+}
+
+function openDetailPanel(panel) {
+	panel.hidden = false;
+	panel.replaceChildren();
+	const close = document.createElement('button');
+	close.className = 'glyph-detail-close';
+	close.type = 'button';
+	close.textContent = '×';
+	close.title = 'Close';
+	close.setAttribute('aria-label', 'Close details');
+	close.addEventListener('click', () => {
+		panel.hidden = true;
+	});
+	const layout = document.createElement('div');
+	layout.className = 'glyph-detail-layout';
+	panel.append(close, layout);
+	panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+	return layout;
+}
+
+function makeMetricGrid(metrics) {
+	const grid = document.createElement('div');
+	grid.className = 'glyph-detail-metrics';
+	for (const [label, value] of metrics) {
+		const row = document.createElement('div');
+		row.className = 'glyph-detail-metric';
+		const key = document.createElement('span');
+		key.className = 'gdm-label';
+		key.textContent = label;
+		const content = document.createElement('span');
+		content.className = 'gdm-value';
+		content.textContent = String(value);
+		row.append(key, content);
+		grid.appendChild(row);
+	}
+	return grid;
 }
 
 function formatContours(contours) {

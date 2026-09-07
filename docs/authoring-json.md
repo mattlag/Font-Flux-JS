@@ -153,11 +153,21 @@ Each group is exported as a single [`GPOS`](./tables/GPOS.md) PairPos Format 2 s
 ```json
 "substitutions": [
   { "type": "ligature", "feature": "liga", "components": ["f", "i"], "ligature": "fi" },
-  { "type": "single", "feature": "smcp", "from": "a", "to": "a.sc" }
+	{ "type": "single", "feature": "smcp", "from": "a", "to": "a.sc" },
+	{
+		"type": "contextual",
+		"feature": "calt",
+		"backtrack": [["a"]],
+		"input": [["b"]],
+		"lookahead": [["c"]],
+		"actions": [
+			{ "at": 0, "substitutions": [{ "type": "single", "from": "b", "to": "b.alt" }] }
+		]
+	}
 ]
 ```
 
-Written into the [`GSUB`](./tables/GSUB.md) table. Supported types and their JSON shapes are documented in [Creating Substitutions](./creating-substitutions.md).
+Written into the [`GSUB`](./tables/GSUB.md) table. Hand-authored rules can omit OpenType lookup details; Font Flux creates helper lookups and selects the encoding. Imported rules may include optional `lookup` metadata, and imported fonts may include top-level `substitutionMetadata`, to retain lookup flags, boundaries, required features, extension preference, and FeatureVariations. Supported shapes are documented in [Creating Substitutions](./creating-substitutions.md).
 
 ### Variable-font fields — optional
 

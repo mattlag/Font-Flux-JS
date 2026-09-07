@@ -32,6 +32,10 @@ import { resolveGlyphId } from './glyph.js';
  *     { type: 'reverse', feature: 'rclt', substitution: { from: 'a', to: 'a.final',
  *       backtrack: [['x', 'y']], lookahead: [['z']] } }
  *
+ *   Contextual — apply one or more substitutions when glyph sets match
+ *     { type: 'contextual', feature: 'calt', input: [['a'], ['b']],
+ *       actions: [{ at: 1, substitution: { type: 'single', from: 'b', to: 'b.alt' } }] }
+ *
  * All types accept optional `script` (default: 'DFLT') and `language` (default: null = defaultLangSys).
  *
  * Class-based shorthand (applies to any glyph ref):
@@ -73,13 +77,40 @@ export function createSubstitution(input) {
 		const type = item.type;
 		if (!type) {
 			throw new Error(
-				'createSubstitution: each rule must have a "type" (single, multiple, alternate, ligature, reverse)',
+				'createSubstitution: each rule must have a "type" (single, multiple, alternate, ligature, reverse, contextual)',
 			);
 		}
 
 		const feature = item.feature || 'liga';
 		const script = item.script || 'DFLT';
 		const language = item.language || null;
+		if (type === 'contextual') {
+			if (!Array.isArray(item.input) || item.input.length === 0) {
+				throw new Error(
+					'createSubstitution: contextual rules require a non-empty "input" array',
+				);
+			}
+			if (!Array.isArray(item.actions) || item.actions.length === 0) {
+				throw new Error(
+					'createSubstitution: contextual rules require a non-empty "actions" array',
+				);
+			}
+			const rule = {
+				type,
+				feature,
+				script,
+				language,
+				backtrack: resolvePositions(item.backtrack, classes),
+				input: resolvePositions(item.input, classes),
+				lookahead: resolvePositions(item.lookahead, classes),
+				actions: item.actions.map((action) =>
+					normalizeContextAction(action, classes),
+				),
+			};
+			if (item.lookup) rule.lookup = { ...item.lookup };
+			result.push(rule);
+			continue;
+		}
 
 		const subs = item.substitutions
 			? item.substitutions
@@ -95,6 +126,8 @@ export function createSubstitution(input) {
 
 		for (const sub of subs) {
 			const base = { type, feature, script, language };
+			const lookup = sub.lookup || item.lookup;
+			if (lookup) base.lookup = { ...lookup };
 
 			switch (type) {
 				case 'single':
@@ -145,7 +178,7 @@ export function createSubstitution(input) {
 
 				default:
 					throw new Error(
-						`createSubstitution: unknown type "${type}". Valid: single, multiple, alternate, ligature, reverse`,
+						`createSubstitution: unknown type "${type}". Valid: single, multiple, alternate, ligature, reverse, contextual`,
 					);
 			}
 		}
@@ -182,6 +215,10 @@ export function getSubstitutions(font, glyphId, options = {}) {
 				return rule.from === name;
 			case 'ligature':
 				return rule.components && rule.components.includes(name);
+			case 'contextual':
+				return [...rule.backtrack, ...rule.input, ...rule.lookahead].some(
+					(position) => position.includes(name),
+				);
 			default:
 				return false;
 		}
@@ -231,5 +268,44 @@ function resolveRefArray(arr, classes) {
 			result.push(ref);
 		}
 	}
+	return result;
+}
+
+function resolvePositions(positions, classes) {
+	return (positions || []).map((position) =>
+		resolveRefArray(position, classes),
+	);
+}
+
+function normalizeContextAction(action, classes) {
+	if (!Number.isInteger(action.at) || action.at < 0) {
+		throw new Error(
+			'createSubstitution: contextual action "at" must be a non-negative integer',
+		);
+	}
+	const inputs = action.substitutions ||
+		(action.substitution ? [action.substitution] : []);
+	if (inputs.length === 0) {
+		throw new Error(
+			'createSubstitution: contextual actions require "substitution" or "substitutions"',
+		);
+	}
+	const substitutions = [];
+	for (const input of inputs) {
+		const normalized = createSubstitution({
+			type: input.type || action.type,
+			feature: 'DFLT',
+			substitution: input,
+			classes,
+		});
+		substitutions.push(
+			...normalized.map(
+				({ feature, script, language, lookup, ...substitution }) =>
+					substitution,
+			),
+		);
+	}
+	const result = { at: action.at, substitutions };
+	if (action.lookup) result.lookup = { ...action.lookup };
 	return result;
 }

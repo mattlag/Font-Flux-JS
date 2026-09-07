@@ -573,6 +573,7 @@ function parseLookup(reader, offset, parseSubtable, extensionLookupType) {
 		lookupFlag,
 		subtables: finalSubtables,
 	};
+	if (finalType !== lookupType) lookup.useExtension = true;
 	if (markFilteringSet !== undefined)
 		lookup.markFilteringSet = markFilteringSet;
 	return lookup;
@@ -654,11 +655,23 @@ export function writeLookupList(
 		return false;
 	};
 
-	if (checkOverflow(lookupBlocks) && extensionLookupType !== undefined) {
-		// -- Step 4: auto-wrap non-Extension Lookups ------------------
+	const overflow = checkOverflow(lookupBlocks);
+	const useExtensions = lookupData.some((lookup) => lookup.useExtension);
+	if (
+		(overflow || useExtensions) &&
+		extensionLookupType !== undefined
+	) {
+		// -- Step 4: wrap requested Lookups ---------------------------
 
 		// Build wrapped lookup blocks with deferred inner data
-		const wrappedData = lookupData.map((ld) => {
+		const wrappedData = lookupData.map((ld, lookupIndex) => {
+			if (!overflow && !ld.useExtension) {
+				return {
+					compactBytes: lookupBlocks[lookupIndex],
+					subtableOffsets: [],
+					innerDataBytes: [],
+				};
+			}
 			const { lookupType, lookupFlag, subtableBytes, markFilteringSet } = ld;
 			const hasMarkFilteringSet = markFilteringSet !== undefined;
 

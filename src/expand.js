@@ -264,13 +264,17 @@ export function buildRawFromSimplified(simplified) {
 			simplified.substitutions,
 			simplified._rawGSUBLookups || [],
 			glyphs,
+			simplified.substitutionMetadata,
 		);
 	} else if (
 		simplified._rawGSUBLookups &&
 		simplified._rawGSUBLookups.length > 0
 	) {
 		// Only raw lookups, no simplified substitutions — rebuild minimal GSUB
-		tables.GSUB = buildGSUBFromRawLookups(simplified._rawGSUBLookups);
+		tables.GSUB = buildGSUBFromRawLookups(
+			simplified._rawGSUBLookups,
+			simplified.substitutionMetadata,
+		);
 	}
 
 	// Legacy: if features.GSUB is set directly (e.g. setFeatures), use it
@@ -2724,21 +2728,46 @@ function resolveToIndex(ref, glyphs, nameToIndex) {
  * @param {object[]} glyphs - Simplified glyphs array.
  * @returns {object} Full GSUB table structure.
  */
-function buildGSUBFromSubstitutions(substitutions, rawLookups, glyphs) {
+function buildGSUBFromSubstitutions(
+	substitutions,
+	rawLookups,
+	glyphs,
+	metadata = {},
+) {
 	const nameToIndex = buildNameToIndex(glyphs);
 	const lookups = [];
 	const featureMap = new Map(); // 'featureTag' → { lookupIndices: Set, scripts: Map }
+	const lookupIndexRemap = new Map();
 
 	// Group substitutions by type + feature tag
 	const groups = groupSubstitutions(substitutions);
+	let syntheticLookupId = -1;
 
 	for (const [key, rules] of groups) {
 		const [type, featureTag] = key.split('\0');
-		const lookup = buildLookupFromRules(type, rules, glyphs, nameToIndex);
+		let lookup;
+		if (type === 'contextual') {
+			const built = buildContextualSubstLookup(
+				rules,
+				glyphs,
+				nameToIndex,
+				lookups,
+				lookupIndexRemap,
+				syntheticLookupId,
+			);
+			lookup = built.lookup;
+			syntheticLookupId = built.nextSyntheticLookupId;
+		} else {
+			lookup = buildLookupFromRules(type, rules, glyphs, nameToIndex);
+		}
 		if (!lookup) continue;
 
 		const lookupIndex = lookups.length;
 		lookups.push(lookup);
+		const originalLookupIndex = rules[0]?.lookup?.id;
+		if (originalLookupIndex !== undefined) {
+			lookupIndexRemap.set(originalLookupIndex, lookupIndex);
+		}
 
 		if (!featureMap.has(featureTag)) {
 			featureMap.set(featureTag, {
@@ -2767,11 +2796,10 @@ function buildGSUBFromSubstitutions(substitutions, rawLookups, glyphs) {
 		}
 	}
 
-	// Merge raw lookups (types 5/6 from import) — append after simplified lookups
-	const rawLookupIndexRemap = new Map();
+	// Merge contextual lookups and their helper lookups from import.
 	for (const raw of rawLookups) {
-		rawLookupIndexRemap.set(raw.index, lookups.length);
-		lookups.push(raw.lookup);
+		lookupIndexRemap.set(raw.index, lookups.length);
+		lookups.push(structuredClone(raw.lookup));
 
 		// Re-register feature associations for raw lookups
 		for (const ref of raw.features) {
@@ -2795,8 +2823,8 @@ function buildGSUBFromSubstitutions(substitutions, rawLookups, glyphs) {
 	}
 
 	// Remap lookup indices inside raw contextual subtables (types 5/6)
-	if (rawLookupIndexRemap.size > 0) {
-		remapContextualLookupIndices(lookups, rawLookupIndexRemap);
+	if (lookupIndexRemap.size > 0) {
+		remapContextualLookupIndices(lookups, lookupIndexRemap);
 	}
 
 	// Build featureList
@@ -2843,7 +2871,12 @@ function buildGSUBFromSubstitutions(substitutions, rawLookups, glyphs) {
 		for (const [langTag, featureIndices] of langMap) {
 			const langSys = {
 				lookupOrderOffset: 0,
-				requiredFeatureIndex: 0xffff,
+				requiredFeatureIndex: resolveRequiredFeatureIndex(
+					metadata,
+					scriptTag,
+					langTag,
+					featureTagToIndex,
+				),
 				featureIndices: Array.from(featureIndices).sort((a, b) => a - b),
 			};
 
@@ -2866,7 +2899,12 @@ function buildGSUBFromSubstitutions(substitutions, rawLookups, glyphs) {
 			}
 			defaultLangSys = {
 				lookupOrderOffset: 0,
-				requiredFeatureIndex: 0xffff,
+				requiredFeatureIndex: resolveRequiredFeatureIndex(
+					metadata,
+					scriptTag,
+					null,
+					featureTagToIndex,
+				),
 				featureIndices: Array.from(allIndices).sort((a, b) => a - b),
 			};
 		}
@@ -2880,27 +2918,34 @@ function buildGSUBFromSubstitutions(substitutions, rawLookups, glyphs) {
 		});
 	}
 
-	return {
-		majorVersion: 1,
-		minorVersion: 0,
+	const featureVariations = remapFeatureVariations(
+		metadata,
+		featureTagToIndex,
+		lookupIndexRemap,
+	);
+	const result = {
+		majorVersion: metadata.majorVersion ?? 1,
+		minorVersion: featureVariations ? Math.max(metadata.minorVersion ?? 0, 1) : 0,
 		scriptList: { scriptRecords },
 		featureList: { featureRecords },
 		lookupList: { lookups },
 	};
+	if (featureVariations) result.featureVariations = featureVariations;
+	return result;
 }
 
 /**
  * Build a minimal GSUB table from only raw (non-simplifiable) lookups.
  * Used when there are no simplified substitutions but raw lookups need preserving.
  */
-function buildGSUBFromRawLookups(rawLookups) {
+function buildGSUBFromRawLookups(rawLookups, metadata = {}) {
 	const lookups = [];
 	const featureMap = new Map();
 	const lookupIndexRemap = new Map();
 
 	for (const raw of rawLookups) {
 		lookupIndexRemap.set(raw.index, lookups.length);
-		lookups.push(raw.lookup);
+		lookups.push(structuredClone(raw.lookup));
 
 		for (const ref of raw.features) {
 			const featureTag = ref.featureTag;
@@ -2965,7 +3010,12 @@ function buildGSUBFromRawLookups(rawLookups) {
 		for (const [langTag, featureIndices] of langMap) {
 			const langSys = {
 				lookupOrderOffset: 0,
-				requiredFeatureIndex: 0xffff,
+				requiredFeatureIndex: resolveRequiredFeatureIndex(
+					metadata,
+					scriptTag,
+					langTag,
+					featureTagToIndex,
+				),
 				featureIndices: Array.from(featureIndices).sort((a, b) => a - b),
 			};
 			if (langTag === null) {
@@ -2981,7 +3031,12 @@ function buildGSUBFromRawLookups(rawLookups) {
 			}
 			defaultLangSys = {
 				lookupOrderOffset: 0,
-				requiredFeatureIndex: 0xffff,
+				requiredFeatureIndex: resolveRequiredFeatureIndex(
+					metadata,
+					scriptTag,
+					null,
+					featureTagToIndex,
+				),
 				featureIndices: Array.from(allIndices).sort((a, b) => a - b),
 			};
 		}
@@ -2991,13 +3046,51 @@ function buildGSUBFromRawLookups(rawLookups) {
 		});
 	}
 
-	return {
-		majorVersion: 1,
-		minorVersion: 0,
+	const featureVariations = remapFeatureVariations(
+		metadata,
+		featureTagToIndex,
+		lookupIndexRemap,
+	);
+	const result = {
+		majorVersion: metadata.majorVersion ?? 1,
+		minorVersion: featureVariations ? Math.max(metadata.minorVersion ?? 0, 1) : 0,
 		scriptList: { scriptRecords },
 		featureList: { featureRecords },
 		lookupList: { lookups },
 	};
+	if (featureVariations) result.featureVariations = featureVariations;
+	return result;
+}
+
+function resolveRequiredFeatureIndex(
+	metadata,
+	script,
+	language,
+	featureTagToIndex,
+) {
+	const match = (metadata.requiredFeatures || []).find(
+		(entry) => entry.script === script && entry.language === language,
+	);
+	return match ? (featureTagToIndex.get(match.feature) ?? 0xffff) : 0xffff;
+}
+
+function remapFeatureVariations(metadata, featureTagToIndex, lookupIndexRemap) {
+	if (!metadata.featureVariations) return null;
+	const variations = structuredClone(metadata.featureVariations);
+	for (const record of variations.featureVariationRecords || []) {
+		for (const substitution of
+			record.featureTableSubstitution?.substitutions || []) {
+			const tag = metadata.featureOrder?.[substitution.featureIndex];
+			if (!tag || !featureTagToIndex.has(tag)) continue;
+			substitution.featureIndex = featureTagToIndex.get(tag);
+			substitution.feature.lookupListIndices = (
+				substitution.feature.lookupListIndices || []
+			)
+				.map((index) => lookupIndexRemap.get(index))
+				.filter((index) => index !== undefined);
+		}
+	}
+	return variations;
 }
 
 /**
@@ -3007,7 +3100,12 @@ function buildGSUBFromRawLookups(rawLookups) {
 function groupSubstitutions(substitutions) {
 	const groups = new Map();
 	for (const rule of substitutions) {
-		const key = `${rule.type}\0${rule.feature}`;
+		const lookup = rule.lookup || {};
+		const identity =
+			lookup.id !== undefined
+				? `id:${lookup.id}`
+				: `auto:${lookup.flags || 0}:${lookup.markFilteringSet ?? ''}:${lookup.useExtension ? 1 : 0}`;
+		const key = `${rule.type}\0${rule.feature}\0${identity}`;
 		if (!groups.has(key)) groups.set(key, []);
 		groups.get(key).push(rule);
 	}
@@ -3018,20 +3116,135 @@ function groupSubstitutions(substitutions) {
  * Build a GSUB lookup from a group of simplified rules of the same type.
  */
 function buildLookupFromRules(type, rules, glyphs, nameToIndex) {
+	let lookup;
 	switch (type) {
 		case 'single':
-			return buildSingleSubstLookup(rules, glyphs, nameToIndex);
+			lookup = buildSingleSubstLookup(rules, glyphs, nameToIndex);
+			break;
 		case 'multiple':
-			return buildMultipleSubstLookup(rules, glyphs, nameToIndex);
+			lookup = buildMultipleSubstLookup(rules, glyphs, nameToIndex);
+			break;
 		case 'alternate':
-			return buildAlternateSubstLookup(rules, glyphs, nameToIndex);
+			lookup = buildAlternateSubstLookup(rules, glyphs, nameToIndex);
+			break;
 		case 'ligature':
-			return buildLigatureSubstLookup(rules, glyphs, nameToIndex);
+			lookup = buildLigatureSubstLookup(rules, glyphs, nameToIndex);
+			break;
 		case 'reverse':
-			return buildReverseChainSubstLookup(rules, glyphs, nameToIndex);
+			lookup = buildReverseChainSubstLookup(rules, glyphs, nameToIndex);
+			break;
 		default:
 			return null;
 	}
+	if (!lookup) return null;
+	const metadata = rules[0]?.lookup;
+	if (metadata) {
+		lookup.lookupFlag = metadata.flags || 0;
+		if (metadata.markFilteringSet !== undefined) {
+			lookup.markFilteringSet = metadata.markFilteringSet;
+			lookup.lookupFlag |= 0x0010;
+		}
+		if (metadata.useExtension) lookup.useExtension = true;
+	}
+	return lookup;
+}
+
+function buildContextualSubstLookup(
+	rules,
+	glyphs,
+	nameToIndex,
+	lookups,
+	lookupIndexRemap,
+	syntheticLookupId,
+) {
+	const subtables = [];
+	let lookupType = 5;
+	for (const rule of rules) {
+		const seqLookupRecords = [];
+		for (const action of rule.actions || []) {
+			let helperId = action.lookup?.id;
+			if (helperId === undefined) helperId = syntheticLookupId--;
+			if (!lookupIndexRemap.has(helperId)) {
+				const substitutions = action.substitutions || [];
+				const helperType = substitutions[0]?.type;
+				const helperRules = substitutions.map((substitution) => ({
+					...substitution,
+					lookup: action.lookup,
+				}));
+				const helper = buildLookupFromRules(
+					helperType,
+					helperRules,
+					glyphs,
+					nameToIndex,
+				);
+				if (!helper) continue;
+				lookupIndexRemap.set(helperId, lookups.length);
+				lookups.push(helper);
+			}
+			seqLookupRecords.push({
+				sequenceIndex: action.at,
+				lookupListIndex: helperId,
+			});
+		}
+		if (seqLookupRecords.length === 0) continue;
+
+		const inputCoverages = buildContextCoverages(
+			rule.input,
+			glyphs,
+			nameToIndex,
+		);
+		if (inputCoverages.some((coverage) => coverage.glyphs.length === 0)) continue;
+		const backtrackCoverages = buildContextCoverages(
+			rule.backtrack,
+			glyphs,
+			nameToIndex,
+		);
+		const lookaheadCoverages = buildContextCoverages(
+			rule.lookahead,
+			glyphs,
+			nameToIndex,
+		);
+		if (backtrackCoverages.length || lookaheadCoverages.length) {
+			lookupType = 6;
+			subtables.push({
+				format: 3,
+				backtrackCoverages,
+				inputCoverages,
+				lookaheadCoverages,
+				seqLookupRecords,
+			});
+		} else {
+			subtables.push({
+				format: 3,
+				coverages: inputCoverages,
+				seqLookupRecords,
+			});
+		}
+	}
+	if (subtables.length === 0) {
+		return { lookup: null, nextSyntheticLookupId: syntheticLookupId };
+	}
+	const lookup = { lookupType, lookupFlag: 0, subtables };
+	const metadata = rules[0]?.lookup;
+	if (metadata) {
+		lookup.lookupFlag = metadata.flags || 0;
+		if (metadata.markFilteringSet !== undefined) {
+			lookup.markFilteringSet = metadata.markFilteringSet;
+			lookup.lookupFlag |= 0x0010;
+		}
+		if (metadata.useExtension) lookup.useExtension = true;
+	}
+	return { lookup, nextSyntheticLookupId: syntheticLookupId };
+}
+
+function buildContextCoverages(positions, glyphs, nameToIndex) {
+	return (positions || []).map((position) => ({
+		format: 1,
+		glyphs: position
+			.map((reference) => resolveToIndex(reference, glyphs, nameToIndex))
+			.filter((index) => index !== undefined)
+			.sort((a, b) => a - b),
+	}));
 }
 
 /** Build a Single Substitution lookup (type 1, format 2). */
@@ -3260,18 +3473,18 @@ function remapContextualLookupIndices(lookups, indexRemap) {
 }
 
 function remapSubtableLookupRefs(st, indexRemap) {
-	// Format 1: rules → ruleSet → rule.seqLookupRecords
-	if (st.ruleSets) {
-		for (const ruleSet of st.ruleSets) {
+	// SequenceContext format 1
+	if (st.seqRuleSets) {
+		for (const ruleSet of st.seqRuleSets) {
 			if (!ruleSet) continue;
 			for (const rule of ruleSet) {
 				remapSeqLookupRecords(rule.seqLookupRecords, indexRemap);
 			}
 		}
 	}
-	// Format 2: classSets → classSet → rule.seqLookupRecords
-	if (st.classSets) {
-		for (const classSet of st.classSets) {
+	// SequenceContext format 2
+	if (st.classSeqRuleSets) {
+		for (const classSet of st.classSeqRuleSets) {
 			if (!classSet) continue;
 			for (const rule of classSet) {
 				remapSeqLookupRecords(rule.seqLookupRecords, indexRemap);
@@ -3283,16 +3496,16 @@ function remapSubtableLookupRefs(st, indexRemap) {
 		remapSeqLookupRecords(st.seqLookupRecords, indexRemap);
 	}
 	// Chained context variants
-	if (st.chainedRuleSets) {
-		for (const ruleSet of st.chainedRuleSets) {
+	if (st.chainedSeqRuleSets) {
+		for (const ruleSet of st.chainedSeqRuleSets) {
 			if (!ruleSet) continue;
 			for (const rule of ruleSet) {
 				remapSeqLookupRecords(rule.seqLookupRecords, indexRemap);
 			}
 		}
 	}
-	if (st.chainedClassSets) {
-		for (const classSet of st.chainedClassSets) {
+	if (st.chainedClassSeqRuleSets) {
+		for (const classSet of st.chainedClassSeqRuleSets) {
 			if (!classSet) continue;
 			for (const rule of classSet) {
 				remapSeqLookupRecords(rule.seqLookupRecords, indexRemap);

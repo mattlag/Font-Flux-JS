@@ -16,6 +16,32 @@ import { importFont } from '../src/import.js';
 
 const SAMPLES_DIR = resolve(import.meta.dirname, 'sample fonts');
 
+function contextualTargetTypes(font) {
+	const lookups = font.tables.GSUB.lookupList.lookups;
+	const targetTypes = [];
+	const collect = (records) => {
+		for (const record of records || []) {
+			targetTypes.push(lookups[record.lookupListIndex]?.lookupType);
+		}
+	};
+	for (const lookup of lookups) {
+		for (const subtable of lookup.subtables || []) {
+			collect(subtable.seqLookupRecords);
+			for (const key of [
+				'seqRuleSets',
+				'classSeqRuleSets',
+				'chainedSeqRuleSets',
+				'chainedClassSeqRuleSets',
+			]) {
+				for (const ruleSet of subtable[key] || []) {
+					for (const rule of ruleSet || []) collect(rule.seqLookupRecords);
+				}
+			}
+		}
+	}
+	return targetTypes.sort((a, b) => a - b);
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 //  Simplification: import decomposes GSUB into substitutions
 // ═══════════════════════════════════════════════════════════════════════════
@@ -103,6 +129,143 @@ describe('GSUB round-trip', () => {
 		const font2 = importFont(exported);
 
 		expect(font2.substitutions?.length).toBe(font1.substitutions.length);
+	});
+
+	it('should preserve contextual helpers without exposing them as unconditional ligatures', async () => {
+		const buffer = (
+			await readFile(resolve(SAMPLES_DIR, 'segoe-ui-emoji.ttf'))
+		).buffer;
+		const font1 = importFont(buffer);
+		const originalGSUB = structuredClone(font1.tables.GSUB);
+		const ligatures1 = (font1.substitutions || []).filter(
+			(substitution) => substitution.type === 'ligature',
+		);
+
+		expect(ligatures1).toHaveLength(2533);
+		expect(ligatures1.every((ligature) => ligature.feature === 'ccmp')).toBe(
+			true,
+		);
+		expect(contextualTargetTypes(font1)).toEqual([
+			1,
+			1,
+			1,
+			1,
+			1,
+			4,
+			4,
+			4,
+			4,
+			4,
+			4,
+			4,
+			4,
+			4,
+			4,
+		]);
+
+		const font2 = importFont(exportFont(font1));
+		expect(font1.tables.GSUB).toEqual(originalGSUB);
+		const ligatures2 = (font2.substitutions || []).filter(
+			(substitution) => substitution.type === 'ligature',
+		);
+		expect(ligatures2).toHaveLength(ligatures1.length);
+		expect(contextualTargetTypes(font2)).toEqual(
+			contextualTargetTypes(font1),
+		);
+	});
+
+	it('should preserve lookup flags and mark filtering metadata', () => {
+		const font = FontFlux.create({ family: 'LookupMetadata' });
+		font.addGlyph({ name: 'a', unicode: 97, advanceWidth: 500 });
+		font.addGlyph({ name: 'a.alt', advanceWidth: 500 });
+		font.addSubstitution({
+			type: 'single',
+			feature: 'salt',
+			lookup: { flags: 0x0108, markFilteringSet: 2, useExtension: true },
+			substitution: { from: 'a', to: 'a.alt' },
+		});
+
+		const reopened = FontFlux.open(font.export());
+		const lookup = reopened.data.tables.GSUB.lookupList.lookups[0];
+		expect(lookup.lookupFlag).toBe(0x0118);
+		expect(lookup.markFilteringSet).toBe(2);
+		expect(lookup.useExtension).toBe(true);
+		expect(reopened.substitutions[0].lookup).toMatchObject({
+			flags: 0x0118,
+			markFilteringSet: 2,
+			useExtension: true,
+		});
+	});
+
+	it('should keep same-feature lookups separate', () => {
+		const font = FontFlux.create({ family: 'LookupBoundaries' });
+		for (const name of ['a', 'a.alt', 'b', 'b.alt']) {
+			font.addGlyph({ name, advanceWidth: 500 });
+		}
+		font.addSubstitution([
+			{
+				type: 'single',
+				feature: 'salt',
+				lookup: { id: 4, flags: 0 },
+				substitution: { from: 'a', to: 'a.alt' },
+			},
+			{
+				type: 'single',
+				feature: 'salt',
+				lookup: { id: 9, flags: 8 },
+				substitution: { from: 'b', to: 'b.alt' },
+			},
+		]);
+
+		const reopened = FontFlux.open(font.export());
+		const lookups = reopened.data.tables.GSUB.lookupList.lookups;
+		expect(lookups).toHaveLength(2);
+		expect(lookups.map((lookup) => lookup.lookupFlag)).toEqual([0, 8]);
+	});
+
+	it('should preserve required features through simplified rebuild', () => {
+		const font = FontFlux.create({ family: 'RequiredFeature' });
+		font.addGlyph({ name: 'a', advanceWidth: 500 });
+		font.addGlyph({ name: 'a.alt', advanceWidth: 500 });
+		font.addSubstitution({
+			type: 'single',
+			feature: 'ccmp',
+			script: 'latn',
+			substitution: { from: 'a', to: 'a.alt' },
+		});
+		font.data.substitutionMetadata = {
+			majorVersion: 1,
+			minorVersion: 0,
+			featureOrder: ['ccmp'],
+			requiredFeatures: [
+				{ script: 'latn', language: null, feature: 'ccmp' },
+			],
+		};
+
+		const reopened = FontFlux.open(font.export());
+		expect(reopened.data.substitutionMetadata.requiredFeatures).toEqual([
+			{ script: 'latn', language: null, feature: 'ccmp' },
+		]);
+		expect(
+			reopened.data.tables.GSUB.scriptList.scriptRecords[0].script
+				.defaultLangSys.requiredFeatureIndex,
+		).toBe(0);
+	});
+
+	it('should preserve FeatureVariations through simplified rebuild', async () => {
+		const buffer = (
+			await readFile(resolve(SAMPLES_DIR, 'AdobeVFPrototype-online-test.otf'))
+		).buffer;
+		const font1 = importFont(buffer);
+		expect(
+			font1.substitutionMetadata?.featureVariations?.featureVariationRecords,
+		).toHaveLength(1);
+
+		const font2 = importFont(exportFont(font1));
+		expect(font2.substitutionMetadata.minorVersion).toBe(1);
+		expect(
+			font2.substitutionMetadata.featureVariations.featureVariationRecords,
+		).toHaveLength(1);
 	});
 });
 
@@ -201,6 +364,46 @@ describe('GSUB from scratch (hand-authored)', () => {
 		expect(mults.length).toBeGreaterThanOrEqual(1);
 		expect(mults[0].from).toBe('ffi');
 		expect(mults[0].to).toEqual(['f', 'f', 'i']);
+	});
+
+	it('should build GSUB with contextual substitutions', () => {
+		const font = FontFlux.create({ family: 'ContextTest' });
+		font.addGlyph({ name: 'a', unicode: 97, advanceWidth: 500 });
+		font.addGlyph({ name: 'b', unicode: 98, advanceWidth: 500 });
+		font.addGlyph({ name: 'b.alt', advanceWidth: 500 });
+		font.addGlyph({ name: 'c', unicode: 99, advanceWidth: 500 });
+
+		font.addSubstitution({
+			type: 'contextual',
+			feature: 'calt',
+			backtrack: [['a']],
+			input: [['b']],
+			lookahead: [['c']],
+			actions: [
+				{
+					at: 0,
+					substitution: { type: 'single', from: 'b', to: 'b.alt' },
+				},
+			],
+		});
+
+		const reopened = FontFlux.open(font.export());
+		const contextual = reopened.listSubstitutions({ type: 'contextual' });
+		expect(contextual).toHaveLength(1);
+		expect(contextual[0]).toMatchObject({
+			feature: 'calt',
+			backtrack: [['a']],
+			input: [['b']],
+			lookahead: [['c']],
+			actions: [
+				{
+					at: 0,
+					substitutions: [{ type: 'single', from: 'b', to: 'b.alt' }],
+				},
+			],
+		});
+		expect(reopened.data.tables.GSUB.lookupList.lookups).toHaveLength(2);
+		expect(contextualTargetTypes(reopened.data)).toEqual([1]);
 	});
 
 	it('should build GSUB with mixed substitution types', () => {

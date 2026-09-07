@@ -110,6 +110,7 @@ export function buildSimplified(raw) {
 			tables.GSUB,
 			glyphs,
 		);
+		result.substitutionMetadata = extractSubstitutionMetadata(tables.GSUB);
 		if (substitutions.length > 0) {
 			result.substitutions = substitutions;
 		}
@@ -166,6 +167,39 @@ export function buildSimplified(raw) {
 	result._header = header;
 
 	return result;
+}
+
+function extractSubstitutionMetadata(gsub) {
+	const featureRecords = gsub.featureList?.featureRecords || [];
+	const requiredFeatures = [];
+	for (const scriptRecord of gsub.scriptList?.scriptRecords || []) {
+		const collect = (langSys, language) => {
+			const index = langSys?.requiredFeatureIndex;
+			if (index === undefined || index === 0xffff) return;
+			const feature = featureRecords[index]?.featureTag;
+			if (feature) {
+				requiredFeatures.push({
+					script: scriptRecord.scriptTag,
+					language,
+					feature,
+				});
+			}
+		};
+		collect(scriptRecord.script.defaultLangSys, null);
+		for (const languageRecord of scriptRecord.script.langSysRecords || []) {
+			collect(languageRecord.langSys, languageRecord.langSysTag);
+		}
+	}
+	const metadata = {
+		majorVersion: gsub.majorVersion,
+		minorVersion: gsub.minorVersion,
+		featureOrder: featureRecords.map((record) => record.featureTag),
+		requiredFeatures,
+	};
+	if (gsub.featureVariations) {
+		metadata.featureVariations = structuredClone(gsub.featureVariations);
+	}
+	return metadata;
 }
 
 // ===========================================================================
@@ -1608,20 +1642,55 @@ function extractSubstitutions(gsub, glyphs) {
 	// Classify each lookup
 	const lookups = gsub.lookupList.lookups;
 	const simplifiedLookupIndices = new Set();
+	const contextualTargets = collectContextualLookupTargets(lookups);
 
 	for (let i = 0; i < lookups.length; i++) {
 		const lookup = lookups[i];
 		if (!lookup) continue;
+		const featureRefs = featureInfo.lookupToFeatures.get(i) || [];
+		const uniqueFeatures = deduplicateFeatureRefs(featureRefs);
+		const effectiveFeatures = uniqueFeatures.length
+			? uniqueFeatures
+			: [
+					{
+						featureTag: 'DFLT',
+						script: 'DFLT',
+						language: null,
+						allScripts: undefined,
+					},
+				];
 
-		if (SIMPLIFIABLE_GSUB_TYPES.has(lookup.lookupType)) {
-			// Find all features referencing this lookup
-			const featureRefs = featureInfo.lookupToFeatures.get(i) || [];
+		if (lookup.lookupType === 5 || lookup.lookupType === 6) {
+			let supported = true;
+			const extracted = [];
+			const usedHelpers = new Set();
+			for (const ref of effectiveFeatures) {
+				const result = extractContextualLookup(
+					lookup,
+					i,
+					lookups,
+					glyphs,
+					ref,
+				);
+				if (!result) {
+					supported = false;
+					break;
+				}
+				extracted.push(...result.rules);
+				for (const helper of result.usedHelpers) usedHelpers.add(helper);
+			}
+			if (supported) {
+				substitutions.push(...extracted);
+				simplifiedLookupIndices.add(i);
+				for (const helper of usedHelpers) simplifiedLookupIndices.add(helper);
+			}
+			continue;
+		}
 
-			// Extract the lookup's rules ONCE, then create one rule per
-			// unique feature tag (with its first script/language association).
-			// This avoids duplicating all rules for every script/language combo.
-			const uniqueFeatures = deduplicateFeatureRefs(featureRefs);
-
+		if (
+			SIMPLIFIABLE_GSUB_TYPES.has(lookup.lookupType) &&
+			(!contextualTargets.has(i) || featureRefs.length > 0)
+		) {
 			for (const ref of uniqueFeatures) {
 				const rules = extractLookupSubstitutions(
 					lookup,
@@ -1630,6 +1699,7 @@ function extractSubstitutions(gsub, glyphs) {
 					ref.script,
 					ref.language,
 					ref.allScripts,
+					i,
 				);
 				substitutions.push(...rules);
 			}
@@ -1642,6 +1712,8 @@ function extractSubstitutions(gsub, glyphs) {
 					'DFLT',
 					'DFLT',
 					null,
+					undefined,
+					i,
 				);
 				substitutions.push(...rules);
 			}
@@ -1650,7 +1722,9 @@ function extractSubstitutions(gsub, glyphs) {
 		}
 	}
 
-	// Collect raw lookups (types 5/6 and any unhandled)
+	// Preserve contextual lookups, their helper lookups, and any unhandled types.
+	// A type 1-4 helper invoked by type 5/6 is conditional and must not also be
+	// exposed as an unconditional simplified substitution.
 	for (let i = 0; i < lookups.length; i++) {
 		if (!simplifiedLookupIndices.has(i) && lookups[i]) {
 			rawLookups.push({
@@ -1662,6 +1736,219 @@ function extractSubstitutions(gsub, glyphs) {
 	}
 
 	return { substitutions, rawLookups };
+}
+
+function extractContextualLookup(lookup, lookupIndex, lookups, glyphs, ref) {
+	const rules = [];
+	const usedHelpers = new Set();
+	for (const subtable of lookup.subtables || []) {
+		const matches = extractContextMatches(subtable, lookup.lookupType, glyphs);
+		if (!matches) return null;
+		for (const match of matches) {
+			const actions = [];
+			for (const record of match.records) {
+				const helper = lookups[record.lookupListIndex];
+				if (!helper || !SIMPLIFIABLE_GSUB_TYPES.has(helper.lookupType)) {
+					return null;
+				}
+				const helperRules = extractLookupSubstitutions(
+					helper,
+					glyphs,
+					ref.featureTag,
+					ref.script,
+					ref.language,
+					undefined,
+					record.lookupListIndex,
+				).map(stripRuleContext);
+				if (helperRules.length === 0) return null;
+				actions.push({
+					at: record.sequenceIndex,
+					lookup: lookupMetadata(helper, record.lookupListIndex),
+					substitutions: helperRules,
+				});
+				usedHelpers.add(record.lookupListIndex);
+			}
+			const rule = {
+				type: 'contextual',
+				feature: ref.featureTag,
+				script: ref.script,
+				language: ref.language,
+				backtrack: match.backtrack,
+				input: match.input,
+				lookahead: match.lookahead,
+				actions,
+				lookup: lookupMetadata(lookup, lookupIndex),
+			};
+			if (ref.allScripts) rule.allScripts = ref.allScripts;
+			rules.push(rule);
+		}
+	}
+	return { rules, usedHelpers };
+}
+
+function lookupMetadata(lookup, id) {
+	const metadata = { id, flags: lookup.lookupFlag || 0 };
+	if (lookup.markFilteringSet !== undefined) {
+		metadata.markFilteringSet = lookup.markFilteringSet;
+	}
+	if (lookup.useExtension) metadata.useExtension = true;
+	return metadata;
+}
+
+function stripRuleContext(rule) {
+	const { feature, script, language, allScripts, lookup, ...substitution } = rule;
+	return substitution;
+}
+
+function extractContextMatches(subtable, lookupType, glyphs) {
+	const emptyContext = { backtrack: [], lookahead: [] };
+	if (lookupType === 5 && subtable.format === 1) {
+		const firstGlyphs = expandCoverage(subtable.coverage);
+		const matches = [];
+		for (let i = 0; i < (subtable.seqRuleSets || []).length; i++) {
+			for (const rule of subtable.seqRuleSets[i] || []) {
+				matches.push({
+					...emptyContext,
+					input: [
+						[glyphName(glyphs, firstGlyphs[i])],
+						...rule.inputSequence.map((gid) => [glyphName(glyphs, gid)]),
+					],
+					records: rule.seqLookupRecords || [],
+				});
+			}
+		}
+		return matches;
+	}
+	if (lookupType === 5 && subtable.format === 2) {
+		const classMembers = buildClassMembers(subtable.classDef, glyphs);
+		const coverage = new Set(expandCoverage(subtable.coverage));
+		const matches = [];
+		for (let i = 0; i < (subtable.classSeqRuleSets || []).length; i++) {
+			for (const rule of subtable.classSeqRuleSets[i] || []) {
+				matches.push({
+					...emptyContext,
+					input: [
+						(classMembers.get(i) || []).filter((name) =>
+							coverage.has(glyphIndexByName(glyphs, name)),
+						),
+						...rule.inputSequence.map((classId) =>
+							classMembers.get(classId) || [],
+						),
+					],
+					records: rule.seqLookupRecords || [],
+				});
+			}
+		}
+		return matches;
+	}
+	if (lookupType === 5 && subtable.format === 3) {
+		return [
+			{
+				...emptyContext,
+				input: subtable.coverages.map((coverage) =>
+					expandCoverage(coverage).map((gid) => glyphName(glyphs, gid)),
+				),
+				records: subtable.seqLookupRecords || [],
+			},
+		];
+	}
+	if (lookupType === 6 && subtable.format === 1) {
+		const firstGlyphs = expandCoverage(subtable.coverage);
+		const matches = [];
+		for (let i = 0; i < (subtable.chainedSeqRuleSets || []).length; i++) {
+			for (const rule of subtable.chainedSeqRuleSets[i] || []) {
+				matches.push({
+					backtrack: rule.backtrackSequence.map((gid) => [glyphName(glyphs, gid)]),
+					input: [
+						[glyphName(glyphs, firstGlyphs[i])],
+						...rule.inputSequence.map((gid) => [glyphName(glyphs, gid)]),
+					],
+					lookahead: rule.lookaheadSequence.map((gid) => [glyphName(glyphs, gid)]),
+					records: rule.seqLookupRecords || [],
+				});
+			}
+		}
+		return matches;
+	}
+	if (lookupType === 6 && subtable.format === 2) {
+		const backtrack = buildClassMembers(subtable.backtrackClassDef, glyphs);
+		const input = buildClassMembers(subtable.inputClassDef, glyphs);
+		const lookahead = buildClassMembers(subtable.lookaheadClassDef, glyphs);
+		const coverage = new Set(expandCoverage(subtable.coverage));
+		const matches = [];
+		for (let i = 0; i < (subtable.chainedClassSeqRuleSets || []).length; i++) {
+			for (const rule of subtable.chainedClassSeqRuleSets[i] || []) {
+				matches.push({
+					backtrack: rule.backtrackSequence.map((classId) => backtrack.get(classId) || []),
+					input: [
+						(input.get(i) || []).filter((name) =>
+							coverage.has(glyphIndexByName(glyphs, name)),
+						),
+						...rule.inputSequence.map((classId) => input.get(classId) || []),
+					],
+					lookahead: rule.lookaheadSequence.map((classId) => lookahead.get(classId) || []),
+					records: rule.seqLookupRecords || [],
+				});
+			}
+		}
+		return matches;
+	}
+	if (lookupType === 6 && subtable.format === 3) {
+		return [
+			{
+				backtrack: subtable.backtrackCoverages.map((coverage) =>
+					expandCoverage(coverage).map((gid) => glyphName(glyphs, gid)),
+				),
+				input: subtable.inputCoverages.map((coverage) =>
+					expandCoverage(coverage).map((gid) => glyphName(glyphs, gid)),
+				),
+				lookahead: subtable.lookaheadCoverages.map((coverage) =>
+					expandCoverage(coverage).map((gid) => glyphName(glyphs, gid)),
+				),
+				records: subtable.seqLookupRecords || [],
+			},
+		];
+	}
+	return null;
+}
+
+function buildClassMembers(classDef, glyphs) {
+	const classMap = buildClassMap(classDef, glyphs.length);
+	const members = new Map();
+	for (let gid = 0; gid < glyphs.length; gid++) {
+		const classId = classMap.get(gid) ?? 0;
+		if (!members.has(classId)) members.set(classId, []);
+		members.get(classId).push(glyphName(glyphs, gid));
+	}
+	return members;
+}
+
+function glyphIndexByName(glyphs, name) {
+	return glyphs.findIndex((glyph) => glyph.name === name);
+}
+
+function collectContextualLookupTargets(lookups) {
+	const targets = new Set();
+	const collectRecords = (records) => {
+		for (const record of records || []) targets.add(record.lookupListIndex);
+	};
+	for (const lookup of lookups) {
+		if (lookup?.lookupType !== 5 && lookup?.lookupType !== 6) continue;
+		for (const subtable of lookup.subtables || []) {
+			collectRecords(subtable.seqLookupRecords);
+			for (const key of [
+				'seqRuleSets',
+				'classSeqRuleSets',
+				'chainedSeqRuleSets',
+				'chainedClassSeqRuleSets',
+			]) {
+				for (const ruleSet of subtable[key] || []) {
+					for (const rule of ruleSet || []) collectRecords(rule.seqLookupRecords);
+				}
+			}
+		}
+	}
+	return targets;
 }
 
 /**
@@ -1777,9 +2064,15 @@ function extractLookupSubstitutions(
 	script,
 	language,
 	allScripts,
+	lookupIndex,
 ) {
 	const rules = [];
-	const base = { feature: featureTag, script, language };
+	const base = {
+		feature: featureTag,
+		script,
+		language,
+		lookup: lookupMetadata(lookup, lookupIndex),
+	};
 	if (allScripts) base.allScripts = allScripts;
 
 	for (const st of lookup.subtables || []) {

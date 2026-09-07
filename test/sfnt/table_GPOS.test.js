@@ -10,6 +10,12 @@ import { parseGPOS, writeGPOS } from '../../src/sfnt/table_GPOS.js';
 
 const SAMPLES_DIR = resolve(import.meta.dirname, '..', 'sample fonts');
 
+function withoutExtensionMarkers(table) {
+	const copy = structuredClone(table);
+	for (const lookup of copy.lookupList.lookups) delete lookup.useExtension;
+	return copy;
+}
+
 // Fonts known to contain a GPOS table:
 // oblegg.ttf, oblegg.otf, fira.ttf, noto.ttf, BungeeTint
 
@@ -97,7 +103,9 @@ describe('GPOS table round-trip', () => {
 			const writtenBytes = writeGPOS(gposData);
 			const reparsed = parseGPOS(writtenBytes);
 
-			expect(reparsed).toEqual(gposData);
+			expect(withoutExtensionMarkers(reparsed)).toEqual(
+				withoutExtensionMarkers(gposData),
+			);
 		});
 	}
 
