@@ -7,6 +7,7 @@
  * Also tests the hand-authored (from-scratch) path.
  */
 
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -15,6 +16,7 @@ import { FontFlux } from '../src/font_flux.js';
 import { importFont } from '../src/import.js';
 
 const SAMPLES_DIR = resolve(import.meta.dirname, 'sample fonts');
+const SEGOE_EMOJI_PATH = resolve(SAMPLES_DIR, 'segoe-ui-emoji.ttf');
 
 function contextualTargetTypes(font) {
 	const lookups = font.tables.GSUB.lookupList.lookups;
@@ -131,10 +133,10 @@ describe('GSUB round-trip', () => {
 		expect(font2.substitutions?.length).toBe(font1.substitutions.length);
 	});
 
-	it('should preserve contextual helpers without exposing them as unconditional ligatures', async () => {
-		const buffer = (
-			await readFile(resolve(SAMPLES_DIR, 'segoe-ui-emoji.ttf'))
-		).buffer;
+	it.runIf(existsSync(SEGOE_EMOJI_PATH))(
+		'should preserve contextual helpers without exposing them as unconditional ligatures',
+		async () => {
+		const buffer = (await readFile(SEGOE_EMOJI_PATH)).buffer;
 		const font1 = importFont(buffer);
 		const originalGSUB = structuredClone(font1.tables.GSUB);
 		const ligatures1 = (font1.substitutions || []).filter(
@@ -172,7 +174,8 @@ describe('GSUB round-trip', () => {
 		expect(contextualTargetTypes(font2)).toEqual(
 			contextualTargetTypes(font1),
 		);
-	});
+		},
+	);
 
 	it('should preserve lookup flags and mark filtering metadata', () => {
 		const font = FontFlux.create({ family: 'LookupMetadata' });
