@@ -1665,13 +1665,7 @@ function extractSubstitutions(gsub, glyphs) {
 			const extracted = [];
 			const usedHelpers = new Set();
 			for (const ref of effectiveFeatures) {
-				const result = extractContextualLookup(
-					lookup,
-					i,
-					lookups,
-					glyphs,
-					ref,
-				);
+				const result = extractContextualLookup(lookup, i, lookups, glyphs, ref);
 				if (!result) {
 					supported = false;
 					break;
@@ -1796,7 +1790,8 @@ function lookupMetadata(lookup, id) {
 }
 
 function stripRuleContext(rule) {
-	const { feature, script, language, allScripts, lookup, ...substitution } = rule;
+	const { feature, script, language, allScripts, lookup, ...substitution } =
+		rule;
 	return substitution;
 }
 
@@ -1831,8 +1826,8 @@ function extractContextMatches(subtable, lookupType, glyphs) {
 						(classMembers.get(i) || []).filter((name) =>
 							coverage.has(glyphIndexByName(glyphs, name)),
 						),
-						...rule.inputSequence.map((classId) =>
-							classMembers.get(classId) || [],
+						...rule.inputSequence.map(
+							(classId) => classMembers.get(classId) || [],
 						),
 					],
 					records: rule.seqLookupRecords || [],
@@ -1858,12 +1853,16 @@ function extractContextMatches(subtable, lookupType, glyphs) {
 		for (let i = 0; i < (subtable.chainedSeqRuleSets || []).length; i++) {
 			for (const rule of subtable.chainedSeqRuleSets[i] || []) {
 				matches.push({
-					backtrack: rule.backtrackSequence.map((gid) => [glyphName(glyphs, gid)]),
+					backtrack: rule.backtrackSequence.map((gid) => [
+						glyphName(glyphs, gid),
+					]),
 					input: [
 						[glyphName(glyphs, firstGlyphs[i])],
 						...rule.inputSequence.map((gid) => [glyphName(glyphs, gid)]),
 					],
-					lookahead: rule.lookaheadSequence.map((gid) => [glyphName(glyphs, gid)]),
+					lookahead: rule.lookaheadSequence.map((gid) => [
+						glyphName(glyphs, gid),
+					]),
 					records: rule.seqLookupRecords || [],
 				});
 			}
@@ -1879,14 +1878,18 @@ function extractContextMatches(subtable, lookupType, glyphs) {
 		for (let i = 0; i < (subtable.chainedClassSeqRuleSets || []).length; i++) {
 			for (const rule of subtable.chainedClassSeqRuleSets[i] || []) {
 				matches.push({
-					backtrack: rule.backtrackSequence.map((classId) => backtrack.get(classId) || []),
+					backtrack: rule.backtrackSequence.map(
+						(classId) => backtrack.get(classId) || [],
+					),
 					input: [
 						(input.get(i) || []).filter((name) =>
 							coverage.has(glyphIndexByName(glyphs, name)),
 						),
 						...rule.inputSequence.map((classId) => input.get(classId) || []),
 					],
-					lookahead: rule.lookaheadSequence.map((classId) => lookahead.get(classId) || []),
+					lookahead: rule.lookaheadSequence.map(
+						(classId) => lookahead.get(classId) || [],
+					),
 					records: rule.seqLookupRecords || [],
 				});
 			}
@@ -1943,7 +1946,8 @@ function collectContextualLookupTargets(lookups) {
 				'chainedClassSeqRuleSets',
 			]) {
 				for (const ruleSet of subtable[key] || []) {
-					for (const rule of ruleSet || []) collectRecords(rule.seqLookupRecords);
+					for (const rule of ruleSet || [])
+						collectRecords(rule.seqLookupRecords);
 				}
 			}
 		}

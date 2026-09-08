@@ -64,9 +64,13 @@ describe('GSUB simplification on import', () => {
 			expect(sub.type).toBeDefined();
 			expect(sub.feature).toBeDefined();
 			expect(sub.script).toBeDefined();
-			expect(['single', 'multiple', 'alternate', 'ligature', 'reverse']).toContain(
-				sub.type,
-			);
+			expect([
+				'single',
+				'multiple',
+				'alternate',
+				'ligature',
+				'reverse',
+			]).toContain(sub.type);
 		}
 	});
 
@@ -136,44 +140,30 @@ describe('GSUB round-trip', () => {
 	it.runIf(existsSync(SEGOE_EMOJI_PATH))(
 		'should preserve contextual helpers without exposing them as unconditional ligatures',
 		async () => {
-		const buffer = (await readFile(SEGOE_EMOJI_PATH)).buffer;
-		const font1 = importFont(buffer);
-		const originalGSUB = structuredClone(font1.tables.GSUB);
-		const ligatures1 = (font1.substitutions || []).filter(
-			(substitution) => substitution.type === 'ligature',
-		);
+			const buffer = (await readFile(SEGOE_EMOJI_PATH)).buffer;
+			const font1 = importFont(buffer);
+			const originalGSUB = structuredClone(font1.tables.GSUB);
+			const ligatures1 = (font1.substitutions || []).filter(
+				(substitution) => substitution.type === 'ligature',
+			);
 
-		expect(ligatures1).toHaveLength(2533);
-		expect(ligatures1.every((ligature) => ligature.feature === 'ccmp')).toBe(
-			true,
-		);
-		expect(contextualTargetTypes(font1)).toEqual([
-			1,
-			1,
-			1,
-			1,
-			1,
-			4,
-			4,
-			4,
-			4,
-			4,
-			4,
-			4,
-			4,
-			4,
-			4,
-		]);
+			expect(ligatures1).toHaveLength(2533);
+			expect(ligatures1.every((ligature) => ligature.feature === 'ccmp')).toBe(
+				true,
+			);
+			expect(contextualTargetTypes(font1)).toEqual([
+				1, 1, 1, 1, 1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+			]);
 
-		const font2 = importFont(exportFont(font1));
-		expect(font1.tables.GSUB).toEqual(originalGSUB);
-		const ligatures2 = (font2.substitutions || []).filter(
-			(substitution) => substitution.type === 'ligature',
-		);
-		expect(ligatures2).toHaveLength(ligatures1.length);
-		expect(contextualTargetTypes(font2)).toEqual(
-			contextualTargetTypes(font1),
-		);
+			const font2 = importFont(exportFont(font1));
+			expect(font1.tables.GSUB).toEqual(originalGSUB);
+			const ligatures2 = (font2.substitutions || []).filter(
+				(substitution) => substitution.type === 'ligature',
+			);
+			expect(ligatures2).toHaveLength(ligatures1.length);
+			expect(contextualTargetTypes(font2)).toEqual(
+				contextualTargetTypes(font1),
+			);
 		},
 	);
 
@@ -240,9 +230,7 @@ describe('GSUB round-trip', () => {
 			majorVersion: 1,
 			minorVersion: 0,
 			featureOrder: ['ccmp'],
-			requiredFeatures: [
-				{ script: 'latn', language: null, feature: 'ccmp' },
-			],
+			requiredFeatures: [{ script: 'latn', language: null, feature: 'ccmp' }],
 		};
 
 		const reopened = FontFlux.open(font.export());

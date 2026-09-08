@@ -45,9 +45,9 @@
  */
 
 import {
-    buildNameToGlyphIdMap,
-    hexToBGRA,
-    resolvePaintGlyphNames,
+	buildNameToGlyphIdMap,
+	hexToBGRA,
+	resolvePaintGlyphNames,
 } from './color.js';
 import { cubicContourToPoints, isCubicContours } from './convert.js';
 import { normalizeComponent, resolveGlyphId } from './glyph.js';
@@ -2657,7 +2657,9 @@ function buildMVARTable(simplified) {
 	}
 	const columnOrder = [...wordCols, ...shortCols];
 	const orderedRegionIndexes = columnOrder.map((r) => regionIndexes[r]);
-	const orderedDeltaSets = deltaSets.map((row) => columnOrder.map((r) => row[r]));
+	const orderedDeltaSets = deltaSets.map((row) =>
+		columnOrder.map((r) => row[r]),
+	);
 	const wordDeltaCount = needsLong
 		? wordCols.length | LONG_WORDS
 		: wordCols.length;
@@ -2925,7 +2927,9 @@ function buildGSUBFromSubstitutions(
 	);
 	const result = {
 		majorVersion: metadata.majorVersion ?? 1,
-		minorVersion: featureVariations ? Math.max(metadata.minorVersion ?? 0, 1) : 0,
+		minorVersion: featureVariations
+			? Math.max(metadata.minorVersion ?? 0, 1)
+			: 0,
 		scriptList: { scriptRecords },
 		featureList: { featureRecords },
 		lookupList: { lookups },
@@ -3053,7 +3057,9 @@ function buildGSUBFromRawLookups(rawLookups, metadata = {}) {
 	);
 	const result = {
 		majorVersion: metadata.majorVersion ?? 1,
-		minorVersion: featureVariations ? Math.max(metadata.minorVersion ?? 0, 1) : 0,
+		minorVersion: featureVariations
+			? Math.max(metadata.minorVersion ?? 0, 1)
+			: 0,
 		scriptList: { scriptRecords },
 		featureList: { featureRecords },
 		lookupList: { lookups },
@@ -3078,8 +3084,8 @@ function remapFeatureVariations(metadata, featureTagToIndex, lookupIndexRemap) {
 	if (!metadata.featureVariations) return null;
 	const variations = structuredClone(metadata.featureVariations);
 	for (const record of variations.featureVariationRecords || []) {
-		for (const substitution of
-			record.featureTableSubstitution?.substitutions || []) {
+		for (const substitution of record.featureTableSubstitution?.substitutions ||
+			[]) {
 			const tag = metadata.featureOrder?.[substitution.featureIndex];
 			if (!tag || !featureTagToIndex.has(tag)) continue;
 			substitution.featureIndex = featureTagToIndex.get(tag);
@@ -3193,7 +3199,8 @@ function buildContextualSubstLookup(
 			glyphs,
 			nameToIndex,
 		);
-		if (inputCoverages.some((coverage) => coverage.glyphs.length === 0)) continue;
+		if (inputCoverages.some((coverage) => coverage.glyphs.length === 0))
+			continue;
 		const backtrackCoverages = buildContextCoverages(
 			rule.backtrack,
 			glyphs,

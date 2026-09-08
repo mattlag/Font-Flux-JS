@@ -253,7 +253,9 @@ function resolveRef(ref, classes) {
  */
 function resolveRefArray(arr, classes) {
 	if (!Array.isArray(arr)) {
-		throw new Error('createSubstitution: expected an array of glyph references');
+		throw new Error(
+			'createSubstitution: expected an array of glyph references',
+		);
 	}
 	const result = [];
 	for (const ref of arr) {
@@ -283,8 +285,8 @@ function normalizeContextAction(action, classes) {
 			'createSubstitution: contextual action "at" must be a non-negative integer',
 		);
 	}
-	const inputs = action.substitutions ||
-		(action.substitution ? [action.substitution] : []);
+	const inputs =
+		action.substitutions || (action.substitution ? [action.substitution] : []);
 	if (inputs.length === 0) {
 		throw new Error(
 			'createSubstitution: contextual actions require "substitution" or "substitutions"',

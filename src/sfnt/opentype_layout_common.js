@@ -657,10 +657,7 @@ export function writeLookupList(
 
 	const overflow = checkOverflow(lookupBlocks);
 	const useExtensions = lookupData.some((lookup) => lookup.useExtension);
-	if (
-		(overflow || useExtensions) &&
-		extensionLookupType !== undefined
-	) {
+	if ((overflow || useExtensions) && extensionLookupType !== undefined) {
 		// -- Step 4: wrap requested Lookups ---------------------------
 
 		// Build wrapped lookup blocks with deferred inner data

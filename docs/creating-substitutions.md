@@ -149,23 +149,23 @@ Omit `backtrack` and `lookahead` for a type 5 contextual rule. Providing either 
 
 The `feature` field determines when the substitution is applied. Here are the most common tags:
 
-| Feature       | Description                     | Typical type(s)      |
-| ------------- | ------------------------------- | -------------------- |
-| `liga`        | Standard ligatures              | ligature             |
-| `dlig`        | Discretionary ligatures         | ligature             |
-| `smcp`        | Small capitals                  | single               |
-| `c2sc`        | Caps to small caps              | single               |
-| `salt`        | Stylistic alternates            | alternate, single    |
-| `ss01`–`ss20` | Stylistic sets                  | single               |
-| `ccmp`        | Glyph composition/decomposition | multiple, ligature   |
-| `calt`        | Contextual alternates           | contextual           |
-| `locl`        | Localized forms                 | single               |
-| `frac`        | Fractions                       | single, ligature     |
-| `subs`        | Subscript                       | single               |
-| `sups`        | Superscript                     | single               |
-| `zero`        | Slashed zero                    | single               |
-| `onum`        | Oldstyle figures                | single               |
-| `lnum`        | Lining figures                  | single               |
+| Feature       | Description                     | Typical type(s)    |
+| ------------- | ------------------------------- | ------------------ |
+| `liga`        | Standard ligatures              | ligature           |
+| `dlig`        | Discretionary ligatures         | ligature           |
+| `smcp`        | Small capitals                  | single             |
+| `c2sc`        | Caps to small caps              | single             |
+| `salt`        | Stylistic alternates            | alternate, single  |
+| `ss01`–`ss20` | Stylistic sets                  | single             |
+| `ccmp`        | Glyph composition/decomposition | multiple, ligature |
+| `calt`        | Contextual alternates           | contextual         |
+| `locl`        | Localized forms                 | single             |
+| `frac`        | Fractions                       | single, ligature   |
+| `subs`        | Subscript                       | single             |
+| `sups`        | Superscript                     | single             |
+| `zero`        | Slashed zero                    | single             |
+| `onum`        | Oldstyle figures                | single             |
+| `lnum`        | Lining figures                  | single             |
 
 ## Script and language
 
