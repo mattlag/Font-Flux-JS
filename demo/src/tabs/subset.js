@@ -2,6 +2,7 @@
  * Subset tab — select Unicode blocks to remove from the font.
  * No blocks are checked by default; check the ranges you want to remove.
  */
+import { FontFlux } from 'font-flux-js';
 import { UNICODE_BLOCKS } from '../unicode-blocks.js';
 
 export const subsetTab = {
@@ -42,15 +43,33 @@ function render(container, fontData, appContext) {
 	summaryEl.className = 'subset-summary';
 
 	const applyBtn = document.createElement('button');
+	let applying = false;
 	applyBtn.className = 'subset-apply-btn';
 	applyBtn.textContent = 'Remove Checked Ranges';
 	applyBtn.disabled = true;
-	applyBtn.addEventListener('click', () => {
-		applySubset(fontData, blockData, appContext);
+	applyBtn.addEventListener('click', async () => {
+		if (applying) return;
+		applying = true;
+		applyBtn.disabled = true;
+		status.style.display = 'none';
+		try {
+			await applySubset(fontData, blockData, appContext);
+		} catch (err) {
+			status.textContent = `Subset failed: ${err.message}. Font unchanged.`;
+			status.style.display = '';
+		} finally {
+			applying = false;
+			updateSummary();
+		}
 	});
 
 	applyBar.append(summaryEl, applyBtn);
 	wrap.appendChild(applyBar);
+	const status = document.createElement('div');
+	status.className = 'validation-results invalid';
+	status.setAttribute('role', 'alert');
+	status.style.display = 'none';
+	wrap.appendChild(status);
 
 	// ── Toolbar (filter + toggle) — below summary ──
 	const toolbar = document.createElement('div');
@@ -205,7 +224,10 @@ function render(container, fontData, appContext) {
 			if (coveredCodes.has(cp)) glyphs.push(cp);
 		}
 
-		const totalPages = Math.max(1, Math.ceil(glyphs.length / PREVIEW_PAGE_SIZE));
+		const totalPages = Math.max(
+			1,
+			Math.ceil(glyphs.length / PREVIEW_PAGE_SIZE),
+		);
 		if (currentPage >= totalPages) currentPage = totalPages - 1;
 		if (currentPage < 0) currentPage = 0;
 
@@ -262,7 +284,14 @@ function render(container, fontData, appContext) {
 
 	function updateSummary() {
 		const checkedBlocks = blockData.filter((b) => b.checked);
-		const removeCount = checkedBlocks.reduce((sum, b) => sum + b.count, 0);
+		const removeCount = (fontData.glyphs || []).filter(
+			(glyph, index) =>
+				index > 0 &&
+				glyph.name !== '.notdef' &&
+				checkedBlocks.some(
+					(block) => glyph.unicode >= block.start && glyph.unicode <= block.end,
+				),
+		).length;
 		const total = fontData.glyphs?.length ?? 0;
 		const remaining = total - removeCount;
 
@@ -271,13 +300,13 @@ function render(container, fontData, appContext) {
 				? `All <strong>${total}</strong> glyphs included`
 				: `<strong>${removeCount}</strong> glyphs to remove · <strong>${remaining}</strong> will remain`;
 
-		applyBtn.disabled = checkedBlocks.length === 0;
+		applyBtn.disabled = applying || removeCount === 0;
 	}
 
 	updateSummary();
 }
 
-function applySubset(fontData, blockData, appContext) {
+export async function applySubset(fontData, blockData, appContext) {
 	const checked = blockData.filter((b) => b.checked);
 	if (checked.length === 0) return;
 
@@ -288,14 +317,11 @@ function applySubset(fontData, blockData, appContext) {
 		}
 	}
 
-	let removeCount = 0;
-	if (fontData.glyphs) {
-		for (const g of fontData.glyphs) {
-			if (g.unicode !== undefined && removeCodes.has(g.unicode)) {
-				removeCount++;
-			}
-		}
-	}
+	const removed = (fontData.glyphs || []).filter(
+		(glyph, index) =>
+			index > 0 && glyph.name !== '.notdef' && removeCodes.has(glyph.unicode),
+	);
+	const removeCount = removed.length;
 
 	if (removeCount === 0) return;
 
@@ -304,24 +330,41 @@ function applySubset(fontData, blockData, appContext) {
 	);
 	if (!ok) return;
 
-	fontData.glyphs = fontData.glyphs.filter(
-		(g) => g.unicode === undefined || !removeCodes.has(g.unicode),
+	const candidate = new FontFlux(
+		structuredClone(
+			Object.fromEntries(
+				Object.entries(fontData).filter(
+					([key]) =>
+						!key.startsWith('_collection') &&
+						!['_originalBuffer', '_loadError'].includes(key),
+				),
+			),
+		),
 	);
-
-	if (fontData.tables?.cmap?.subtables) {
-		for (const subtable of fontData.tables.cmap.subtables) {
-			if (subtable.glyphIndexMap) {
-				for (const cp of removeCodes) {
-					delete subtable.glyphIndexMap[cp];
-				}
-			}
-		}
+	const removedNames = new Set(removed.map((glyph) => glyph.name));
+	candidate.data.glyphs = candidate.glyphs.filter(
+		(glyph, index) =>
+			index === 0 ||
+			glyph.name === '.notdef' ||
+			!removeCodes.has(glyph.unicode),
+	);
+	if (candidate.data.kerning) {
+		candidate.data.kerning = candidate.data.kerning.filter(
+			(pair) => !removedNames.has(pair.left) && !removedNames.has(pair.right),
+		);
 	}
+	const report = candidate.validate();
+	if (!report.valid) {
+		throw new Error(report.errors.map((issue) => issue.message).join('\n'));
+	}
+	const buffer = candidate.export({ format: 'sfnt' });
+	await appContext?.refreshPreview?.(buffer);
+	fontData.glyphs = candidate.glyphs;
+	if (candidate.data.kerning) fontData.kerning = candidate.data.kerning;
 
 	if (appContext) {
 		appContext.markDirty();
-		appContext.invalidateL1Cache('subset');
-		appContext.invalidateL1Cache('overview');
+		appContext.invalidateL1Cache();
 	}
 }
 

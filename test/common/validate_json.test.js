@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { validateJSON } from '../../src/validate/index.js';
+import { validateSimplifiedJSON } from '../../src/validate/validateJSON.js';
 
 // Helper: minimal valid TrueType font with all required tables as raw bytes
 function minimalTTF(overrides = {}) {
@@ -31,6 +32,63 @@ function minimalTTF(overrides = {}) {
 }
 
 describe('validateJSON', () => {
+	it('rejects missing point coordinates and unknown paint glyphs', () => {
+		const data = {
+			font: {},
+			glyphs: [{ name: '.notdef', contours: [[{ x: 0 }]] }],
+			colorGlyphs: [
+				{
+					name: '.notdef',
+					paint: {
+						format: 10,
+						glyphID: 'missing',
+						paint: { format: 2, paletteIndex: 4 },
+					},
+				},
+			],
+		};
+		const codes = validateSimplifiedJSON(data).errors.map(
+			(issue) => issue.code,
+		);
+		expect(codes).toContain('COORDINATE_INVALID');
+		expect(codes).toContain('GLYPH_REFERENCE_INVALID');
+		expect(codes).toContain('PALETTE_REFERENCE_INVALID');
+	});
+
+	it('reports cyclic and excessive nested authoring data without recursing indefinitely', () => {
+		const data = { font: {}, glyphs: [{ name: '.notdef' }], substitutions: [] };
+		data.substitutions.push({
+			actions: [{ substitutions: data.substitutions }],
+		});
+		expect(validateSimplifiedJSON(data).errors[0].code).toBe('CYCLIC_DATA');
+		let nested = { from: '.notdef', to: '.notdef' };
+		for (let index = 0; index < 70; index++) nested = { substitution: nested };
+		data.substitutions = [nested];
+		expect(validateSimplifiedJSON(data).errors[0].code).toBe(
+			'COMPLEXITY_LIMIT',
+		);
+	});
+
+	it('checks glyph references in contextual action substitution arrays', () => {
+		const data = {
+			font: {},
+			glyphs: [{ name: '.notdef' }],
+			substitutions: [
+				{
+					substitution: {
+						input: ['.notdef'],
+						actions: [{ substitutions: [{ from: '.notdef', to: 'missing' }] }],
+					},
+				},
+			],
+		};
+		expect(
+			validateSimplifiedJSON(data).errors.some(
+				(issue) => issue.code === 'GLYPH_REFERENCE_INVALID',
+			),
+		).toBe(true);
+	});
+
 	// --- Report shape ---------------------------------------------------
 
 	it('report includes infos array and infoCount', () => {
@@ -64,7 +122,9 @@ describe('validateJSON', () => {
 
 		const report = validateJSON(fontJson);
 		expect(report.valid).toBe(true);
-		expect(report.infos.some((i) => i.code === 'HEADER_SYNTHESIZED')).toBe(true);
+		expect(report.infos.some((i) => i.code === 'HEADER_SYNTHESIZED')).toBe(
+			true,
+		);
 		// Header was actually created on the object
 		expect(fontJson.header).toBeDefined();
 		expect(fontJson.header.sfVersion).toBe(0x00010000);
@@ -110,9 +170,9 @@ describe('validateJSON', () => {
 
 		const report = validateJSON(fontJson);
 		expect(report.valid).toBe(true);
-		expect(report.infos.some((i) => i.code === 'HEADER_SFVERSION_INFERRED')).toBe(
-			true,
-		);
+		expect(
+			report.infos.some((i) => i.code === 'HEADER_SFVERSION_INFERRED'),
+		).toBe(true);
 		expect(fontJson.header.sfVersion).toBe(0x00010000);
 	});
 
@@ -156,9 +216,9 @@ describe('validateJSON', () => {
 
 		const report = validateJSON(fontJson);
 		expect(report.valid).toBe(false);
-		expect(report.errors.some((e) => e.code === 'TABLE_WRITER_UNSUPPORTED')).toBe(
-			true,
-		);
+		expect(
+			report.errors.some((e) => e.code === 'TABLE_WRITER_UNSUPPORTED'),
+		).toBe(true);
 	});
 
 	it('reports unrecognized raw tables as info', () => {
@@ -213,9 +273,9 @@ describe('validateJSON', () => {
 		});
 
 		expect(report.valid).toBe(false);
-		expect(report.errors.some((e) => e.path.includes('$.fonts[0].tables'))).toBe(
-			true,
-		);
+		expect(
+			report.errors.some((e) => e.path.includes('$.fonts[0].tables')),
+		).toBe(true);
 	});
 
 	it('auto-corrects collection.numFonts mismatch', () => {

@@ -1,3 +1,11 @@
+## Import Options and Types
+
+`FontFlux.open(input, { faceIndex?, ...limits })` supports selecting a zero-based face from binary or JSON collections without parsing other binary faces. Without `faceIndex`, collections reject and direct callers to `openAll()`. `FontFlux.openAll(input, limits)` always loads every face.
+
+Binary imports accept positive safe-integer limits: `maxInputBytes` (256 MiB), `maxUncompressedBytes` (256 MiB), `maxTableBytes` (256 MiB of table data per face), `maxTables` (4,096), `maxFonts` (64), `maxGlyphs` (65,535), `maxPoints` (10,000,000 TrueType points per face), and `maxCharStringOperations` (1,000,000 interpreter steps per CFF/Type 1 glyph). WOFF2 directory counts are checked before reconstruction. Collection work is bounded per face plus the face-count limit, not by a total process-memory limit. JSON input is checked at validation/export time; these binary-parser limits do not bound JSON parsing.
+
+The npm package ships declarations for `FontFlux`, all five public exports, common editable fields, and import/export options. Advanced table fields use an explicit `Record<string, unknown>` escape hatch. `axes`, `instances`, `features`, and `tables` can be undefined. `format` distinguishes `truetype`, `cff`, and `cff2`; static outline conversion remains limited to TrueType and CFF1.
+
 # API Reference
 
 Complete reference for the `FontFlux` class and the library's standalone
@@ -27,25 +35,27 @@ exposed for tooling and tests.
 Create a `FontFlux` instance (or array of instances) from a file, JSON, or
 metadata.
 
-### `FontFlux.open(input)`
+### `FontFlux.open(input, options)`
 
 Parse a single font into a `FontFlux` instance.
 
-| Argument | Type                                  | Description                                                                                                |
-| -------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `input`  | `ArrayBuffer \| Uint8Array \| string` | Binary font (TTF/OTF/TTC/WOFF/WOFF2/CFF/PFB/PFA), a JSON string from `font.toJSON()`, or UTF-8 JSON bytes. |
+| Argument  | Type                                  | Description                                                                                                         |
+| --------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `input`   | `ArrayBuffer \| Uint8Array \| string` | Binary font (TTF/OTF/TTC/WOFF/WOFF2/CFF/PFB/PFA), a JSON string from `font.toJSON()`, or UTF-8 JSON bytes.          |
+| `options` | `ImportOptions`                       | Optional `faceIndex` and binary resource limits described in [Import Options and Types](#import-options-and-types). |
 
 **Returns** `FontFlux` — a single-font instance.
 
-**Throws** if `input` is a collection (TTC/OTC) — use `openAll()` instead.
+**Throws** for a collection unless a valid zero-based `faceIndex` is supplied. Use `openAll()` to load every face. Malformed binary data or exceeded resource limits also throw.
 
-### `FontFlux.openAll(input)`
+### `FontFlux.openAll(input, options)`
 
 Parse a font collection (or single font), returning one instance per face.
 
-| Argument | Type                                  | Description                            |
-| -------- | ------------------------------------- | -------------------------------------- |
-| `input`  | `ArrayBuffer \| Uint8Array \| string` | Same input types accepted by `open()`. |
+| Argument  | Type                                  | Description                                              |
+| --------- | ------------------------------------- | -------------------------------------------------------- |
+| `input`   | `ArrayBuffer \| Uint8Array \| string` | Same input types accepted by `open()`.                   |
+| `options` | `Omit<ImportOptions, 'faceIndex'>`    | Optional binary resource limits. Always loads all faces. |
 
 **Returns** `FontFlux[]` — one `FontFlux` instance per face in the file.
 
@@ -79,12 +89,16 @@ instance.
 
 Export multiple `FontFlux` instances as a single TTC/OTC collection.
 
-| Argument         | Type         | Default  | Description                                      |
-| ---------------- | ------------ | -------- | ------------------------------------------------ |
-| `fonts`          | `FontFlux[]` | —        | Non-empty array of instances to bundle.          |
-| `options.format` | `string`     | `'sfnt'` | Output container: `'sfnt'`, `'woff'`, `'woff2'`. |
+| Argument         | Type         | Default  | Description                                   |
+| ---------------- | ------------ | -------- | --------------------------------------------- |
+| `fonts`          | `FontFlux[]` | —        | Non-empty array of instances to bundle.       |
+| `options.format` | `string`     | `'sfnt'` | Use `'sfnt'` for a single TTC/OTC collection. |
 
 **Returns** `ArrayBuffer` — the collection file bytes.
+
+Combined WOFF/WOFF2 collection export is not supported by the current wrappers,
+even though the format option is accepted by the API. Export each instance
+separately with `.export({ format: 'woff' })` or `'woff2'` for web fonts.
 
 ### `FontFlux.initWoff2()`
 
@@ -180,7 +194,10 @@ Replacement rules, in priority order:
 
 ### `.removeGlyph(id)`
 
-Remove a glyph and any kerning pairs referencing it.
+Remove a glyph and flat kerning pairs referencing it. This does not immediately
+remap all dependent tables. Validation/export rebind supported composite,
+layout, and COLR v0 references, and reject dangling or unsupported dependencies;
+see [Workflow Support](./index.md#workflow-support).
 
 | Argument | Type             | Description                            |
 | -------- | ---------------- | -------------------------------------- |
@@ -238,7 +255,9 @@ pairs resolve last-write-wins.
 
 ### `.clearKerning()`
 
-Remove all kerning. Returns nothing.
+Clear both flat pairs and class groups. On export, legacy kerning is removed
+and unrelated positioning is retained where the edit is unambiguous; shared
+or unsupported layout dependencies can reject. Returns nothing.
 
 ## Substitution methods (GSUB)
 
@@ -280,7 +299,8 @@ Remove rules matching a filter.
 
 ### `.clearSubstitutions()`
 
-Remove all substitution rules. Returns nothing.
+Clear simplified rules, retained raw lookup projections, substitution metadata,
+and legacy `features.GSUB`. GDEF is not removed. Returns nothing.
 
 ## Axis & instance methods
 
@@ -307,6 +327,10 @@ Add a new axis (or replace one with the same tag).
 ### `.removeAxis(tag)`
 
 Remove an axis by tag. Also removes any named instances referencing it.
+
+Retained variation tables may make the change unsupported. Dependency checks
+run at validation/export; removing the final axis does not silently strip
+dependent outline or metric variation data.
 
 | Argument | Type     | Description |
 | -------- | -------- | ----------- |
@@ -629,8 +653,10 @@ into this data:
 ```
 
 The top-level fields (`font`, `glyphs`, `kerning`) are the human-friendly editing
-interface. The `tables` object preserves every parsed table for lossless binary
-round-trip.
+interface. The `tables` object retains parsed originals and opaque payloads.
+Expansion preserves, rebuilds, removes, or rejects each domain according to
+the edits and supported dependencies; it is not a universal lossless override
+of simplified fields.
 
 ## Working with glyph outlines
 

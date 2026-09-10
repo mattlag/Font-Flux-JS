@@ -18,6 +18,109 @@ import { importFont } from '../src/import.js';
 const SAMPLES_DIR = resolve(import.meta.dirname, 'sample fonts');
 const SEGOE_EMOJI_PATH = resolve(SAMPLES_DIR, 'segoe-ui-emoji.ttf');
 
+describe('GSUB removal survives export', () => {
+	it('rejects editing a simple lookup also targeted by a contextual rule', () => {
+		const source = FontFlux.create();
+		for (const name of ['a', 'a.alt', 'b']) source.addGlyph({ name });
+		source.addSubstitution({
+			type: 'single',
+			feature: 'salt',
+			substitution: { from: 'a', to: 'a.alt' },
+		});
+		const font = FontFlux.open(source.export());
+		font.tables.GSUB.lookupList.lookups.push({
+			lookupType: 5,
+			lookupFlag: 0,
+			subtables: [
+				{
+					format: 3,
+					coverages: [{ format: 1, glyphs: [2] }],
+					seqLookupRecords: [{ sequenceIndex: 0, lookupListIndex: 0 }],
+				},
+			],
+		});
+		font.substitutions[0].to = 'b';
+		expect(() => font.export()).toThrow(/shared|contextual/);
+	});
+
+	it('patches an imported rule without rebuilding untouched feature parameters or lookups', () => {
+		const source = FontFlux.create();
+		for (const name of ['a', 'a.alt', 'a.other']) source.addGlyph({ name });
+		source.addSubstitution({
+			type: 'single',
+			feature: 'salt',
+			substitution: { from: 'a', to: 'a.alt' },
+		});
+		source.addSubstitution({
+			type: 'single',
+			feature: 'ss01',
+			substitution: { from: 'a.alt', to: 'a.other' },
+		});
+		const font = FontFlux.open(source.export());
+		const table = font.tables.GSUB;
+		const feature = table.featureList.featureRecords.find(
+			(record) => record.featureTag === 'ss01',
+		);
+		feature.feature.featureParams = [0, 0, 1, 0];
+		const untouched = structuredClone(table.lookupList.lookups[1]);
+		font.substitutions.find((rule) => rule.feature === 'salt').to = 'a.other';
+		const reopened = FontFlux.open(font.export());
+		expect(reopened.tables.GSUB.lookupList.lookups[1]).toEqual(untouched);
+		const semanticFeatures = (gsub) =>
+			gsub.featureList.featureRecords.map(
+				({ featureTag, feature: { featureParamsOffset, ...feature } }) => ({
+					featureTag,
+					feature,
+				}),
+			);
+		expect(semanticFeatures(reopened.tables.GSUB)).toEqual(
+			semanticFeatures(table),
+		);
+		expect(
+			reopened.substitutions.find((rule) => rule.feature === 'salt').to,
+		).toBe('a.other');
+	});
+	it('clears legacy feature GSUB and retained raw lookup data', () => {
+		const font = FontFlux.create({ family: 'Raw Removal' });
+		font.data.features = {
+			GSUB: { majorVersion: 1, minorVersion: 0 },
+			GDEF: { majorVersion: 1 },
+		};
+		font.data._rawGSUBLookups = [{ lookupIndex: 0, lookup: {} }];
+		font.data.substitutionMetadata = { featureOrder: ['calt'] };
+		font.clearSubstitutions();
+		expect(font.data._rawGSUBLookups).toEqual([]);
+		expect(font.features.GSUB).toBeUndefined();
+		expect(font.features.GDEF).toEqual({ majorVersion: 1 });
+		delete font.data.features.GDEF;
+		expect(FontFlux.open(font.export()).tables.GSUB).toBeUndefined();
+	});
+
+	it.each(['clear', 'remove', 'splice'])(
+		'keeps substitutions removed using %s',
+		(method) => {
+			const source = FontFlux.create({ family: 'Removal' });
+			source.addGlyph({ name: 'a', unicode: 97, advanceWidth: 500 });
+			source.addGlyph({ name: 'a.alt', advanceWidth: 500 });
+			source.addSubstitution({
+				type: 'single',
+				feature: 'salt',
+				substitution: { from: 'a', to: 'a.alt' },
+			});
+			const font = FontFlux.open(source.export());
+			expect(font.substitutions).toHaveLength(1);
+			if (method === 'clear') font.clearSubstitutions();
+			if (method === 'remove') font.removeSubstitution({ feature: 'salt' });
+			if (method === 'splice') font.substitutions.splice(0);
+
+			const restored = FontFlux.fromJSON(font.toJSON());
+			const reopened = FontFlux.open(restored.export());
+			expect(reopened.substitutions).toEqual([]);
+			expect(reopened.tables.GSUB).toBeUndefined();
+		},
+	);
+});
+
 function contextualTargetTypes(font) {
 	const lookups = font.tables.GSUB.lookupList.lookups;
 	const targetTypes = [];

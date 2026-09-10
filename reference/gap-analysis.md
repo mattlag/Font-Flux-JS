@@ -2,10 +2,7 @@
 
 _Last reviewed: May 11, 2026 (codebase audit)_
 
-> **Note** — Counts below reflect the April 2026 snapshot; the qualitative gaps
-> (CIDFont writing, MATH/JSTF/MERG subtables, glyf instructions, DSIG signature
-> bytes) are still accurate. This page should eventually graduate to a public
-> "Known limitations" page under `docs/`.
+> **Historical snapshot.** The current [workflow support matrix](../docs/index.md#workflow-support) supersedes these counts and export claims. CID per-FD Private/Subrs writing and selected-face loading are implemented and tested with bounded CJK outline/shaping checks. Edited CID outlines remain guarded. MATH/JSTF/MERG and instruction/signature payload distinctions still matter.
 
 **51 table types** have registered parsers and writers. **~40 are fully structured JSON**; **~11 have partial raw byte storage**. No tables are completely missing. Every table that has a parser also has a writer.
 
@@ -23,15 +20,15 @@ _Last reviewed: May 11, 2026 (codebase audit)_
 
 ## MEDIUM — Specific structures stored as raw bytes
 
-| Table      | Gap                                                                                                                                                                                                     |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **CFF v1** | **CharStrings** stored as raw byte arrays (decoded on-demand via `charstring_interpreter.js`). **CIDFont writing** incomplete — comment: _"full CIDFont writing is complex and can be expanded later."_ |
-| **CFF2**   | **CharStrings** same as CFF v1.                                                                                                                                                                         |
-| **glyf**   | Points, contours, flags fully structured. **Glyph instructions** stored as raw byte arrays — no TrueType bytecode parsing.                                                                              |
-| **fpgm**   | Entire table is raw instruction bytes: `{ instructions: Array.from(rawBytes) }`.                                                                                                                        |
-| **prep**   | Same as fpgm — raw instruction bytes only.                                                                                                                                                              |
-| **GDEF**   | v1.0–1.2 fully parsed. v1.3+ `itemVariationStore` now fully structured via `item_variation_store.js`.                                                                                                   |
-| **DSIG**   | Header + record metadata parsed. **CMS/PKCS#7 signature bytes** stored as `_raw`.                                                                                                                       |
+| Table      | Gap                                                                                                                                                                                         |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **CFF v1** | **CharStrings** retain byte arrays alongside eagerly decoded projections. Updated checkpoint: CID per-FD Private/Subrs writing is implemented; edited CID outlines/topology remain guarded. |
+| **CFF2**   | **CharStrings** same as CFF v1.                                                                                                                                                             |
+| **glyf**   | Points, contours, flags fully structured. **Glyph instructions** stored as raw byte arrays — no TrueType bytecode parsing.                                                                  |
+| **fpgm**   | Entire table is raw instruction bytes: `{ instructions: Array.from(rawBytes) }`.                                                                                                            |
+| **prep**   | Same as fpgm — raw instruction bytes only.                                                                                                                                                  |
+| **GDEF**   | v1.0–1.2 fully parsed. v1.3+ `itemVariationStore` now fully structured via `item_variation_store.js`.                                                                                       |
+| **DSIG**   | Header + record metadata parsed. **CMS/PKCS#7 signature bytes** stored as `_raw`.                                                                                                           |
 
 ---
 

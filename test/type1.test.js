@@ -352,6 +352,18 @@ describe('Type 1 charstring interpreter', () => {
 });
 
 describe('PFB import', () => {
+	it('enforces glyph and operation budgets', () => {
+		expect(() => importFont(buildPFB(), { maxGlyphs: 1 })).toThrow(/maxGlyphs/);
+		expect(() =>
+			importFont(buildPFB(), { maxCharStringOperations: 1 }),
+		).toThrow(/maxCharStringOperations/);
+	});
+	it('rejects unsigned oversized segment lengths before slicing', () => {
+		const bytes = new Uint8Array([0x80, 1, 255, 255, 255, 255]);
+		expect(() => importFont(bytes.buffer)).toThrow(
+			/segment outside input bounds/,
+		);
+	});
 	it('imports a synthetic PFB and produces valid font data', () => {
 		const pfb = buildPFB();
 		const result = importFont(pfb);
@@ -410,7 +422,9 @@ describe('PFA import', () => {
 			expect(pfaResult.glyphs[i].advanceWidth).toBe(
 				pfbResult.glyphs[i].advanceWidth,
 			);
-			expect(pfaResult.glyphs[i].contours).toEqual(pfbResult.glyphs[i].contours);
+			expect(pfaResult.glyphs[i].contours).toEqual(
+				pfbResult.glyphs[i].contours,
+			);
 		}
 	});
 });

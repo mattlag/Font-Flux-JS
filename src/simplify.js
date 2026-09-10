@@ -12,6 +12,7 @@ import {
 	buildGlyphIdToNameMap,
 	resolvePaintGlyphIds,
 } from './color.js';
+import { getCFFGlyphContext } from './otf/cff_common.js';
 import {
 	disassembleCharString,
 	interpretCharString,
@@ -60,11 +61,11 @@ export const DECOMPOSED_TABLES = new Set([
  * @param {{ header: object, tables: object }} raw
  * @returns {object} simplified object
  */
-export function buildSimplified(raw) {
+export function buildSimplified(raw, options = {}) {
 	const { header, tables } = raw;
 
 	const font = extractFontInfo(tables);
-	const glyphs = buildSimplifiedGlyphs(tables);
+	const glyphs = buildSimplifiedGlyphs(tables, options);
 
 	const result = { font, glyphs };
 
@@ -116,15 +117,17 @@ export function buildSimplified(raw) {
 		}
 		// Store raw lookups that couldn't be simplified (types 5/6)
 		if (rawLookups.length > 0) {
-			result._rawGSUBLookups = rawLookups;
+			result._rawGSUBLookups = structuredClone(rawLookups);
 		}
 	}
 
 	// OpenType layout features (passthrough: GPOS, GDEF)
 	// GSUB is now decomposed into substitutions; only pass through non-GSUB features
 	const features = {};
-	if (tables.GPOS && !tables.GPOS._raw) features.GPOS = tables.GPOS;
-	if (tables.GDEF && !tables.GDEF._raw) features.GDEF = tables.GDEF;
+	if (tables.GPOS && !tables.GPOS._raw)
+		features.GPOS = structuredClone(tables.GPOS);
+	if (tables.GDEF && !tables.GDEF._raw)
+		features.GDEF = structuredClone(tables.GDEF);
 	if (Object.keys(features).length > 0) {
 		result.features = features;
 	}
@@ -139,13 +142,13 @@ export function buildSimplified(raw) {
 
 	// TrueType hinting programs (passthrough)
 	if (tables['cvt '] && !tables['cvt ']._raw && tables['cvt '].values) {
-		result.cvt = tables['cvt '].values;
+		result.cvt = tables['cvt '].values.slice();
 	}
 	if (tables.fpgm && !tables.fpgm._raw && tables.fpgm.instructions) {
-		result.fpgm = tables.fpgm.instructions;
+		result.fpgm = tables.fpgm.instructions.slice();
 	}
 	if (tables.prep && !tables.prep._raw && tables.prep.instructions) {
-		result.prep = tables.prep.instructions;
+		result.prep = tables.prep.instructions.slice();
 	}
 
 	// Color font data (CPAL palettes + COLR color glyphs)
@@ -169,7 +172,7 @@ export function buildSimplified(raw) {
 	return result;
 }
 
-function extractSubstitutionMetadata(gsub) {
+export function extractSubstitutionMetadata(gsub) {
 	const featureRecords = gsub.featureList?.featureRecords || [];
 	const requiredFeatures = [];
 	for (const scriptRecord of gsub.scriptList?.scriptRecords || []) {
@@ -502,6 +505,22 @@ function toUnicodeCodepoint(code, translateMacRoman) {
  * Roman byte values and converted to Unicode before being recorded.
  */
 function readSubtableInto(map, subtable, translateMacRoman) {
+	let mappingCount = 0;
+	for (const range of subtable.groups || subtable.segments || []) {
+		const start = range.startCharCode ?? range.startCode;
+		const end = range.endCharCode ?? range.endCode;
+		if (
+			!Number.isInteger(start) ||
+			!Number.isInteger(end) ||
+			start < 0 ||
+			end > 0x10ffff ||
+			end < start
+		)
+			throw new Error('cmap range is outside Unicode bounds.');
+		mappingCount += end - start + 1;
+		if (mappingCount > 0x110000)
+			throw new Error('cmap mapping expansion exceeds Unicode budget.');
+	}
 	switch (subtable.format) {
 		case 0:
 			for (let code = 0; code < subtable.glyphIdArray.length; code++) {
@@ -581,7 +600,7 @@ function readSubtableInto(map, subtable, translateMacRoman) {
  * subtable at all, and then only after translating its single-byte values
  * through the Mac Roman → Unicode mapping table.
  */
-function buildGlyphToUnicodeMap(cmapTable) {
+export function buildGlyphToUnicodeMap(cmapTable) {
 	const map = new Map();
 	if (!cmapTable || cmapTable._raw || !cmapTable.subtables) return map;
 
@@ -650,7 +669,7 @@ function addToMap(map, glyphIndex, codepoint) {
 /**
  * Get glyph names from post or CFF tables.
  */
-function getGlyphNames(tables, numGlyphs) {
+export function getGlyphNames(tables, numGlyphs) {
 	// post table v2.0 has individual glyph names
 	if (
 		tables.post &&
@@ -693,7 +712,7 @@ function getGlyphNames(tables, numGlyphs) {
 /**
  * Build the unified simplified glyphs array.
  */
-function buildSimplifiedGlyphs(tables) {
+function buildSimplifiedGlyphs(tables, options) {
 	const isTrueType = tables.glyf && !tables.glyf._raw;
 	const isCFF = tables['CFF '] && !tables['CFF ']._raw;
 	const hmtx = tables.hmtx && !tables.hmtx._raw ? tables.hmtx : null;
@@ -766,14 +785,14 @@ function buildSimplifiedGlyphs(tables) {
 		if (isTrueType) {
 			const rawGlyph = tables.glyf.glyphs[i];
 			if (rawGlyph && rawGlyph.type === 'simple') {
-				glyph.contours = rawGlyph.contours;
+				glyph.contours = structuredClone(rawGlyph.contours);
 				if (rawGlyph.instructions && rawGlyph.instructions.length > 0) {
-					glyph.instructions = rawGlyph.instructions;
+					glyph.instructions = rawGlyph.instructions.slice();
 				}
 			} else if (rawGlyph && rawGlyph.type === 'composite') {
-				glyph.components = rawGlyph.components;
+				glyph.components = structuredClone(rawGlyph.components);
 				if (rawGlyph.instructions && rawGlyph.instructions.length > 0) {
-					glyph.instructions = rawGlyph.instructions;
+					glyph.instructions = rawGlyph.instructions.slice();
 				}
 			}
 			// null/empty glyphs have no outline data
@@ -785,15 +804,15 @@ function buildSimplifiedGlyphs(tables) {
 			const font = cffTable.fonts[0];
 			const charStrings = font.charStrings;
 			if (charStrings[i]) {
-				glyph.charString = charStrings[i];
+				glyph.charString = charStrings[i].slice();
 				glyph.charStringDisassembly = disassembleCharString(charStrings[i]);
 				// Interpret bytecode into cubic Bézier contours
-				const globalSubrs = cffTable.globalSubrs || [];
-				const localSubrs = font.localSubrs || [];
+				const { globalSubrs, localSubrs } = getCFFGlyphContext(cffTable, i);
 				const result = interpretCharString(
 					charStrings[i],
 					globalSubrs,
 					localSubrs,
+					options,
 				);
 				if (result.contours.length > 0) {
 					glyph.contours = result.contours;
@@ -827,7 +846,7 @@ function buildSimplifiedGlyphs(tables) {
  *
  * @returns {{ pairs: Array, classes: object|null }}
  */
-function extractKerning(tables, glyphs) {
+export function extractKerning(tables, glyphs) {
 	const gpos = extractGPOSKerning(tables, glyphs);
 	const kern = extractKernTableKerning(tables, glyphs);
 
@@ -1452,7 +1471,7 @@ function extractAxisMapping(tables) {
  * Returns a simplified axisStyles object with designAxes info embedded,
  * or null if there is no STAT table.
  */
-function extractAxisStyles(tables) {
+export function extractAxisStyles(tables) {
 	const stat = tables.STAT;
 	const fvar = tables.fvar;
 	if (!stat || stat._raw) return null;
@@ -1627,7 +1646,7 @@ const SIMPLIFIABLE_GSUB_TYPES = new Set([1, 2, 3, 4, 8]);
  * @param {object[]} glyphs - Simplified glyphs array (for name resolution).
  * @returns {{ substitutions: object[], rawLookups: object[] }}
  */
-function extractSubstitutions(gsub, glyphs) {
+export function extractSubstitutions(gsub, glyphs) {
 	const substitutions = [];
 	const rawLookups = [];
 
@@ -2210,7 +2229,7 @@ function extractReverseChainSubst(st, glyphs, base, rules) {
  * @param {object} tables
  * @returns {string[][]|null}
  */
-function extractPalettes(tables) {
+export function extractPalettes(tables) {
 	const cpal = tables.CPAL;
 	if (!cpal || cpal._raw || !cpal.palettes) return null;
 
@@ -2227,7 +2246,7 @@ function extractPalettes(tables) {
  * @param {object[]} glyphs - Simplified glyph array.
  * @returns {object[]|null}
  */
-function extractColorGlyphs(tables, glyphs) {
+export function extractColorGlyphs(tables, glyphs) {
 	const colr = tables.COLR;
 	if (!colr || colr._raw) return null;
 

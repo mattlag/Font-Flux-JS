@@ -15,6 +15,83 @@ import { importFont } from '../src/import.js';
 
 const SAMPLES_DIR = resolve(import.meta.dirname, 'sample fonts');
 
+describe('CFF2 outline preservation', () => {
+	it('detects direct variable-outline edits without mutating retained points', async () => {
+		const bytes = await readFile(resolve(SAMPLES_DIR, 'SegUIVar-test.ttf'));
+		const imported = importFont(
+			bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+		);
+		const index = imported.glyphs.findIndex(
+			(glyph) => glyph.contours?.[0]?.length,
+		);
+		const originalX = imported.tables.glyf.glyphs[index].contours[0][0].x;
+		imported.glyphs[index].contours[0][0].x += 10;
+		expect(imported.tables.glyf.glyphs[index].contours[0][0].x).toBe(originalX);
+		expect(() => exportFont(imported)).toThrow(/gvar point data/);
+	});
+	it('retains custom and localized variable names', () => {
+		const data = {
+			font: { familyName: 'Variable Names', unitsPerEm: 1000 },
+			glyphs: [{ name: '.notdef', advanceWidth: 500 }],
+			axes: [{ tag: 'wght', name: 'Weight', min: 100, default: 400, max: 900 }],
+		};
+		const imported = importFont(exportFont(data));
+		const nameID = imported.tables.fvar.axes[0].axisNameID;
+		const localized = {
+			platformID: 3,
+			encodingID: 1,
+			languageID: 0x040c,
+			nameID,
+			value: 'Graisse',
+		};
+		const custom = {
+			platformID: 3,
+			encodingID: 1,
+			languageID: 0x0409,
+			nameID: 900,
+			value: 'Custom retained label',
+		};
+		imported.tables.name.names.push(localized, custom);
+		imported.font.familyName = 'Edited Family';
+		const reopened = importFont(exportFont(imported));
+		expect(reopened.tables.name.names).toContainEqual(localized);
+		expect(reopened.tables.name.names).toContainEqual(custom);
+		expect(reopened.tables.fvar.axes[0].axisNameID).toBe(nameID);
+	});
+	it('rejects changing retained variation axis order', async () => {
+		const bytes = await readFile(
+			resolve(SAMPLES_DIR, 'AdobeVFPrototype-online-test.otf'),
+		);
+		const font = importFont(
+			bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+		);
+		font.axes.reverse();
+		expect(() => exportFont(font)).toThrow(/axis.*(order|layout|topology)/i);
+	});
+
+	it('keeps CFF2 as the only outline technology on metadata export', async () => {
+		const bytes = await readFile(
+			resolve(SAMPLES_DIR, 'AdobeVFPrototype-online-test.otf'),
+		);
+		const font = importFont(
+			bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+		);
+		font.font.familyName = 'CFF2 Metadata Edit';
+		const reopened = importFont(exportFont(font));
+		expect(reopened.tables.CFF2.charStrings).toEqual(
+			font.tables.CFF2.charStrings,
+		);
+		expect(reopened.tables.CFF2.globalSubrs).toEqual(
+			font.tables.CFF2.globalSubrs,
+		);
+		expect(reopened.tables.glyf).toBeUndefined();
+		expect(reopened.tables.loca).toBeUndefined();
+		expect(reopened.tables['CFF ']).toBeUndefined();
+		expect(reopened.tables.maxp.version).toBe(0x00005000);
+		expect(reopened._header.sfVersion).toBe(0x4f54544f);
+	});
+});
+
 // ===========================================================================
 //  AXIS MAPPING (avar)
 // ===========================================================================
@@ -569,9 +646,9 @@ describe('combined variable metrics authoring', () => {
 					advanceWidth: 600,
 					contours: [
 						[
-							[100, 0, 1],
-							[300, 700, 1],
-							[500, 0, 1],
+							{ x: 100, y: 0, onCurve: true },
+							{ x: 300, y: 700, onCurve: true },
+							{ x: 500, y: 0, onCurve: true },
 						],
 					],
 				},
@@ -623,6 +700,9 @@ describe('combined variable metrics authoring', () => {
 
 		expect(reimported.axes.length).toBe(2);
 		expect(reimported.instances.length).toBe(2);
+		expect(reimported.glyphs[1].contours).toEqual(
+			simplified.glyphs[1].contours,
+		);
 		// axisMapping has only identity for wght, should be stripped
 		expect(reimported.axisMapping).toBeUndefined();
 		expect(reimported.axisStyles).toBeDefined();

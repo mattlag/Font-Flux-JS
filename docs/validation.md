@@ -1,9 +1,21 @@
+## Editable Data Checks
+
+`FontFlux.validate()` is observational: it checks simplified data and a detached resolved export candidate, including authored fonts that have no prebuilt tables. Warnings are retained. Resolution failures become `EXPORT_RESOLUTION_FAILED` issues rather than escaping as exceptions. The low-level raw-table validator's legacy repair behavior is separate.
+
+Checks include finite/ranged advances and bearings, Unicode scalars, contour coordinates, glyph names and references, kerning values/classes, color layer references, axis tag/range constraints, and composite cycles/limits. Export enforces the same simplified checks. Imported duplicate names warn, but ambiguous topology changes reject. This is not a complete OpenType semantic validator: raw payloads and unsupported advanced authoring still require independent consumers.
+
+WOFF/WOFF2 imports accept `{ maxUncompressedBytes: 256 * 1024 * 1024 }` by default. Decoded and reconstructed sizes are bounded; invalid directory/table extents, duplicate tags, malformed CFF INDEX structures, and excessive cmap expansion reject early. These limits are not a security sandbox or a total process-memory cap. Run hostile/untrusted font work in an isolated process with external resource limits.
+
+Additional binary-import limits are listed in [Import Options](./api.md#import-options-and-types). Nested simplified layout/color data rejects cycles, depth above 64, or more than ten million visited fields. Contextual action references, paint glyph/palette references, component transform ranges, and required contour coordinates are checked before resolution. Arbitrary raw-table objects are still a low-level escape hatch, not exhaustively validated authoring input.
+
 # Validation Guide
 
 Use `.validate()` to catch structural and cross-table issues before export.
-The validator also **auto-fixes** recoverable problems (missing headers, wrong
-directory fields, mismatched counts) and reports them as `info`-level issues
-so the font can be exported directly afterward.
+It builds and checks a detached export candidate, including generated tables
+for fonts created from scratch. Validation does not mutate the live font or
+change how subsequent edits are exported. Recoverable problems in the candidate
+(missing headers, wrong directory fields, mismatched counts) are repaired and
+reported as `info`-level issues. These repairs do not modify the source data.
 
 ## API
 
@@ -13,7 +25,7 @@ import { FontFlux } from 'font-flux-js';
 const font = FontFlux.open(buffer);
 
 const report = font.validate();
-// The internal data may have been mutated with auto-fixes
+// The live font and its edits are unchanged.
 if (!report.valid) {
 	console.error(report.errors);
 	throw new Error('Font failed validation');
@@ -32,7 +44,8 @@ const output = font.export();
 
 ## What `.validate()` checks
 
-- Root shape (`header`, `tables`) for single fonts, or `collection` + `fonts[]` for TTC/OTC.
+- The resolved export candidate's `header` and `tables`, rather than requiring
+  callers to supply generated tables in the simplified authoring format.
 - Header field sanity (`sfVersion`, `numTables`, directory fields) — auto-fixed when possible.
 - Table tags are exactly 4 characters.
 - Raw table bytes (`_raw`) are valid byte arrays.
@@ -46,6 +59,11 @@ const output = font.export();
   - `loca` → `head`, `maxp`
   - `glyf` → `loca`, `head`, `maxp`
   - `vmtx` → `vhea`, `maxp`
+
+This is structural validation, not a full font sanitizer or a guarantee of
+rendering equivalence. The internal `validateJSON()` helper still accepts raw
+table data (including collections) and applies repairs directly to that input;
+the public `.validate()` method isolates those repairs from the live font.
 
 ## Complete issue reference
 
@@ -106,19 +124,21 @@ const output = font.export();
 
 ## Auto-fix behavior
 
-When `.validate()` detects a recoverable issue it **mutates** the input
-object in place and reports an `info`-level issue. This means the
-font can be exported directly after validation:
+When `.validate()` detects a recoverable issue, it repairs only a detached
+export candidate and reports an `info`-level issue. The live font data is
+unchanged; export independently resolves the current data:
 
 ```js
 const report = font.validate();
-// Internal data is now guaranteed to have correct header fields
+// The live source is unchanged; the resolved candidate passed validation.
 if (report.valid) {
 	const buffer = font.export();
 }
 ```
 
-Auto-fixes applied:
+The internal raw-table validator can apply the following repairs. Through
+`FontFlux.validate()`, they affect only the candidate. Calling the internal
+`validateJSON()` directly retains its legacy in-place repair behavior:
 
 - **Missing header**: Synthesized from table data (sfVersion inferred from CFF/TrueType tables).
 - **`_header` promotion**: Copied to `header` when `header` is absent.
@@ -129,7 +149,7 @@ Auto-fixes applied:
 
 ## Best practices
 
-- Run `.validate()` before every `.export()` call to catch issues early and apply auto-fixes.
+- Run `.validate()` before `.export()` to inspect issues without mutating live data. Export can still throw for errors only discovered during binary serialization.
 - Treat warnings as "likely bugs" when hand-authoring JSON.
 - Keep `_raw` for unknown tables to preserve round-trip behavior.
 - Prefer small iterative edits and validate after each edit.

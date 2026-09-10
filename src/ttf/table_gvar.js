@@ -100,7 +100,7 @@ export function parseGvar(rawBytes, tables = {}) {
  */
 function getGlyphPointCount(tables, glyphIndex) {
 	const glyph = tables.glyf?.glyphs?.[glyphIndex];
-	if (!glyph) return 0;
+	if (!glyph) return tables.glyf?.glyphs ? 4 : 0;
 
 	if (glyph.type === 'simple' && glyph.contours) {
 		let count = 0;
@@ -114,7 +114,7 @@ function getGlyphPointCount(tables, glyphIndex) {
 		return glyph.components.length + 4;
 	}
 
-	return 0;
+	return 4;
 }
 
 // ===========================================================================
@@ -225,7 +225,9 @@ function collectSharedTuples(glyphVariationData, axisCount) {
 		if (!Array.isArray(entry)) continue;
 		for (const tv of entry) {
 			if (!tv || !tv.peakTuple) continue;
-			const key = tv.peakTuple.map((v) => Math.round((v ?? 0) * 16384)).join(',');
+			const key = tv.peakTuple
+				.map((v) => Math.round((v ?? 0) * 16384))
+				.join(',');
 			if (!seen.has(key)) {
 				seen.add(key);
 				tuples.push(tv.peakTuple);

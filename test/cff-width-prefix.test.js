@@ -62,6 +62,25 @@ function buildHandAuthored() {
 	};
 }
 
+describe('CFF export ownership', () => {
+	it('does not modify retained source CFF tables during width repair', () => {
+		const imported = importFont(exportFont(buildHandAuthored()));
+		imported.glyphs[2].advanceWidth += 100;
+		const before = structuredClone(imported);
+		exportFont(imported);
+		expect(imported).toEqual(before);
+	});
+
+	it('honors edited contours when original charstrings are still present', () => {
+		const imported = importFont(exportFont(buildHandAuthored()));
+		const original = structuredClone(imported.glyphs[2].contours);
+		imported.glyphs[2].contours[0][1].x += 100;
+		const reopened = importFont(exportFont(imported));
+		expect(reopened.glyphs[2].contours).not.toEqual(original);
+		expect(reopened.glyphs[2].contours).toEqual(imported.glyphs[2].contours);
+	});
+});
+
 function widthsFromExportedCFF(buffer) {
 	const ab = buffer instanceof ArrayBuffer ? buffer : buffer.buffer;
 	const data = importFont(ab);

@@ -5,11 +5,50 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { buildRawFromSimplified } from '../../src/expand.js';
+import { FontFlux } from '../../src/font_flux.js';
 import { importFontTables } from '../../src/import.js';
 import { parseCmap, writeCmap } from '../../src/sfnt/table_cmap.js';
 import { DataWriter } from '../../src/writer.js';
 
 const SAMPLES_DIR = resolve(import.meta.dirname, '..', 'sample fonts');
+
+describe('cmap ownership', () => {
+	it('preserves original records on metadata edits and UVS records on Unicode edits', () => {
+		const font = FontFlux.create({ family: 'UVS Preservation' });
+		font.addGlyph({ name: 'A', unicode: 65, advanceWidth: 500 });
+		const imported = FontFlux.open(font.export());
+		const cmap = imported.tables.cmap;
+		const variation = {
+			format: 14,
+			varSelectorRecords: [
+				{
+					varSelector: 0xfe0f,
+					defaultUVS: [{ startUnicodeValue: 32, additionalCount: 0 }],
+					nonDefaultUVS: [{ unicodeValue: 65, glyphID: 2 }],
+				},
+			],
+		};
+		cmap.encodingRecords.push({
+			platformID: 0,
+			encodingID: 5,
+			subtableIndex: cmap.subtables.length,
+		});
+		cmap.subtables.push(variation);
+		imported.info.familyName = 'Renamed';
+		expect(buildRawFromSimplified(imported.data).tables.cmap).toEqual(cmap);
+		imported.glyphs.find((glyph) => glyph.name === 'A').unicode = 66;
+		const edited = buildRawFromSimplified(imported.data).tables.cmap;
+		const record = edited.encodingRecords.find(
+			(entry) => entry.encodingID === 5,
+		);
+		expect(edited.subtables[record.subtableIndex]).toEqual(variation);
+		const reopened = FontFlux.open(imported.export());
+		expect(
+			reopened.tables.cmap.subtables.find((subtable) => subtable.format === 14),
+		).toEqual(variation);
+	});
+});
 
 describe('cmap table parsing', () => {
 	it('should parse the cmap table from an OTF file', async () => {

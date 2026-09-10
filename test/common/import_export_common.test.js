@@ -7,6 +7,30 @@ import { exportFont } from '../../src/export.js';
 import { importFont, importFontTables } from '../../src/import.js';
 
 describe('import/export common functionality', () => {
+	it('rejects duplicate tags and table ranges outside the input', () => {
+		const buffer = new ArrayBuffer(44);
+		const view = new DataView(buffer);
+		view.setUint32(0, 0x10000);
+		view.setUint16(4, 2);
+		for (const offset of [12, 28]) {
+			view.setUint32(offset, 0x54455354);
+			view.setUint32(offset + 8, 44);
+		}
+		expect(() => importFontTables(buffer)).toThrow(/duplicate/i);
+		view.setUint16(4, 1);
+		view.setUint32(24, 100);
+		expect(() => importFontTables(buffer)).toThrow(/bounds|range/i);
+	});
+
+	it('rejects a truncated collection offset array before allocating it', () => {
+		const buffer = new ArrayBuffer(12);
+		const view = new DataView(buffer);
+		view.setUint32(0, 0x74746366);
+		view.setUint16(4, 1);
+		view.setUint32(8, 0xffffffff);
+		expect(() => importFont(buffer)).toThrow(/collection.*count|offset array/i);
+	});
+
 	it('should reject invalid input types', () => {
 		expect(() => importFont(new Uint8Array([1, 2, 3]))).toThrow(
 			'importFont expects an ArrayBuffer',
@@ -47,7 +71,7 @@ describe('import/export common functionality', () => {
 				view.getUint8(15),
 			),
 		).toBe('TEST');
-		expect(view.getUint32(16)).toBe(0x12345678);
+		expect(view.getUint32(16)).toBe(0x01020300);
 		expect(view.getUint32(24)).toBe(3);
 
 		const tableOffset = view.getUint32(20);
@@ -97,6 +121,6 @@ describe('import/export common functionality', () => {
 
 		const reparsed = importFontTables(exportFont(input));
 		expect(reparsed.tables.ABCD._raw).toEqual([9, 8, 7, 6, 5]);
-		expect(reparsed.tables.ABCD._checksum).toBe(0x01020304);
+		expect(reparsed.tables.ABCD._checksum).toBe(0x0e080706);
 	});
 });

@@ -369,7 +369,8 @@ export function decomposeGlyph(glyphs, glyph, depth = 0) {
 			: [];
 	}
 	// Guard against pathological / cyclic component references.
-	if (depth > 16 || !Array.isArray(glyphs)) return [];
+	if (depth > 64 || !Array.isArray(glyphs))
+		throw new Error('Composite cycle or excessive component depth.');
 
 	const out = [];
 	for (const component of glyph.components) {
@@ -377,10 +378,27 @@ export function decomposeGlyph(glyphs, glyph, depth = 0) {
 		if (!ref && component.glyphName != null) {
 			ref = glyphs.find((g) => g && g.name === component.glyphName);
 		}
-		if (!ref) continue;
+		if (!ref) throw new Error('Composite references an unknown glyph.');
 		const refContours = decomposeGlyph(glyphs, ref, depth + 1);
 		if (refContours.length === 0) continue;
-		const { a, b, c, d, dx, dy } = componentTransform(component);
+		const { a, b, c, d } = componentTransform(component);
+		let { dx, dy } = componentTransform(component);
+		if (component.flags?.argsAreXYValues === false) {
+			const parent = out.flat()[component.argument1];
+			const child = refContours.flat()[component.argument2];
+			if (!parent || !child)
+				throw new Error(
+					'Composite point attachment references an unknown point.',
+				);
+			dx = parent.x - (a * child.x + c * child.y);
+			dy = parent.y - (b * child.x + d * child.y);
+		} else if (component.flags?.scaledComponentOffset) {
+			[dx, dy] = [a * dx + c * dy, b * dx + d * dy];
+		}
+		if (component.flags?.roundXYToGrid) {
+			dx = Math.round(dx);
+			dy = Math.round(dy);
+		}
 		const identity = a === 1 && b === 0 && c === 0 && d === 1;
 		for (const contour of refContours) {
 			out.push(

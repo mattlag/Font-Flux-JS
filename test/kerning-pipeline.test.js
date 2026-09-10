@@ -5,9 +5,106 @@
 
 import { describe, expect, it } from 'vitest';
 import { buildRawFromSimplified } from '../src/expand.js';
+import { FontFlux } from '../src/font_flux.js';
 import { getKerningValue } from '../src/kerning.js';
 import { parseGPOS, writeGPOS } from '../src/sfnt/table_GPOS.js';
 import { buildSimplified } from '../src/simplify.js';
+
+describe('clearing imported kerning', () => {
+	it('preserves complete positioning records when kerning is unchanged', () => {
+		const source = FontFlux.create({ family: 'Preserved GPOS' });
+		source.addGlyph({ name: 'A', unicode: 65, advanceWidth: 600 });
+		source.addGlyph({ name: 'V', unicode: 86, advanceWidth: 600 });
+		source.addKerning({ left: 'A', right: 'V', value: -50 });
+		const raw = buildRawFromSimplified(source.data);
+		const lookup = raw.tables.GPOS.lookupList.lookups[0];
+		lookup.lookupFlag = 8;
+		const subtable = lookup.subtables[0];
+		subtable.valueFormat1 = 5;
+		subtable.valueFormat2 = 2;
+		subtable.pairSets[0][0].value1.xPlacement = 12;
+		subtable.pairSets[0][0].value2 = { yPlacement: 25 };
+		const simplified = buildSimplified(raw);
+		simplified.font.familyName = 'Metadata Edit';
+		expect(buildRawFromSimplified(simplified).tables.GPOS).toEqual(
+			raw.tables.GPOS,
+		);
+	});
+
+	it.each(['clear', 'remove', 'splice'])(
+		'keeps pairs removed using %s without dropping other positioning',
+		(method) => {
+			const source = FontFlux.create({ family: 'Clear Kern' });
+			source.addGlyph({ name: 'A', unicode: 65, advanceWidth: 600 });
+			source.addGlyph({ name: 'V', unicode: 86, advanceWidth: 600 });
+			source.addKerning({ left: 'A', right: 'V', value: -50 });
+			const font = FontFlux.open(source.export());
+			const gpos = font.features.GPOS;
+			gpos.featureList.featureRecords.push({
+				featureTag: 'dist',
+				feature: { lookupListIndices: [0] },
+			});
+			gpos.scriptList.scriptRecords[0].script.defaultLangSys.featureIndices.push(
+				1,
+			);
+			const originalLookup = structuredClone(gpos.lookupList.lookups[0]);
+			if (method === 'clear') font.clearKerning();
+			if (method === 'remove') font.removeKerning('A', 'V');
+			if (method === 'splice') font.kerning.splice(0);
+			const reopened = FontFlux.open(FontFlux.fromJSON(font.toJSON()).export());
+			expect(reopened.kerning).toEqual([]);
+			const dist = reopened.features.GPOS.featureList.featureRecords.find(
+				(record) => record.featureTag === 'dist',
+			);
+			expect(
+				reopened.features.GPOS.lookupList.lookups[
+					dist.feature.lookupListIndices[0]
+				],
+			).toEqual(originalLookup);
+		},
+	);
+
+	it('patches advance edits while preserving flags and placement', () => {
+		const source = FontFlux.create();
+		source.addGlyph({ name: 'A', unicode: 65 });
+		source.addGlyph({ name: 'V', unicode: 86 });
+		source.addKerning({ left: 'A', right: 'V', value: -50 });
+		const font = FontFlux.open(source.export());
+		const lookup = font.features.GPOS.lookupList.lookups[0];
+		lookup.lookupFlag = 1;
+		lookup.subtables[0].valueFormat1 = 5;
+		lookup.subtables[0].pairSets[0][0].value1.xPlacement = 12;
+		font.kerning[0].value = -75;
+		const reopened = FontFlux.open(font.export());
+		const retained = reopened.features.GPOS.lookupList.lookups[0];
+		expect(retained.lookupFlag).toBe(1);
+		expect(retained.subtables[0].pairSets[0][0].value1).toEqual({
+			xPlacement: 12,
+			xAdvance: -75,
+		});
+	});
+
+	it('clears class kerning and legacy kern along with flat pairs', () => {
+		const source = FontFlux.create({ family: 'Clear Classes' });
+		source.addGlyph({ name: 'A', unicode: 65, advanceWidth: 600 });
+		source.addGlyph({ name: 'V', unicode: 86, advanceWidth: 600 });
+		source.data.kerningClasses = [
+			{
+				leftClasses: { left: ['A'] },
+				rightClasses: { right: ['V'] },
+				pairs: [{ left: '@left', right: '@right', value: -50 }],
+			},
+		];
+		source.data._options = { kerningFormat: 'gpos+kern' };
+		const font = FontFlux.open(source.export());
+		expect(font.getKerning('A', 'V')).toBe(-50);
+		font.clearKerning();
+		expect(font.getKerning('A', 'V')).toBeUndefined();
+		const reopened = FontFlux.open(font.export());
+		expect(reopened.getKerning('A', 'V')).toBeUndefined();
+		expect(reopened.tables.kern).toBeUndefined();
+	});
+});
 
 // Helper: build a minimal raw font with glyphs and optional tables
 function makeRawFont(tables, numGlyphs = 100) {

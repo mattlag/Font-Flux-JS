@@ -9,7 +9,7 @@
  * Spec: https://www.w3.org/TR/WOFF/
  */
 
-import { deflate, inflate } from 'pako';
+import { deflate, Inflate } from 'pako';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -28,7 +28,13 @@ const SFNT_TABLE_RECORD_SIZE = 16;
  * @param {ArrayBuffer} buffer - Raw WOFF file bytes.
  * @returns {{ sfnt: ArrayBuffer, metadata: Uint8Array|null, privateData: Uint8Array|null }}
  */
-export function unwrapWOFF1(buffer) {
+export function unwrapWOFF1(
+	buffer,
+	{ maxUncompressedBytes = 256 * 1024 * 1024 } = {},
+) {
+	if (!Number.isSafeInteger(maxUncompressedBytes) || maxUncompressedBytes < 1)
+		throw new Error('Invalid decompression budget.');
+	if (buffer.byteLength < 44) throw new Error('Truncated WOFF1 header.');
 	const view = new DataView(buffer);
 	const bytes = new Uint8Array(buffer);
 
@@ -50,6 +56,20 @@ export function unwrapWOFF1(buffer) {
 	// const metaOrigLength = view.getUint32(32);
 	const privOffset = view.getUint32(36);
 	const privLength = view.getUint32(40);
+	if (44 + numTables * 20 > buffer.byteLength)
+		throw new Error('WOFF1 directory outside input bounds.');
+	if (
+		view.getUint32(16) > maxUncompressedBytes ||
+		view.getUint32(32) > maxUncompressedBytes
+	)
+		throw new Error('WOFF1 output exceeds decompression budget.');
+	for (const [offset, length] of [
+		[metaOffset, metaLength],
+		[privOffset, privLength],
+	]) {
+		if (offset > buffer.byteLength || length > buffer.byteLength - offset)
+			throw new Error('WOFF1 ancillary data range outside input bounds.');
+	}
 
 	// ── Parse WOFF table directory (20 bytes per entry) ──────────────────
 	const tables = [];
@@ -70,6 +90,44 @@ export function unwrapWOFF1(buffer) {
 		dirOffset += WOFF_TABLE_DIR_ENTRY_SIZE;
 	}
 
+	let totalOutput = 12 + 16 * numTables;
+	for (const entry of tables) {
+		if (
+			entry.offset > buffer.byteLength ||
+			entry.compLength > buffer.byteLength - entry.offset ||
+			entry.compLength > entry.origLength
+		)
+			throw new Error(
+				`WOFF1 table ${entry.tag} has an invalid range or length.`,
+			);
+		totalOutput += entry.origLength + 3 - ((entry.origLength + 3) % 4);
+		if (totalOutput > maxUncompressedBytes)
+			throw new Error('WOFF1 output exceeds decompression budget.');
+	}
+	const inflateBounded = (input, limit) => {
+		const decoder = new Inflate();
+		const chunks = [];
+		let length = 0;
+		decoder.onData = (chunk) => {
+			length += chunk.length;
+			if (length > limit)
+				throw new Error(
+					'WOFF1 decompression output exceeds declared length or budget.',
+				);
+			chunks.push(chunk);
+		};
+		decoder.push(input, true);
+		if (decoder.err || !decoder.ended)
+			throw new Error(decoder.msg || 'Invalid WOFF1 compressed stream.');
+		const output = new Uint8Array(length);
+		let offset = 0;
+		for (const chunk of chunks) {
+			output.set(chunk, offset);
+			offset += chunk.length;
+		}
+		return output;
+	};
+
 	// ── Decompress each table ────────────────────────────────────────────
 	const decompressedTables = tables.map((entry) => {
 		const compressed = bytes.subarray(
@@ -80,7 +138,7 @@ export function unwrapWOFF1(buffer) {
 		let data;
 		if (entry.compLength < entry.origLength) {
 			// Table is zlib-compressed
-			data = inflate(compressed);
+			data = inflateBounded(compressed, entry.origLength);
 			if (data.length !== entry.origLength) {
 				throw new Error(
 					`WOFF1 table '${entry.tag}': decompressed size ${data.length} !== expected ${entry.origLength}`,
@@ -152,7 +210,7 @@ export function unwrapWOFF1(buffer) {
 	let metadata = null;
 	if (metaOffset && metaLength) {
 		const metaCompressed = bytes.subarray(metaOffset, metaOffset + metaLength);
-		metadata = inflate(metaCompressed);
+		metadata = inflateBounded(metaCompressed, view.getUint32(32));
 	}
 
 	let privateData = null;

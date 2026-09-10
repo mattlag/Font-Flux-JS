@@ -521,7 +521,7 @@ function parseExtensionPos(reader, offset) {
  * `deviceOffsets` receives { key, bytes } entries for any Device tables
  * that need to be appended later with offsets patched.
  */
-function writeValueRecord(vr, valueFormat, deviceCollector) {
+function writeValueRecord(vr, valueFormat, deviceCollector, recordOffset = 0) {
 	if (!valueFormat) return [];
 	const w = new DataWriter(valueFormatSize(valueFormat));
 	if (valueFormat & 0x0001) w.int16(vr ? (vr.xPlacement ?? 0) : 0);
@@ -531,25 +531,56 @@ function writeValueRecord(vr, valueFormat, deviceCollector) {
 	// Device offset fields are placeholders — filled after we know layout
 	if (valueFormat & 0x0010) {
 		if (vr?.xPlaDevice)
-			deviceCollector.push({ field: w.position, device: vr.xPlaDevice });
+			deviceCollector.push({
+				field: recordOffset + w.position,
+				device: vr.xPlaDevice,
+			});
 		w.uint16(0);
 	}
 	if (valueFormat & 0x0020) {
 		if (vr?.yPlaDevice)
-			deviceCollector.push({ field: w.position, device: vr.yPlaDevice });
+			deviceCollector.push({
+				field: recordOffset + w.position,
+				device: vr.yPlaDevice,
+			});
 		w.uint16(0);
 	}
 	if (valueFormat & 0x0040) {
 		if (vr?.xAdvDevice)
-			deviceCollector.push({ field: w.position, device: vr.xAdvDevice });
+			deviceCollector.push({
+				field: recordOffset + w.position,
+				device: vr.xAdvDevice,
+			});
 		w.uint16(0);
 	}
 	if (valueFormat & 0x0080) {
 		if (vr?.yAdvDevice)
-			deviceCollector.push({ field: w.position, device: vr.yAdvDevice });
+			deviceCollector.push({
+				field: recordOffset + w.position,
+				device: vr.yAdvDevice,
+			});
 		w.uint16(0);
 	}
 	return w.toArray();
+}
+
+function appendValueDevices(bytes, devices) {
+	const offsets = new Map();
+	for (const { field, device } of devices) {
+		const encoded = writeDevice(device);
+		const key = encoded.join(',');
+		let offset = offsets.get(key);
+		if (offset === undefined) {
+			offset = bytes.length;
+			if (offset > 0xffff)
+				throw new Error('GPOS Device offset exceeds Offset16 range.');
+			offsets.set(key, offset);
+			for (const value of encoded) bytes.push(value);
+		}
+		bytes[field] = offset >>> 8;
+		bytes[field + 1] = offset & 0xff;
+	}
+	return bytes;
 }
 
 /**
@@ -728,9 +759,29 @@ function splitPairPosFormat1Subtable(subtable) {
 	const valueRecordSize =
 		valueFormatSize(subtable.valueFormat1) +
 		valueFormatSize(subtable.valueFormat2);
-	const pairSetSizes = subtable.pairSets.map(
-		(pairSet) => 2 + pairSet.length * (2 + valueRecordSize),
-	);
+	const pairSetSizes = subtable.pairSets.map((pairSet) => {
+		const devices = new Map();
+		for (const record of pairSet) {
+			for (const value of [record.value1, record.value2]) {
+				for (const key of [
+					'xPlaDevice',
+					'yPlaDevice',
+					'xAdvDevice',
+					'yAdvDevice',
+				]) {
+					if (value?.[key]) {
+						const bytes = writeDevice(value[key]);
+						devices.set(bytes.join(','), bytes.length);
+					}
+				}
+			}
+		}
+		return (
+			2 +
+			pairSet.length * (2 + valueRecordSize) +
+			[...devices.values()].reduce((sum, size) => sum + size, 0)
+		);
+	});
 	const totalPairSetBytes = pairSetSizes.reduce((sum, size) => sum + size, 0);
 	const wholeSize = estimatePairPosFormat1Size(
 		subtable.pairSets.length,
@@ -850,6 +901,7 @@ function writeSinglePos(st) {
 			st.valueRecord,
 			st.valueFormat,
 			deviceCollector,
+			6,
 		);
 		// format(2) + covOff(2) + valueFormat(2) + vrBytes
 		const headerSize = 6 + vrBytes.length;
@@ -862,12 +914,12 @@ function writeSinglePos(st) {
 		w.rawBytes(vrBytes);
 		w.seek(covOff);
 		w.rawBytes(covBytes);
-		return w.toArray();
+		return appendValueDevices(w.toArray(), deviceCollector);
 	}
 	if (st.format === 2) {
 		const vrSize = valueFormatSize(st.valueFormat);
-		const allVrBytes = st.valueRecords.map((vr) =>
-			writeValueRecord(vr, st.valueFormat, deviceCollector),
+		const allVrBytes = st.valueRecords.map((vr, index) =>
+			writeValueRecord(vr, st.valueFormat, deviceCollector, 8 + index * vrSize),
 		);
 		// format(2) + covOff(2) + valueFormat(2) + count(2) + vrBytes
 		const headerSize = 8 + allVrBytes.length * vrSize;
@@ -881,7 +933,7 @@ function writeSinglePos(st) {
 		for (const b of allVrBytes) w.rawBytes(b);
 		w.seek(covOff);
 		w.rawBytes(covBytes);
-		return w.toArray();
+		return appendValueDevices(w.toArray(), deviceCollector);
 	}
 	throw new Error(`Unknown SinglePos format: ${st.format}`);
 }
@@ -895,6 +947,7 @@ function writePairPos(st) {
 	if (st.format === 1) {
 		// Serialize each PairSet
 		const pairSetBytesArr = st.pairSets.map((ps) => {
+			const pairDevices = [];
 			const vrSize1 = valueFormatSize(st.valueFormat1);
 			const vrSize2 = valueFormatSize(st.valueFormat2);
 			const recordSize = 2 + vrSize1 + vrSize2; // secondGlyph(2) + vr1 + vr2
@@ -903,13 +956,23 @@ function writePairPos(st) {
 			for (const pvr of ps) {
 				w.uint16(pvr.secondGlyph);
 				w.rawBytes(
-					writeValueRecord(pvr.value1, st.valueFormat1, deviceCollector),
+					writeValueRecord(
+						pvr.value1,
+						st.valueFormat1,
+						pairDevices,
+						w.position,
+					),
 				);
 				w.rawBytes(
-					writeValueRecord(pvr.value2, st.valueFormat2, deviceCollector),
+					writeValueRecord(
+						pvr.value2,
+						st.valueFormat2,
+						pairDevices,
+						w.position,
+					),
 				);
 			}
-			return w.toArray();
+			return appendValueDevices(w.toArray(), pairDevices);
 		});
 
 		// Header: format(2) + covOff(2) + vf1(2) + vf2(2) + psCount(2) + psOff(2*n)
@@ -972,10 +1035,20 @@ function writePairPos(st) {
 		for (const c2Arr of st.class1Records) {
 			for (const rec of c2Arr) {
 				w.rawBytes(
-					writeValueRecord(rec.value1, st.valueFormat1, deviceCollector),
+					writeValueRecord(
+						rec.value1,
+						st.valueFormat1,
+						deviceCollector,
+						w.position,
+					),
 				);
 				w.rawBytes(
-					writeValueRecord(rec.value2, st.valueFormat2, deviceCollector),
+					writeValueRecord(
+						rec.value2,
+						st.valueFormat2,
+						deviceCollector,
+						w.position,
+					),
 				);
 			}
 		}
@@ -987,7 +1060,7 @@ function writePairPos(st) {
 		w.seek(cd2Off);
 		w.rawBytes(cd2Bytes);
 
-		return w.toArray();
+		return appendValueDevices(w.toArray(), deviceCollector);
 	}
 	throw new Error(`Unknown PairPos format: ${st.format}`);
 }

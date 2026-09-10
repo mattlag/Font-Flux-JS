@@ -178,10 +178,12 @@ export function parseCFF2(rawArray, _tables) {
 
 			// Resolve Private DICT
 			let privateDict = {};
+			let privateDictEntries = [];
 			let localSubrs = [];
 			if (Array.isArray(fd.Private) && fd.Private.length === 2) {
 				const [privSize, privOffset] = fd.Private;
 				const pe = decodeDICT(data, privOffset, privOffset + privSize);
+				privateDictEntries = pe.filter((entry) => entry.operator !== 19);
 				privateDict = dictEntriesToObject(pe, CFF2_PRIVATE_DICT_OPS);
 
 				if (privateDict.Subrs !== undefined) {
@@ -195,6 +197,7 @@ export function parseCFF2(rawArray, _tables) {
 			return {
 				fontDict: fd,
 				privateDict,
+				privateDictEntries,
 				localSubrs,
 			};
 		});
@@ -322,18 +325,34 @@ export function writeCFF2(tableData) {
 
 	// Build Private DICTs + Local Subrs and record their offsets/sizes
 	const privBlocks = fontDicts.map((fd) => {
-		const privEntries = objectToDictEntries(
+		let privEntries = objectToDictEntries(
 			fd.privateDict || {},
 			CFF2_PRIVATE_DICT_OPS_BY_NAME,
 		);
+		if (fd.privateDictEntries?.length) {
+			const projection = dictEntriesToObject(
+				fd.privateDictEntries,
+				CFF2_PRIVATE_DICT_OPS,
+			);
+			if (JSON.stringify(projection) !== JSON.stringify(fd.privateDict || {}))
+				throw new Error(
+					'Editing imported CFF2 private dictionaries requires ordered blend-program compilation.',
+				);
+			privEntries = structuredClone(fd.privateDictEntries);
+		}
 
 		let localSubrBytes = null;
 		if (fd.localSubrs && fd.localSubrs.length > 0) {
-			localSubrBytes = writeINDEXv2(fd.localSubrs.map((s) => new Uint8Array(s)));
+			localSubrBytes = writeINDEXv2(
+				fd.localSubrs.map((s) => new Uint8Array(s)),
+			);
 		}
 
 		if (localSubrBytes) {
-			const privWithout = encodeDICTForced(privEntries, PRIVATE_DICT_OFFSET_OPS);
+			const privWithout = encodeDICTForced(
+				privEntries,
+				PRIVATE_DICT_OFFSET_OPS,
+			);
 			const subsOffset = privWithout.length + 6; // 5-byte int32 + 1-byte operator
 			privEntries.push({
 				operator: 19, // Subrs
@@ -346,7 +365,8 @@ export function writeCFF2(tableData) {
 		return {
 			privBytes,
 			localSubrBytes,
-			totalSize: privBytes.length + (localSubrBytes ? localSubrBytes.length : 0),
+			totalSize:
+				privBytes.length + (localSubrBytes ? localSubrBytes.length : 0),
 		};
 	});
 
@@ -415,7 +435,8 @@ export function writeCFF2(tableData) {
 	];
 
 	if (fdSelectBytes) {
-		for (let i = 0; i < fdSelectBytes.length; i++) result.push(fdSelectBytes[i]);
+		for (let i = 0; i < fdSelectBytes.length; i++)
+			result.push(fdSelectBytes[i]);
 	}
 
 	if (variationStoreBytes) {

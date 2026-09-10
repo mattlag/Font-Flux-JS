@@ -18,6 +18,17 @@ const SAMPLES_DIR = resolve(import.meta.dirname, '..', 'sample fonts');
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe('interpretCharString', () => {
+	it('bounds recursive subroutines and repeated execution', () => {
+		expect(() => interpretCharString([32, 10], [], [[32, 10]])).toThrow(
+			/recursion/,
+		);
+		expect(() =>
+			interpretCharString([32, 10, 32, 10, 14], [], [[139, 22, 11]], {
+				maxCharStringOperations: 6,
+			}),
+		).toThrow(/maxCharStringOperations/);
+		expect(() => interpretCharString([28, 0])).toThrow(/Truncated CFF number/);
+	});
 	it('should decode a simple rmoveto + rlineto + endchar', () => {
 		// Charstring: 100 200 rmoveto 50 -30 rlineto endchar
 		// 100 → byte 239 (100 + 139)

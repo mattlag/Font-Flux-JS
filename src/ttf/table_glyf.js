@@ -55,15 +55,24 @@ const UNSCALED_COMPONENT_OFFSET = 0x1000;
  * @param {object}   tables - Already-parsed tables (needs loca, maxp)
  * @returns {object}  { glyphs: Array }
  */
-export function parseGlyf(rawBytes, tables) {
+export function parseGlyf(rawBytes, tables, { maxPoints = 10000000 } = {}) {
 	const offsets = tables.loca.offsets;
 	const numGlyphs = tables.maxp.numGlyphs;
 	const reader = new DataReader(rawBytes);
 
 	const glyphs = [];
+	let pointCount = 0;
 	for (let i = 0; i < numGlyphs; i++) {
 		const start = offsets[i];
 		const end = offsets[i + 1];
+		if (
+			!Number.isInteger(start) ||
+			!Number.isInteger(end) ||
+			start < 0 ||
+			end < start ||
+			end > rawBytes.length
+		)
+			throw new Error('Invalid glyf loca extent.');
 
 		if (start === end) {
 			// Empty glyph (no outline, e.g. space)
@@ -79,12 +88,24 @@ export function parseGlyf(rawBytes, tables) {
 		const yMax = reader.int16();
 
 		if (numberOfContours >= 0) {
+			if (numberOfContours) {
+				if (reader.position + numberOfContours * 2 + 2 > end)
+					throw new Error('Truncated glyf contour endpoints.');
+				const saved = reader.position;
+				reader.seek(saved + (numberOfContours - 1) * 2);
+				pointCount += reader.uint16() + 1;
+				if (pointCount > maxPoints)
+					throw new Error('Glyph point count exceeds maxPoints.');
+				reader.seek(saved);
+			}
 			glyphs.push(
 				parseSimpleGlyph(reader, numberOfContours, xMin, yMin, xMax, yMax),
 			);
 		} else {
 			glyphs.push(parseCompositeGlyph(reader, xMin, yMin, xMax, yMax));
 		}
+		if (reader.position > end)
+			throw new Error('Glyph data exceeds its loca extent.');
 	}
 
 	return { glyphs };
@@ -104,6 +125,12 @@ export function parseGlyf(rawBytes, tables) {
 function parseSimpleGlyph(reader, numberOfContours, xMin, yMin, xMax, yMax) {
 	// 1. endPtsOfContours
 	const endPtsOfContours = reader.array('uint16', numberOfContours);
+	if (
+		endPtsOfContours.some(
+			(end, index) => index > 0 && end <= endPtsOfContours[index - 1],
+		)
+	)
+		throw new Error('Glyph contour endpoints must increase.');
 
 	// Total number of points
 	const numPoints =
@@ -120,6 +147,8 @@ function parseSimpleGlyph(reader, numberOfContours, xMin, yMin, xMax, yMax) {
 		flags.push(flag);
 		if (flag & REPEAT_FLAG) {
 			const repeatCount = reader.uint8();
+			if (flags.length + repeatCount > numPoints)
+				throw new Error('Glyph flag repeat exceeds point count.');
 			for (let r = 0; r < repeatCount; r++) {
 				flags.push(flag);
 			}

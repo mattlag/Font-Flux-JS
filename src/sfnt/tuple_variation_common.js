@@ -300,16 +300,16 @@ export function parseGlyphVariationData(
 		}
 
 		const pointCount = pointIndices === null ? numPoints : pointIndices.length;
-		const totalDeltaCount = pointCount * 2; // X + Y for gvar
-		const deltas = parsePackedDeltas(reader, totalDeltaCount);
+		const xDeltas = parsePackedDeltas(reader, pointCount);
+		const yDeltas = parsePackedDeltas(reader, pointCount);
 
 		tupleVariations.push({
 			peakTuple: header.peakTuple,
 			intermediateStartTuple: header.intermediateStartTuple,
 			intermediateEndTuple: header.intermediateEndTuple,
 			pointIndices,
-			xDeltas: deltas.slice(0, pointCount),
-			yDeltas: deltas.slice(pointCount),
+			xDeltas,
+			yDeltas,
 		});
 
 		reader.seek(tupleDataEnd);
@@ -356,8 +356,8 @@ export function writeGlyphVariationData(tupleVariations, axisCount) {
 		}
 
 		// Packed deltas: X then Y
-		const allDeltas = [...(tv.xDeltas ?? []), ...(tv.yDeltas ?? [])];
-		partBytes.push(...writePackedDeltas(allDeltas));
+		partBytes.push(...writePackedDeltas(tv.xDeltas ?? []));
+		partBytes.push(...writePackedDeltas(tv.yDeltas ?? []));
 
 		perTupleSizes.push(partBytes.length);
 		serializedParts.push(partBytes);
@@ -403,7 +403,8 @@ export function writeGlyphVariationData(tupleVariations, axisCount) {
 				headerBytes.push((val >> 8) & 0xff, val & 0xff);
 			}
 			for (let a = 0; a < axisCount; a++) {
-				const val = Math.round((tv.intermediateEndTuple[a] ?? 0) * 16384) & 0xffff;
+				const val =
+					Math.round((tv.intermediateEndTuple[a] ?? 0) * 16384) & 0xffff;
 				headerBytes.push((val >> 8) & 0xff, val & 0xff);
 			}
 		}
@@ -614,7 +615,8 @@ export function writeCvarTable(cvar, axisCount) {
 				headersFlat.push((val >> 8) & 0xff, val & 0xff);
 			}
 			for (let a = 0; a < axisCount; a++) {
-				const val = Math.round((tv.intermediateEndTuple[a] ?? 0) * 16384) & 0xffff;
+				const val =
+					Math.round((tv.intermediateEndTuple[a] ?? 0) * 16384) & 0xffff;
 				headersFlat.push((val >> 8) & 0xff, val & 0xff);
 			}
 		}

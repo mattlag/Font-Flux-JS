@@ -37,13 +37,52 @@ export async function initBrotli() {
 			throw new Error('node:zlib brotli functions unavailable');
 		}
 		_brotliCompress = (data) => new Uint8Array(brotliCompressSync(data));
-		_brotliDecompress = (data) => new Uint8Array(brotliDecompressSync(data));
+		_brotliDecompress = (data, limit) =>
+			new Uint8Array(brotliDecompressSync(data, { maxOutputLength: limit }));
 	} catch {
 		// Browser: use brotli-wasm
 		const mod = await import('brotli-wasm');
 		const brotli = await (mod.default || mod);
 		_brotliCompress = brotli.compress;
-		_brotliDecompress = brotli.decompress;
+		_brotliDecompress = (data, limit) => {
+			const decoder = new brotli.DecompressStream();
+			const chunks = [];
+			let offset = 0;
+			let length = 0;
+			try {
+				while (true) {
+					const result = decoder.decompress(
+						data.subarray(offset),
+						Math.min(65536, limit - length + 1),
+					);
+					const chunk = result.buf;
+					const consumed = result.input_offset;
+					const code = result.code;
+					result.free();
+					offset += consumed;
+					length += chunk.length;
+					if (length > limit)
+						throw new Error('WOFF2 output exceeds decompression budget.');
+					chunks.push(chunk);
+					if (code === brotli.BrotliStreamResultCode.ResultSuccess) break;
+					if (
+						(!consumed && !chunk.length) ||
+						(code === brotli.BrotliStreamResultCode.NeedsMoreInput &&
+							offset >= data.length)
+					)
+						throw new Error('Truncated WOFF2 Brotli stream.');
+				}
+			} finally {
+				decoder.free();
+			}
+			const output = new Uint8Array(length);
+			let outputOffset = 0;
+			for (const chunk of chunks) {
+				output.set(chunk, outputOffset);
+				outputOffset += chunk.length;
+			}
+			return output;
+		};
 	}
 }
 
@@ -919,8 +958,21 @@ function buildLocaTable(locaOffsets, indexFormat) {
  * @param {ArrayBuffer} buffer - Raw WOFF2 file bytes.
  * @returns {{ sfnt: ArrayBuffer, metadata: Uint8Array|null, privateData: Uint8Array|null }}
  */
-export function unwrapWOFF2(buffer) {
+export function unwrapWOFF2(
+	buffer,
+	{
+		maxUncompressedBytes = 256 * 1024 * 1024,
+		maxTables = 4096,
+		maxFonts = 64,
+	} = {},
+) {
 	requireBrotli();
+	for (const [name, limit] of Object.entries({ maxTables, maxFonts }))
+		if (!Number.isSafeInteger(limit) || limit < 1)
+			throw new Error(`Invalid import limit: ${name}`);
+	if (!Number.isSafeInteger(maxUncompressedBytes) || maxUncompressedBytes < 1)
+		throw new Error('Invalid decompression budget.');
+	if (buffer.byteLength < 48) throw new Error('Truncated WOFF2 header.');
 
 	const bytes = new Uint8Array(buffer);
 	const view = new DataView(buffer);
@@ -934,6 +986,8 @@ export function unwrapWOFF2(buffer) {
 	const flavor = view.getUint32(4);
 	// const length = view.getUint32(8);
 	const numTables = view.getUint16(12);
+	if (numTables > maxTables)
+		throw new Error('WOFF2 table count exceeds maxTables.');
 	// const reserved = view.getUint16(14);
 	// const totalSfntSize = view.getUint32(16);
 	const totalCompressedSize = view.getUint32(20);
@@ -944,12 +998,25 @@ export function unwrapWOFF2(buffer) {
 	// const metaOrigLength = view.getUint32(36);
 	const privOffset = view.getUint32(40);
 	const privLength = view.getUint32(44);
+	if (
+		view.getUint32(16) > maxUncompressedBytes ||
+		view.getUint32(36) > maxUncompressedBytes
+	)
+		throw new Error('WOFF2 output exceeds decompression budget.');
+	for (const [offset, length] of [
+		[metaOffset, metaLength],
+		[privOffset, privLength],
+	]) {
+		if (offset > bytes.length || length > bytes.length - offset)
+			throw new Error('WOFF2 ancillary range outside input bounds.');
+	}
 
 	// ── Parse table directory (variable-length entries) ──────────────────
 	let dirPos = WOFF2_HEADER_SIZE;
 	const tableEntries = [];
 
 	for (let i = 0; i < numTables; i++) {
+		if (dirPos >= bytes.length) throw new Error('Truncated WOFF2 directory.');
 		const flags = bytes[dirPos++];
 		const tagIndex = flags & 0x3f;
 		const transformVersion = (flags >> 6) & 0x03;
@@ -1017,6 +1084,8 @@ export function unwrapWOFF2(buffer) {
 			dirPos,
 		);
 		dirPos += nfBytes;
+		if (numFonts < 1 || numFonts > maxFonts)
+			throw new Error('WOFF2 collection count exceeds maxFonts or is empty.');
 
 		const fonts = [];
 		for (let f = 0; f < numFonts; f++) {
@@ -1025,6 +1094,10 @@ export function unwrapWOFF2(buffer) {
 				dirPos,
 			);
 			dirPos += ntBytes;
+			if (fontNumTables > maxTables || fontNumTables > numTables)
+				throw new Error(
+					'WOFF2 face table count exceeds maxTables or directory size.',
+				);
 			const fontFlavor = readU32(bytes, dirPos);
 			dirPos += 4;
 
@@ -1032,6 +1105,8 @@ export function unwrapWOFF2(buffer) {
 			for (let t = 0; t < fontNumTables; t++) {
 				const { value: idx, bytesRead: iBytes } = read255UInt16(bytes, dirPos);
 				dirPos += iBytes;
+				if (idx >= numTables)
+					throw new Error('WOFF2 collection table index outside directory.');
 				indices.push(idx);
 			}
 			fonts.push({
@@ -1049,7 +1124,27 @@ export function unwrapWOFF2(buffer) {
 		compressedStart,
 		compressedStart + totalCompressedSize,
 	);
-	const decompressed = _brotliDecompress(compressedData);
+	const transformedSize = tableEntries.reduce(
+		(total, entry) => total + entry.transformLength,
+		0,
+	);
+	const reconstructedSize = tableEntries.reduce(
+		(total, entry) =>
+			total + entry.origLength + ((4 - (entry.origLength % 4)) % 4),
+		12 + 16 * tableEntries.length,
+	);
+	if (reconstructedSize > maxUncompressedBytes)
+		throw new Error('WOFF2 reconstructed data exceeds decompression budget.');
+	if (transformedSize > maxUncompressedBytes)
+		throw new Error('WOFF2 transformed data exceeds decompression budget.');
+	if (dirPos > bytes.length || totalCompressedSize > bytes.length - dirPos)
+		throw new Error('WOFF2 compressed data range outside input bounds.');
+	const decompressed = _brotliDecompress(
+		compressedData,
+		Math.max(1, transformedSize),
+	);
+	if (decompressed.length !== transformedSize)
+		throw new Error('WOFF2 decompressed length does not match its directory.');
 
 	// ── Split decompressed data into individual tables ──────────────────
 	let tableDataPos = 0;
@@ -1135,7 +1230,10 @@ export function unwrapWOFF2(buffer) {
 	let metadata = null;
 	if (metaOffset && metaLength) {
 		const metaCompressed = bytes.subarray(metaOffset, metaOffset + metaLength);
-		metadata = _brotliDecompress(metaCompressed);
+		metadata = _brotliDecompress(
+			metaCompressed,
+			Math.max(1, view.getUint32(36)),
+		);
 	}
 
 	let privateData = null;
@@ -1350,6 +1448,12 @@ export function wrapWOFF2(sfntBuffer, metadata = null, privateData = null) {
 		concatenated.set(part, copyPos);
 		copyPos += part.length;
 	}
+	let tableOffset = 0;
+	for (const entry of filteredTables) {
+		if (entry.tag === 'head' && entry.length >= 18)
+			concatenated[tableOffset + 16] |= 0x08;
+		tableOffset += entry.length;
+	}
 
 	const compressed = _brotliCompress(concatenated);
 
@@ -1371,6 +1475,7 @@ export function wrapWOFF2(sfntBuffer, metadata = null, privateData = null) {
 	// Compressed font data immediately follows
 	const compressedOffset = woffDataOffset;
 	woffDataOffset += compressed.length;
+	woffDataOffset += (4 - (woffDataOffset % 4)) % 4;
 
 	// Metadata block (4-byte aligned)
 	let metaOff = 0;

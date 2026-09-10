@@ -18,6 +18,17 @@ console.log(font.format); // 'cff'
 
 On import, Font Flux synthesizes the missing SFNT metadata (head, hhea, hmtx, name, OS/2, etc.) from CFF Top DICT values like `FontBBox` and the font name. Advance widths are extracted by interpreting each charstring.
 
+Subroutine and private-dictionary context is retained, including per-FD context
+for CID fonts. Imported CID outline/topology edits remain guarded. A standalone
+CFF does not carry an OpenType Unicode cmap: if no mappings are recovered,
+SFNT export emits a valid empty cmap rather than inventing character assignments.
+Assign Unicode values explicitly when needed for text display.
+
+CFF and Type 1 imports honor `maxGlyphs` and per-glyph
+`maxCharStringOperations`; malformed or over-budget programs reject. PFB segment
+extents are checked before slicing. See [Import Options](./api.md#import-options-and-types)
+for defaults and isolation limitations.
+
 ### Exporting back to CFF
 
 CFF fonts default to CFF format on export, producing raw CFF bytes without an SFNT wrapper:
@@ -88,7 +99,7 @@ After import, Type 1 fonts behave like any other font and can be exported to mod
 
 ```js
 const buffer = readFileSync('legacy-font.pfb');
-const font = FontFlux.open(buffer.buffer);
+const font = FontFlux.open(buffer);
 
 // Add kerning that wasn't in the Type 1 file
 font.addKerning({ left: 'A', right: 'V', value: -80 });

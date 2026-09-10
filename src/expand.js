@@ -50,10 +50,24 @@ import {
 	resolvePaintGlyphNames,
 } from './color.js';
 import { cubicContourToPoints, isCubicContours } from './convert.js';
-import { normalizeComponent, resolveGlyphId } from './glyph.js';
+import { decomposeGlyph, normalizeComponent, resolveGlyphId } from './glyph.js';
+import { remapLayoutGlyphs } from './layout_remap.js';
+import { getCFFGlyphContext } from './otf/cff_common.js';
 import { compileCharString } from './otf/charstring_compiler.js';
 import { interpretCharString } from './otf/charstring_interpreter.js';
-import { isoToLongdatetime, MVAR_NAME_TAGS } from './simplify.js';
+import {
+	buildGlyphToUnicodeMap,
+	extractAxisStyles,
+	extractColorGlyphs,
+	extractKerning,
+	extractPalettes,
+	extractSubstitutionMetadata,
+	extractSubstitutions,
+	getGlyphNames,
+	isoToLongdatetime,
+	MVAR_NAME_TAGS,
+} from './simplify.js';
+import { validateSimplifiedJSON } from './validate/validateJSON.js';
 
 // ===========================================================================
 //  MAIN ENTRY
@@ -67,7 +81,182 @@ import { isoToLongdatetime, MVAR_NAME_TAGS } from './simplify.js';
  * @returns {{ header: object, tables: object }}
  */
 export function buildRawFromSimplified(simplified) {
-	const { font, glyphs } = simplified;
+	const validation = validateSimplifiedJSON(simplified);
+	if (!validation.valid)
+		throw new Error(validation.errors.map((error) => error.message).join('\n'));
+	const { font } = simplified;
+	let { glyphs } = simplified;
+	let originalTables = simplified.tables;
+	if (originalTables?.glyf && simplified._header) {
+		for (const [index, glyph] of glyphs.entries()) {
+			const original = originalTables.glyf.glyphs[index];
+			if (!original) continue;
+			const changed =
+				JSON.stringify(original.contours || []) !==
+					JSON.stringify(glyph.contours || []) ||
+				JSON.stringify(original.components || []) !==
+					JSON.stringify(glyph.components || []);
+			if (changed && originalTables.gvar)
+				throw new Error(
+					'Editing imported variable outlines requires remapping retained gvar point data.',
+				);
+			const oldTopology = (original.contours || []).map((contour) =>
+				contour.map((point) => point.onCurve),
+			);
+			const newTopology = (glyph.contours || []).map((contour) =>
+				contour.map((point) => point.onCurve),
+			);
+			if (
+				original.instructions?.length &&
+				JSON.stringify(oldTopology) !== JSON.stringify(newTopology) &&
+				glyph.instructions?.length
+			)
+				throw new Error(
+					'Changing hinted point topology requires explicitly replacing the glyph instructions.',
+				);
+		}
+	}
+	if (originalTables?.maxp && simplified._header) {
+		const originalNames =
+			simplified._sourceGlyphNames ||
+			getGlyphNames(originalTables, originalTables.maxp.numGlyphs);
+		const topologyChanged =
+			originalNames.length !== glyphs.length ||
+			originalNames.some((name, index) => name !== glyphs[index]?.name);
+		if (topologyChanged) {
+			if (new Set(originalNames).size !== originalNames.length)
+				throw new Error(
+					'Glyph topology changes require unique original glyph names for reference remapping.',
+				);
+			const safeTables = new Set([
+				'COLR',
+				'CPAL',
+				'GDEF',
+				'GPOS',
+				'GSUB',
+				'head',
+				'hhea',
+				'hmtx',
+				'vhea',
+				'vmtx',
+				'maxp',
+				'name',
+				'OS/2',
+				'post',
+				'cmap',
+				'glyf',
+				'loca',
+				'gasp',
+				'cvt ',
+				'fpgm',
+				'prep',
+				'meta',
+				'ltag',
+			]);
+			const appendOnly =
+				glyphs.length >= originalNames.length &&
+				originalNames.every((name, index) => name === glyphs[index].name);
+			if (appendOnly)
+				for (const tag of ['GDEF', 'GPOS', 'GSUB', 'kern', 'FFTM', 'CFF '])
+					safeTables.add(tag);
+			const unsafe = Object.keys(originalTables).filter(
+				(tag) => !safeTables.has(tag),
+			);
+			if (unsafe.length)
+				throw new Error(
+					`Glyph topology changes require unsupported reference remapping in: ${unsafe.join(', ')}.`,
+				);
+			if (glyphs[0]?.name !== originalNames[0])
+				throw new Error(
+					'The original .notdef glyph must remain at glyph index zero.',
+				);
+			if (
+				!appendOnly &&
+				originalTables.cmap?.subtables?.some(
+					(subtable) => ![4, 12].includes(subtable.format),
+				)
+			)
+				throw new Error(
+					'Glyph topology changes require remapping retained cmap encodings.',
+				);
+			const newIndices = new Map(
+				glyphs.map((glyph, index) => [glyph.name, index]),
+			);
+			if (!appendOnly) {
+				const indices = new Map(
+					originalNames.flatMap((name, index) =>
+						newIndices.has(name) ? [[index, newIndices.get(name)]] : [],
+					),
+				);
+				originalTables = { ...originalTables };
+				const features = { ...simplified.features };
+				for (const tag of ['GDEF', 'GPOS', 'GSUB', 'COLR']) {
+					if (originalTables[tag])
+						originalTables[tag] = remapLayoutGlyphs(
+							originalTables[tag],
+							tag,
+							indices,
+						);
+					if (features[tag])
+						features[tag] = remapLayoutGlyphs(features[tag], tag, indices);
+				}
+				delete originalTables.cmap;
+				simplified = { ...simplified, tables: originalTables, features };
+			}
+			glyphs = glyphs.map((glyph) => ({
+				...glyph,
+				...(glyph.components
+					? {
+							components: glyph.components.map((component) => {
+								if (
+									component.glyphName != null ||
+									!originalNames.includes(glyph.name)
+								)
+									return component;
+								const targetName = originalNames[component.glyphIndex];
+								if (!newIndices.has(targetName))
+									throw new Error(
+										`Composite references removed glyph: ${targetName}`,
+									);
+								return { ...component, glyphIndex: newIndices.get(targetName) };
+							}),
+						}
+					: {}),
+			}));
+		}
+	}
+	if (originalTables?.fvar?.axes && simplified._header) {
+		const axes = simplified.axes || [];
+		const changed =
+			originalTables.fvar.axes.length !== axes.length ||
+			originalTables.fvar.axes.some((axis, index) => {
+				const edited = axes[index];
+				return (
+					!edited ||
+					axis.axisTag !== edited.tag ||
+					axis.minValue !== edited.min ||
+					axis.defaultValue !== edited.default ||
+					axis.maxValue !== edited.max
+				);
+			});
+		const dependencies = [
+			'gvar',
+			'cvar',
+			'HVAR',
+			'VVAR',
+			'MVAR',
+			'CFF2',
+			'GDEF',
+			'GPOS',
+			'COLR',
+			'avar',
+		];
+		if (changed && dependencies.some((tag) => originalTables[tag]))
+			throw new Error(
+				'Changing imported axis layout requires remapping retained variation data; axis order, ranges and count must be preserved.',
+			);
+	}
+	const isCFF2 = !!simplified.tables?.CFF2;
 
 	// Determine outline format: CFF (PostScript) vs TrueType (glyf).
 	//
@@ -107,14 +296,76 @@ export function buildRawFromSimplified(simplified) {
 		charStringCount > 0 &&
 		charStringCount >= pointContourCount;
 
-	const metrics = computeGlyphMetrics(glyphs, font);
+	const maxp = buildMaxpTable(glyphs, isCFF || isCFF2);
+	const glyf = !isCFF && !isCFF2 ? buildGlyfTable(glyphs) : null;
+	const metrics = computeGlyphMetrics(glyphs, font, glyf);
 	const tables = {};
 
 	// == Required tables ==============================================
 	tables.head = buildHeadTable(font, metrics);
 	tables.hhea = buildHheaTable(font, metrics, glyphs.length);
-	tables.maxp = buildMaxpTable(glyphs, isCFF);
+	tables.maxp = maxp;
+	if (!isCFF && !isCFF2 && simplified.tables?.maxp) {
+		for (const key of [
+			'maxZones',
+			'maxTwilightPoints',
+			'maxStorage',
+			'maxFunctionDefs',
+			'maxInstructionDefs',
+			'maxStackElements',
+		]) {
+			tables.maxp[key] = Math.max(
+				tables.maxp[key],
+				simplified.tables.maxp[key] || 0,
+			);
+		}
+	}
 	tables['OS/2'] = buildOS2Table(font, metrics);
+	const preservedFields = {
+		head: [
+			'fontRevision',
+			'flags',
+			'lowestRecPPEM',
+			'fontDirectionHint',
+			'glyphDataFormat',
+		],
+		hhea: [
+			'caretSlopeRise',
+			'caretSlopeRun',
+			'caretOffset',
+			'reserved1',
+			'reserved2',
+			'reserved3',
+			'reserved4',
+			'metricDataFormat',
+		],
+		'OS/2': [
+			'version',
+			'ySubscriptXSize',
+			'ySubscriptYSize',
+			'ySubscriptXOffset',
+			'ySubscriptYOffset',
+			'ySuperscriptXSize',
+			'ySuperscriptYSize',
+			'ySuperscriptXOffset',
+			'ySuperscriptYOffset',
+			'yStrikeoutSize',
+			'yStrikeoutPosition',
+			'sFamilyClass',
+			'usBreakChar',
+			'usDefaultChar',
+			'usMaxContext',
+			'usLowerOpticalPointSize',
+			'usUpperOpticalPointSize',
+		],
+	};
+	for (const [tag, fields] of Object.entries(preservedFields)) {
+		const original = simplified.tables?.[tag];
+		if (!original || original._raw) continue;
+		for (const key of fields) {
+			if (original[key] !== undefined) tables[tag][key] = original[key];
+		}
+	}
 	tables.name = buildNameTable(font);
 	// Preserve name records the info model does not own — localized (non-English)
 	// copies of known IDs, unknown IDs (15/18/20/23/24/26), and custom 256+
@@ -131,13 +382,65 @@ export function buildRawFromSimplified(simplified) {
 	}
 	tables.post = buildPostTable(font, glyphs, isCFF);
 	tables.cmap = buildCmapTable(glyphs);
+	const originalCmap = simplified.tables?.cmap;
+	if (originalCmap && !originalCmap._raw) {
+		const originalMapping = buildGlyphToUnicodeMap(originalCmap);
+		const generatedMapping = buildGlyphToUnicodeMap(tables.cmap);
+		const mappingsEqual =
+			originalMapping.size === generatedMapping.size &&
+			[...originalMapping].every(([glyphId, codes]) => {
+				const generatedCodes = generatedMapping.get(glyphId);
+				return (
+					generatedCodes?.length === codes.length &&
+					codes.every((code) => generatedCodes.includes(code))
+				);
+			});
+		if (mappingsEqual) {
+			tables.cmap = originalCmap;
+		} else {
+			const preservedIndices = new Map();
+			for (const record of originalCmap.encodingRecords || []) {
+				const subtable = originalCmap.subtables[record.subtableIndex];
+				const isUnicode =
+					record.platformID === 0 ||
+					(record.platformID === 3 && [1, 10].includes(record.encodingID));
+				if (isUnicode && subtable.format !== 14) continue;
+				if (!preservedIndices.has(record.subtableIndex)) {
+					preservedIndices.set(
+						record.subtableIndex,
+						tables.cmap.subtables.length,
+					);
+					tables.cmap.subtables.push(subtable);
+				}
+				tables.cmap.encodingRecords.push({
+					...record,
+					subtableIndex: preservedIndices.get(record.subtableIndex),
+				});
+			}
+		}
+	}
 	tables.hmtx = buildHmtxTable(glyphs);
 
 	// == Outline tables ===============================================
-	if (isCFF) {
-		tables['CFF '] = buildCFFShell(font, glyphs);
+	if (isCFF2) {
+		if (
+			glyphs.length !== simplified.tables.maxp?.numGlyphs ||
+			glyphs.some(
+				(glyph) =>
+					glyph.contours?.length ||
+					glyph.components?.length ||
+					glyph.charString,
+			)
+		) {
+			throw new Error(
+				'CFF2 outline or glyph-count editing is not supported; preserve the imported glyph topology.',
+			);
+		}
+		tables.CFF2 = simplified.tables.CFF2;
+	} else if (isCFF) {
+		tables['CFF '] = buildCFFShell(font, glyphs, simplified.tables?.['CFF ']);
 	} else {
-		tables.glyf = buildGlyfTable(glyphs);
+		tables.glyf = glyf;
 		tables.loca = { offsets: [] }; // placeholder — coordinated by export.js
 	}
 
@@ -150,13 +453,33 @@ export function buildRawFromSimplified(simplified) {
 
 	// == Optional kerning =============================================
 	const kerningFormat = simplified._options?.kerningFormat || 'gpos';
+	const originalKerning =
+		simplified.tables && extractKerning(simplified.tables, glyphs);
+	const unchangedKerning =
+		originalKerning &&
+		!simplified._options?.kerningFormat &&
+		JSON.stringify(originalKerning.pairs) ===
+			JSON.stringify(simplified.kerning || []) &&
+		JSON.stringify(originalKerning.classes || []) ===
+			JSON.stringify(simplified.kerningClasses || []);
 	const hasFlatKerning = simplified.kerning && simplified.kerning.length > 0;
 	const hasClassKerning =
 		Array.isArray(simplified.kerningClasses) &&
 		simplified.kerningClasses.some(
 			(g) => g && Array.isArray(g.pairs) && g.pairs.length > 0,
 		);
-	if (hasFlatKerning || hasClassKerning) {
+	const clearedKerning =
+		!hasFlatKerning &&
+		!hasClassKerning &&
+		(Array.isArray(simplified.kerning) ||
+			Array.isArray(simplified.kerningClasses));
+	if (clearedKerning && !unchangedKerning && simplified.features?.GPOS) {
+		tables.GPOS = structuredClone(simplified.features.GPOS);
+		for (const record of tables.GPOS.featureList?.featureRecords || []) {
+			if (record.featureTag === 'kern') record.feature.lookupListIndices = [];
+		}
+	}
+	if (!unchangedKerning && (hasFlatKerning || hasClassKerning)) {
 		const wantGpos = kerningFormat === 'gpos' || kerningFormat === 'gpos+kern';
 		const wantKern = kerningFormat !== 'gpos';
 
@@ -167,7 +490,18 @@ export function buildRawFromSimplified(simplified) {
 				existingGPOS?.featureList?.featureRecords &&
 				existingGPOS?.lookupList?.lookups;
 			let gpos;
-			if (hasClassKerning) {
+			const patched =
+				hasValidGPOS && originalKerning
+					? patchImportedKerning(
+							existingGPOS,
+							simplified,
+							originalKerning,
+							glyphs,
+						)
+					: null;
+			if (patched) {
+				gpos = patched;
+			} else if (hasClassKerning) {
 				// Class-based path: emit PairPos Format 2 directly (no permutation),
 				// plus a Format 1 lookup for any individual pairs.
 				const lookups = buildKerningLookups(
@@ -220,7 +554,12 @@ export function buildRawFromSimplified(simplified) {
 
 		// STAT from axisStyles (if provided), else auto-generate
 		if (simplified.axisStyles) {
-			tables.STAT = buildSTATFromAxisStyles(simplified, tables.name);
+			tables.STAT =
+				originalTables?.STAT &&
+				JSON.stringify(extractAxisStyles(originalTables)) ===
+					JSON.stringify(simplified.axisStyles)
+					? originalTables.STAT
+					: buildSTATFromAxisStyles(simplified, tables.name);
 		} else if (!simplified.tables?.STAT) {
 			tables.STAT = buildSTATTable(simplified, tables.name);
 		}
@@ -259,22 +598,49 @@ export function buildRawFromSimplified(simplified) {
 	}
 
 	// -- GSUB from simplified substitutions ---------------------------
-	if (simplified.substitutions && simplified.substitutions.length > 0) {
-		tables.GSUB = buildGSUBFromSubstitutions(
-			simplified.substitutions,
-			simplified._rawGSUBLookups || [],
-			glyphs,
-			simplified.substitutionMetadata,
-		);
+	const originalSubstitutions =
+		originalTables?.GSUB && extractSubstitutions(originalTables.GSUB, glyphs);
+	const unchangedSubstitutions =
+		originalSubstitutions &&
+		JSON.stringify(originalSubstitutions.substitutions) ===
+			JSON.stringify(simplified.substitutions || []) &&
+		JSON.stringify(originalSubstitutions.rawLookups) ===
+			JSON.stringify(simplified._rawGSUBLookups || []) &&
+		JSON.stringify(extractSubstitutionMetadata(originalTables.GSUB)) ===
+			JSON.stringify(simplified.substitutionMetadata);
+	if (unchangedSubstitutions) {
+		tables.GSUB = originalTables.GSUB;
+	} else if (simplified.substitutions && simplified.substitutions.length > 0) {
+		tables.GSUB =
+			(originalSubstitutions &&
+				patchImportedSubstitutions(
+					originalTables.GSUB,
+					originalSubstitutions,
+					simplified,
+					glyphs,
+				)) ||
+			buildGSUBFromSubstitutions(
+				simplified.substitutions,
+				simplified._rawGSUBLookups || [],
+				glyphs,
+				simplified.substitutionMetadata,
+			);
 	} else if (
 		simplified._rawGSUBLookups &&
 		simplified._rawGSUBLookups.length > 0
 	) {
-		// Only raw lookups, no simplified substitutions — rebuild minimal GSUB
-		tables.GSUB = buildGSUBFromRawLookups(
-			simplified._rawGSUBLookups,
-			simplified.substitutionMetadata,
-		);
+		tables.GSUB =
+			(originalSubstitutions &&
+				patchImportedSubstitutions(
+					originalTables.GSUB,
+					originalSubstitutions,
+					simplified,
+					glyphs,
+				)) ||
+			buildGSUBFromRawLookups(
+				simplified._rawGSUBLookups,
+				simplified.substitutionMetadata,
+			);
 	}
 
 	// Legacy: if features.GSUB is set directly (e.g. setFeatures), use it
@@ -284,15 +650,35 @@ export function buildRawFromSimplified(simplified) {
 
 	// -- Color font tables (CPAL + COLR from simplified) ----------------
 	if (simplified.palettes && simplified.palettes.length > 0) {
-		tables.CPAL = buildCPALFromPalettes(simplified.palettes);
+		tables.CPAL =
+			originalTables?.CPAL &&
+			JSON.stringify(extractPalettes(originalTables)) ===
+				JSON.stringify(simplified.palettes)
+				? originalTables.CPAL
+				: buildCPALFromPalettes(simplified.palettes);
 	}
 	if (simplified.colorGlyphs && simplified.colorGlyphs.length > 0) {
-		tables.COLR = buildCOLRFromColorGlyphs(simplified.colorGlyphs, glyphs);
+		tables.COLR =
+			originalTables?.COLR &&
+			JSON.stringify(extractColorGlyphs(originalTables, glyphs)) ===
+				JSON.stringify(simplified.colorGlyphs)
+				? originalTables.COLR
+				: buildCOLRFromColorGlyphs(simplified.colorGlyphs, glyphs);
 	}
 
 	// -- Passthrough tables (carried from import, not decomposed) -----
 	if (simplified.tables) {
 		for (const [tag, tableData] of Object.entries(simplified.tables)) {
+			if (tag === 'COLR' && Array.isArray(simplified.colorGlyphs)) continue;
+			if (tag === 'CPAL' && Array.isArray(simplified.palettes)) continue;
+			if (
+				['fvar', 'avar'].includes(tag) &&
+				Array.isArray(simplified.axes) &&
+				simplified.axes.length === 0
+			)
+				continue;
+			if (tag === 'GSUB' && Array.isArray(simplified.substitutions)) continue;
+			if (tag === 'kern' && clearedKerning) continue;
 			if (!tables[tag]) {
 				tables[tag] = tableData;
 			}
@@ -312,7 +698,7 @@ export function buildRawFromSimplified(simplified) {
 		const rangeShift = numTables * 16 - searchRange;
 
 		header = {
-			sfVersion: isCFF ? 0x4f54544f : 0x00010000,
+			sfVersion: isCFF || isCFF2 ? 0x4f54544f : 0x00010000,
 			numTables,
 			searchRange,
 			entrySelector,
@@ -330,7 +716,7 @@ export function buildRawFromSimplified(simplified) {
 /**
  * Compute aggregate metrics from all glyphs.
  */
-function computeGlyphMetrics(glyphs, font) {
+function computeGlyphMetrics(glyphs, font, glyf) {
 	let xMin = Infinity,
 		yMin = Infinity,
 		xMax = -Infinity,
@@ -344,12 +730,12 @@ function computeGlyphMetrics(glyphs, font) {
 	let lastCharIndex = 0;
 	const unicodeRanges = new Set();
 
-	for (const glyph of glyphs) {
+	for (const [index, glyph] of glyphs.entries()) {
 		const aw = glyph.advanceWidth || 0;
 		advanceWidthSum += aw;
 		if (aw > advanceWidthMax) advanceWidthMax = aw;
 
-		const bbox = getGlyphBBox(glyph);
+		const bbox = glyf ? glyf.glyphs[index] : getGlyphBBox(glyph);
 
 		if (bbox) {
 			if (bbox.xMin < xMin) xMin = bbox.xMin;
@@ -638,18 +1024,63 @@ function buildMaxpTable(glyphs, isCFF) {
 	// TrueType: compute maxPoints, maxContours, etc.
 	let maxPoints = 0;
 	let maxContours = 0;
-	const maxCompositePoints = 0;
-	const maxCompositeContours = 0;
+	let maxCompositePoints = 0;
+	let maxCompositeContours = 0;
 	let maxComponentElements = 0;
 	let maxComponentDepth = 0;
 	let maxSizeOfInstructions = 0;
 
-	for (const glyph of glyphs) {
+	const nameToIndex = new Map(
+		glyphs.map((glyph, index) => [glyph.name, index]),
+	);
+	const totals = new Map();
+	const active = new Set();
+	function measure(index, depth = 0) {
+		if (active.has(index)) throw new Error('Cyclic composite glyph reference.');
+		if (depth > 64)
+			throw new Error('Composite nesting exceeds the supported depth of 64.');
+		if (totals.has(index)) return totals.get(index);
+		const glyph = glyphs[index];
+		if (!glyph) throw new Error(`Invalid composite glyph reference: ${index}`);
+		active.add(index);
+		const contours = glyph.contours || [];
+		const normalized = isCubicContours(contours)
+			? contours.map((contour) => cubicContourToPoints(contour))
+			: contours;
+		const total = {
+			points: normalized.reduce((count, contour) => count + contour.length, 0),
+			contours: normalized.length,
+			depth: 0,
+		};
+		for (const component of glyph.components || []) {
+			if (component.glyphName != null && !nameToIndex.has(component.glyphName))
+				throw new Error(
+					`Composite references unknown glyph name "${component.glyphName}".`,
+				);
+			const target =
+				component.glyphName != null
+					? nameToIndex.get(component.glyphName)
+					: component.glyphIndex;
+			if (!Number.isInteger(target) || target < 0 || target >= glyphs.length)
+				throw new Error(
+					`Invalid composite glyph reference: ${component.glyphName ?? target}`,
+				);
+			const child = measure(target, depth + 1);
+			total.points += child.points;
+			total.contours += child.contours;
+			total.depth = Math.max(total.depth, child.depth + 1);
+			if (total.points > 65535 || total.contours > 65535)
+				throw new Error('Composite geometry exceeds maxp limits.');
+		}
+		active.delete(index);
+		totals.set(index, total);
+		return total;
+	}
+
+	for (const [index, glyph] of glyphs.entries()) {
+		const total = measure(index);
 		if (glyph.contours) {
-			let points = 0;
-			for (const contour of glyph.contours) {
-				points += contour.length;
-			}
+			const points = total.points;
 			if (points > maxPoints) maxPoints = points;
 			if (glyph.contours.length > maxContours)
 				maxContours = glyph.contours.length;
@@ -657,7 +1088,9 @@ function buildMaxpTable(glyphs, isCFF) {
 		if (glyph.components) {
 			if (glyph.components.length > maxComponentElements)
 				maxComponentElements = glyph.components.length;
-			if (1 > maxComponentDepth) maxComponentDepth = 1;
+			maxComponentDepth = Math.max(maxComponentDepth, total.depth);
+			maxCompositePoints = Math.max(maxCompositePoints, total.points);
+			maxCompositeContours = Math.max(maxCompositeContours, total.contours);
 		}
 		if (
 			glyph.instructions &&
@@ -863,7 +1296,6 @@ function mergePreservedNameRecords(builtName, originalName, isVariable) {
 
 	for (const rec of originalName.names) {
 		// Variable fonts regenerate the user range (256+) via fvar/STAT.
-		if (isVariable && rec.nameID >= 256) continue;
 		// The info model already owns this exact record.
 		if (present.has(tupleKey(rec))) continue;
 		names.push({
@@ -985,7 +1417,7 @@ function buildCmapTable(glyphs) {
 
 	// Format 4 for BMP entries
 	const bmpEntries = sortedEntries.filter(([code]) => code <= 0xffff);
-	if (bmpEntries.length > 0) {
+	if (bmpEntries.length > 0 || subtables.length === 0) {
 		const { segments, glyphIdArray } = buildFormat4Data(bmpEntries);
 		const subtableIndex = subtables.length;
 		subtables.push({ format: 4, language: 0, segments, glyphIdArray });
@@ -1229,6 +1661,11 @@ function buildGlyfTable(glyphs) {
 		// Empty glyph (e.g., space)
 		return null;
 	});
+	for (const glyph of rawGlyphs) {
+		if (glyph?.type !== 'composite') continue;
+		const bbox = getGlyphBBox({ contours: decomposeGlyph(rawGlyphs, glyph) });
+		if (bbox) Object.assign(glyph, bbox);
+	}
 	return { glyphs: rawGlyphs };
 }
 
@@ -1335,7 +1772,71 @@ function hasEndChar(bytes) {
  * Note: This creates the parsed CFF structure that the existing
  * writeCFF function can encode.
  */
-function buildCFFShell(font, glyphs) {
+function buildCFFShell(font, glyphs, original) {
+	if (
+		original?.fonts?.[0] &&
+		original.fonts[0].charStrings.length <= glyphs.length
+	) {
+		const cff = structuredClone(original);
+		const source = original.fonts[0];
+		if (
+			!source.topDict?.FontMatrix &&
+			font.unitsPerEm !== 1000 &&
+			!source.fdArray?.length
+		) {
+			const scale = 1 / (font.unitsPerEm || 1000);
+			cff.fonts[0].topDict = {
+				...cff.fonts[0].topDict,
+				FontMatrix: [scale, 0, 0, scale, 0, 0],
+			};
+		}
+		if (source.charStrings.length !== glyphs.length) {
+			if (source.fdArray?.length || source.topDict?.ROS)
+				throw new Error(
+					'Appending CID CFF glyphs requires per-FD compilation support.',
+				);
+			cff.fonts[0].charset = glyphs.slice(1).map((glyph) => {
+				let index = cff.strings.indexOf(glyph.name);
+				if (index < 0) {
+					index = cff.strings.length;
+					cff.strings.push(glyph.name || '.notdef');
+				}
+				return index + 391;
+			});
+		}
+		cff.fonts[0].charStrings = glyphs.map((glyph, index) => {
+			const context = getCFFGlyphContext(original, index);
+			if (index >= source.charStrings.length)
+				return compileCharString(
+					glyph.contours || [],
+					(glyph.advanceWidth || 0) - context.nominalWidthX,
+				);
+			const originalContours = interpretCharString(
+				source.charStrings[index],
+				context.globalSubrs,
+				context.localSubrs,
+			).contours;
+			if (
+				JSON.stringify(glyph.contours || []) !==
+				JSON.stringify(originalContours)
+			) {
+				if (source.fdArray?.length || source.topDict?.ROS)
+					throw new Error(
+						'Editing CID CFF outlines requires per-FD compilation support.',
+					);
+				return compileCharString(
+					glyph.contours || [],
+					(glyph.advanceWidth || 0) - context.nominalWidthX,
+				);
+			}
+			return ensureCharStringWidth(
+				glyph.charString || source.charStrings[index],
+				glyph.advanceWidth,
+				context,
+			);
+		});
+		return cff;
+	}
 	const fontName = font.postScriptName || buildPostScriptName(font);
 	const charset = glyphs.slice(1).map((g) => g.name || '.notdef');
 	const charStrings = glyphs.map((g) => {
@@ -1866,107 +2367,128 @@ function buildGPOSFromLookups(lookups) {
  * Merge kerning pairs into an existing GPOS table.
  * Replaces the 'kern' feature lookups; preserves all other features/lookups.
  */
-function mergeKerningIntoGPOS(existingGPOS, kerning, glyphs) {
-	const { pairs } = resolveKerningPairs(kerning, glyphs);
-	const gpos = JSON.parse(JSON.stringify(existingGPOS)); // deep clone
-
-	// Guard against incomplete GPOS structure
-	if (
-		!gpos.scriptList?.scriptRecords ||
-		!gpos.featureList?.featureRecords ||
-		!gpos.lookupList?.lookups
-	) {
-		return buildGPOSFromKerning(kerning, glyphs);
-	}
-
-	if (pairs.length === 0) return gpos;
-
-	const newLookup = buildPairPosLookup(pairs);
-
-	// Collect old kern lookup indices so we can replace one of them in-place
-	const oldKernIndices = new Set();
-	for (const rec of gpos.featureList.featureRecords) {
-		if (rec.featureTag === 'kern') {
-			for (const idx of rec.feature.lookupListIndices) {
-				oldKernIndices.add(idx);
-			}
-		}
-	}
-
-	let newLookupIdx;
-	if (oldKernIndices.size > 0) {
-		// Replace the first old kern lookup in-place, remove extras
-		const sorted = [...oldKernIndices].sort((a, b) => a - b);
-		newLookupIdx = sorted[0];
-		gpos.lookupList.lookups[newLookupIdx] = newLookup;
-		// Remove extra kern lookups (in reverse order to preserve indices)
-		for (let i = sorted.length - 1; i > 0; i--) {
-			gpos.lookupList.lookups.splice(sorted[i], 1);
-		}
-		// Remap lookup indices that shifted from the removals
-		if (sorted.length > 1) {
-			const removed = sorted.slice(1);
-			remapLookupIndices(gpos, removed);
-		}
-	} else {
-		// Append new lookup
-		newLookupIdx = gpos.lookupList.lookups.length;
-		gpos.lookupList.lookups.push(newLookup);
-	}
-
-	// Point kern feature to the new lookup
-	let foundKern = false;
-	for (const rec of gpos.featureList.featureRecords) {
-		if (rec.featureTag === 'kern') {
-			rec.feature.lookupListIndices = [newLookupIdx];
-			foundKern = true;
-		}
-	}
-
-	// If no kern feature exists, add one
-	if (!foundKern) {
-		gpos.featureList.featureRecords.push({
-			featureTag: 'kern',
-			feature: {
-				featureParamsOffset: 0,
-				lookupListIndices: [newLookupIdx],
-			},
-		});
-
-		// Add kern feature index to all script/langSys featureIndices
-		const kernFeatureIdx = gpos.featureList.featureRecords.length - 1;
-		for (const sr of gpos.scriptList.scriptRecords) {
-			if (sr.script.defaultLangSys) {
-				sr.script.defaultLangSys.featureIndices.push(kernFeatureIdx);
-			}
-			for (const lr of sr.script.langSysRecords || []) {
-				lr.langSys.featureIndices.push(kernFeatureIdx);
-			}
-		}
-	}
-
-	return gpos;
+function collectLayoutTargets(lookupList) {
+	const contextualTargets = new Set();
+	const visited = new WeakSet();
+	let fields = 0;
+	const collectTargets = (node, depth = 0) => {
+		if (++fields > 10000000 || depth > 64)
+			throw new Error(
+				'Layout dependency traversal exceeds the complexity limit.',
+			);
+		if (!node || typeof node !== 'object') return;
+		if (visited.has(node)) return;
+		visited.add(node);
+		if (Number.isInteger(node.lookupListIndex))
+			contextualTargets.add(node.lookupListIndex);
+		for (const value of Object.values(node)) collectTargets(value, depth + 1);
+	};
+	collectTargets(lookupList);
+	return contextualTargets;
 }
 
-/**
- * Remap lookup indices in all features and script/langSys after removing lookups.
- * @param {object} gpos
- * @param {number[]} removedIndices - sorted ascending
- */
-function remapLookupIndices(gpos, removedIndices) {
-	function adjust(idx) {
-		let shift = 0;
-		for (const r of removedIndices) {
-			if (r < idx) shift++;
-			else break;
+function patchImportedKerning(existingGPOS, simplified, original, glyphs) {
+	const contextualTargets = collectLayoutTargets(existingGPOS.lookupList);
+	const records = existingGPOS.featureList.featureRecords;
+	const indices = new Set(
+		records
+			.filter((record) => record.featureTag === 'kern')
+			.flatMap((record) => record.feature.lookupListIndices),
+	);
+	if (!indices.size) return null;
+	const gpos = structuredClone(existingGPOS);
+	const key = (left, right) =>
+		JSON.stringify([
+			resolveGlyphId(glyphs, left),
+			resolveGlyphId(glyphs, right),
+		]);
+	const before = new Map(
+		original.pairs.map((pair) => [key(pair.left, pair.right), pair.value]),
+	);
+	const after = new Map(
+		(simplified.kerning || []).map((pair) => [
+			key(pair.left, pair.right),
+			pair.value,
+		]),
+	);
+	const changed = new Set(
+		[...before.keys(), ...after.keys()].filter(
+			(pair) => before.get(pair) !== after.get(pair),
+		),
+	);
+	const classesChanged =
+		JSON.stringify(original.classes || []) !==
+		JSON.stringify(simplified.kerningClasses || []);
+	const seen = new Set();
+	let complex =
+		records.filter((record) => record.featureTag === 'kern').length > 1 ||
+		!!gpos.featureVariations;
+	for (const index of indices) {
+		const lookup = gpos.lookupList.lookups[index];
+		const shared =
+			contextualTargets.has(index) ||
+			!!gpos.featureVariations ||
+			records.some(
+				(record) =>
+					record.featureTag !== 'kern' &&
+					record.feature.lookupListIndices.includes(index),
+			);
+		complex ||= shared || !!lookup.lookupFlag;
+		for (const wrapped of lookup.subtables) {
+			const subtable = lookup.lookupType === 9 ? wrapped.subtable : wrapped;
+			if (
+				!subtable ||
+				(lookup.lookupType !== 2 && wrapped.extensionLookupType !== 2) ||
+				subtable.format !== 1
+			) {
+				complex = true;
+				continue;
+			}
+			const coverage =
+				subtable.coverage.glyphs ||
+				(subtable.coverage.ranges || []).flatMap((range) =>
+					Array.from(
+						{ length: range.endGlyphID - range.startGlyphID + 1 },
+						(_, offset) => range.startGlyphID + offset,
+					),
+				);
+			for (const [leftIndex, pairs] of subtable.pairSets.entries()) {
+				for (const pair of pairs) {
+					complex ||=
+						!!subtable.valueFormat2 || (subtable.valueFormat1 & ~4) !== 0;
+					const pairKey = key(
+						glyphs[coverage[leftIndex]]?.name,
+						glyphs[pair.secondGlyph]?.name,
+					);
+					if (!changed.has(pairKey)) continue;
+					if (shared || seen.has(pairKey))
+						throw new Error(
+							'Kerning edit requires disambiguating shared or repeated positioning records.',
+						);
+					if (!(subtable.valueFormat1 & 4))
+						throw new Error(
+							'Kerning edit requires adding a ValueRecord field; edit the raw GPOS table explicitly.',
+						);
+					pair.value1.xAdvance = after.get(pairKey) ?? 0;
+					seen.add(pairKey);
+				}
+			}
 		}
-		return idx - shift;
 	}
-	for (const rec of gpos.featureList.featureRecords) {
-		rec.feature.lookupListIndices = rec.feature.lookupListIndices
-			.filter((idx) => !removedIndices.includes(idx))
-			.map(adjust);
-	}
+	if (!classesChanged && [...changed].every((pair) => seen.has(pair)))
+		return gpos;
+	if (complex)
+		throw new Error(
+			'Kerning edit requires unsupported reconstruction of retained class, variable, flagged or shared positioning; edit raw GPOS explicitly.',
+		);
+	return null;
+}
+
+function mergeKerningIntoGPOS(existingGPOS, kerning, glyphs) {
+	const resolved = resolveKerningPairs(kerning, glyphs);
+	return replaceKernLookupsInGPOS(existingGPOS, [
+		buildPairPosLookup(resolved.pairs),
+	]);
 }
 
 /**
@@ -2258,11 +2780,6 @@ function replaceKernLookupsInGPOS(existingGPOS, newLookups) {
 			for (const idx of rec.feature.lookupListIndices) oldKernIndices.add(idx);
 		}
 	}
-	const removed = [...oldKernIndices].sort((a, b) => a - b);
-	for (let i = removed.length - 1; i >= 0; i--) {
-		gpos.lookupList.lookups.splice(removed[i], 1);
-	}
-	if (removed.length > 0) remapLookupIndices(gpos, removed);
 
 	// Append the new lookups.
 	const newIndices = [];
@@ -2304,12 +2821,15 @@ function replaceKernLookupsInGPOS(existingGPOS, newLookups) {
  */
 function buildFvarTable(simplified, nameTable) {
 	const { axes, instances = [] } = simplified;
-
-	// Assign nameIDs starting from 256 (user-defined range)
-	let nextNameID = 256;
+	const original = simplified.tables?.fvar;
+	let nextNameID =
+		Math.max(255, ...nameTable.names.map((record) => record.nameID)) + 1;
 
 	const fvarAxes = axes.map((axis) => {
-		const nameID = nextNameID++;
+		const originalAxis = original?.axes.find(
+			(entry) => entry.axisTag === axis.tag,
+		);
+		const nameID = originalAxis?.axisNameID ?? nextNameID++;
 		// Add the axis name to the name table
 		addNameRecord(nameTable, nameID, axis.name || axis.tag);
 		return {
@@ -2317,22 +2837,26 @@ function buildFvarTable(simplified, nameTable) {
 			minValue: axis.min,
 			defaultValue: axis.default,
 			maxValue: axis.max,
-			flags: axis.hidden ? 0x0001 : 0,
+			flags: ((originalAxis?.flags || 0) & ~1) | (axis.hidden ? 1 : 0),
 			axisNameID: nameID,
 		};
 	});
 
-	const fvarInstances = instances.map((inst) => {
-		const nameID = nextNameID++;
+	const fvarInstances = instances.map((inst, index) => {
+		const originalInstance = original?.instances[index];
+		const nameID = originalInstance?.subfamilyNameID ?? nextNameID++;
 		addNameRecord(nameTable, nameID, inst.name);
 		const coordinates = axes.map((a) => inst.coordinates[a.tag] ?? a.default);
 		const instance = {
 			subfamilyNameID: nameID,
-			flags: 0,
+			flags: originalInstance?.flags || 0,
 			coordinates,
 		};
 		if (inst.postScriptName) {
-			const psNameID = nextNameID++;
+			const psNameID =
+				originalInstance?.postScriptNameID !== 0xffff
+					? (originalInstance?.postScriptNameID ?? nextNameID++)
+					: nextNameID++;
 			addNameRecord(nameTable, psNameID, inst.postScriptName);
 			instance.postScriptNameID = psNameID;
 		}
@@ -2358,11 +2882,22 @@ function buildFvarTable(simplified, nameTable) {
  */
 function addNameRecord(nameTable, nameID, value) {
 	if (!value) return;
-	nameTable.names.push(
+	const records = [
 		{ platformID: 3, encodingID: 1, languageID: 0x0409, nameID, value },
 		{ platformID: 1, encodingID: 0, languageID: 0, nameID, value },
 		{ platformID: 0, encodingID: 3, languageID: 0, nameID, value },
-	);
+	];
+	for (const record of records) {
+		const existing = nameTable.names.find(
+			(entry) =>
+				entry.nameID === nameID &&
+				entry.platformID === record.platformID &&
+				entry.encodingID === record.encodingID &&
+				entry.languageID === record.languageID,
+		);
+		if (existing) existing.value = value;
+		else nameTable.names.push(record);
+	}
 }
 
 /**
@@ -2730,6 +3265,94 @@ function resolveToIndex(ref, glyphs, nameToIndex) {
  * @param {object[]} glyphs - Simplified glyphs array.
  * @returns {object} Full GSUB table structure.
  */
+function patchImportedSubstitutions(original, projection, simplified, glyphs) {
+	const before = projection.substitutions;
+	const after = simplified.substitutions || [];
+	const contextualTargets = collectLayoutTargets(original.lookupList);
+	const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+	const ids = new Set(before.map((rule) => rule.lookup?.id));
+	const metadataChanged = !same(
+		extractSubstitutionMetadata(original),
+		simplified.substitutionMetadata,
+	);
+	const added = after.some((rule) => !ids.has(rule.lookup?.id));
+	if (metadataChanged || added) {
+		if (
+			original.featureVariations ||
+			original.lookupList.lookups.some(
+				(lookup) => ![1, 2, 3, 4, 8].includes(lookup.lookupType),
+			) ||
+			original.featureList.featureRecords.some(
+				(record) => record.feature.featureParams,
+			)
+		)
+			throw new Error(
+				'Adding GSUB lookups or changing metadata requires explicit raw layout editing for this imported font.',
+			);
+		return null;
+	}
+	const gsub = structuredClone(original);
+	const nameToIndex = buildNameToIndex(glyphs);
+	for (const id of ids) {
+		const oldRules = before.filter((rule) => rule.lookup?.id === id);
+		const newRules = after.filter((rule) => rule.lookup?.id === id);
+		if (same(oldRules, newRules)) continue;
+		const lookup = original.lookupList.lookups[id];
+		const bindings = (rules) => [
+			...new Set(
+				rules.map((rule) =>
+					JSON.stringify([
+						rule.type,
+						rule.feature,
+						rule.script,
+						rule.language,
+						rule.allScripts,
+						rule.lookup,
+					]),
+				),
+			),
+		];
+		if (
+			!lookup ||
+			contextualTargets.has(id) ||
+			lookup.subtables.length !== 1 ||
+			oldRules.some((rule) => rule.type === 'contextual') ||
+			bindings(oldRules).length !== 1 ||
+			(newRules.length && !same(bindings(oldRules), bindings(newRules)))
+		)
+			throw new Error(
+				'GSUB edit requires disambiguating shared, contextual or multi-subtable rules; edit raw GSUB explicitly.',
+			);
+		gsub.lookupList.lookups[id] = newRules.length
+			? buildLookupFromRules(newRules[0].type, newRules, glyphs, nameToIndex)
+			: {
+					...lookup,
+					lookupType: 1,
+					subtables: [
+						{
+							format: 2,
+							coverage: { format: 1, glyphs: [] },
+							substituteGlyphIDs: [],
+						},
+					],
+				};
+	}
+	const rawBefore = projection.rawLookups;
+	const rawAfter = simplified._rawGSUBLookups || [];
+	if (
+		!same(
+			rawBefore.map(({ index, features }) => ({ index, features })),
+			rawAfter.map(({ index, features }) => ({ index, features })),
+		)
+	)
+		throw new Error(
+			'Changing raw GSUB lookup identities requires explicit raw table editing.',
+		);
+	for (const raw of rawAfter)
+		gsub.lookupList.lookups[raw.index] = structuredClone(raw.lookup);
+	return gsub;
+}
+
 function buildGSUBFromSubstitutions(
 	substitutions,
 	rawLookups,

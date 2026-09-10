@@ -4,6 +4,11 @@ This guide covers how to create and work with variable font data in Font Flux JS
 
 Font Flux JS decomposes variable font tables into three simplified fields — `axisMapping`, `axisStyles`, and `metricVariations` — alongside the existing `axes` and `instances` fields. These provide a human-readable interface for the underlying `avar`, `STAT`, and `MVAR` tables.
 
+Declaring axes and instances does not generate interpolating glyph outlines.
+There is no general outline-variation compiler. Imported variable outlines,
+glyph order, and axis order/ranges have dependent data; unsupported changes
+are rejected during validation/export rather than silently stripping it.
+
 ## Concepts overview
 
 A variable font has several layers:
@@ -37,7 +42,7 @@ const buffer = font.export();
 For the `axisMapping`, `axisStyles`, and `metricVariations` fields, assign them directly on the underlying data:
 
 ```js
-const data = font._data; // internal simplified data object
+const data = font.data; // public live simplified data object
 
 // Add axis mapping (avar)
 data.axisMapping = {
@@ -306,22 +311,27 @@ When you open an existing variable font with `FontFlux.open()`:
 
 When exporting:
 
-| Field                | Output table | Behavior                                                                 |
-| -------------------- | ------------ | ------------------------------------------------------------------------ |
-| `axes` + `instances` | `fvar`       | Always built from simplified data                                        |
-| `axisMapping`        | `avar`       | Built only when `axisMapping` is present                                 |
-| `axisStyles`         | `STAT`       | Built from `axisStyles` if present; otherwise auto-generated from `axes` |
-| `metricVariations`   | `MVAR`       | Built only when `metricVariations` is present                            |
+| Field                | Output table | Behavior                                                                             |
+| -------------------- | ------------ | ------------------------------------------------------------------------------------ |
+| `axes` + `instances` | `fvar`       | Always built from simplified data                                                    |
+| `axisMapping`        | `avar`       | Built only when `axisMapping` is present                                             |
+| `axisStyles`         | `STAT`       | Unchanged imported STAT retained; otherwise built from styles or generated from axes |
+| `metricVariations`   | `MVAR`       | Built only when `metricVariations` is present                                        |
 
 ## What's not yet covered
 
-The following variable font features are preserved for lossless round-trip through the `tables` passthrough, but are **not** yet decomposed into simplified fields:
+The following variable font features retain their original structured tables
+and programs, but are **not** decomposed into simplified authoring fields:
 
 - **Per-glyph outline variations** — `gvar` (TrueType) and CFF2 `blend` operators store how individual glyph outlines change across axes. These remain in `tables.gvar` / `tables.CFF2`.
 - **Per-glyph metric variations** — `HVAR` and `VVAR` store how individual glyph advance widths and side bearings vary. These remain in `tables.HVAR` / `tables.VVAR`.
 - **CVT variations** — `cvar` stores how TrueType hinting control values vary. Remains in `tables.cvar`.
 
-These tables pass through the import/export pipeline unchanged, preserving all variation data in existing fonts.
+These tables are re-serialized; binary offsets and encodings can change.
+Untouched variation behavior is tested at selected coordinates, including
+empty-glyph phantom-point metrics. Arbitrary outline, point-topology, glyph,
+or axis remapping is not supported. Stable fvar name IDs and unchanged STAT
+records retain imported custom/localized naming data.
 
 ## Complete example
 
@@ -351,7 +361,7 @@ font.addInstance({
 });
 
 // Axis mapping — make weight interpolation perceptually even
-font._data.axisMapping = {
+font.data.axisMapping = {
 	wght: [
 		{ from: -1, to: -1 },
 		{ from: -0.5, to: -0.7 },
@@ -362,7 +372,7 @@ font._data.axisMapping = {
 };
 
 // Axis styles — full STAT control
-font._data.axisStyles = {
+font.data.axisStyles = {
 	elidedFallbackName: 'Regular',
 	values: [
 		{ name: 'Thin', axis: 'wght', value: 100, flags: 0 },
@@ -375,7 +385,7 @@ font._data.axisStyles = {
 };
 
 // Metric variations — ascender grows with weight
-font._data.metricVariations = {
+font.data.metricVariations = {
 	regions: [{ axes: { wght: [0, 1, 1] } }],
 	metrics: {
 		ascender: [{ region: 0, delta: 30 }],

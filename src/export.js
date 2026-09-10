@@ -4,7 +4,7 @@
  */
 
 import { convertOutlines } from './convert.js';
-import { buildRawFromSimplified, ensureCharStringWidth } from './expand.js';
+import { buildRawFromSimplified } from './expand.js';
 import { writeCFF } from './otf/table_CFF.js';
 import { writeCFF2 } from './otf/table_CFF2.js';
 import { writeVORG } from './otf/table_VORG.js';
@@ -50,7 +50,6 @@ import { writeVDMX } from './sfnt/table_VDMX.js';
 import { writeVhea } from './sfnt/table_vhea.js';
 import { writeVmtx } from './sfnt/table_vmtx.js';
 import { writeVVAR } from './sfnt/table_VVAR.js';
-import { DECOMPOSED_TABLES } from './simplify.js';
 import { writeCvar } from './ttf/table_cvar.js';
 import { writeCvt } from './ttf/table_cvt.js';
 import { writeFpgm } from './ttf/table_fpgm.js';
@@ -341,102 +340,13 @@ function isCollection(fontData) {
  *    (familyName, glyphs, kerning, etc.) are always honoured on export.
  * 3. Hand-authored simplified: has `font` + `glyphs` but no `_header` — expand.
  */
-/**
- * Check whether simplified CFF glyph data is unchanged from the original
- * CFF table.  When true, the original CFF table (with subroutines etc.)
- * can safely be preserved for a lossless round-trip.
- *
- * Returns `true` only when every glyph still carries its original charString
- * bytes and the glyph count hasn't changed.
- */
-function cffGlyphsUnmodified(originalCFF, simplifiedGlyphs) {
-	if (!originalCFF?.fonts?.[0]) return false;
-	const origCS = originalCFF.fonts[0].charStrings;
-	if (!origCS || origCS.length !== simplifiedGlyphs.length) return false;
-
-	for (let i = 0; i < simplifiedGlyphs.length; i++) {
-		const glyph = simplifiedGlyphs[i];
-		const orig = origCS[i];
-
-		// Glyph no longer has a charString (user cleared it to provide contours)
-		if (!glyph.charString) {
-			if (orig && orig.length > 0) return false;
-			continue;
-		}
-
-		// Length mismatch
-		if (!orig || glyph.charString.length !== orig.length) return false;
-
-		// Byte-level comparison
-		for (let j = 0; j < orig.length; j++) {
-			if (glyph.charString[j] !== orig[j]) return false;
-		}
-	}
-	return true;
-}
-
-/**
- * Ensure the preserved CFF table's Top DICT carries a FontMatrix that matches
- * the font's unitsPerEm.  The CFF default FontMatrix is [0.001 0 0 0.001 0 0]
- * (1000-unit em); when unitsPerEm differs, an explicit FontMatrix of
- * [1/upm 0 0 1/upm 0 0] is required, otherwise rasterizers will render
- * outlines at the wrong scale relative to hmtx advances and the em-square.
- * (See: Oblegg-Regular at upm=2048 — letters rendered ~2x too large.)
- */
-function ensureCFFFontMatrix(cffTable, font) {
-	const upm = font?.unitsPerEm || 1000;
-	if (upm === 1000) return; // default is already correct
-	const f0 = cffTable?.fonts?.[0];
-	if (!f0) return;
-	f0.topDict = f0.topDict || {};
-	const expected = 1 / upm;
-	const cur = f0.topDict.FontMatrix;
-	const matches =
-		Array.isArray(cur) &&
-		cur.length === 6 &&
-		Math.abs(cur[0] - expected) < 1e-9 &&
-		cur[1] === 0 &&
-		cur[2] === 0 &&
-		Math.abs(cur[3] - expected) < 1e-9;
-	if (!matches) {
-		f0.topDict.FontMatrix = [expected, 0, 0, expected, 0, 0];
-	}
-}
-
-/**
- * Ensure each preserved CFF charstring carries a leading width operand
- * matching the simplified glyph's `advanceWidth`. Without this, renderers
- * that read glyph widths from the CFF (notably Chrome/Blink for OT-CFF)
- * fall back to defaultWidthX = 0 and stack every glyph at x = 0 even when
- * the hmtx table contains correct advances. Charstrings that already encode
- * a width are left untouched.
- *
- * (See: Oblegg-Regular round-trip — hmtx correct but CFF widths missing
- * after the demo recompiled charstrings during a glyph-insert.)
- */
-function ensurePreservedCFFWidths(cffTable, glyphs) {
-	const f0 = cffTable?.fonts?.[0];
-	if (!f0 || !Array.isArray(f0.charStrings)) return;
-	const globalSubrs = cffTable.globalSubrs || [];
-	const localSubrs = f0.localSubrs || [];
-	const nominalWidthX = f0.privateDict?.nominalWidthX ?? 0;
-	const defaultWidthX = f0.privateDict?.defaultWidthX ?? 0;
-	const n = Math.min(f0.charStrings.length, glyphs.length);
-	for (let i = 0; i < n; i++) {
-		const w = glyphs[i]?.advanceWidth;
-		if (!Number.isFinite(w)) continue;
-		f0.charStrings[i] = ensureCharStringWidth(f0.charStrings[i], w, {
-			globalSubrs,
-			localSubrs,
-			nominalWidthX,
-			defaultWidthX,
-		});
-	}
-}
-
-function resolveExportSource(fontData) {
+export function resolveExportSource(fontData) {
 	// Legacy shape: { header, tables } — already the raw format
-	if (fontData.header && fontData.tables) {
+	if (
+		fontData.header &&
+		fontData.tables &&
+		!(fontData.font && fontData.glyphs)
+	) {
 		return fontData;
 	}
 
@@ -444,31 +354,7 @@ function resolveExportSource(fontData) {
 	// Rebuild decomposed tables from simplified (honouring user edits),
 	// then merge in non-decomposed tables from the original import.
 	if (fontData._header && fontData.tables && fontData.font && fontData.glyphs) {
-		const rebuilt = buildRawFromSimplified(fontData);
-		// Carry forward non-decomposed tables that the rebuild cannot produce
-		for (const [tag, data] of Object.entries(fontData.tables)) {
-			if (!DECOMPOSED_TABLES.has(tag) && !rebuilt.tables[tag]) {
-				rebuilt.tables[tag] = data;
-			}
-		}
-		// Preserve original CFF/CFF2 only when glyph outline data is unchanged.
-		// The original table retains subroutines and internal structures that
-		// the rebuilt shell cannot reproduce.  When glyphs HAVE been modified
-		// (added, removed, or charStrings changed), the rebuilt table — which
-		// compiles charStrings from simplified glyphs — must be used instead.
-		if (fontData.tables['CFF '] && rebuilt.tables['CFF ']) {
-			if (cffGlyphsUnmodified(fontData.tables['CFF '], fontData.glyphs)) {
-				rebuilt.tables['CFF '] = fontData.tables['CFF '];
-				ensureCFFFontMatrix(rebuilt.tables['CFF '], fontData.font);
-				ensurePreservedCFFWidths(rebuilt.tables['CFF '], fontData.glyphs);
-			}
-		}
-		if (fontData.tables.CFF2 && rebuilt.tables.CFF2) {
-			if (cffGlyphsUnmodified(fontData.tables.CFF2, fontData.glyphs)) {
-				rebuilt.tables.CFF2 = fontData.tables.CFF2;
-			}
-		}
-		return rebuilt;
+		return buildRawFromSimplified(fontData);
 	}
 
 	// Pure lossless passthrough: _header + tables but no simplified fields
@@ -524,25 +410,15 @@ function exportSFNT(fontData, directoryOffsetBase) {
 		}
 
 		const raw = new Uint8Array(rawArray);
-		// If the table came in as `_raw` with a recorded `_checksum` (i.e.
-		// the bytes were untouched since import or were supplied verbatim by
-		// the caller), preserve the original checksum verbatim. This keeps
-		// roundtrip integrity for tables we don't modify and lets callers
-		// stamp their own checksums when assembling fonts byte-by-byte.
-		// Parsed-then-rewritten tables always recompute, since their bytes
-		// were regenerated by the writer.
-		const preserveChecksum =
-			tableData._raw &&
-			typeof tableData._checksum === 'number' &&
-			!precomputed.has(tag);
+		if (tag === 'head' && raw.byteLength >= 12) {
+			new DataView(raw.buffer).setUint32(8, 0);
+		}
 		return {
 			tag,
 			data: raw,
 			length: raw.length,
 			paddedLength: raw.length + ((4 - (raw.length % 4)) % 4),
-			checksum: preserveChecksum
-				? tableData._checksum >>> 0
-				: computeTableChecksum(raw),
+			checksum: computeTableChecksum(raw),
 		};
 	});
 
@@ -594,6 +470,14 @@ function exportSFNT(fontData, directoryOffsetBase) {
 	// Write table data (padding between tables is already zeroed)
 	for (const entry of tableEntries) {
 		bytes.set(entry.data, entry.offset);
+	}
+
+	const headEntry = tableEntries.find((entry) => entry.tag === 'head');
+	if (directoryOffsetBase === 0 && headEntry?.length >= 12) {
+		view.setUint32(
+			headEntry.offset + 8,
+			(0xb1b0afba - computeTableChecksum(bytes)) >>> 0,
+		);
 	}
 
 	return buffer;

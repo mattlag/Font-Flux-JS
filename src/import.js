@@ -3,6 +3,7 @@
  * Reads binary font data and converts it to a JSON representation.
  */
 
+import { getCFFGlyphContext } from './otf/cff_common.js';
 import { interpretCharString } from './otf/charstring_interpreter.js';
 import { parseCFF } from './otf/table_CFF.js';
 import { parseCFF2 } from './otf/table_CFF2.js';
@@ -14,9 +15,9 @@ import { parseBdat } from './sfnt/table_bdat.js';
 import { parseBloc } from './sfnt/table_bloc.js';
 import { parseCBDT } from './sfnt/table_CBDT.js';
 import { parseCBLC } from './sfnt/table_CBLC.js';
+import { parseCmap } from './sfnt/table_cmap.js';
 import { parseCOLR } from './sfnt/table_COLR.js';
 import { parseCPAL } from './sfnt/table_CPAL.js';
-import { parseCmap } from './sfnt/table_cmap.js';
 import { parseDSIG } from './sfnt/table_DSIG.js';
 import { parseEBDT } from './sfnt/table_EBDT.js';
 import { parseEBLC } from './sfnt/table_EBLC.js';
@@ -25,31 +26,31 @@ import { parseFvar } from './sfnt/table_fvar.js';
 import { parseGDEF } from './sfnt/table_GDEF.js';
 import { parseGPOS } from './sfnt/table_GPOS.js';
 import { parseGSUB } from './sfnt/table_GSUB.js';
-import { parseHVAR } from './sfnt/table_HVAR.js';
 import { parseHdmx } from './sfnt/table_hdmx.js';
 import { parseHead } from './sfnt/table_head.js';
 import { parseHhea } from './sfnt/table_hhea.js';
 import { parseHmtx } from './sfnt/table_hmtx.js';
+import { parseHVAR } from './sfnt/table_HVAR.js';
 import { parseJSTF } from './sfnt/table_JSTF.js';
 import { parseKern } from './sfnt/table_kern.js';
-import { parseLTSH } from './sfnt/table_LTSH.js';
 import { parseLtag } from './sfnt/table_ltag.js';
+import { parseLTSH } from './sfnt/table_LTSH.js';
 import { parseMATH } from './sfnt/table_MATH.js';
-import { parseMERG } from './sfnt/table_MERG.js';
-import { parseMVAR } from './sfnt/table_MVAR.js';
 import { parseMaxp } from './sfnt/table_maxp.js';
+import { parseMERG } from './sfnt/table_MERG.js';
 import { parseMeta } from './sfnt/table_meta.js';
+import { parseMVAR } from './sfnt/table_MVAR.js';
 import { parseName } from './sfnt/table_name.js';
 import { parseOS2 } from './sfnt/table_OS-2.js';
 import { parsePCLT } from './sfnt/table_PCLT.js';
 import { parsePost } from './sfnt/table_post.js';
+import { parseSbix } from './sfnt/table_sbix.js';
 import { parseSTAT } from './sfnt/table_STAT.js';
 import { parseSVG } from './sfnt/table_SVG.js';
-import { parseSbix } from './sfnt/table_sbix.js';
 import { parseVDMX } from './sfnt/table_VDMX.js';
-import { parseVVAR } from './sfnt/table_VVAR.js';
 import { parseVhea } from './sfnt/table_vhea.js';
 import { parseVmtx } from './sfnt/table_vmtx.js';
+import { parseVVAR } from './sfnt/table_VVAR.js';
 import { buildSimplified } from './simplify.js';
 import { parseCvar } from './ttf/table_cvar.js';
 import { parseCvt } from './ttf/table_cvt.js';
@@ -184,32 +185,38 @@ export const tableParseOrder = [
  * @param {ArrayBuffer} buffer - Raw font file bytes.
  * @returns {object} Simplified font data.
  */
-export function importFont(buffer) {
+export function importFont(buffer, options = {}) {
 	if (!(buffer instanceof ArrayBuffer)) {
 		throw new TypeError('importFont expects an ArrayBuffer');
 	}
+	options = importLimits(buffer, options);
 
 	const bytes = new Uint8Array(buffer);
 	if (bytes.length >= 4) {
-		const signature = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
+		const signature = String.fromCharCode(
+			bytes[0],
+			bytes[1],
+			bytes[2],
+			bytes[3],
+		);
 		if (signature === 'wOFF') {
-			const { sfnt, metadata, privateData } = unwrapWOFF1(buffer);
-			const result = importFont(sfnt);
+			const { sfnt, metadata, privateData } = unwrapWOFF1(buffer, options);
+			const result = importFont(sfnt, options);
 			result._woff = { version: 1 };
 			if (metadata) result._woff.metadata = metadata;
 			if (privateData) result._woff.privateData = privateData;
 			return result;
 		}
 		if (signature === 'wOF2') {
-			const { sfnt, metadata, privateData } = unwrapWOFF2(buffer);
-			const result = importFont(sfnt);
+			const { sfnt, metadata, privateData } = unwrapWOFF2(buffer, options);
+			const result = importFont(sfnt, options);
 			result._woff = { version: 2 };
 			if (metadata) result._woff.metadata = metadata;
 			if (privateData) result._woff.privateData = privateData;
 			return result;
 		}
 		if (signature === 'ttcf') {
-			return importCollection(buffer);
+			return importCollection(buffer, options);
 		}
 	}
 
@@ -223,7 +230,7 @@ export function importFont(buffer) {
 		bytes[3] >= 1 &&
 		bytes[3] <= 4
 	) {
-		return importCFF(buffer);
+		return importCFF(buffer, options);
 	}
 
 	// PFB: binary PostScript Type 1 — starts with 0x80 segment marker
@@ -232,16 +239,44 @@ export function importFont(buffer) {
 		bytes[0] === 0x80 &&
 		(bytes[1] === 1 || bytes[1] === 2)
 	) {
-		return importPFB(buffer);
+		return importPFB(buffer, options);
 	}
 
 	// PFA: ASCII PostScript Type 1 — starts with %!
 	if (bytes.length >= 2 && bytes[0] === 0x25 && bytes[1] === 0x21) {
-		return importPFA(buffer);
+		return importPFA(buffer, options);
 	}
 
-	const raw = importFontTables(buffer);
-	return buildSimplified(raw);
+	const raw = importFontTables(buffer, options);
+	return buildSimplified(raw, options);
+}
+
+function importLimits(buffer, options) {
+	const limits = {
+		maxInputBytes: 256 * 1024 * 1024,
+		maxTableBytes: 256 * 1024 * 1024,
+		maxTables: 4096,
+		maxFonts: 64,
+		maxGlyphs: 65535,
+		maxPoints: 10000000,
+		maxCharStringOperations: 1000000,
+		...options,
+	};
+	for (const key of [
+		'maxInputBytes',
+		'maxTableBytes',
+		'maxTables',
+		'maxFonts',
+		'maxGlyphs',
+		'maxPoints',
+		'maxCharStringOperations',
+	]) {
+		if (!Number.isSafeInteger(limits[key]) || limits[key] < 1)
+			throw new Error(`Invalid import limit: ${key}`);
+	}
+	if (buffer.byteLength > limits.maxInputBytes)
+		throw new Error('Font input exceeds maxInputBytes.');
+	return limits;
 }
 
 /**
@@ -254,20 +289,24 @@ export function importFont(buffer) {
  * @param {ArrayBuffer} buffer - Raw font file bytes.
  * @returns {{ header: object, tables: object }}
  */
-export function importFontTables(buffer) {
+export function importFontTables(buffer, options = {}) {
 	if (!(buffer instanceof ArrayBuffer)) {
 		throw new TypeError('importFontTables expects an ArrayBuffer');
 	}
+	options = importLimits(buffer, options);
 
 	const reader = new DataReader(new Uint8Array(buffer));
 	const header = readFontHeader(reader);
+	if (header.numTables > options.maxTables)
+		throw new Error('Font table count exceeds maxTables.');
 	const tableDirectory = readTableDirectory(reader, header.numTables);
-	const tables = extractTableData(buffer, tableDirectory);
+	const tables = extractTableData(buffer, tableDirectory, options);
 
 	return { header, tables };
 }
 
-function importCollection(buffer) {
+function importCollection(buffer, options) {
+	const { faceIndex } = options;
 	const reader = new DataReader(new Uint8Array(buffer));
 	const tag = reader.tag();
 	if (tag !== 'ttcf') {
@@ -277,7 +316,19 @@ function importCollection(buffer) {
 	const majorVersion = reader.uint16();
 	const minorVersion = reader.uint16();
 	const numFonts = reader.uint32();
+	if (numFonts > options.maxFonts)
+		throw new Error('Collection count exceeds maxFonts.');
+	if (
+		numFonts === 0 ||
+		numFonts > Math.floor((buffer.byteLength - reader.position) / 4)
+	)
+		throw new Error('Invalid collection font count or truncated offset array.');
 	const offsetTable = reader.array('uint32', numFonts);
+	if (
+		faceIndex !== undefined &&
+		(!Number.isInteger(faceIndex) || faceIndex < 0 || faceIndex >= numFonts)
+	)
+		throw new Error(`faceIndex must be between 0 and ${numFonts - 1}.`);
 
 	let dsigTag;
 	let dsigLength;
@@ -288,18 +339,22 @@ function importCollection(buffer) {
 		dsigOffset = reader.uint32();
 	}
 
-	const fonts = offsetTable.map((sfntOffset) => {
+	const selectedOffsets =
+		faceIndex === undefined ? offsetTable : [offsetTable[faceIndex]];
+	const fonts = selectedOffsets.map((sfntOffset) => {
 		const sfntReader = new DataReader(new Uint8Array(buffer), sfntOffset);
 		const header = readFontHeader(sfntReader);
+		if (header.numTables > options.maxTables)
+			throw new Error('Font table count exceeds maxTables.');
 		const tableDirectory = readTableDirectory(sfntReader, header.numTables);
 		const normalizedTableDirectory = normalizeTtcTableDirectoryOffsets(
 			buffer,
 			tableDirectory,
 			sfntOffset,
 		);
-		const tables = extractTableData(buffer, normalizedTableDirectory);
+		const tables = extractTableData(buffer, normalizedTableDirectory, options);
 		const raw = { header, tables };
-		return buildSimplified(raw);
+		return buildSimplified(raw, options);
 	});
 
 	const collection = {
@@ -314,7 +369,7 @@ function importCollection(buffer) {
 		collection.dsigOffset = dsigOffset;
 	}
 
-	return { collection, fonts };
+	return faceIndex === undefined ? { collection, fonts } : fonts[0];
 }
 
 function normalizeTtcTableDirectoryOffsets(buffer, tableDirectory, sfntOffset) {
@@ -402,7 +457,10 @@ function readFontHeader(reader) {
  * @returns {Array<{tag: string, checksum: number, offset: number, length: number}>}
  */
 function readTableDirectory(reader, numTables) {
+	if (numTables > Math.floor((reader.length - reader.position) / 16))
+		throw new Error('Truncated SFNT table directory.');
 	const entries = [];
+	const tags = new Set();
 
 	for (let i = 0; i < numTables; i++) {
 		entries.push({
@@ -411,6 +469,10 @@ function readTableDirectory(reader, numTables) {
 			offset: reader.offset32(),
 			length: reader.uint32(),
 		});
+		const entry = entries[entries.length - 1];
+		if (tags.has(entry.tag))
+			throw new Error(`Duplicate SFNT table tag: ${entry.tag}`);
+		tags.add(entry.tag);
 	}
 
 	return entries;
@@ -432,8 +494,19 @@ function readTableDirectory(reader, numTables) {
  * @param {Array}       tableDirectory
  * @returns {object}
  */
-function extractTableData(buffer, tableDirectory) {
+function extractTableData(buffer, tableDirectory, options) {
 	const tables = {};
+	let totalBytes = 0;
+	for (const entry of tableDirectory) {
+		totalBytes += entry.length;
+		if (totalBytes > options.maxTableBytes)
+			throw new Error('Font table data exceeds maxTableBytes.');
+		if (
+			entry.offset > buffer.byteLength ||
+			entry.length > buffer.byteLength - entry.offset
+		)
+			throw new Error(`SFNT table ${entry.tag} range is outside input bounds.`);
+	}
 
 	// Build a lookup from tag -> directory entry
 	const entryByTag = new Map(tableDirectory.map((e) => [e.tag, e]));
@@ -454,9 +527,11 @@ function extractTableData(buffer, tableDirectory) {
 
 		if (parser) {
 			tables[tag] = {
-				...parser(rawArray, tables),
+				...parser(rawArray, tables, options),
 				_checksum: entry.checksum,
 			};
+			if (tag === 'maxp' && tables.maxp.numGlyphs > options.maxGlyphs)
+				throw new Error('Glyph count exceeds maxGlyphs.');
 		} else {
 			tables[tag] = {
 				_raw: rawArray,
@@ -532,7 +607,7 @@ function extractTableData(buffer, tableDirectory) {
  * @param {ArrayBuffer} buffer
  * @returns {object} Simplified font data.
  */
-function importCFF(buffer) {
+function importCFF(buffer, options = {}) {
 	const rawArray = Array.from(new Uint8Array(buffer));
 	const cffTable = parseCFF(rawArray);
 
@@ -540,6 +615,8 @@ function importCFF(buffer) {
 	const topDict = font?.topDict || {};
 	const charStrings = font?.charStrings || [];
 	const numGlyphs = charStrings.length;
+	if (numGlyphs > (options.maxGlyphs ?? 65535))
+		throw new Error('Glyph count exceeds maxGlyphs.');
 
 	// Extract metrics from CFF Top DICT
 	const bbox = topDict.FontBBox || [0, 0, 1000, 1000];
@@ -602,22 +679,19 @@ function importCFF(buffer) {
 	};
 
 	// Synthetic hmtx — derive advance widths from charstring interpretation
-	const defaultWidth = font?.privateDict?.defaultWidthX ?? 0;
-	const nominalWidth = font?.privateDict?.nominalWidthX ?? 0;
 	const hMetrics = [];
 	for (let i = 0; i < numGlyphs; i++) {
-		let width = defaultWidth;
+		const context = getCFFGlyphContext(cffTable, i);
+		let width = context.defaultWidthX;
 		if (charStrings[i] && charStrings[i].length > 0) {
-			const globalSubrs = cffTable.globalSubrs || [];
-			const localSubrs = font.localSubrs || [];
-			try {
-				const result = interpretCharString(charStrings[i], globalSubrs, localSubrs);
-				if (result.width !== undefined) {
-					width = result.width + nominalWidth;
-				}
-			} catch {
-				// Fall back to default width
-			}
+			const result = interpretCharString(
+				charStrings[i],
+				context.globalSubrs,
+				context.localSubrs,
+				options,
+			);
+			if (result.width !== undefined)
+				width = result.width + context.nominalWidthX;
 		}
 		hMetrics.push({ advanceWidth: width, lsb: 0 });
 	}
@@ -734,7 +808,7 @@ function importCFF(buffer) {
 	};
 
 	const header = { sfVersion: 0x4f54544f };
-	const result = buildSimplified({ header, tables });
+	const result = buildSimplified({ header, tables }, options);
 	result._standalone = 'cff';
 	return result;
 }
@@ -755,7 +829,7 @@ function importCFF(buffer) {
  * @param {ArrayBuffer} buffer
  * @returns {object} Simplified font data.
  */
-function importPFB(buffer) {
+function importPFB(buffer, options) {
 	const bytes = new Uint8Array(buffer);
 	const asciiParts = [];
 	const binaryParts = [];
@@ -766,12 +840,12 @@ function importPFB(buffer) {
 		const segType = bytes[offset + 1];
 		if (segType === 3) break; // EOF segment
 
-		const segLength =
-			bytes[offset + 2] |
-			(bytes[offset + 3] << 8) |
-			(bytes[offset + 4] << 16) |
-			(bytes[offset + 5] << 24);
+		if (offset + 6 > bytes.length)
+			throw new Error('Truncated PFB segment header.');
+		const segLength = new DataView(buffer).getUint32(offset + 2, true);
 		offset += 6;
+		if (segLength > bytes.length - offset)
+			throw new Error('PFB segment outside input bounds.');
 
 		const segData = bytes.slice(offset, offset + segLength);
 		offset += segLength;
@@ -788,7 +862,7 @@ function importPFB(buffer) {
 	const binaryBytes = concatUint8Arrays(binaryParts);
 
 	const asciiText = new TextDecoder('latin1').decode(asciiBytes);
-	return importType1(asciiText, binaryBytes);
+	return importType1(asciiText, binaryBytes, options);
 }
 
 // ===========================================================================
@@ -804,7 +878,7 @@ function importPFB(buffer) {
  * @param {ArrayBuffer} buffer
  * @returns {object} Simplified font data.
  */
-function importPFA(buffer) {
+function importPFA(buffer, options) {
 	const text = new TextDecoder('latin1').decode(new Uint8Array(buffer));
 	const eexecMarker = 'currentfile eexec';
 	const eexecIndex = text.indexOf(eexecMarker);
@@ -826,7 +900,7 @@ function importPFA(buffer) {
 		binaryBytes[i] = parseInt(hexData.slice(i * 2, i * 2 + 2), 16);
 	}
 
-	return importType1(asciiText, binaryBytes);
+	return importType1(asciiText, binaryBytes, options);
 }
 
 // ===========================================================================
@@ -870,8 +944,9 @@ function type1Decrypt(cipherBytes, key, skip) {
  * @param {Uint8Array[]} subrs - Local subroutines (decrypted)
  * @returns {{ contours: Array, width: number }}
  */
-function interpretType1CharString(bytes, subrs) {
+function interpretType1CharString(bytes, subrs, options) {
 	const stack = [];
+	let operations = 0;
 	const psStack = []; // PostScript argument stack for callothersubr/pop
 	const contours = [];
 	let currentContour = null;
@@ -902,9 +977,13 @@ function interpretType1CharString(bytes, subrs) {
 	}
 
 	function execute(data, depth) {
-		if (depth > 10) return;
+		if (depth > 64) throw new Error('Type 1 subroutine depth exceeds 64.');
 		let i = 0;
 		while (i < data.length) {
+			if (++operations > options.maxCharStringOperations)
+				throw new Error('Type 1 execution exceeds maxCharStringOperations.');
+			if (stack.length > 513)
+				throw new Error('Type 1 operand stack exceeds 513.');
 			const b0 = data[i];
 
 			// Number encoding (Type 1 spec §2)
@@ -1322,7 +1401,7 @@ function parseType1Encoding(text) {
  * @param {Uint8Array} decryptedBytes
  * @returns {{ charStrings: Map<string, Uint8Array>, subrs: Uint8Array[], privateDict: object }}
  */
-function parseType1Private(decryptedBytes) {
+function parseType1Private(decryptedBytes, options) {
 	const text = new TextDecoder('latin1').decode(decryptedBytes);
 
 	// Extract lenIV (default 4)
@@ -1368,6 +1447,8 @@ function parseType1Private(decryptedBytes) {
 	const subrsMatch = text.match(/\/Subrs\s+(\d+)\s+array/);
 	if (subrsMatch) {
 		const subrsCount = parseInt(subrsMatch[1]);
+		if (subrsCount > 65535)
+			throw new Error('Type 1 subroutine count exceeds 65535.');
 		// Find each "dup <index> <length> RD|-| <binary data> NP|noaccess put"
 		const subrsRegion = text.slice(subrsMatch.index);
 		extractBinaryEntries(
@@ -1376,6 +1457,8 @@ function parseType1Private(decryptedBytes) {
 			subrsCount,
 			lenIV,
 			(index, decrypted) => {
+				if (index >= subrsCount)
+					throw new Error('Type 1 subroutine index outside declared array.');
 				subrs[index] = decrypted;
 			},
 		);
@@ -1385,6 +1468,8 @@ function parseType1Private(decryptedBytes) {
 	const charStrings = new Map();
 	const csMatch = text.match(/\/CharStrings\s+(\d+)\s+dict/);
 	if (csMatch) {
+		if (Number(csMatch[1]) > options.maxGlyphs)
+			throw new Error('Type 1 glyph count exceeds maxGlyphs.');
 		const csRegion = text.slice(csMatch.index);
 		const csBytes = decryptedBytes.slice(
 			findByteOffset(decryptedBytes, csMatch.index),
@@ -1401,6 +1486,8 @@ function parseType1Private(decryptedBytes) {
 			const encrypted = csBytes.slice(byteOffset, byteOffset + length);
 			const decrypted = type1Decrypt(encrypted, 4330, lenIV);
 			charStrings.set(name, decrypted);
+			if (charStrings.size > options.maxGlyphs)
+				throw new Error('Type 1 glyph count exceeds maxGlyphs.');
 		}
 	}
 
@@ -1440,7 +1527,7 @@ function findByteOffset(bytes, textOffset) {
  * @param {Uint8Array} encryptedBinary - eexec-encrypted binary data
  * @returns {object} Simplified font data
  */
-function importType1(asciiText, encryptedBinary) {
+function importType1(asciiText, encryptedBinary, options) {
 	// Decrypt the eexec-encrypted portion
 	const decrypted = type1Decrypt(encryptedBinary, 55665, 4);
 
@@ -1448,7 +1535,15 @@ function importType1(asciiText, encryptedBinary) {
 	const headerInfo = parseType1Header(asciiText);
 
 	// Parse private dict and charstrings
-	const { charStrings, subrs, privateDict } = parseType1Private(decrypted);
+	const { charStrings, subrs, privateDict } = parseType1Private(
+		decrypted,
+		options,
+	);
+	if (
+		charStrings.size + (charStrings.has('.notdef') ? 0 : 1) >
+		options.maxGlyphs
+	)
+		throw new Error('Type 1 glyph count exceeds maxGlyphs.');
 
 	// Font metrics
 	const bbox = headerInfo.FontBBox || [0, 0, 1000, 1000];
@@ -1464,7 +1559,11 @@ function importType1(asciiText, encryptedBinary) {
 
 	// .notdef first
 	if (charStrings.has('.notdef')) {
-		const result = interpretType1CharString(charStrings.get('.notdef'), subrs);
+		const result = interpretType1CharString(
+			charStrings.get('.notdef'),
+			subrs,
+			options,
+		);
 		glyphList.push({
 			name: '.notdef',
 			unicode: null,
@@ -1487,7 +1586,7 @@ function importType1(asciiText, encryptedBinary) {
 	for (const [name, csBytes] of charStrings) {
 		if (name === '.notdef') continue;
 
-		const result = interpretType1CharString(csBytes, subrs);
+		const result = interpretType1CharString(csBytes, subrs, options);
 		const unicode = nameToUnicode.get(name) ?? null;
 
 		glyphList.push({

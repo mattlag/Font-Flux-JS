@@ -12,7 +12,7 @@
 
 import { createColorGlyph, normalizePalette } from './color.js';
 import { convertOutlines } from './convert.js';
-import { exportFont } from './export.js';
+import { exportFont, resolveExportSource } from './export.js';
 import {
 	createGlyph,
 	decomposeGlyph,
@@ -33,6 +33,10 @@ import {
 import { createSubstitution, getSubstitutions } from './substitution.js';
 import { contoursToSVGPath, svgPathToContours } from './svg_path.js';
 import { diagnoseFont, validateJSON } from './validate/index.js';
+import {
+	buildReport,
+	validateSimplifiedJSON,
+} from './validate/validateJSON.js';
 import { initBrotli } from './woff/woff2.js';
 
 // ============================================================================
@@ -238,12 +242,21 @@ export class FontFlux {
 	 * @returns {FontFlux} Single-font instance. For collections, use openAll().
 	 * @throws {Error} If input is a collection (TTC/OTC) — use openAll() instead.
 	 */
-	static open(input) {
+	static open(input, options = {}) {
 		const detected = detectInput(input);
 
 		if (detected.kind === 'json') {
 			const data = fontFromJSON(detected.text);
 			if (data && data.collection && Array.isArray(data.fonts)) {
+				if (options.faceIndex !== undefined) {
+					if (
+						!Number.isInteger(options.faceIndex) ||
+						options.faceIndex < 0 ||
+						options.faceIndex >= data.fonts.length
+					)
+						throw new Error('faceIndex is outside the collection.');
+					return new FontFlux(data.fonts[options.faceIndex]);
+				}
 				throw new Error(
 					'FontFlux.open() received a font collection JSON. ' +
 						'Use FontFlux.openAll() for collections.',
@@ -252,7 +265,15 @@ export class FontFlux {
 			return new FontFlux(data);
 		}
 
-		const result = importFont(detected.buffer);
+		if (
+			options.faceIndex === undefined &&
+			detected.buffer.byteLength >= 4 &&
+			new DataView(detected.buffer).getUint32(0) === 0x74746366
+		)
+			throw new Error(
+				'FontFlux.open() received a font collection (TTC/OTC). Use openAll() or specify faceIndex.',
+			);
+		const result = importFont(detected.buffer, options);
 
 		// Collection check
 		if (result.collection && result.fonts) {
@@ -272,7 +293,7 @@ export class FontFlux {
 	 * @param {ArrayBuffer|Uint8Array|string} input
 	 * @returns {FontFlux[]} Array of FontFlux instances (one per face).
 	 */
-	static openAll(input) {
+	static openAll(input, options = {}) {
 		const detected = detectInput(input);
 
 		if (detected.kind === 'json') {
@@ -283,7 +304,10 @@ export class FontFlux {
 			return [new FontFlux(data)];
 		}
 
-		const result = importFont(detected.buffer);
+		const result = importFont(detected.buffer, {
+			...options,
+			faceIndex: undefined,
+		});
 
 		if (result.collection && result.fonts) {
 			return result.fonts.map((face) => new FontFlux(face));
@@ -450,6 +474,7 @@ export class FontFlux {
 
 	/** Detected outline format: 'truetype', 'cff', or 'cff2'. */
 	get format() {
+		if (this._data.tables?.CFF2) return 'cff2';
 		if (this._data._header?.sfVersion === 0x4f54544f) return 'cff';
 		const glyphs = this._data.glyphs;
 		if (glyphs.some((g) => g.charString)) return 'cff';
@@ -690,6 +715,7 @@ export class FontFlux {
 	 */
 	clearKerning() {
 		this._data.kerning = [];
+		this._data.kerningClasses = [];
 	}
 
 	// ========================================================================
@@ -770,6 +796,9 @@ export class FontFlux {
 	 */
 	clearSubstitutions() {
 		this._data.substitutions = [];
+		this._data._rawGSUBLookups = [];
+		delete this._data.substitutionMetadata;
+		if (this._data.features) delete this._data.features.GSUB;
 	}
 
 	// ========================================================================
@@ -827,8 +856,7 @@ export class FontFlux {
 
 		// Remove axes array entirely if empty
 		if (this._data.axes.length === 0) {
-			delete this._data.axes;
-			delete this._data.instances;
+			this._data.instances = [];
 		}
 		return true;
 	}
@@ -937,9 +965,6 @@ export class FontFlux {
 			return false;
 		}
 		this._data.palettes.splice(index, 1);
-		if (this._data.palettes.length === 0) {
-			delete this._data.palettes;
-		}
 		return true;
 	}
 
@@ -1013,9 +1038,6 @@ export class FontFlux {
 		const idx = this._data.colorGlyphs.findIndex((cg) => cg.name === name);
 		if (idx < 0) return false;
 		this._data.colorGlyphs.splice(idx, 1);
-		if (this._data.colorGlyphs.length === 0) {
-			delete this._data.colorGlyphs;
-		}
 		return true;
 	}
 
@@ -1116,12 +1138,29 @@ export class FontFlux {
 	}
 
 	/**
-	 * Validate the font data.
+	 * Validate a detached export candidate without changing the font data.
 	 *
 	 * @returns {object} { valid, errors, warnings, infos }
 	 */
 	validate() {
-		return validateJSON(this._data);
+		const report = validateSimplifiedJSON(this._data);
+		if (!report.valid) return report;
+		try {
+			const resolved = validateJSON(
+				resolveExportSource(structuredClone(this._data)),
+			);
+			return buildReport([...report.issues, ...resolved.issues]);
+		} catch (error) {
+			return buildReport([
+				...report.issues,
+				{
+					severity: 'error',
+					code: 'EXPORT_RESOLUTION_FAILED',
+					message: error.message,
+					path: '$',
+				},
+			]);
+		}
 	}
 
 	/**

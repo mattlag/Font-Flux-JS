@@ -12,13 +12,12 @@ const SKIP_KEYS = new Set([
 	'_originalBuffer',
 	'_collection',
 	'_collectionFonts',
-	'_woff',
 ]);
 
 /**
  * Serialize a font data object to a JSON string.
- * BigInt values (used for LONGDATETIME fields) are converted to numbers.
- * Transient top-level properties (e.g. _header, _fileName) are omitted.
+ * Safe BigInt values become numbers; larger integers use an exact tagged form.
+ * Durable headers and WOFF metadata survive; transient file bookkeeping is omitted.
  * Table-level _raw and _checksum are preserved for lossless round-trip.
  *
  * @param {object} fontData - The font data object from importFont.
@@ -26,12 +25,18 @@ const SKIP_KEYS = new Set([
  * @returns {string} JSON string.
  */
 export function fontToJSON(fontData, indent = 2) {
+	const document = { ...fontData, _schemaVersion: 1 };
 	return JSON.stringify(
-		fontData,
+		document,
 		function (key, value) {
 			// Only strip known transient keys at the top level
-			if (this === fontData && SKIP_KEYS.has(key)) return undefined;
-			if (typeof value === 'bigint') return Number(value);
+			if (this === document && SKIP_KEYS.has(key)) return undefined;
+			if (typeof value === 'bigint') {
+				const numeric = Number(value);
+				return Number.isSafeInteger(numeric)
+					? numeric
+					: { $fontFluxBigInt: value.toString() };
+			}
 			// TypedArrays (e.g. Uint8Array _raw) serialize as objects — convert to arrays
 			if (ArrayBuffer.isView(value) && !(value instanceof DataView)) {
 				return Array.from(value);
@@ -50,5 +55,23 @@ export function fontToJSON(fontData, indent = 2) {
  * @returns {object} Font data object.
  */
 export function fontFromJSON(jsonString) {
-	return JSON.parse(jsonString);
+	const document = JSON.parse(jsonString, (_key, value) => {
+		if (
+			value &&
+			typeof value === 'object' &&
+			Object.keys(value).length === 1 &&
+			typeof value.$fontFluxBigInt === 'string'
+		) {
+			if (!/^-?\d+$/.test(value.$fontFluxBigInt))
+				throw new Error('Invalid exact integer encoding.');
+			return BigInt(value.$fontFluxBigInt);
+		}
+		return value;
+	});
+	if (document?._schemaVersion !== undefined && document._schemaVersion !== 1)
+		throw new Error(
+			`Unsupported Font Flux JSON schema version: ${document._schemaVersion}`,
+		);
+	if (document && typeof document === 'object') delete document._schemaVersion;
+	return document;
 }

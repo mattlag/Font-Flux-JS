@@ -3,6 +3,10 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import {
+	parseGlyphVariationData,
+	writeGlyphVariationData,
+} from '../../src/sfnt/tuple_variation_common.js';
 import { parseGvar, writeGvar } from '../../src/ttf/table_gvar.js';
 
 function normalizeGvar(gvar) {
@@ -17,6 +21,42 @@ function normalizeGvar(gvar) {
 }
 
 describe('gvar table', () => {
+	it('encodes X and Y as independent packed runs', () => {
+		const bytes = [0, 1, 0, 10, 0, 7, 160, 0, 64, 0, 0, 1, 5, 6, 1, 7, 8];
+		const tuples = [
+			{
+				peakTuple: [1],
+				intermediateStartTuple: null,
+				intermediateEndTuple: null,
+				pointIndices: null,
+				xDeltas: [5, 6],
+				yDeltas: [7, 8],
+			},
+		];
+		expect(writeGlyphVariationData(tuples, 1)).toEqual(bytes);
+		expect(parseGlyphVariationData(bytes, 1, [], 2)).toEqual(tuples);
+	});
+
+	it.each([null, { type: 'simple', contours: [] }])(
+		'preserves four phantom points for an empty glyph: %j',
+		(glyph) => {
+			const tuples = [
+				{
+					peakTuple: [1],
+					intermediateStartTuple: null,
+					intermediateEndTuple: null,
+					pointIndices: null,
+					xDeltas: [0, -81, 0, 0],
+					yDeltas: [0, 0, 0, 0],
+				},
+			];
+			const bytes = writeGvar({ axisCount: 1, glyphVariationData: [tuples] });
+			expect(
+				parseGvar(bytes, { glyf: { glyphs: [glyph] } }).glyphVariationData[0],
+			).toEqual(tuples);
+		},
+	);
+
 	it('should round-trip a gvar table with structured tuple variations', () => {
 		const original = {
 			majorVersion: 1,

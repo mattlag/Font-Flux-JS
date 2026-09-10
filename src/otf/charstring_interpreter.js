@@ -92,7 +92,14 @@ export function interpretCharString(
 	charString,
 	globalSubrs = [],
 	localSubrs = [],
+	{ maxCharStringOperations = 1000000 } = {},
 ) {
+	if (
+		!Number.isSafeInteger(maxCharStringOperations) ||
+		maxCharStringOperations < 1
+	)
+		throw new Error('Invalid import limit: maxCharStringOperations');
+	let operations = 0;
 	const stack = [];
 	const contours = [];
 	let currentContour = null;
@@ -520,20 +527,29 @@ export function interpretCharString(
 		}
 	}
 
-	function executeReal(bytes, stemCountInit) {
+	function executeReal(bytes, stemCountInit, depth = 0) {
+		if (depth > 64)
+			throw new Error('CFF subroutine recursion exceeds depth 64.');
 		let stemCount = stemCountInit || 0;
 		let i = 0;
 
 		while (i < bytes.length) {
+			if (++operations > maxCharStringOperations)
+				throw new Error('CFF execution exceeds maxCharStringOperations.');
+			if (stack.length > 513)
+				throw new Error('CFF operand stack exceeds limit.');
 			const b0 = bytes[i];
 			const num = decodeNumber(bytes, i);
 			if (num !== null) {
+				if (i + num.bytesConsumed > bytes.length)
+					throw new Error('Truncated CFF number.');
 				stack.push(num.value);
 				i += num.bytesConsumed;
 				continue;
 			}
 
 			if (b0 === 12) {
+				if (i + 1 >= bytes.length) throw new Error('Truncated CFF operator.');
 				i++;
 				const b1 = bytes[i];
 				i++;
@@ -553,6 +569,7 @@ export function interpretCharString(
 				// Skip mask data bytes
 				const maskBytes = Math.ceil(stemCount / 8);
 				i += maskBytes;
+				if (i > bytes.length) throw new Error('Truncated CFF hint mask.');
 			} else if (b0 === 1 || b0 === 3 || b0 === 18 || b0 === 23) {
 				// Stem operators
 				if (!hasWidth) {
@@ -570,14 +587,14 @@ export function interpretCharString(
 				i++;
 				const subrIndex = stack.pop() + localBias;
 				if (localSubrs[subrIndex]) {
-					stemCount = executeReal(localSubrs[subrIndex], stemCount);
+					stemCount = executeReal(localSubrs[subrIndex], stemCount, depth + 1);
 				}
 			} else if (b0 === 29) {
 				// callgsubr — propagate stemCount changes back up
 				i++;
 				const subrIndex = stack.pop() + globalBias;
 				if (globalSubrs[subrIndex]) {
-					stemCount = executeReal(globalSubrs[subrIndex], stemCount);
+					stemCount = executeReal(globalSubrs[subrIndex], stemCount, depth + 1);
 				}
 			} else if (b0 === 11) {
 				// return

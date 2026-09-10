@@ -322,6 +322,7 @@ export function writeCFF(tableData) {
 	// -- 5. Build real Top DICTs with correct offsets -------------------
 	let offset = fontDataStart;
 	const realTopDicts = fonts.map((font, i) => {
+		fontBuilds[i] = buildFontSections(font, offset);
 		const td = buildTopDictBytes(font, fontBuilds[i], offset);
 		offset += fontBuilds[i].totalSize;
 		return td;
@@ -364,7 +365,7 @@ export function writeCFF(tableData) {
  *   offsets    — { charStrings, charset, encoding, privateOffset, privateSize,
  *                  fdArray, fdSelect }  all relative to baseOffset
  */
-function buildFontSections(font) {
+function buildFontSections(font, baseOffset = 0) {
 	const sections = [];
 	const offsets = {};
 	let cursor = 0;
@@ -425,7 +426,9 @@ function buildFontSections(font) {
 	// Local Subrs go immediately after Private DICT
 	let localSubrBytes = null;
 	if (font.localSubrs && font.localSubrs.length > 0) {
-		localSubrBytes = writeINDEXv1(font.localSubrs.map((s) => new Uint8Array(s)));
+		localSubrBytes = writeINDEXv1(
+			font.localSubrs.map((s) => new Uint8Array(s)),
+		);
 	}
 
 	// If there are local subrs, add Subrs entry to Private DICT
@@ -466,14 +469,41 @@ function buildFontSections(font) {
 		}
 		if (font.fdArray) {
 			const fdDicts = font.fdArray.map((fd) => {
+				const privateEntries = objectToDictEntries(
+					fd.privateDict || {},
+					CFF1_PRIVATE_DICT_OPS_BY_NAME,
+				);
+				const subrs = fd.localSubrs?.length
+					? writeINDEXv1(fd.localSubrs.map((subr) => new Uint8Array(subr)))
+					: null;
+				if (subrs) {
+					const privateSize =
+						encodeDICTForced(privateEntries, PRIVATE_DICT_OFFSET_OPS).length +
+						6;
+					privateEntries.push({
+						operator: CFF1_PRIVATE_DICT_OPS_BY_NAME.Subrs,
+						operands: [privateSize],
+					});
+				}
+				const privateBytes = encodeDICTForced(
+					privateEntries,
+					PRIVATE_DICT_OFFSET_OPS,
+				);
+				const privateOffset = cursor + baseOffset;
+				sections.push(privateBytes);
+				cursor += privateBytes.length;
+				if (subrs) {
+					sections.push(subrs);
+					cursor += subrs.length;
+				}
 				const entries = objectToDictEntries(
 					fd.fontDict || {},
 					CFF1_TOP_DICT_OPS_BY_NAME,
 				);
-				// Add Private entry for this Font DICT
-				// Private DICT goes inline after FDArray (this is a simplification)
-				// For now, encode without Private reference — full CIDFont writing
-				// is complex and can be expanded later.
+				entries.push({
+					operator: CFF1_TOP_DICT_OPS_BY_NAME.Private,
+					operands: [privateBytes.length, privateOffset],
+				});
 				return encodeDICTForced(entries, TOP_DICT_OFFSET_OPS);
 			});
 			const fdArrayBytes = writeINDEXv1(fdDicts);

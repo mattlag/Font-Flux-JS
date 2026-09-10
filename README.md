@@ -6,21 +6,26 @@
 
 Convert fonts to JSON, make edits, then convert them back!
 
-Font Flux JS is a JavaScript library for parsing OpenType/TrueType font binaries into structured JSON, then exporting that JSON back into a valid font binary. Every table is fully parsed into human-readable fields! If you're ambitious, you can also create a font JSON from scratch and turn it into a font.
+Font Flux JS parses OpenType/TrueType fonts into editable JSON and exports imported or authored fonts. Complex subtables, bytecode, images, and unknown tables may retain binary payloads. See the [workflow support matrix](docs/index.md#workflow-support) for preservation guarantees, authoring support, and guarded edits.
 
 Font Flux JS is part of the Glyphr Studio family. Any questions or feedback? We'd love to hear from you: mail@glyphrstudio.com
 
-# June 2026
-
-Things seem good - have you tried it yet? mail@glyphrstudio.com
-
 ## Demo
 
-Try out the demo app! You can load a font, edit it's metadata, subset glyphs, and even save as different font file formats.
+Try out the demo app! Load a font, edit its metadata, remove glyphs where dependencies permit, and save in different font containers. Arbitrary subsetting and outline conversion are subject to the workflow limits linked above.
+
+Subset changes are validated and exported on a detached candidate before they
+are applied. Successful changes refresh the browser preview; dependency or
+preview-loading errors leave the loaded font unchanged. Retained original
+tables are not manually pruned by the demo.
 
 ### [Font Flux JS Demo App](https://www.glyphrstudio.com/fontfluxjs)
 
 ## Installation
+
+The package includes TypeScript declarations and a structural JSON schema at `font-flux-js/schema`. New serialized documents carry `_schemaVersion: 1`; legacy unversioned JSON remains readable. Unsafe-to-round integers use an exact tagged encoding, and durable WOFF metadata survives JSON serialization.
+
+Binary imports accept configurable input, decompression, table, face, glyph, point, and charstring-execution limits; see [Import Options](docs/api.md#import-options-and-types) for defaults and scope. For large collections, use `FontFlux.open(bytes, { faceIndex: 0 })` to parse only one face; `openAll()` loads every face. Unsupported glyph/axis dependency edits fail during validation/export instead of silently changing retained data. `validate()` checks a detached candidate without mutating the live source. Limits are not a process-memory sandbox.
 
 ### npm (recommended)
 
@@ -36,6 +41,9 @@ You can also use `dist/font-flux-js.js` directly as a single-file ES module — 
 
 ### Browser
 
+This package import requires a bundler or an import map. For standalone use,
+import from the URL of your local `dist/font-flux-js.js` instead.
+
 ```html
 <script type="module">
 	import { FontFlux } from 'font-flux-js';
@@ -45,7 +53,7 @@ You can also use `dist/font-flux-js.js` directly as a single-file ES module — 
 
 	const font = FontFlux.open(buffer);
 
-	// Modify anything — font metadata, glyphs, kerning...
+	// Edit font metadata
 	font.info.familyName = 'My Custom Font';
 
 	const outputBuffer = font.export();
@@ -66,7 +74,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { FontFlux } from 'font-flux-js';
 
 // Open a font
-const buffer = (await readFile('MyFont.ttf')).buffer;
+const buffer = await readFile('MyFont.ttf');
 const font = FontFlux.open(buffer);
 
 // Inspect

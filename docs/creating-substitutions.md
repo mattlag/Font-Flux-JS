@@ -467,11 +467,17 @@ When you call `FontFlux.open()`, the GSUB table is parsed and decomposed:
 
 - **Lookup types 1–4** (single, multiple, alternate, ligature) → simplified rules in `substitutions[]`
 - **Lookup type 8** (reverse chaining single) → simplified rules in `substitutions[]`
-- **Lookup types 5, 6** (contextual, chaining contextual) → preserved as raw lookup data in `_rawGSUBLookups[]` (these are complex structures that reference other lookups by index)
+- **Lookup types 5, 6** (contextual, chaining contextual) → simplified contextual rules when their helper graph is representable; unsupported graphs and their helpers remain in `_rawGSUBLookups[]`.
 
 ### Export (`substitutions[]` → GSUB binary)
 
-On export, Font Flux:
+Unchanged imported substitutions retain the original GSUB structure. Supported
+edits patch the existing lookup index while retaining unrelated lookups and
+metadata. Shared/contextual targets and ambiguous multi-subtable edits reject.
+Clearing only `substitutions` does not clear separately retained raw lookups;
+use `clearSubstitutions()` to clear both.
+
+For newly authored rules or a supported rebuild, Font Flux:
 
 1. Groups substitution rules by type, feature tag, and optional lookup identity
 2. Builds one GSUB lookup per group
@@ -481,7 +487,11 @@ On export, Font Flux:
 
 ### Round-trip fidelity
 
-Imported fonts retain lookup boundaries, flags, mark-filtering sets, required features, extension lookup preference, and FeatureVariations metadata. The GSUB binary structure may be reorganized, including normalization of contextual formats 1 and 2 to format 3, while preserving represented behavior.
+Unchanged imported fonts retain lookup boundaries, flags, mark-filtering sets,
+required features, extension lookup preference, and FeatureVariations metadata.
+Newly built contextual rules use format 3. This normalization is not applied
+to unchanged imported GSUB, and does not imply arbitrary imported contextual
+or FeatureVariations edits are supported.
 
 ## Contextual lookups (types 5 and 6)
 
@@ -493,7 +503,7 @@ If you need to inspect or manipulate these, access them via the raw features:
 const font = FontFlux.open(buffer);
 
 // Raw GSUB lookups are available for advanced use
-console.log(font._data._rawGSUBLookups?.length);
+console.log(font.data._rawGSUBLookups?.length);
 ```
 
 ### Optional lookup metadata

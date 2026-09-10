@@ -1,3 +1,11 @@
+# Persisted JSON Contract
+
+`fontToJSON()` and `FontFlux.toJSON()` write `_schemaVersion: 1`. `fontFromJSON()`, `FontFlux.fromJSON()`, and `FontFlux.open()` accept version 1 and legacy unversioned documents. Unknown explicit versions reject; loading does not mutate the input string. The version marker is transport metadata and is removed from the returned data object.
+
+Integers outside JavaScript's safe integer range serialize as `{ "$fontFluxBigInt": "9223372036854775807" }` and restore as `BigInt`. Safe `BigInt` values remain ordinary JSON numbers for compatibility. This single-key object shape is reserved. Typed byte arrays serialize as arrays. Durable `_header`, `_woff`, raw tables, and their bytes are retained; transient file/session bookkeeping is omitted.
+
+The package's `font-flux-js/schema` export provides a Draft 2020-12 structural schema for simplified fonts, raw table documents, and collections. It deliberately allows extension/raw fields. It is not a substitute for `FontFlux.validate()`, which checks references, numeric ranges, and export dependencies. Empty editable arrays request removal; deleting a field can instead leave original data eligible for preservation.
+
 # Authoring JSON From Scratch
 
 This page is for humans (or scripts) who want to write a Font Flux JSON document directly in a text editor — no `FontFlux.create()`, no `.addGlyph()` — and pipe it straight through to a valid binary font.
@@ -221,7 +229,9 @@ if (!report.valid) {
 }
 ```
 
-See [Validation](./validation.md) for the full list of checks and what's auto-fixed versus what's a hard error.
+See [Validation](./validation.md) for documented checks, hard errors, and repairs
+to the detached candidate. `validate()` does not mutate the live font, and a
+valid report is not an exhaustive guarantee for arbitrary raw-table data.
 
 ## A more complete example
 

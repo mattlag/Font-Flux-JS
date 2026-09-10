@@ -447,15 +447,15 @@ The baseline sits at `y = 0`. Characters like "A" have outlines from `y = 0` up 
 
 ## Choosing an outline format
 
-| Scenario                             | Recommended format                            |
-| ------------------------------------ | --------------------------------------------- |
-| Exporting paths from a design tool   | SVG path (`path`)                             |
-| Hand-authoring simple shapes         | SVG path (`path`)                             |
-| Building an OTF with precise curves  | CFF contours (`contours` with `type`)         |
-| Building a TTF with hinting          | TrueType contours (`contours` with `onCurve`) |
-| Preserving imported OTF data exactly | Raw charstring (`charString`)                 |
-| Programmatic glyph generation        | SVG path (`path`) or CFF contours             |
-| Accented / composed characters       | Composite (`components`)                      |
+| Scenario                            | Recommended format                                      |
+| ----------------------------------- | ------------------------------------------------------- |
+| Exporting paths from a design tool  | SVG path (`path`)                                       |
+| Hand-authoring simple shapes        | SVG path (`path`)                                       |
+| Building an OTF with precise curves | CFF contours (`contours` with `type`)                   |
+| Building a TTF with hinting         | TrueType contours (`contours` with `onCurve`)           |
+| Retaining imported CFF programs     | Raw charstring plus retained private/subroutine context |
+| Programmatic glyph generation       | SVG path (`path`) or CFF contours                       |
+| Accented / composed characters      | Composite (`components`)                                |
 
 ## Validation
 
@@ -468,7 +468,10 @@ if (report.valid) {
 }
 ```
 
-See the [Validation guide](./validation.md) for details on what's checked and auto-fixed.
+Validation leaves the live font unchanged. See the [Validation guide](./validation.md)
+for checks and repairs made only to the detached candidate. Imported CID,
+hinted, variable, and dependent glyph edits may reject at validation/export;
+see [Workflow Support](./index.md#workflow-support).
 
 ## Related table references
 

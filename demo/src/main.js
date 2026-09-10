@@ -12,6 +12,8 @@ import { createTableTab } from './tabs/table-detail.js';
 const app = document.getElementById('app');
 
 let fontFaceURL = null;
+let previewFontFace = null;
+let currentFontData = null;
 
 /**
  * Bridge between FontFlux class instances and the demo's tab UI.
@@ -49,11 +51,8 @@ function prepareFromInstances(instances, fileName, originalBuffer) {
 }
 
 function showLoadingScreen() {
-	// Revoke previous blob URL
-	if (fontFaceURL) {
-		URL.revokeObjectURL(fontFaceURL);
-		fontFaceURL = null;
-	}
+	currentFontData = null;
+	clearFontPreview();
 
 	app.className = '';
 	app.innerHTML = '';
@@ -122,10 +121,28 @@ function showLoadingScreen() {
 	}
 }
 
-function injectFontFace(buffer, fileName) {
-	// Remove previous injected style
+function clearFontPreview() {
 	const prev = document.getElementById('demo-font-face');
 	if (prev) prev.remove();
+	if (fontFaceURL) URL.revokeObjectURL(fontFaceURL);
+	fontFaceURL = null;
+	if (previewFontFace) document.fonts.delete(previewFontFace);
+	previewFontFace = null;
+}
+
+async function refreshFontPreview(buffer, expectedFontData) {
+	const replacement = new FontFace('DemoLoadedFont', buffer);
+	await replacement.load();
+	if (currentFontData !== expectedFontData) {
+		throw new Error('The active font changed while loading the preview');
+	}
+	clearFontPreview();
+	document.fonts.add(replacement);
+	previewFontFace = replacement;
+}
+
+function injectFontFace(buffer, fileName) {
+	clearFontPreview();
 
 	// Determine MIME by extension
 	const ext = fileName.split('.').pop().toLowerCase();
@@ -154,6 +171,7 @@ function injectFontFace(buffer, fileName) {
 
 function showApp(fontData, options = {}) {
 	const { initialTab = 'overview', errorMode = false } = options;
+	currentFontData = fontData;
 	app.className = 'app-loaded';
 	app.innerHTML = '';
 
@@ -177,7 +195,12 @@ function showApp(fontData, options = {}) {
 		}
 	}
 
-	const appContext = { fontData, markDirty, invalidateL1Cache };
+	const appContext = {
+		fontData,
+		markDirty,
+		invalidateL1Cache,
+		refreshPreview: (buffer) => refreshFontPreview(buffer, fontData),
+	};
 
 	// Header
 	const header = document.createElement('header');
@@ -211,13 +234,25 @@ function showApp(fontData, options = {}) {
 			const f = fontData._collectionFonts[i];
 			const opt = document.createElement('option');
 			opt.value = String(i);
-			opt.textContent = f.font?.fullName || f.font?.familyName || `Font ${i + 1}`;
+			opt.textContent =
+				f.font?.fullName || f.font?.familyName || `Font ${i + 1}`;
 			if (i === (fontData._collectionIndex ?? 0)) opt.selected = true;
 			chooser.appendChild(opt);
 		}
-		chooser.addEventListener('change', () => {
+		chooser.addEventListener('change', async () => {
 			const idx = parseInt(chooser.value, 10);
-			showApp(fontData._collectionFonts[idx]);
+			const nextFont = fontData._collectionFonts[idx];
+			chooser.disabled = true;
+			try {
+				const buffer = new FontFlux(nextFont).export({ format: 'sfnt' });
+				await refreshFontPreview(buffer, fontData);
+				showApp(nextFont);
+			} catch (err) {
+				chooser.value = String(fontData._collectionIndex ?? 0);
+				alert(`Unable to preview this face: ${err.message}`);
+			} finally {
+				chooser.disabled = false;
+			}
 		});
 		headerLeft.appendChild(chooser);
 	}

@@ -46,3 +46,22 @@ jobs:
 
       - name: Build docs
         run: npm run docs:build
+
+      - name: Install browser engines
+        run: npx playwright install --with-deps chromium firefox
+
+      - name: Verify installed package and independent consumers
+        run: npm run test:consumers
+
+  large-font:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify CJK collection serially in bounded child processes
+        run: npm run test:large

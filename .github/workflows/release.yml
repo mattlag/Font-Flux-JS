@@ -68,6 +68,18 @@ jobs:
       - name: Build library
         run: npm run build
 
+      - name: Build demo and documentation
+        run: npm run site:build
+
+      - name: Install browser engines
+        run: npx playwright install --with-deps chromium firefox
+
+      - name: Verify installed package and independent consumers
+        run: npm run test:consumers
+
+      - name: Verify CJK collection in bounded child processes
+        run: npm run test:large
+
       - name: Publish to npm
         run: npm publish --access public
 

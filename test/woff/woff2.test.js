@@ -42,8 +42,33 @@ beforeAll(async () => {
 // ─── Low-level unwrap tests ─────────────────────────────────────────────────
 
 describe('WOFF2 unwrap', () => {
+	it('checks table and collection counts before parsing their entries', () => {
+		const buffer = new ArrayBuffer(53);
+		const view = new DataView(buffer);
+		view.setUint32(0, 0x774f4632);
+		view.setUint16(12, 2);
+		expect(() => unwrapWOFF2(buffer, { maxTables: 1 })).toThrow(/maxTables/);
+		view.setUint16(12, 0);
+		view.setUint32(4, 0x74746366);
+		view.setUint32(48, 0x10000);
+		view.setUint8(52, 2);
+		expect(() => unwrapWOFF2(buffer, { maxFonts: 1 })).toThrow(/maxFonts/);
+	});
+
+	it('rejects output above the configured decompression budget', async () => {
+		const bytes = await readFile(resolve(SAMPLES_DIR, 'oblegg.woff2'));
+		const buffer = bytes.buffer.slice(
+			bytes.byteOffset,
+			bytes.byteOffset + bytes.byteLength,
+		);
+		expect(() => unwrapWOFF2(buffer, { maxUncompressedBytes: 64 })).toThrow(
+			/budget|limit/i,
+		);
+	});
+
 	it('should unwrap oblegg.woff2 into a valid SFNT', async () => {
-		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.woff2'))).buffer;
+		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.woff2')))
+			.buffer;
 		const { sfnt } = unwrapWOFF2(buffer);
 
 		expect(sfnt).toBeInstanceOf(ArrayBuffer);
@@ -85,20 +110,28 @@ describe('WOFF2 unwrap', () => {
 
 describe('WOFF2 wrap', () => {
 	it('should wrap a TTF SFNT into valid WOFF2', async () => {
-		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf'))).buffer;
+		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf')))
+			.buffer;
+		const originalBytes = new Uint8Array(ttfBuffer).slice();
 		const woff2Buffer = wrapWOFF2(ttfBuffer);
+		expect(new Uint8Array(ttfBuffer)).toEqual(originalBytes);
+		const decoded = importFont(unwrapWOFF2(woff2Buffer).sfnt);
+		expect(decoded.tables.head.flags & 0x0800).toBe(0x0800);
 
 		expect(woff2Buffer).toBeInstanceOf(ArrayBuffer);
 		// Check WOFF2 signature
 		const view = new DataView(woff2Buffer);
 		expect(view.getUint32(0)).toBe(0x774f4632); // 'wOF2'
+		expect(woff2Buffer.byteLength % 4).toBe(0);
+		expect(view.getUint32(8)).toBe(woff2Buffer.byteLength);
 
 		// WOFF2 should be smaller than SFNT (Brotli compressed)
 		expect(woff2Buffer.byteLength).toBeLessThan(ttfBuffer.byteLength);
 	});
 
 	it('should wrap an OTF SFNT into valid WOFF2', async () => {
-		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
+		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf')))
+			.buffer;
 		const woff2Buffer = wrapWOFF2(otfBuffer);
 
 		expect(woff2Buffer).toBeInstanceOf(ArrayBuffer);
@@ -108,7 +141,8 @@ describe('WOFF2 wrap', () => {
 	});
 
 	it('should produce a WOFF2 that unwraps back to matching font data', async () => {
-		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf'))).buffer;
+		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf')))
+			.buffer;
 
 		const woff2Buffer = wrapWOFF2(ttfBuffer);
 		const { sfnt } = unwrapWOFF2(woff2Buffer);
@@ -117,6 +151,7 @@ describe('WOFF2 wrap', () => {
 		// SFNT directory checksums, so strip _checksum/checksumAdjustment
 		const originalImport = importFont(ttfBuffer);
 		const roundTripped = importFont(sfnt);
+		originalImport.tables.head.flags |= 0x0800;
 
 		expect(stripBinaryArtifacts(roundTripped)).toEqual(
 			stripBinaryArtifacts(originalImport),
@@ -128,7 +163,8 @@ describe('WOFF2 wrap', () => {
 
 describe('WOFF2 importFont integration', () => {
 	it('should auto-detect and import a .woff2 file via importFont()', async () => {
-		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.woff2'))).buffer;
+		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.woff2')))
+			.buffer;
 		const result = importFont(buffer);
 
 		// Should have the simplified structure
@@ -172,7 +208,8 @@ describe('WOFF2 importFont integration', () => {
 
 describe('WOFF2 exportFont integration', () => {
 	it('WOFF2 import → export with no format → produces WOFF2', async () => {
-		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.woff2'))).buffer;
+		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.woff2')))
+			.buffer;
 		const imported = importFont(buffer);
 		expect(imported._woff?.version).toBe(2);
 		const out = exportFont(imported);
@@ -189,7 +226,8 @@ describe('WOFF2 exportFont integration', () => {
 	});
 
 	it('WOFF2 import + format:"sfnt" → produces SFNT', async () => {
-		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.woff2'))).buffer;
+		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.woff2')))
+			.buffer;
 		const imported = importFont(buffer);
 		const out = exportFont(imported, { format: 'sfnt' });
 		const view = new DataView(out);
@@ -197,7 +235,8 @@ describe('WOFF2 exportFont integration', () => {
 	});
 
 	it('TTF → WOFF2 → reimport → stabilizes', async () => {
-		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf'))).buffer;
+		const ttfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf')))
+			.buffer;
 		const original = importFont(ttfBuffer);
 
 		const woff2a = exportFont(original, { format: 'woff2' });
@@ -211,7 +250,8 @@ describe('WOFF2 exportFont integration', () => {
 	});
 
 	it('OTF → WOFF2 → reimport → stabilizes', async () => {
-		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
+		const otfBuffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf')))
+			.buffer;
 		const original = importFont(otfBuffer);
 
 		const woff2a = exportFont(original, { format: 'woff2' });

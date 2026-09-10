@@ -7,14 +7,103 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { parseINDEXv2, writeINDEXv2 } from '../../src/otf/cff_common.js';
+import {
+	parseINDEXv1,
+	parseINDEXv2,
+	writeINDEXv1,
+	writeINDEXv2,
+} from '../../src/otf/cff_common.js';
 import { parseCFF2, writeCFF2 } from '../../src/otf/table_CFF2.js';
+
+describe.each([
+	{ version: 1, countBytes: 2, parse: parseINDEXv1, write: writeINDEXv1 },
+	{ version: 2, countBytes: 4, parse: parseINDEXv2, write: writeINDEXv2 },
+])('CFF INDEX v$version bounds', ({ countBytes, parse, write }) => {
+	it('rejects every truncated prefix of a nonempty INDEX', () => {
+		const bytes = write([[14]]);
+		for (let length = 0; length < bytes.length; length++) {
+			expect(
+				() => parse(bytes.slice(0, length), 0),
+				`length ${length}`,
+			).toThrow(/INDEX/);
+		}
+	});
+
+	it.each([-1, 0.5, NaN, Infinity, 100])(
+		'rejects invalid start offset %s',
+		(offset) => {
+			expect(() => parse(write([]), offset)).toThrow(/INDEX/);
+		},
+	);
+
+	it.each([0, 5, 255])('rejects invalid offSize %s', (offSize) => {
+		const bytes = write([[14]]);
+		bytes[countBytes] = offSize;
+		expect(() => parse(bytes, 0)).toThrow(/INDEX/);
+	});
+
+	it.each([
+		[0, 2, 3],
+		[2, 2, 3],
+		[1, 3, 2],
+		[1, 2, 100],
+	])('rejects invalid offset array %j', (...offsets) => {
+		const bytes = write([[14], [14]]);
+		bytes.splice(countBytes + 1, 3, ...offsets);
+		expect(() => parse(bytes, 0)).toThrow(/INDEX/);
+	});
+
+	it('rejects a count exceeding the available offset array', () => {
+		const bytes = write([[14]]);
+		bytes[countBytes - 1] = 32;
+		expect(() => parse(bytes, 0)).toThrow(/INDEX/);
+	});
+
+	it('allows empty items, a nonzero start, and trailing data', () => {
+		const bytes = write([[], [14], []]);
+		const parsed = parse(new Uint8Array([255, ...bytes, 255]), 1);
+		expect(parsed.items.map((item) => Array.from(item))).toEqual([
+			[],
+			[14],
+			[],
+		]);
+		expect(parsed.totalBytes).toBe(bytes.length);
+	});
+});
 
 // ============================================================================
 //  INDEX v2 round-trip (uint32 count)
 // ============================================================================
 
 describe('CFF2 INDEX v2 round-trip', () => {
+	it.each([0x7fffffff, 0x80000000, 0xffffffff])(
+		'rejects oversized count %s before reading offsets',
+		(count) => {
+			const bytes = [
+				count >>> 24,
+				(count >>> 16) & 255,
+				(count >>> 8) & 255,
+				count & 255,
+				1,
+			];
+			const guarded = new Proxy(bytes, {
+				get(target, key) {
+					if (
+						typeof key === 'string' &&
+						/^\d+$/.test(key) &&
+						Number(key) >= target.length
+					) {
+						throw new Error('Read past input before validating INDEX count');
+					}
+					return Reflect.get(target, key);
+				},
+			});
+			expect(() => parseINDEXv2(guarded, 0)).toThrow(
+				'CFF INDEX offset array exceeds the input',
+			);
+		},
+	);
+
 	it('should round-trip an empty INDEX', () => {
 		const bytes = writeINDEXv2([]);
 		expect(bytes).toEqual([0, 0, 0, 0]); // uint32 count = 0
@@ -148,6 +237,8 @@ describe('CFF2 synthetic round-trip', () => {
 		const written = writeCFF2(cff2);
 		const parsed = parseCFF2(written);
 
-		expect(parsed.fontDicts[0].localSubrs).toEqual(cff2.fontDicts[0].localSubrs);
+		expect(parsed.fontDicts[0].localSubrs).toEqual(
+			cff2.fontDicts[0].localSubrs,
+		);
 	});
 });

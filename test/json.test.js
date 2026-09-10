@@ -13,6 +13,29 @@ import { fontFromJSON, fontToJSON } from '../src/json.js';
 const SAMPLES_DIR = resolve(import.meta.dirname, 'sample fonts');
 
 describe('fontToJSON', () => {
+	it('preserves exact large integers and durable WOFF metadata', () => {
+		const data = {
+			tables: { head: { created: 9223372036854775807n } },
+			_woff: {
+				version: 1,
+				metadata: new Uint8Array([60, 120, 47, 62]),
+				privateData: new Uint8Array([1, 2]),
+			},
+		};
+		const json = fontToJSON(data);
+		expect(JSON.parse(json)._schemaVersion).toBe(1);
+		const restored = fontFromJSON(json);
+		expect(restored.tables.head.created).toBe(9223372036854775807n);
+		expect(restored._woff).toEqual({
+			version: 1,
+			metadata: [60, 120, 47, 62],
+			privateData: [1, 2],
+		});
+		expect(() => fontFromJSON('{"_schemaVersion":999}')).toThrow(
+			/schema version/i,
+		);
+	});
+
 	it('should return a valid JSON string', () => {
 		const data = { font: { familyName: 'Test' }, glyphs: [] };
 		const json = fontToJSON(data);

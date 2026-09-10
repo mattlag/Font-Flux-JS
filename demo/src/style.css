@@ -2203,6 +2203,29 @@ pre.data-string-long.data-expanded {
 }
 
 /* ===== Responsive ===== */
+@media (max-width: 1100px) {
+	.app-header {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 8px 12px;
+	}
+	.header-left {
+		min-width: 0;
+		flex-wrap: wrap;
+	}
+	.app-header .font-name,
+	.app-header .font-chooser {
+		max-width: 100%;
+	}
+	.l1-nav {
+		grid-column: 1 / -1;
+		grid-row: 2;
+		min-width: 0;
+		justify-content: flex-start;
+		overflow-x: auto;
+	}
+}
+
 @media (max-width: 640px) {
 	.loading-card {
 		padding: 32px 20px;
@@ -2212,6 +2235,14 @@ pre.data-string-long.data-expanded {
 	}
 	.app-header {
 		padding: 10px 16px;
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.header-right {
+		grid-row: 2;
+		justify-content: flex-end;
+	}
+	.l1-nav {
+		grid-row: 3;
 	}
 	.tab-bar {
 		padding: 0 16px;

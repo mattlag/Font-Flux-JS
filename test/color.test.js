@@ -19,6 +19,47 @@ import { FontFlux } from '../src/font_flux.js';
 
 const SAMPLES = path.resolve('test/sample fonts');
 
+describe('cleared color ownership', () => {
+	it.each(['delete', 'reorder'])(
+		'remaps COLR v0 glyph identities on %s',
+		(operation) => {
+			const source = FontFlux.create({ family: 'Color Identity' });
+			for (const name of ['unused', 'base', 'layer'])
+				source.addGlyph({ name, advanceWidth: 500 });
+			source.addPalette(['#ff0000']);
+			source.addColorGlyph({
+				name: 'base',
+				layers: [{ glyph: 'layer', paletteIndex: 0 }],
+			});
+			const font = FontFlux.open(source.export());
+			const original = structuredClone(font.tables.COLR);
+			if (operation === 'delete') font.removeGlyph('unused');
+			else [font.glyphs[3], font.glyphs[4]] = [font.glyphs[4], font.glyphs[3]];
+			const reopened = FontFlux.open(font.export());
+			expect(reopened.data.colorGlyphs).toEqual(source.data.colorGlyphs);
+			expect(font.tables.COLR).toEqual(original);
+			font.removeGlyph('layer');
+			expect(() => font.export()).toThrow(/reference|removed glyph/i);
+		},
+	);
+
+	it('does not restore the final removed COLR and CPAL data', () => {
+		const source = FontFlux.create({ family: 'Clear Color' });
+		source.addGlyph({ name: 'A', unicode: 65, advanceWidth: 500 });
+		source.addPalette(['#ff0000']);
+		source.addColorGlyph({
+			name: 'A',
+			layers: [{ glyph: 'A', paletteIndex: 0 }],
+		});
+		const font = FontFlux.open(source.export());
+		font.removeColorGlyph('A');
+		font.removePalette(0);
+		const reopened = FontFlux.open(FontFlux.fromJSON(font.toJSON()).export());
+		expect(reopened.tables.COLR).toBeUndefined();
+		expect(reopened.tables.CPAL).toBeUndefined();
+	});
+});
+
 // ============================================================================
 //  HEX ↔ BGRA CONVERSION
 // ============================================================================

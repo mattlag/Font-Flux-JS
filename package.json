@@ -1,16 +1,21 @@
 {
 	"name": "font-flux-js",
-	"version": "2.8.0",
+	"version": "2.9.0",
 	"description": "Convert fonts to JSON, make edits, then convert them back!",
 	"main": "dist/font-flux-js.js",
+	"types": "index.d.ts",
 	"type": "module",
 	"exports": {
 		".": {
+			"types": "./index.d.ts",
 			"import": "./dist/font-flux-js.js"
-		}
+		},
+		"./schema": "./font-flux.schema.json"
 	},
 	"files": [
 		"dist/",
+		"index.d.ts",
+		"font-flux.schema.json",
 		"README.md",
 		"LICENSE"
 	],
@@ -18,6 +23,9 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"test:visual": "node test/visual/server.js",
+		"test:demo": "node scripts/verify-demo.mjs",
+		"test:consumers": "npm run build && node scripts/verify-consumers.mjs",
+		"test:large": "node scripts/verify-large-font.mjs",
 		"build": "vite build",
 		"demo:dev": "vite --config demo/vite.config.js",
 		"demo:build": "vite build --config demo/vite.config.js",
@@ -55,9 +63,14 @@
 	"homepage": "https://www.glyphrstudio.com/fontfluxjs/",
 	"devDependencies": {
 		"@biomejs/biome": "2.4.15",
+		"@playwright/test": "1.63.0",
+		"ajv": "8.20.0",
+		"harfbuzzjs": "1.6.1",
+		"typescript": "7.0.2",
 		"vite": "^8.0.0",
 		"vitepress": "^2.0.0-alpha.18",
-		"vitest": "^4.1.0"
+		"vitest": "4.1.11",
+		"yaml": "2.9.0"
 	},
 	"dependencies": {
 		"brotli-wasm": "^3.0.1",

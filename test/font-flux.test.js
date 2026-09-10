@@ -10,6 +10,161 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { FontFlux } from '../src/font_flux.js';
 
+describe('simplified validation failures', () => {
+	it.each([
+		'maxInputBytes',
+		'maxTableBytes',
+		'maxTables',
+		'maxGlyphs',
+		'maxPoints',
+	])('enforces configurable %s before excessive import work', (key) => {
+		const bytes = FontFlux.create().export();
+		expect(() => FontFlux.open(bytes, { [key]: 1 })).toThrow(new RegExp(key));
+		expect(() => FontFlux.open(bytes, { [key]: Infinity })).toThrow(
+			/Invalid import limit/,
+		);
+	});
+	it('limits collection face counts before parsing faces', () => {
+		const bytes = FontFlux.exportCollection([
+			FontFlux.create(),
+			FontFlux.create(),
+		]);
+		expect(() => FontFlux.openAll(bytes, { maxFonts: 1 })).toThrow(/maxFonts/);
+	});
+	it.each([
+		'kerning',
+		'kerningClasses',
+		'substitutions',
+		'axes',
+		'instances',
+		'colorGlyphs',
+		'palettes',
+	])('reports malformed %s arrays without throwing', (key) => {
+		const font = FontFlux.create();
+		font.data[key] = {};
+		expect(font.validate().errors[0].code).toBe('ARRAY_SHAPE_INVALID');
+		expect(() => font.export()).toThrow(/must be an array/);
+	});
+	it('rejects transforms outside the binary range and invalid instance coordinates', () => {
+		const font = FontFlux.create();
+		font.addGlyph({
+			name: 'component',
+			components: [{ glyphName: 'space', scale: 2 }],
+		});
+		font.addInstance({ name: 'Invalid', coordinates: { wght: 500 } });
+		const codes = font.validate().errors.map((issue) => issue.code);
+		expect(codes).toContain('COMPONENT_TRANSFORM_INVALID');
+		expect(codes).toContain('INSTANCE_COORDINATES_INVALID');
+	});
+	it.each(['oblegg.ttf', 'oblegg.otf', 'AdobeVFPrototype-online-test.otf'])(
+		'exports frozen imported data without mutation: %s',
+		async (fileName) => {
+			const font = FontFlux.open(
+				await readFile(resolve(import.meta.dirname, 'sample fonts', fileName)),
+			);
+			font.info.familyName += ' Frozen';
+			const freeze = (value, seen = new WeakSet()) => {
+				if (!value || typeof value !== 'object' || seen.has(value)) return;
+				seen.add(value);
+				for (const child of Object.values(value)) freeze(child, seen);
+				if (!ArrayBuffer.isView(value)) Object.freeze(value);
+			};
+			const before = font.toJSON();
+			freeze(font.data);
+			const exported = font.export();
+			expect(font.toJSON()).toBe(before);
+			expect(FontFlux.open(exported).info.familyName).toBe(
+				font.info.familyName,
+			);
+		},
+	);
+	it('reports dangling references before silently dropping layout', () => {
+		const font = FontFlux.create();
+		font.data.kerning = [{ left: 'missing', right: 'space', value: -20 }];
+		expect(
+			font
+				.validate()
+				.errors.some((issue) => issue.code === 'GLYPH_REFERENCE_INVALID'),
+		).toBe(true);
+		expect(() => font.export()).toThrow(/Unknown glyph reference/);
+	});
+	it('opens one selected collection face without parsing other faces', () => {
+		const buffer = FontFlux.exportCollection([
+			FontFlux.create({ family: 'First Face' }),
+			FontFlux.create({ family: 'Second Face' }),
+		]);
+		const view = new DataView(buffer);
+		view.setUint32(12, 0xffffffff);
+		expect(FontFlux.open(buffer, { faceIndex: 1 }).info.familyName).toBe(
+			'Second Face',
+		);
+		expect(() => FontFlux.open(buffer, { faceIndex: 2 })).toThrow(/faceIndex/);
+	});
+
+	it('preserves metadata fields outside the editable projection', () => {
+		const font = FontFlux.open(
+			FontFlux.create({ family: 'Unowned Metadata' }).export(),
+		);
+		Object.assign(font.tables.head, {
+			flags: 0x1234,
+			fontRevision: 2.5,
+			lowestRecPPEM: 12,
+		});
+		Object.assign(font.tables.hhea, {
+			caretSlopeRise: 2,
+			caretSlopeRun: 1,
+			caretOffset: 30,
+		});
+		Object.assign(font.tables['OS/2'], {
+			ySubscriptXSize: 333,
+			ySuperscriptYOffset: 444,
+			sFamilyClass: 512,
+		});
+		font.info.familyName = 'Metadata Renamed';
+		const reopened = FontFlux.open(font.export());
+		expect(reopened.tables.head).toMatchObject({
+			flags: 0x1234,
+			fontRevision: 2.5,
+			lowestRecPPEM: 12,
+		});
+		expect(reopened.tables.hhea).toMatchObject({
+			caretSlopeRise: 2,
+			caretSlopeRun: 1,
+			caretOffset: 30,
+		});
+		expect(reopened.tables['OS/2']).toMatchObject({
+			ySubscriptXSize: 333,
+			ySuperscriptYOffset: 444,
+			sFamilyClass: 512,
+		});
+	});
+
+	it.each([NaN, Infinity, -1, 65536, 1.5])(
+		'rejects an invalid advanceWidth %s before serialization',
+		(value) => {
+			const font = FontFlux.create({ family: 'Invalid Metrics' });
+			font.glyphs[0].advanceWidth = value;
+			const report = font.validate();
+			expect(report.valid).toBe(false);
+			expect(
+				report.errors.some((error) => error.path.includes('advanceWidth')),
+			).toBe(true);
+			expect(() => font.export()).toThrow(/advanceWidth/);
+		},
+	);
+
+	it('reports resolver failures without throwing or mutating the input', () => {
+		const font = FontFlux.create({ family: 'Invalid Components' });
+		font.glyphs[0].components = [{ glyphName: '.notdef' }];
+		const before = font.toJSON();
+		expect(font.validate()).toMatchObject({
+			valid: false,
+			errors: [expect.objectContaining({ code: 'EXPORT_RESOLUTION_FAILED' })],
+		});
+		expect(font.toJSON()).toBe(before);
+	});
+});
+
 const SAMPLES_DIR = resolve(import.meta.dirname, 'sample fonts');
 
 // ============================================================================
@@ -306,16 +461,14 @@ describe('Reconciliation: edits to imported fonts are honoured on export', () =>
 		expect(reimported.hasGlyph('testglyph')).toBe(true);
 	});
 
-	it('kerning edits survive export', async () => {
+	it('rejects ambiguous kerning edits shared with required positioning', async () => {
 		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf'))).buffer;
 		const font = FontFlux.open(buffer);
 
 		font.addKerning({ left: 'A', right: 'V', value: -999 });
-
-		const exported = font.export({ format: 'sfnt' });
-		const reimported = FontFlux.open(exported);
-
-		expect(reimported.getKerning('A', 'V')).toBe(-999);
+		expect(() => font.export({ format: 'sfnt' })).toThrow(
+			/shared.*positioning/,
+		);
 	});
 
 	it('no-edit export preserves non-decomposed tables', async () => {
@@ -375,7 +528,7 @@ describe('Reconciliation: edits to imported fonts are honoured on export', () =>
 		expect(reimported.hasGlyph('testglyph')).toBe(true);
 	});
 
-	it('OTF glyph removal survives export', async () => {
+	it('OTF glyph removal rejects retained layout dependencies without remapping', async () => {
 		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
 		const font = FontFlux.open(buffer);
 		const originalCount = font.glyphCount;
@@ -384,11 +537,10 @@ describe('Reconciliation: edits to imported fonts are honoured on export', () =>
 		const glyphName = font.glyphs[font.glyphCount - 1].name;
 		font.removeGlyph(glyphName);
 
-		const exported = font.export({ format: 'sfnt' });
-		const reimported = FontFlux.open(exported);
-
-		expect(reimported.glyphCount).toBe(originalCount - 1);
-		expect(reimported.hasGlyph(glyphName)).toBe(false);
+		expect(font.glyphCount).toBe(originalCount - 1);
+		expect(() => font.export({ format: 'sfnt' })).toThrow(
+			/reference remapping|Unknown glyph reference/,
+		);
 	});
 
 	it('OTF glyph contour edit via charString replacement survives export', async () => {
@@ -471,7 +623,7 @@ describe('Reconciliation: edits to imported fonts are honoured on export', () =>
 		expect(aReimported.contours[0][0].y).toBe(0);
 	});
 
-	it('TTF glyph removal survives export', async () => {
+	it('TTF glyph removal rejects retained layout dependencies without remapping', async () => {
 		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.ttf'))).buffer;
 		const font = FontFlux.open(buffer);
 		const originalCount = font.glyphCount;
@@ -479,11 +631,10 @@ describe('Reconciliation: edits to imported fonts are honoured on export', () =>
 		const glyphName = font.glyphs[font.glyphCount - 1].name;
 		font.removeGlyph(glyphName);
 
-		const exported = font.export({ format: 'sfnt' });
-		const reimported = FontFlux.open(exported);
-
-		expect(reimported.glyphCount).toBe(originalCount - 1);
-		expect(reimported.hasGlyph(glyphName)).toBe(false);
+		expect(font.glyphCount).toBe(originalCount - 1);
+		expect(() => font.export({ format: 'sfnt' })).toThrow(
+			/reference remapping|Unknown glyph reference/,
+		);
 	});
 });
 
@@ -539,9 +690,48 @@ describe('detach()', () => {
 describe('validate()', () => {
 	it('validates a created font', () => {
 		const font = FontFlux.create({ family: 'Valid' });
+		const before = font.toJSON();
 		const result = font.validate();
-		expect(result).toHaveProperty('valid');
-		expect(result).toHaveProperty('errors');
+		expect(result.valid).toBe(true);
+		expect(result.errors).toEqual([]);
+		expect(font.toJSON()).toBe(before);
+	});
+
+	it('preserves imported edits and does not change export routing', () => {
+		const font = FontFlux.open(
+			FontFlux.create({ family: 'Original' }).export(),
+		);
+		font.info.familyName = 'Edited';
+		font.getGlyph('space').advanceWidth = 375;
+		const before = font.toJSON();
+
+		expect(font.validate().valid).toBe(true);
+		expect(font.validate().valid).toBe(true);
+		expect(font.toJSON()).toBe(before);
+
+		const reopened = FontFlux.open(font.export());
+		expect(reopened.info.familyName).toBe('Edited');
+		expect(reopened.getGlyph('space').advanceWidth).toBe(375);
+
+		font.info.familyName = 'Edited Again';
+		const restored = FontFlux.fromJSON(font.toJSON());
+		expect(FontFlux.open(restored.export()).info.familyName).toBe(
+			'Edited Again',
+		);
+	});
+
+	it('honors simplified edits in JSON with a legacy header', () => {
+		const font = FontFlux.open(
+			FontFlux.create({ family: 'Original' }).export(),
+		);
+		const data = JSON.parse(font.toJSON());
+		data.header = { ...data._header };
+		data.font.familyName = 'Legacy JSON Edit';
+		const restored = FontFlux.fromJSON(JSON.stringify(data));
+
+		expect(FontFlux.open(restored.export()).info.familyName).toBe(
+			'Legacy JSON Edit',
+		);
 	});
 });
 
@@ -691,7 +881,10 @@ describe('Vertical metrics round-trip', () => {
 
 describe('Static utilities', () => {
 	it('svgToContours() converts SVG path', () => {
-		const contours = FontFlux.svgToContours('M0 0 L100 0 L100 100 Z', 'truetype');
+		const contours = FontFlux.svgToContours(
+			'M0 0 L100 0 L100 100 Z',
+			'truetype',
+		);
 		expect(contours.length).toBeGreaterThan(0);
 	});
 

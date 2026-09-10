@@ -382,39 +382,7 @@ export function encodeDICT(entries) {
  * @returns {{ items: Uint8Array[], totalBytes: number }}
  */
 export function parseINDEXv1(bytes, offset) {
-	const count = (bytes[offset] << 8) | bytes[offset + 1];
-
-	if (count === 0) {
-		return { items: [], totalBytes: 2 };
-	}
-
-	const offSize = bytes[offset + 2];
-	const offArrayStart = offset + 3;
-
-	// Read offsets (each is offSize bytes, big-endian, 1-based)
-	const offsets = [];
-	for (let i = 0; i <= count; i++) {
-		let val = 0;
-		const base = offArrayStart + i * offSize;
-		for (let j = 0; j < offSize; j++) {
-			val = (val << 8) | bytes[base + j];
-		}
-		offsets.push(val);
-	}
-
-	// Data starts after the offset array
-	const dataStart = offArrayStart + (count + 1) * offSize;
-
-	// Extract items — offsets are 1-based from the byte preceding data
-	const items = [];
-	for (let i = 0; i < count; i++) {
-		const start = dataStart + offsets[i] - 1;
-		const end = dataStart + offsets[i + 1] - 1;
-		items.push(new Uint8Array(Array.prototype.slice.call(bytes, start, end)));
-	}
-
-	const totalBytes = dataStart + offsets[count] - 1 - offset;
-	return { items, totalBytes };
+	return parseINDEX(bytes, offset, 2);
 }
 
 /**
@@ -432,43 +400,62 @@ export function parseINDEXv1(bytes, offset) {
  * @returns {{ items: Uint8Array[], totalBytes: number }}
  */
 export function parseINDEXv2(bytes, offset) {
-	const count =
-		(bytes[offset] << 24) |
-		(bytes[offset + 1] << 16) |
-		(bytes[offset + 2] << 8) |
-		bytes[offset + 3];
+	return parseINDEX(bytes, offset, 4);
+}
 
-	// Treat as unsigned
-	const uCount = count >>> 0;
-
-	if (uCount === 0) {
-		return { items: [], totalBytes: 4 };
+function parseINDEX(bytes, offset, countBytes) {
+	if (
+		!Number.isInteger(offset) ||
+		offset < 0 ||
+		offset + countBytes > bytes.length
+	) {
+		throw new RangeError('CFF INDEX count is outside the input');
 	}
+	let count = 0;
+	for (let position = offset; position < offset + countBytes; position++) {
+		count = count * 256 + bytes[position];
+	}
+	if (count === 0) return { items: [], totalBytes: countBytes };
 
-	const offSize = bytes[offset + 4];
-	const offArrayStart = offset + 5;
+	const offSize = bytes[offset + countBytes];
+	if (!Number.isInteger(offSize) || offSize < 1 || offSize > 4) {
+		throw new RangeError('CFF INDEX offSize must be between 1 and 4');
+	}
+	const offArrayStart = offset + countBytes + 1;
+	const dataStart = offArrayStart + (count + 1) * offSize;
+	if (!Number.isInteger(count) || count < 0 || dataStart > bytes.length) {
+		throw new RangeError('CFF INDEX offset array exceeds the input');
+	}
 
 	const offsets = [];
-	for (let i = 0; i <= uCount; i++) {
-		let val = 0;
-		const base = offArrayStart + i * offSize;
-		for (let j = 0; j < offSize; j++) {
-			val = (val << 8) | bytes[base + j];
+	let previous = 1;
+	for (let index = 0; index <= count; index++) {
+		let value = 0;
+		const base = offArrayStart + index * offSize;
+		for (let byteIndex = 0; byteIndex < offSize; byteIndex++) {
+			value = value * 256 + bytes[base + byteIndex];
 		}
-		offsets.push(val >>> 0); // unsigned
+		if (
+			!Number.isInteger(value) ||
+			(index === 0 && value !== 1) ||
+			value < previous ||
+			value > bytes.length - dataStart + 1
+		) {
+			throw new RangeError(
+				'CFF INDEX offsets must be ordered, 1-based, and within the input',
+			);
+		}
+		offsets.push(value);
+		previous = value;
 	}
-
-	const dataStart = offArrayStart + (uCount + 1) * offSize;
 
 	const items = [];
-	for (let i = 0; i < uCount; i++) {
-		const start = dataStart + offsets[i] - 1;
-		const end = dataStart + offsets[i + 1] - 1;
+	for (let index = 0; index < count; index++) {
+		const start = dataStart + offsets[index] - 1;
+		const end = dataStart + offsets[index + 1] - 1;
 		items.push(new Uint8Array(Array.prototype.slice.call(bytes, start, end)));
 	}
-
-	const totalBytes = dataStart + offsets[uCount] - 1 - offset;
-	return { items, totalBytes };
+	return { items, totalBytes: dataStart + offsets[count] - 1 - offset };
 }
 
 // ===========================================================================
@@ -750,6 +737,17 @@ export function objectToDictEntries(obj, opsByName) {
  * @param {number} numGlyphs
  * @returns {number[]}
  */
+export function getCFFGlyphContext(cff, index) {
+	const font = cff.fonts[0];
+	const dictionary = font.fdArray?.[font.fdSelect?.[index] ?? 0] || font;
+	return {
+		globalSubrs: cff.globalSubrs || [],
+		localSubrs: dictionary.localSubrs || [],
+		nominalWidthX: dictionary.privateDict?.nominalWidthX ?? 0,
+		defaultWidthX: dictionary.privateDict?.defaultWidthX ?? 0,
+	};
+}
+
 export function parseFDSelect(bytes, offset, numGlyphs) {
 	const format = bytes[offset];
 
@@ -860,7 +858,8 @@ export function parseCharset(bytes, offset, numGlyphs) {
 	if (format === 0) {
 		for (let g = 1; g < numGlyphs; g++) {
 			const sid =
-				(bytes[offset + 1 + (g - 1) * 2] << 8) | bytes[offset + 2 + (g - 1) * 2];
+				(bytes[offset + 1 + (g - 1) * 2] << 8) |
+				bytes[offset + 2 + (g - 1) * 2];
 			sids.push(sid);
 		}
 	} else if (format === 1) {

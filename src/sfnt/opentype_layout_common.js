@@ -454,18 +454,33 @@ export function parseFeatureList(reader, offset) {
 
 	const featureRecords = records.map((rec) => ({
 		featureTag: rec.featureTag,
-		feature: parseFeature(reader, offset + rec.featureOffset),
+		feature: parseFeature(reader, offset + rec.featureOffset, rec.featureTag),
 	}));
 
 	return { featureRecords };
 }
 
-function parseFeature(reader, offset) {
+function parseFeature(reader, offset, tag) {
 	reader.seek(offset);
 	const featureParamsOffset = reader.uint16();
 	const lookupIndexCount = reader.uint16();
 	const lookupListIndices = reader.array('uint16', lookupIndexCount);
-	return { featureParamsOffset, lookupListIndices };
+	const feature = { featureParamsOffset, lookupListIndices };
+	if (featureParamsOffset && tag === 'size') {
+		reader.seek(offset + featureParamsOffset);
+		feature.featureParams = reader.array('uint8', 10);
+	}
+	if (featureParamsOffset && /^ss\d\d$/.test(tag)) {
+		reader.seek(offset + featureParamsOffset);
+		feature.featureParams = reader.array('uint8', 4);
+	}
+	if (featureParamsOffset && /^cv\d\d$/.test(tag)) {
+		reader.seek(offset + featureParamsOffset + 12);
+		const count = reader.uint16();
+		reader.seek(offset + featureParamsOffset);
+		feature.featureParams = reader.array('uint8', 14 + count * 3);
+	}
+	return feature;
 }
 
 /**
@@ -503,10 +518,12 @@ export function writeFeatureList(featureList) {
 
 function writeFeature(feature) {
 	const size = 4 + feature.lookupListIndices.length * 2;
-	const w = new DataWriter(size);
-	w.uint16(feature.featureParamsOffset);
+	const params = feature.featureParams || [];
+	const w = new DataWriter(size + params.length);
+	w.uint16(params.length ? size : 0);
 	w.uint16(feature.lookupListIndices.length);
 	w.array('uint16', feature.lookupListIndices);
+	w.rawBytes(params);
 	return w.toArray();
 }
 

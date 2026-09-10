@@ -18,6 +18,7 @@
 
 import { decomposeGlyph } from './glyph.js';
 import { compileCharString } from './otf/charstring_compiler.js';
+import { getGlyphNames } from './simplify.js';
 import { cubicToQuadratics } from './svg_path.js';
 
 /** sfntVersion for TrueType-outline fonts (.ttf). */
@@ -85,9 +86,13 @@ export function convertOutlines(fontData, target) {
 		);
 	}
 
-	return target === 'truetype'
-		? cffToTrueType(fontData)
-		: trueTypeToCFF(fontData);
+	const converted =
+		target === 'truetype' ? cffToTrueType(fontData) : trueTypeToCFF(fontData);
+	if (tables.maxp)
+		converted._sourceGlyphNames =
+			fontData._sourceGlyphNames ||
+			getGlyphNames(tables, tables.maxp.numGlyphs);
+	return converted;
 }
 
 /**
