@@ -726,7 +726,7 @@ function computeGlyphMetrics(glyphs, font, glyf) {
 	let minLSB = Infinity;
 	let minRSB = Infinity;
 	let maxExtent = -Infinity;
-	let firstCharIndex = 0xffff;
+	let firstCharIndex = Infinity;
 	let lastCharIndex = 0;
 	const unicodeRanges = new Set();
 
@@ -753,7 +753,7 @@ function computeGlyphMetrics(glyphs, font, glyf) {
 		}
 
 		// Unicode tracking
-		const codes = glyph.unicodes || (glyph.unicode ? [glyph.unicode] : []);
+		const codes = glyph.unicodes || (glyph.unicode != null ? [glyph.unicode] : []);
 		for (const code of codes) {
 			if (code < firstCharIndex) firstCharIndex = code;
 			if (code > lastCharIndex) lastCharIndex = code;
@@ -769,7 +769,7 @@ function computeGlyphMetrics(glyphs, font, glyf) {
 	if (minLSB === Infinity) minLSB = 0;
 	if (minRSB === Infinity) minRSB = 0;
 	if (maxExtent === -Infinity) maxExtent = 0;
-	if (firstCharIndex === 0xffff) firstCharIndex = 0;
+	if (firstCharIndex === Infinity) firstCharIndex = 0;
 	if (lastCharIndex === 0) lastCharIndex = 0;
 
 	// Estimate sxHeight and sCapHeight
@@ -1476,15 +1476,19 @@ function buildFormat12Groups(entries) {
 function buildFormat4Data(entries) {
 	const segments = [];
 	const glyphIdArray = [];
+	const lastEntry = entries[entries.length - 1];
+	const hasTerminalMapping = lastEntry?.[0] === 0xffff;
+	const terminalSegment = {
+		startCode: 0xffff,
+		endCode: 0xffff,
+		idDelta: hasTerminalMapping ? lastEntry[1] - 0xffff : 1,
+		idRangeOffset: 0,
+	};
+	// U+FFFF may map to a glyph, but must occupy its own terminal segment.
+	if (hasTerminalMapping) entries = entries.slice(0, -1);
 
 	if (entries.length === 0) {
-		// Must have sentinel
-		segments.push({
-			startCode: 0xffff,
-			endCode: 0xffff,
-			idDelta: 1,
-			idRangeOffset: 0,
-		});
+		segments.push(terminalSegment);
 		return { segments, glyphIdArray };
 	}
 
@@ -1516,13 +1520,7 @@ function buildFormat4Data(entries) {
 		idRangeOffset: 0,
 	});
 
-	// Sentinel segment
-	segments.push({
-		startCode: 0xffff,
-		endCode: 0xffff,
-		idDelta: 1,
-		idRangeOffset: 0,
-	});
+	segments.push(terminalSegment);
 
 	return { segments, glyphIdArray };
 }

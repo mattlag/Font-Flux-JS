@@ -41,6 +41,229 @@ function inspectExported(buffer) {
 	return { directoryTags, map, u8, dv };
 }
 
+function inspectCmap(buffer) {
+	const { map, dv } = inspectExported(buffer);
+	const base = map.cmap.off;
+	return Array.from({ length: dv.getUint16(base + 2) }, (_, i) => {
+		const record = base + 4 + i * 8;
+		const offset = base + dv.getUint32(record + 4);
+		const format = dv.getUint16(offset);
+		const segments = [];
+		const groups = [];
+		if (format === 4) {
+			const count = dv.getUint16(offset + 6) / 2;
+			for (let j = 0; j < count; j++) {
+				segments.push({
+					endCode: dv.getUint16(offset + 14 + j * 2),
+					startCode: dv.getUint16(offset + 16 + count * 2 + j * 2),
+					idDelta: dv.getInt16(offset + 16 + count * 4 + j * 2),
+					idRangeOffset: dv.getUint16(offset + 16 + count * 6 + j * 2),
+				});
+			}
+		} else if (format === 12) {
+			for (let j = 0; j < dv.getUint32(offset + 12); j++) {
+				const group = offset + 16 + j * 12;
+				groups.push({
+					start: dv.getUint32(group),
+					end: dv.getUint32(group + 4),
+					glyphID: dv.getUint32(group + 8),
+				});
+			}
+		}
+		return {
+			platformID: dv.getUint16(record),
+			encodingID: dv.getUint16(record + 2),
+			format,
+			segments,
+			groups,
+		};
+	});
+}
+
+describe('OTS compliance — format-4 terminal mappings', () => {
+	it.each([
+		{ name: 'U+FFFF alone', codes: [0xffff] },
+		{ name: 'U+FFFE alone', codes: [0xfffe] },
+		{ name: 'consecutive glyph IDs at U+FFFE and U+FFFF', codes: [0xfffe, 0xffff] },
+		{ name: 'nonconsecutive glyph IDs at U+FFFE and U+FFFF', codes: [0xfffe, 65, 0xffff] },
+		{ name: 'ordinary BMP mappings without U+FFFF', codes: [65, 66, 0x20ac] },
+		{
+			name: 'BMP, U+FFFF, and supplementary mappings',
+			codes: [65, 66, 0xfffe, 0xffff, 0x10000, 0x1f600],
+		},
+	])('preserves $name in the exported binary', ({ codes }) => {
+		const font = FontFlux.create({
+			family: 'Terminal Repro',
+			unitsPerEm: 1000,
+			ascender: 800,
+			descender: -200,
+		});
+		for (const code of codes) {
+			font.addGlyph({
+				name: `uni${code.toString(16)}`,
+				unicode: code,
+				advanceWidth: 500,
+				contours: [],
+			});
+		}
+		const expected = new Map(
+			font.glyphs.map((glyph, index) => [glyph.unicode, index]),
+		);
+		const buffer = font.export({ format: 'ttf' });
+		const subtables = inspectCmap(buffer);
+		const format4 = subtables.filter((sub) => sub.format === 4);
+		expect(format4.map((sub) => [sub.platformID, sub.encodingID])).toEqual([
+			[0, 3],
+			[3, 1],
+		]);
+		for (const { segments } of format4) {
+			expect(segments.filter((seg) => seg.endCode === 0xffff)).toHaveLength(1);
+			expect(segments.at(-1)).toMatchObject({
+				startCode: 0xffff,
+				endCode: 0xffff,
+				idRangeOffset: 0,
+			});
+			for (let i = 0; i < segments.length; i++) {
+				expect(segments[i].startCode).toBeLessThanOrEqual(segments[i].endCode);
+				if (i > 0) {
+					expect(segments[i].endCode).toBeGreaterThan(segments[i - 1].endCode);
+					expect(segments[i].startCode).toBeGreaterThan(segments[i - 1].endCode);
+				}
+			}
+			for (const code of new Set([32, ...codes.filter((cp) => cp <= 0xffff), 0xffff])) {
+				const seg = segments.find((entry) => entry.endCode >= code);
+				expect(seg.startCode).toBeLessThanOrEqual(code);
+				expect(seg.idRangeOffset).toBe(0);
+				expect((code + seg.idDelta) & 0xffff).toBe(expected.get(code) ?? 0);
+			}
+		}
+		const format12 = subtables.filter((sub) => sub.format === 12);
+		expect(format12).toHaveLength(codes.some((code) => code > 0xffff) ? 2 : 0);
+		for (const { groups } of format12) {
+			for (const code of [32, ...codes]) {
+				const group = groups.find((entry) => entry.start <= code && entry.end >= code);
+				expect(group).toBeDefined();
+				expect(group.glyphID + code - group.start).toBe(expected.get(code));
+			}
+		}
+		expect(FontFlux.diagnose(buffer).errors.filter((issue) => issue.code.startsWith('CMAP_'))).toEqual([]);
+	});
+
+	it('diagnoses duplicate terminal endCodes in an exported binary', () => {
+		const font = FontFlux.create({ family: 'Duplicate Terminal' });
+		font.addGlyph({ name: 'uniFFFE', unicode: 0xfffe, advanceWidth: 500 });
+		const buffer = font.export({ format: 'ttf' });
+		const { map, dv } = inspectExported(buffer);
+		const record = map.cmap.off + 4;
+		const offset = map.cmap.off + dv.getUint32(record + 4);
+		expect(dv.getUint16(offset)).toBe(4);
+		const count = dv.getUint16(offset + 6) / 2;
+		dv.setUint16(offset + 14 + (count - 2) * 2, 0xffff);
+		const report = FontFlux.diagnose(buffer);
+		expect(report.valid).toBe(false);
+		expect(report.errors).toEqual(expect.arrayContaining([
+			expect.objectContaining({ code: 'CMAP_FORMAT4_RANGES_OUT_OF_ORDER' }),
+		]));
+	});
+
+	it.each([0, 2, 4999])('checks terminal glyph ID %i against numGlyphs', (glyphID) => {
+		const font = FontFlux.create({ family: 'Terminal Glyph Bounds' });
+		font.addGlyph({ name: 'uniFFFF', unicode: 0xffff, advanceWidth: 500 });
+		const buffer = font.export({ format: 'ttf' });
+		const { map, dv } = inspectExported(buffer);
+		const offset = map.cmap.off + dv.getUint32(map.cmap.off + 8);
+		const count = dv.getUint16(offset + 6) / 2;
+		dv.setInt16(offset + 16 + count * 4 + (count - 1) * 2, glyphID + 1);
+		expect((0xffff + dv.getInt16(offset + 16 + count * 4 + (count - 1) * 2)) & 0xffff).toBe(glyphID);
+		const errors = FontFlux.diagnose(buffer).errors.filter(
+			(issue) => issue.code === 'CMAP_GLYPH_OUT_OF_RANGE',
+		);
+		expect(errors).toHaveLength(glyphID >= font.glyphs.length ? 1 : 0);
+	});
+});
+
+describe('OTS compliance — Unicode metric boundaries', () => {
+	it.each([
+		{ codes: [], first: 0, last: 0 },
+		{ codes: [0], first: 0, last: 0 },
+		{ codes: [0, 65], first: 0, last: 65 },
+		{ codes: [0xffff], first: 0xffff, last: 0xffff },
+		{ codes: [0x10000], first: 0xffff, last: 0xffff },
+		{ codes: [0xfffe, 0xffff], first: 0xfffe, last: 0xffff },
+		{ codes: [65, 0x1f600], first: 65, last: 0xffff },
+	])('exports OS/2 character bounds for $codes', ({ codes, first, last }) => {
+		for (const useAliases of [false, true]) {
+			const font = FontFlux.create({ family: 'Character Bounds' });
+			delete font.glyphs[1].unicode;
+			if (useAliases && codes.length > 0) {
+				font.addGlyph({ name: 'aliases', unicodes: codes, advanceWidth: 500 });
+			} else {
+				for (const code of codes) {
+					font.addGlyph({ name: `u${code}`, unicode: code, advanceWidth: 500 });
+				}
+			}
+			const { map, dv } = inspectExported(font.export({ format: 'ttf' }));
+			expect(dv.getUint16(map['OS/2'].off + 64)).toBe(first);
+			expect(dv.getUint16(map['OS/2'].off + 66)).toBe(last);
+			expect(font.validate().valid).toBe(true);
+		}
+	});
+});
+
+describe('OTS compliance — format-4 length boundaries', () => {
+	it.each([
+		{ mappings: 8187, length: 65528 },
+		{ mappings: 8188, length: 65536 },
+		{ mappings: 8200, length: 65632 },
+	])('handles $mappings sparse BMP mappings without length wraparound', ({ mappings, length }) => {
+		const font = FontFlux.create({ family: 'Sparse BMP' });
+		for (let i = 0; i < mappings; i++) {
+			font.glyphs.push({
+				name: `s${i}`,
+				unicode: 0x100 + i * 2,
+				advanceWidth: 500,
+				contours: [],
+			});
+		}
+		const report = font.validate();
+		if (length > 0xffff) {
+			expect(report.valid).toBe(false);
+			expect(report.errors).toEqual(expect.arrayContaining([
+				expect.objectContaining({ code: 'CMAP_FORMAT4_LENGTH_INVALID' }),
+			]));
+			expect(() => font.export({ format: 'ttf' })).toThrow(/cmap format 4 length .* exceeds/);
+		} else {
+			expect(report.valid).toBe(true);
+			const buffer = font.export({ format: 'ttf' });
+			const { map, dv } = inspectExported(buffer);
+			const offset = map.cmap.off + dv.getUint32(map.cmap.off + 8);
+			expect(dv.getUint16(offset + 2)).toBe(length);
+			expect(dv.getUint16(offset + 6) / 2).toBe(8189);
+			expect(FontFlux.diagnose(buffer).errors.filter(
+				(issue) => issue.code.startsWith('CMAP_') || issue.code === 'TABLE_PARSE_FAILED',
+			)).toEqual([]);
+		}
+	});
+
+	it.each(['short', 'odd', 'out-of-bounds'])('diagnoses a %s binary format-4 length', (kind) => {
+		const font = FontFlux.create({ family: 'Malformed Cmap Length' });
+		const buffer = font.export({ format: 'ttf' });
+		const { map, dv } = inspectExported(buffer);
+		const offset = map.cmap.off + dv.getUint32(map.cmap.off + 8);
+		const count = dv.getUint16(offset + 6) / 2;
+		const length = kind === 'short' ? 16 + count * 8 - 2
+			: kind === 'odd' ? dv.getUint16(offset + 2) - 1
+				: map.cmap.len + 2;
+		dv.setUint16(offset + 2, length);
+		expect(FontFlux.diagnose(buffer).errors).toEqual(expect.arrayContaining([
+			expect.objectContaining({
+				code: 'TABLE_PARSE_FAILED',
+				message: expect.stringContaining('cmap format 4 length'),
+			}),
+		]));
+	});
+});
+
 describe('OTS compliance — exported fonts', () => {
 	it('exports table directory in ascending tag order (OTF)', async () => {
 		const ff = await FontFlux.open(await load('oblegg.otf'));

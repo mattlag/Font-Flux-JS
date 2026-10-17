@@ -50,6 +50,7 @@ const output = font.export();
 - Table tags are exactly 4 characters.
 - Raw table bytes (`_raw`) are valid byte arrays.
 - Parsed table support (unknown parsed tables must use `_raw`).
+- Parsed format-4 cmap subtable sizes fit the 16-bit length field.
 - Core table presence (`cmap`, `head`, `hhea`, `hmtx`, `maxp`, `name`, `post`).
 - Outline requirements:
   - TrueType outline requires both `glyf` and `loca`.
@@ -64,6 +65,15 @@ This is structural validation, not a full font sanitizer or a guarantee of
 rendering equivalence. The internal `validateJSON()` helper still accepts raw
 table data (including collections) and applies repairs directly to that input;
 the public `.validate()` method isolates those repairs from the live font.
+
+For binary cmap checks, use `FontFlux.diagnose(output)` after export. Its format-4
+checks include strictly increasing `endCode` values and the required final
+`[0xFFFF, 0xFFFF]` segment. Duplicate terminal segments are reported as
+`CMAP_FORMAT4_RANGES_OUT_OF_ORDER`; `.validate()` does not perform these deep
+cmap checks. Direct terminal mappings are checked for out-of-range glyph IDs,
+just like other direct mappings. Invalid binary format-4 lengths cause a
+`TABLE_PARSE_FAILED` diagnostic instead of being parsed beyond the declared
+subtable length.
 
 ## Complete issue reference
 
@@ -81,6 +91,7 @@ the public `.validate()` method isolates those repairs from the live font.
 | `TABLE_RAW_INVALID_TYPE`      | \_raw must be an array of byte values    | `_raw` is not an array                                    |
 | `TABLE_RAW_INVALID_BYTE`      | \_raw byte must be 0-255                 | A value in `_raw` is out of byte range                    |
 | `TABLE_WRITER_UNSUPPORTED`    | Parsed JSON but no writer available      | Unrecognized table tag with parsed data (no `_raw`)       |
+| `CMAP_FORMAT4_LENGTH_INVALID` | Format-4 length exceeds 65535 bytes      | Parsed format-4 segment arrays and glyph data cannot fit the length field |
 | `TABLE_DEPENDENCY_MISSING`    | Parsed table requires another table      | A parsed table's dependency is missing                    |
 | `REQUIRED_TABLE_MISSING`      | Required core table missing              | One of the 7 required core tables is absent               |
 | `OUTLINE_MISSING`             | No outline tables found                  | Neither TrueType nor CFF outline tables present           |

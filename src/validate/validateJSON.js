@@ -1,3 +1,4 @@
+import { getFormat4ByteLength } from '../sfnt/table_cmap.js';
 import { ALL_SUPPORTED_TABLES, REQUIRED_CORE_TABLES } from './tables.js';
 
 // =========================================================================
@@ -740,6 +741,27 @@ function validateTables(tables, path, issues) {
 
 		const isSupported = ALL_SUPPORTED_TABLES.has(tag);
 		const isRaw = hasRawTable(tableData);
+
+		if (!isRaw && tag === 'cmap' && Array.isArray(tableData.subtables)) {
+			for (const [index, subtable] of tableData.subtables.entries()) {
+				if (
+					subtable?.format === 4 &&
+					Array.isArray(subtable.segments) &&
+					Array.isArray(subtable.glyphIdArray)
+				) {
+					const length = getFormat4ByteLength(subtable);
+					if (length > 0xffff) {
+						addIssue(
+							issues,
+							'error',
+							'CMAP_FORMAT4_LENGTH_INVALID',
+							`cmap format 4 length ${length} exceeds the uint16 limit of 65535 bytes.`,
+							`${tablePath}.subtables[${index}]`,
+						);
+					}
+				}
+			}
+		}
 
 		if (!isRaw && !isSupported) {
 			// Parsed data for an unrecognized table — will fail at export

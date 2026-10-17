@@ -126,6 +126,37 @@ describe('cmap table round-trip', () => {
 });
 
 describe('cmap Format 4 specifics', () => {
+	it.each([
+		{ count: 8189, glyphs: 0, length: 65528 },
+		{ count: 8189, glyphs: 3, length: 65534 },
+		{ count: 8190, glyphs: 0, length: 65536 },
+		{ count: 8189, glyphs: 4, length: 65536 },
+	])('checks $count segments and $glyphs glyph-array entries against the length limit', ({ count, glyphs, length }) => {
+		const subtable = {
+			format: 4,
+			language: 0,
+			segments: Array.from({ length: count }, (_, i) => ({
+				startCode: i === count - 1 ? 0xffff : i,
+				endCode: i === count - 1 ? 0xffff : i,
+				idDelta: 1,
+				idRangeOffset: 0,
+			})),
+			glyphIdArray: new Array(glyphs).fill(0),
+		};
+		const cmap = {
+			version: 0,
+			encodingRecords: [{ platformID: 3, encodingID: 1, subtableIndex: 0 }],
+			subtables: [subtable],
+		};
+		if (length > 0xffff) {
+			expect(() => writeCmap(cmap)).toThrow(/exceeds the uint16 limit/);
+		} else {
+			const bytes = Uint8Array.from(writeCmap(cmap));
+			expect(new DataView(bytes.buffer).getUint16(14)).toBe(length);
+			expect(parseCmap(bytes)).toEqual(cmap);
+		}
+	});
+
 	it('should have the final segment ending at 0xFFFF', async () => {
 		const buffer = (await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'))).buffer;
 		const font = importFontTables(buffer);

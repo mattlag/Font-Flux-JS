@@ -146,6 +146,16 @@ function parseFormat4(reader, subtableOffset) {
 	const language = reader.uint16();
 	const segCountX2 = reader.uint16();
 	const segCount = segCountX2 / 2;
+	const minimumLength = 16 + segCount * 8;
+	if (
+		length < minimumLength ||
+		length % 2 !== 0 ||
+		subtableOffset + length > reader.length
+	) {
+		throw new RangeError(
+			`cmap format 4 length ${length} is invalid for ${segCount} segments or exceeds the cmap table.`,
+		);
+	}
 	reader.skip(6); // searchRange, entrySelector, rangeShift — derivable
 
 	const endCodes = reader.array('uint16', segCount);
@@ -470,17 +480,26 @@ function writeFormat2(subtable) {
 
 // --- Format 4 ---------------------------------------------------------------
 
+export function getFormat4ByteLength(subtable) {
+	return 16 + subtable.segments.length * 8 + subtable.glyphIdArray.length * 2;
+}
+
 function writeFormat4(subtable) {
 	const { language, segments, glyphIdArray } = subtable;
 	const segCount = segments.length;
 	const segCountX2 = segCount * 2;
+	const totalLen = getFormat4ByteLength(subtable);
+	if (totalLen > 0xffff) {
+		throw new RangeError(
+			`cmap format 4 length ${totalLen} exceeds the uint16 limit of 65535 bytes.`,
+		);
+	}
 
 	// Recompute binary-search parameters from segCount
 	const entrySelector = Math.floor(Math.log2(segCount));
 	const searchRange = Math.pow(2, entrySelector) * 2;
 	const rangeShift = segCountX2 - searchRange;
 
-	const totalLen = 14 + segCount * 8 + 2 + glyphIdArray.length * 2;
 	const w = new DataWriter(totalLen);
 
 	w.uint16(4); // format

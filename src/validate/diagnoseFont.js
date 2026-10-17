@@ -695,9 +695,6 @@ function validateCmapDeep(cmap, maxp, issues) {
 				let flagged = false;
 				for (let i = 0; i < segs.length && !flagged; i++) {
 					const seg = segs[i];
-					// Skip the 0xFFFF terminator segment, whose mapped glyph
-					// is conventionally 0 via wraparound.
-					if (seg.startCode === 0xffff && seg.endCode === 0xffff) continue;
 					const maxGid = format4MaxGlyphId(seg);
 					if (maxGid !== null && maxGid >= numGlyphs) {
 						addIssue(
