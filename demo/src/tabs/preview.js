@@ -2,6 +2,8 @@
  * Preview tab — live text preview and glyph outline grid.
  */
 import { drawGlyphTile } from '../components/glyph-tile.js';
+import { formatUnicodeLabel } from '../unicode-label.js';
+import { getUnicodeName } from '../unicode_definitions/index.js';
 
 export const previewTab = {
 	id: 'preview',
@@ -188,11 +190,12 @@ function buildGlyphSample(fontData) {
 			const label = document.createElement('div');
 			label.className = 'glyph-label';
 			const name = glyph.name || '';
-			const uni = glyph.unicode
+			const uni = glyph.unicode != null
 				? `U+${glyph.unicode.toString(16).toUpperCase().padStart(4, '0')}`
 				: '';
 			label.textContent = name || uni || '—';
-			label.title = [name, uni].filter(Boolean).join(' · ');
+			cell.title = [name, formatUnicodeLabel(glyph.unicode)]
+				.filter(Boolean).join(' · ');
 
 			cell.addEventListener('click', () => {
 				showGlyphDetail(detailPanel, glyph, fontData);
@@ -290,10 +293,10 @@ function showGlyphDetail(panel, glyph, fontData) {
 
 	// Identity
 	const name = glyph.name || '(unnamed)';
-	const uni = glyph.unicode
+	const uni = glyph.unicode != null
 		? `U+${glyph.unicode.toString(16).toUpperCase().padStart(4, '0')}`
 		: null;
-	const char = glyph.unicode ? String.fromCodePoint(glyph.unicode) : null;
+	const char = glyph.unicode != null ? String.fromCodePoint(glyph.unicode) : null;
 
 	const title = document.createElement('h3');
 	title.className = 'glyph-detail-title';
@@ -306,6 +309,13 @@ function showGlyphDetail(panel, glyph, fontData) {
 		title.appendChild(uniSpan);
 	}
 	data.appendChild(title);
+
+	if (uni) {
+		const unicodeName = document.createElement('p');
+		unicodeName.className = 'glyph-detail-unicode-name';
+		unicodeName.textContent = `Unicode name: ${getUnicodeName(glyph.unicode) ?? 'No standard Unicode name'}`;
+		data.appendChild(unicodeName);
+	}
 
 	// Metrics
 	const metrics = [];

@@ -4,6 +4,7 @@
  */
 import { FontFlux } from 'font-flux-js';
 import { UNICODE_BLOCKS } from '../unicode-blocks.js';
+import { formatUnicodeLabel } from '../unicode-label.js';
 
 export const subsetTab = {
 	id: 'subset',
@@ -238,6 +239,7 @@ function render(container, fontData, appContext) {
 		for (const cp of pageGlyphs) {
 			const cell = document.createElement('div');
 			cell.className = 'subset-preview-cell';
+			cell.title = formatUnicodeLabel(cp);
 
 			const charEl = document.createElement('span');
 			charEl.className = 'subset-preview-char';

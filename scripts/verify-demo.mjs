@@ -54,6 +54,88 @@ async function measure(page, text = 'A') {
 	}, text);
 }
 
+async function verifyUnicodeNames(page, url) {
+	const font = makeFont();
+	const cases = [
+		['smile.alt', 0x1f600, 'GRINNING FACE'],
+		['ideograph.alt', 0x20000, 'CJK UNIFIED IDEOGRAPH-20000'],
+		['control.alt', 0, null],
+		['private.alt', 0xe000, null],
+		['unassigned.alt', 0x378, null],
+		['unencoded.alt', undefined, null],
+	];
+	for (const [name, unicode] of cases) {
+		font.addGlyph({
+			name,
+			unicode,
+			advanceWidth: 600,
+			path: 'M100 0 L100 500 L500 500 L500 0 Z',
+			format: 'truetype',
+		});
+	}
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto(url);
+	await page.locator('input[type="file"]').setInputFiles({
+		name: 'unicode.json',
+		mimeType: 'application/json',
+		buffer: Buffer.from(font.toJSON()),
+	});
+	await page.locator('.font-name').waitFor();
+	await page.getByRole('button', { name: 'Preview', exact: true }).click();
+	for (const [name, unicode, standardName] of [
+		['A', 0x41, 'LATIN CAPITAL LETTER A'],
+		...cases,
+	]) {
+		const cell = page.locator('.glyph-cell').filter({
+			has: page.locator('.glyph-label', { hasText: new RegExp(`^${name}$`) }),
+		});
+		const code = unicode == null
+			? null
+			: `U+${unicode.toString(16).toUpperCase().padStart(4, '0')}`;
+		assert.equal(
+			await cell.getAttribute('title'),
+			[name, code && `${code}${standardName ? ` - ${standardName}` : ''}`]
+				.filter(Boolean).join(' · '),
+		);
+		await cell.click();
+		const detail = page.locator('.glyph-detail-panel');
+		assert.match(await detail.locator('h3').textContent(), new RegExp(name));
+		if (code) {
+			assert((await detail.locator('h3').textContent()).includes(code));
+			assert.equal(
+				await detail.locator('.glyph-detail-unicode-name').textContent(),
+				`Unicode name: ${standardName ?? 'No standard Unicode name'}`,
+			);
+		} else {
+			assert.equal(await detail.locator('.glyph-detail-unicode-name').count(), 0);
+		}
+		assert(
+			await page.evaluate(
+				() => document.documentElement.scrollWidth <= window.innerWidth,
+			),
+		);
+	}
+	await page.getByRole('button', { name: 'Subset', exact: true }).click();
+	for (const [code, standardName, block] of [
+		[0x41, 'LATIN CAPITAL LETTER A', 'Basic Latin'],
+		[0x1f600, 'GRINNING FACE', 'Emoticons'],
+		[0x20000, 'CJK UNIFIED IDEOGRAPH-20000', 'CJK Unified Ideographs Extension B'],
+		[0xe000, null, 'Private Use Area'],
+	]) {
+		await page.locator('.subset-block').filter({
+			has: page.locator('.subset-block-name', { hasText: new RegExp(`^${block}$`) }),
+		}).locator('button').click();
+		const hex = code.toString(16).toUpperCase().padStart(4, '0');
+		const cell = page.locator('.subset-preview-cell').filter({
+			has: page.locator('.subset-preview-code', { hasText: new RegExp(`^${hex}$`) }),
+		});
+		assert.equal(
+			await cell.getAttribute('title'),
+			`U+${hex}${standardName ? ` - ${standardName}` : ''}`,
+		);
+	}
+}
+
 async function removeLatin(page) {
 	await page.getByRole('button', { name: 'Subset', exact: true }).click();
 	await page
@@ -178,6 +260,8 @@ try {
 			}
 			const page = await browser.newPage();
 			page.on('dialog', (dialog) => dialog.accept());
+			await verifyUnicodeNames(page, url);
+			console.log(`${engine} Unicode preview names and unnamed code points: passed`);
 			await page.goto(url);
 			await page.locator('input[type="file"]').setInputFiles({
 				name: 'faces.ttc',

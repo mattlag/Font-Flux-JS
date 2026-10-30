@@ -14,12 +14,31 @@ Font Flux JS is part of the Glyphr Studio family. Any questions or feedback? We'
 
 Try out the demo app! Load a font, edit its metadata, remove glyphs where dependencies permit, and save in different font containers. Arbitrary subsetting and outline conversion are subject to the workflow limits linked above.
 
+Hover over glyphs in the Preview tab or the Subset range preview to see their
+Unicode code points and standard character names. Click an outline glyph to
+see its Unicode name alongside its font-specific glyph name and metrics.
+Characters without standard Unicode names retain their code-point labels.
+
 Subset changes are validated and exported on a detached candidate before they
 are applied. Successful changes refresh the browser preview; dependency or
 preview-loading errors leave the loaded font unchanged. Retained original
 tables are not manually pruned by the demo.
 
 ### [Font Flux JS Demo App](https://www.glyphrstudio.com/fontfluxjs)
+
+To deploy only the demo site and documentation, commit and push your changes
+to `main`, then run:
+
+```bash
+npm run release:demo
+```
+
+Requires the [GitHub CLI](https://cli.github.com/) authenticated with `gh auth login`.
+This triggers the existing demo deployment workflow using the remote `main`
+branch, not local uncommitted changes. It does not change the library version,
+create a release tag, or publish to npm. Track deployment progress in
+[GitHub Actions](https://github.com/mattlag/Font-Flux-JS/actions/workflows/deploy-demo.yml).
+Use `npm run release` only for a full library release.
 
 ## Installation
 
@@ -36,6 +55,8 @@ npm install font-flux-js
 ### Standalone
 
 You can also use `dist/font-flux-js.js` directly as a single-file ES module — no bundler or npm required. Everything is self-contained except for WOFF2 support, which requires the `brotli-wasm` package in browser environments (Node.js uses its built-in `zlib`). If you don't need WOFF2, the single file works with no other dependencies.
+
+`npm run build` adds a leading comment block with the project name, package version, copyright, and license. The standalone file and npm package use this same bundle.
 
 ## Quick start
 

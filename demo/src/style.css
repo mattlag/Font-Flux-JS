@@ -2106,6 +2106,13 @@ pre.data-string-long.data-expanded {
 	font-size: 0.9rem;
 }
 
+.glyph-detail-unicode-name {
+	margin: 0 0 12px;
+	color: var(--text-secondary);
+	font-size: 0.85rem;
+	overflow-wrap: anywhere;
+}
+
 .glyph-detail-metrics {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
