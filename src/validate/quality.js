@@ -1,7 +1,12 @@
-import { computeTableChecksum, exportFont } from '../export.js';
+import { convertOutlines } from '../convert.js';
+import { computeTableChecksum, exportFont, resolveExportSource } from '../export.js';
 import { encodeUtf16BE } from '../sfnt/table_name.js';
+import { getCheckDescriptor } from './check-catalog.js';
+import { diagnosisIncomplete } from './coverage.js';
 import { diagnoseFont } from './diagnoseFont.js';
+import { addProfileFindings, applyProfileCompatibility, evaluateProfile, resolveProfile } from './profiles.js';
 import { ALL_SUPPORTED_TABLES } from './tables.js';
+import { buildReport, validateJSON, validateSimplifiedJSON } from './validateJSON.js';
 
 const plans = new WeakMap();
 const CHECKSUM_CODES = ['BAD_CHECKSUM', 'BAD_CHECKSUM_ADJUSTMENT'];
@@ -473,27 +478,7 @@ function cmapRecords(bytes) {
 
 function offerReason(fix, bytes, layout, diagnostics) {
 	if (layout.reason) return layout.reason;
-	if (
-		diagnostics?.issues.some((issue) =>
-			[
-				'INVALID_DIAGNOSTIC_OPTIONS',
-				'DIAGNOSTIC_LIMIT_EXCEEDED',
-				'FACE_INDEX_OUT_OF_RANGE',
-				'DIAGNOSTIC_CHECK_FAILED',
-				'CFF_OPERATION_LIMIT_EXCEEDED',
-				'TABLE_PARSE_FAILED',
-				'CFF_CONTEXT_UNSUPPORTED',
-				'CFF_FDARRAY_MISSING',
-				'CFF_FDSELECT_MISSING',
-				'CFF_FD_INDEX_OUT_OF_RANGE',
-				'CFF_VARIATION_CONTEXT_MISSING',
-				'CFF_VARIATION_CONTEXT_INVALID',
-				'CFF_VSINDEX_OUT_OF_RANGE',
-				'CFF_SUBR_DEPTH_EXCEEDED',
-				'CFF_STACK_OVERFLOW',
-			].includes(issue.code),
-		)
-	)
+	if (diagnosisIncomplete(diagnostics))
 		return 'Inspection was blocked by a limit, failed check, or unreadable table. Resolve that problem before verifying repairs.';
 	const entries = layout.entries;
 	const table = (tag) => entries.find((entry) => entry.tag === tag);
@@ -554,16 +539,15 @@ function offerReason(fix, bytes, layout, diagnostics) {
 }
 
 export function inspectFont(input, options = {}) {
-	if (options.profile !== undefined && options.profile !== 'structural')
-		throw new Error(
-			'Only the structural profile is implemented; foundry policies are not applied implicitly.',
-		);
+	const profile = resolveProfile(options);
 	const bytes = inputBytes(input, options);
 	const format = formatOf(bytes);
 	const unsupported = format === 'cff' || format === 'type1';
-	const diagnostics = unsupported
+	const binary = unsupported
 		? null
-		: diagnoseFont(bytes.slice().buffer, options);
+		: applyProfileCompatibility(diagnoseFont(bytes.slice().buffer, options), profile);
+	const profileReport = evaluateProfile(binary, options);
+	const diagnostics = addProfileFindings(binary, profileReport);
 	const layout = directory(bytes, options);
 	const codes = new Set(diagnostics?.issues.map((issue) => issue.code));
 	const repairs = CATALOG.filter(
@@ -592,10 +576,14 @@ export function inspectFont(input, options = {}) {
 	return {
 		schemaVersion: 1,
 		scope: 'binary',
-		profile: 'structural',
+		profile: profile.id,
+		profileVersion: profile.version,
+		profileReport,
+		complete: false,
 		format,
 		diagnostics,
 		repairs,
+		checks: diagnostics?.checks ?? profileReport.checks,
 		coverage: [
 			{
 				domain: 'binary-structure',
@@ -732,7 +720,8 @@ export async function planRepairs(input, requests, options = {}) {
 	const plan = freeze({
 		schemaVersion: 1,
 		inputFingerprint: await fingerprint(bytes),
-		profile: 'structural',
+		profile: report.profile,
+		profileVersion: report.profileVersion,
 		format: 'sfnt',
 		steps,
 	});
@@ -1076,7 +1065,49 @@ export async function applyRepairs(input, plan) {
 	};
 }
 
-export async function preflightFont(data, validation, options = {}) {
+export function scopedValidation(report, source) {
+	const issues = report.issues.map((issue, index) => ({
+		...issue, id: `${source}:${issue.code}:${issue.path ?? '$'}:${index}`,
+		checkId: getCheckDescriptor(issue.code)?.checkId ?? 'validation.unclassified',
+		executionId: `validation.${source}`,
+		source, location: { path: issue.path ?? '$' },
+		outcome: issue.severity === 'info' ? 'informational' : 'failed',
+		message: source === 'resolved-candidate' && issue.severity === 'info'
+			? `Detached validation copy only: ${issue.message}` : issue.message,
+		evidence: { message: issue.message },
+	}));
+	return {
+		...buildReport(issues), schemaVersion: 1, source,
+		checks: [{
+			id: `validation.${source}`, revision: 1, source, location: {},
+			outcome: issues.some((issue) => issue.severity !== 'info') ? 'failed' : 'passed',
+			coverage: 'partial', reasonCode: 'implemented-subset',
+			reason: 'Implemented JSON shape/range/table-dependency checks only; emitted bytes are a separate inspection.',
+			findingIds: issues.filter((issue) => issue.severity !== 'info').map((issue) => issue.id),
+		}],
+		complete: false,
+	};
+}
+
+function normalizationEvidence(original, output) {
+	if (!original?.diagnostics || !output?.diagnostics) return [];
+	const identity = (issue) => JSON.stringify([issue.code, issue.location?.table ?? null]);
+	const after = new Set(output.diagnostics.issues.filter((issue) =>
+		issue.severity !== 'info').map(identity));
+	const completed = new Set(output.checks.filter((check) =>
+		check.coverage === 'complete').map((check) => check.id));
+	return original.diagnostics.issues.filter((issue) => issue.severity !== 'info' &&
+		!after.has(identity(issue)) && completed.has(issue.executionId),
+	).map((issue) => ({
+		kind: 'finding-not-observed-in-output',
+		code: issue.code, originalFindingId: issue.id,
+		executionId: issue.executionId,
+		description: 'The comparable output check ran and no longer reports this original finding. Import/resolution/serialization or project edits may account for it; no explicit repair was applied by preflight.',
+	}));
+}
+
+export async function preflightFont(data, options = {}, source = null) {
+	resolveProfile(options);
 	const effects = [
 		'Export may normalize directories, counts, bounds, and other derived data; this is not a semantic-preservation certificate.',
 		'Output diagnostics do not execute an independent shaper or rasterizer.',
@@ -1088,12 +1119,38 @@ export async function preflightFont(data, validation, options = {}) {
 	const result = {
 		state: 'failed',
 		buffer: null,
-		validation,
+		schemaVersion: 1,
+		validation: null,
 		output: null,
+		stages: [
+			{ id: 'original', status: 'skipped', reasonCode: 'no-original-bytes',
+				reason: 'This authored/restored project has no retained original binary.', report: null },
+			{ id: 'project', status: 'blocked', reasonCode: 'not-reached', report: null },
+			{ id: 'resolved', status: 'blocked', reasonCode: 'not-reached', report: null },
+			{ id: 'output', status: 'blocked', reasonCode: 'not-reached', report: null },
+		],
+		normalizations: [],
 		effects,
 		error: null,
 	};
-	if (!validation.valid)
+	if (source) {
+		const original = inspectFont(source.bytes, {
+			...source.options, ...options, faceIndex: source.options.faceIndex,
+			profile: 'structural', profileVersion: 1, context: undefined,
+		});
+		result.stages[0] = {
+			id: 'original', status: original.diagnostics ? 'checked' : 'unsupported',
+			reasonCode: 'retained-original', report: original,
+			reason: 'Retained original bytes are inspected independently of the current project.',
+		};
+	}
+	const project = scopedValidation(validateSimplifiedJSON(data), 'editable-project');
+	result.validation = project;
+	result.stages[1] = {
+		id: 'project', status: project.valid ? 'checked' : 'failed',
+		reasonCode: 'observational-validation', report: project,
+	};
+	if (!project.valid)
 		return { ...result, error: 'Editable-data validation failed.' };
 	if (data.tables?.DSIG)
 		return {
@@ -1102,8 +1159,35 @@ export async function preflightFont(data, validation, options = {}) {
 				'Export would invalidate an existing DSIG. Explicit signature removal or external re-signing is required.',
 		};
 	try {
-		const buffer = exportFont(data, options);
-		const output = inspectFont(buffer);
+		const candidate = structuredClone(data);
+		const format = typeof options.format === 'string' ? options.format.toLowerCase() : options.format;
+		const target = format === 'ttf' ? convertOutlines(candidate, 'truetype')
+			: format === 'otf' ? convertOutlines(candidate, 'cff') : candidate;
+		const resolved = resolveExportSource(target);
+		const resolvedReport = scopedValidation(
+			validateJSON(structuredClone(resolved)), 'resolved-candidate',
+		);
+		result.validation = buildReport([...project.issues, ...resolvedReport.issues]);
+		result.stages[2] = {
+			id: 'resolved', status: resolvedReport.valid ? 'checked' : 'failed',
+			reasonCode: 'detached-target-resolution', report: resolvedReport,
+			reason: 'Legacy validation normalizations affect a separate validation copy, not the project or emitted bytes.',
+		};
+		result.normalizations.push(...resolvedReport.infos.map((issue) => ({
+			kind: 'validation-copy-only', code: issue.code, path: issue.path,
+			description: `Not an applied project/output repair: ${issue.message}`,
+		})));
+		if (!resolvedReport.valid)
+			return { ...result, error: 'Resolved target validation failed.' };
+		const buffer = exportFont(candidate, options);
+		const output = inspectFont(buffer, { ...options, faceIndex: undefined });
+		result.output = output;
+		result.stages[3] = {
+			id: 'output', status: !output.diagnostics ? 'unsupported'
+				: output.diagnostics.valid ? 'checked' : 'failed',
+			reasonCode: 'actual-emitted-bytes', report: output,
+		};
+		result.normalizations.push(...normalizationEvidence(result.stages[0].report, output));
 		if (!output.diagnostics)
 			return {
 				...result,
@@ -1117,8 +1201,24 @@ export async function preflightFont(data, validation, options = {}) {
 				output,
 				error: 'The emitted binary has blocking diagnostic errors.',
 			};
+		if (diagnosisIncomplete(output.diagnostics))
+			return {
+				...result, state: 'unsupported',
+				error: 'Implemented output checks could not finish; the output cannot be verified.',
+			};
+		if (!output.profileReport.complete)
+			return {
+				...result, state: 'unsupported',
+				error: 'The selected profile could not complete; supply its missing context or prerequisites.',
+			};
 		return { ...result, state: 'verified', buffer, output };
 	} catch (error) {
+		const stage = result.stages.find((item) => item.status === 'blocked');
+		if (stage) {
+			stage.status = 'failed';
+			stage.reasonCode = 'execution-error';
+			stage.reason = error.message;
+		}
 		return { ...result, error: `Export preflight failed: ${error.message}` };
 	}
 }

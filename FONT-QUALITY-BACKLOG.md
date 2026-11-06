@@ -1,7 +1,8 @@
 # Font quality: detection and repair backlog
 
-Status: **implementation in progress**. A first core/Demo increment is implemented
-in the working tree; the complete roadmap is **not finished**. See the status
+Status: **M0 complete (FQ-001 through FQ-010)**. The first core/Demo increment and
+trustworthy-inspection milestone are implemented; **M1, M2, and M3 are not
+complete**. See the status
 table below and the [implemented API guide](./docs/font-quality.md), rather than
 treating every proposed capability in this document as available.
 Work-item IDs remain stable and suitable for later issues.
@@ -16,11 +17,11 @@ preflight. The Demo consumes these core contracts.
 
 | Work items | Current status | Remaining scope |
 | --- | --- | --- |
-| FQ-001, FQ-003 | Open | Complete check-by-check provenance ledger and versioned interoperability/foundry profiles; only structural profile currently exists |
-| FQ-002, FQ-004 | Partial | Versioned quality reports, explicit coverage, compatible legacy findings, and original regression fixtures exist; not a complete per-check coverage catalogue |
-| FQ-005, FQ-006, FQ-007 | Implemented | All-face/selected-face TTC addressing, legal lookup flags, U+180F, and format-4 overlap regressions are covered |
-| FQ-008, FQ-009 | Partial | Head/standalone checksums, bounded diagnostics, malformed collection recovery, and configurable limits exist; exhaustive work/memory accounting and WOFF2 collection reconstruction remain open |
-| FQ-010 through FQ-015 | Partial | Inspect/plan/apply/verify/preflight, explicit inputs/consent, stale-plan rejection, signatures/opaque-data guards, and byte/record preservation exist; resumable serialized plans, arbitrary conflict graphs, source recovery, and exhaustive semantic verification remain open |
+| FQ-001 through FQ-004 | Implemented | Generated provenance ledger, drift/baseline tests, versioned profiles, scoped execution outcomes, stable findings, and original mutation/preservation fixtures |
+| FQ-005 through FQ-007 | Implemented | Collection offsets/face recovery; legal flags versus GDEF references; Unicode 17 selectors/scalars, supplementary mappings, UVS conflicts, and correct direct/indirect format-4 mapping checks |
+| FQ-008, FQ-009 | Implemented for M0's declared scope | Original-wrapper versus decoded checks, checksums/extents, explicit failure coverage, import-aligned limits, bounded layout/color/composite traversal. WOFF2 collections and exhaustive semantic/process-memory guarantees remain explicitly unsupported, not certified |
+| FQ-010 | Implemented | Retained original bytes, detached project/target resolution, actual emitted output, and normalization evidence; authored/JSON projects explicitly lack original bytes |
+| FQ-011 through FQ-015 | Partial | Inspect/plan/apply/verify, explicit inputs/consent, stale-plan rejection, signatures/opaque-data guards, and byte/record preservation exist; resumable serialized plans, arbitrary conflict graphs, source recovery, and exhaustive semantic verification remain open |
 | FQ-016, FQ-017 | Partial | Checksum, directory search/order/alignment, known head fields, name order, and unique cmap-record order are implemented; repair in WOFF/collections and broader encoding repairs remain open |
 | FQ-018 | Open | Named derived geometry/maxp/metrics repairs, with complete-data and variation safeguards |
 | FQ-019, FQ-020 | Partial | Missing family/style records, intended weight/width, and typo line-gap decisions exist; locale replacement, style linking, licensing, Unicode metadata, whitespace policies, and complete metric reconciliation remain open |
@@ -29,9 +30,49 @@ preflight. The Demo consumes these core contracts.
 | FQ-023 through FQ-035 | Open | Advanced CFF/TT/variation/color/bitmap/specialist/family/language/source repairs and large-font scheduling |
 | FQ-036, FQ-037 | Partial | Public declarations, examples, built package, focused tests, independent shaping, and browser validation are wired; isolated npm installation is blocked in this environment by its remote-package-fetch policy |
 | FQ-038 through FQ-043 | Implemented for current core scope | Core-driven UI, original/project/candidate distinction, decisions, consent, exact-byte downloads, transactional commit/undo/revert, collection diagnosis, and browser regressions; advanced capabilities stay unavailable until core support ships |
-| FQ-044 | Partial | Current API/limitations documentation and progress accounting exist; full roadmap release gates and generated exhaustive catalogue remain open |
+| FQ-044 | Partial | API/limitations documentation, generated identifier catalogue, and progress accounting exist; full roadmap release gates remain open |
 
-Verification for the current increment:
+### M0 acceptance evidence
+
+The [generated inventory](./docs/check-inventory.md) records **264 active
+identifiers**, including all **228 baseline identifiers**, **248 finding
+identifiers**, and **16 informational identifiers**. These are not counts of
+independent executed checks or coverage percentages. All 15 existing repair
+registrations are mapped; this milestone adds inspection capability, not a claim
+that every finding is safely repairable. Upstream code was not copied.
+
+| Requirement | Persistent evidence |
+| --- | --- |
+| FQ-001 | [Catalog and pinned provenance](./docs/check-inventory.md), [deterministic generator](./scripts/generate-check-inventory.mjs), [drift/baseline tests](./test/check-inventory.test.js) |
+| FQ-002, FQ-003 | [Execution coverage](./src/validate/coverage.js), [versioned profiles](./src/validate/profiles.js), [public types](./index.d.ts), [determinism/context tests](./test/quality-m0.test.js) |
+| FQ-004 through FQ-007 | [Exact binary mutation/collection tests](./test/diagnose-correctness.test.js), [compact horizontal/vertical metrics, raw mapping, UVS, opaque-data and profile fixtures](./test/quality-m0.test.js), [localized-name preservation](./test/quality.test.js) |
+| FQ-008, FQ-009 | [Wrapper/decompression/original-source and exact composite budget tests](./test/quality-m0.test.js), [parser depth/work/cycle fixtures](./test/structure-limits.test.js), [CFF context/operation tests](./test/diagnose-cff-context.test.js) |
+| FQ-010 | [Original/project/resolved/output stage tests](./test/quality-m0.test.js), [persisting invalid output and incomplete-check guards](./test/quality.test.js), [stage/normalization contract](./docs/font-quality.md#preflight-an-edited-or-authored-project) |
+
+M0 verification:
+
+- **708 tests across 23 focused files passed**, including inventory drift,
+  binary/profile/preflight fixtures, affected layout/color parsers, CFF/TT
+  diagnostics, repair preservation, and existing Demo unit tests.
+- Strict declaration checking and focused lint passed; library, Demo, and
+  documentation builds passed.
+- Chromium and Firefox quality workflows passed at desktop/mobile sizes,
+  including exact downloads, consent, failure paths, stale work, and collections.
+- A built-library smoke test exercised all new APIs, SFNT/WOFF/WOFF2/OTF
+  preflights, publishing context, and source preservation. Independent HarfBuzz
+  glyph sequences, positions, and paths matched for the tested repair/preflight.
+- Baseline verification and generated-inventory drift checks passed. No
+  dependencies were added. Isolated npm installation was not retested; the
+  previously blocked release gate below is not an M0 inspection requirement.
+
+Remaining gaps are **reported**, not hidden by `valid`, a catalog entry, or a
+generic export success: standalone CFF/Type 1 inspection, WOFF2 collections,
+complete shaping/rendering/variation semantics, unsupported cmap formats, and
+total process-memory/time scheduling. These remain advanced follow-up work.
+M0's check groups state their implemented scope; they do not manufacture a pass
+for every absent diagnostic code.
+
+Earlier core/Demo increment verification (retained for provenance):
 
 - 546 focused tests across 15 files passed, covering diagnostic corrections,
   CFF context, public APIs, repair/rollback guards, and existing Demo unit tests.
@@ -70,7 +111,7 @@ release. Advanced core work is grouped together below for navigation; it does
 
 | Milestone | Required work | Exit condition |
 | --- | --- | --- |
-| M0: trustworthy inspection | FQ-001 through FQ-010 | Known false positives/negatives fixed; original, candidate, and skipped coverage distinguished |
+| **M0: trustworthy inspection - complete** | FQ-001 through FQ-010 | Known false positives/negatives fixed; original, candidate, and skipped coverage distinguished; evidence above |
 | M1: usable core repair | FQ-011 through FQ-020, FQ-036, FQ-037 | Narrow safe repairs and assisted metadata/metrics repairs have public, verified workflows |
 | M2: user-facing repair | FQ-038 through FQ-044, after M1 | Demo uses core plans, consent, verified candidates, and honest export reports |
 | M3: advanced coverage | FQ-021 through FQ-035, incrementally | Each added domain states its coverage, limitations, and independently tested repair preconditions |
@@ -156,8 +197,9 @@ Current contract documentation:
 
 ## Shared check and fix contract
 
-The names below are conceptual requirements, **not existing API names**.
-Finalize the public spelling in FQ-002/FQ-036.
+The dimensions below define the roadmap contract. Implemented M0 spellings are
+documented in [Font Quality](./docs/font-quality.md); broader repair execution and
+availability concepts remain subject to the unfinished M1 work.
 
 ### Separate severity, risk, availability, and execution
 

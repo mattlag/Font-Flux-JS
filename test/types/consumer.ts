@@ -47,8 +47,23 @@ if (preflight.buffer) {
 		void candidate;
 	}
 }
-FontFlux.diagnose(bytes, { faceIndex: 0, maxFonts: 4 });
-// @ts-expect-error Only the implemented structural profile is exposed.
+FontFlux.diagnose(bytes, { faceIndex: 0, maxFonts: 4, maxStructureDepth: 64, maxStructureNodes: 10000 });
+const catalog = FontFlux.checkCatalog();
+const references: readonly string[] = catalog.BAD_CHECKSUM.references;
+const profiles = FontFlux.qualityProfiles();
+const publishing = FontFlux.inspect(bytes, { profile: 'publishing', profileVersion: 1, context: {
+	fileName: 'TypeConsumer.woff2', expectedFileName: 'TypeConsumer.woff2',
+	expectedFamilyName: 'Type Consumer',
+} });
+const complete: boolean = publishing.profileReport.complete;
+for (const stage of preflight.stages) {
+	if (stage.id === 'original' || stage.id === 'output') {
+		const report = stage.report?.diagnostics;
+		void report;
+	}
+}
+void [references, profiles, complete];
+// @ts-expect-error Unsupported foundry profiles must not silently become structural.
 FontFlux.inspect(bytes, { profile: 'googlefonts' });
 fontFromJSON(restored.toJSON());
 void [valid, count, selected];

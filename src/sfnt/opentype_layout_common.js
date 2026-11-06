@@ -19,6 +19,7 @@
  */
 
 import { DataReader } from '../reader.js';
+import { consumeStructure } from '../structure_limits.js';
 import { DataWriter } from '../writer.js';
 
 // ===========================================================================
@@ -42,6 +43,7 @@ export function parseCoverage(reader, offset) {
 	}
 	if (format === 2) {
 		const rangeCount = reader.uint16();
+		consumeStructure(reader, rangeCount);
 		const ranges = [];
 		for (let i = 0; i < rangeCount; i++) {
 			ranges.push({
@@ -106,6 +108,7 @@ export function parseClassDef(reader, offset) {
 	}
 	if (format === 2) {
 		const classRangeCount = reader.uint16();
+		consumeStructure(reader, classRangeCount);
 		const ranges = [];
 		for (let i = 0; i < classRangeCount; i++) {
 			ranges.push({
@@ -183,6 +186,7 @@ export function parseDevice(reader, offset) {
 	const deltaFormat = third;
 
 	const count = endSize - startSize + 1;
+	consumeStructure(reader, Math.max(0, count));
 	let bitsPerDelta, mask, signBit;
 	if (deltaFormat === 1) {
 		bitsPerDelta = 2;
@@ -294,6 +298,7 @@ export function deviceSize(dev) {
 export function parseScriptList(reader, offset) {
 	reader.seek(offset);
 	const scriptCount = reader.uint16();
+	consumeStructure(reader, scriptCount);
 	const records = [];
 	for (let i = 0; i < scriptCount; i++) {
 		records.push({
@@ -314,6 +319,7 @@ function parseScript(reader, offset) {
 	reader.seek(offset);
 	const defaultLangSysOffset = reader.uint16();
 	const langSysCount = reader.uint16();
+	consumeStructure(reader, langSysCount);
 
 	const langSysRecords = [];
 	for (let i = 0; i < langSysCount; i++) {
@@ -444,6 +450,7 @@ function writeLangSys(langSys) {
 export function parseFeatureList(reader, offset) {
 	reader.seek(offset);
 	const featureCount = reader.uint16();
+	consumeStructure(reader, featureCount);
 	const records = [];
 	for (let i = 0; i < featureCount; i++) {
 		records.push({
@@ -810,6 +817,7 @@ export function parseSequenceContext(reader, subtableOffset) {
 	if (format === 1) {
 		const coverageOffset = reader.uint16();
 		const seqRuleSetCount = reader.uint16();
+		consumeStructure(reader, seqRuleSetCount);
 		const seqRuleSetOffsets = [];
 		for (let i = 0; i < seqRuleSetCount; i++)
 			seqRuleSetOffsets.push(reader.uint16());
@@ -824,6 +832,7 @@ export function parseSequenceContext(reader, subtableOffset) {
 		const coverageOffset = reader.uint16();
 		const classDefOffset = reader.uint16();
 		const classSeqRuleSetCount = reader.uint16();
+		consumeStructure(reader, classSeqRuleSetCount);
 		const classSeqRuleSetOffsets = [];
 		for (let i = 0; i < classSeqRuleSetCount; i++)
 			classSeqRuleSetOffsets.push(reader.uint16());
@@ -878,6 +887,7 @@ function parseClassSeqRuleSet(reader, offset) {
 }
 
 function parseSeqLookupRecords(reader, count) {
+	consumeStructure(reader, count);
 	const records = [];
 	for (let i = 0; i < count; i++) {
 		records.push({
@@ -1060,6 +1070,7 @@ export function parseChainedSequenceContext(reader, subtableOffset) {
 	if (format === 1) {
 		const coverageOffset = reader.uint16();
 		const chainedSeqRuleSetCount = reader.uint16();
+		consumeStructure(reader, chainedSeqRuleSetCount);
 		const chainedSeqRuleSetOffsets = [];
 		for (let i = 0; i < chainedSeqRuleSetCount; i++)
 			chainedSeqRuleSetOffsets.push(reader.uint16());
@@ -1076,6 +1087,7 @@ export function parseChainedSequenceContext(reader, subtableOffset) {
 		const inputClassDefOffset = reader.uint16();
 		const lookaheadClassDefOffset = reader.uint16();
 		const chainedClassSeqRuleSetCount = reader.uint16();
+		consumeStructure(reader, chainedClassSeqRuleSetCount);
 		const chainedClassSeqRuleSetOffsets = [];
 		for (let i = 0; i < chainedClassSeqRuleSetCount; i++)
 			chainedClassSeqRuleSetOffsets.push(reader.uint16());
@@ -1413,6 +1425,7 @@ export function parseFeatureVariations(reader, offset) {
 	const majorVersion = reader.uint16();
 	const minorVersion = reader.uint16();
 	const recordCount = reader.uint32();
+	consumeStructure(reader, recordCount);
 
 	const records = [];
 	for (let i = 0; i < recordCount; i++) {
@@ -1443,6 +1456,7 @@ export function parseFeatureVariations(reader, offset) {
 function parseConditionSet(reader, offset) {
 	reader.seek(offset);
 	const conditionCount = reader.uint16();
+	consumeStructure(reader, conditionCount);
 	const conditionOffsets = [];
 	for (let i = 0; i < conditionCount; i++)
 		conditionOffsets.push(reader.uint32());
@@ -1467,6 +1481,7 @@ function parseFeatureTableSubstitution(reader, offset) {
 	const majorVersion = reader.uint16();
 	const minorVersion = reader.uint16();
 	const substitutionCount = reader.uint16();
+	consumeStructure(reader, substitutionCount);
 
 	const substitutions = [];
 	for (let i = 0; i < substitutionCount; i++) {

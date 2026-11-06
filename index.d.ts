@@ -180,6 +180,8 @@ export interface ImportOptions {
 	maxGlyphs?: number;
 	maxPoints?: number;
 	maxCharStringOperations?: number;
+	maxStructureDepth?: number;
+	maxStructureNodes?: number;
 	faceIndex?: number;
 }
 export interface ExportOptions {
@@ -192,6 +194,13 @@ export interface ValidationIssue {
 	message: string;
 	path?: string;
 	faceIndex?: number;
+	id?: string;
+	checkId?: string;
+	executionId?: string;
+	outcome?: 'failed' | 'informational';
+	source?: string;
+	location?: FindingLocation;
+	evidence?: { message: string };
 	[key: string]: unknown;
 }
 export interface ValidationReport {
@@ -200,6 +209,10 @@ export interface ValidationReport {
 	warnings: ValidationIssue[];
 	infos: ValidationIssue[];
 	issues: ValidationIssue[];
+	schemaVersion?: 1;
+	source?: string;
+	complete?: boolean;
+	checks?: CheckExecution[];
 	summary: {
 		errorCount: number;
 		warningCount: number;
@@ -207,11 +220,106 @@ export interface ValidationReport {
 		issueCount: number;
 	};
 }
-export interface DiagnosticReport extends ValidationReport {
-	faces?: (ValidationReport & { faceIndex: number })[];
+export interface FindingLocation {
+	table?: string;
+	faceIndex?: number;
+	glyphIndex?: number;
+	fontIndex?: number;
+	lookupIndex?: number;
+	subtableIndex?: number;
+	segmentIndex?: number;
+	directoryIndex?: number;
+	byteOffset?: number;
+	path?: string;
 }
+export interface CheckExecution {
+	id: string;
+	revision: number;
+	source: string;
+	location: FindingLocation;
+	outcome: 'passed' | 'failed' | 'skipped' | 'blocked' | 'unsupported';
+	coverage: 'complete' | 'partial' | 'not-checked';
+	reasonCode: string;
+	reason: string;
+	findingIds: string[];
+	provenance?: string;
+	rationale?: string;
+	consequence?: string;
+}
+export interface DiagnosticMetadata {
+	format?: string;
+	sfVersion?: number;
+	tableTags?: string[];
+	directoryComplete?: boolean;
+	names?: { nameID: number; platformID: number; encodingID: number; languageID: number; value: string }[];
+}
+export interface DiagnosticFaceReport extends ValidationReport {
+	faceIndex: number;
+	schemaVersion: 1;
+	source: string;
+	complete: boolean;
+	checks: CheckExecution[];
+	metadata: DiagnosticMetadata;
+}
+export interface DiagnosticReport extends ValidationReport {
+	schemaVersion: 1;
+	source: string;
+	complete: boolean;
+	checks: CheckExecution[];
+	metadata: DiagnosticMetadata;
+	faces: DiagnosticFaceReport[];
+}
+export type QualityProfileId = 'structural' | 'interoperability' | 'publishing';
 export interface InspectionOptions extends ImportOptions {
-	profile?: 'structural';
+	profile?: QualityProfileId;
+	profileVersion?: 1;
+	context?: { fileName?: string; expectedFileName?: string; expectedFamilyName?: string };
+}
+export interface QualityProfile {
+	readonly id: QualityProfileId;
+	readonly version: 1;
+	readonly description: string;
+}
+export interface ProfileReport extends ValidationReport {
+	id: QualityProfileId;
+	version: 1;
+	complete: boolean;
+	passed: boolean;
+	checks: CheckExecution[];
+}
+export type CheckPipeline = 'binary' | 'editable' | 'resolved' | 'public-validation' | 'profile';
+export interface CheckSource {
+	readonly file: string;
+	readonly line: number;
+	readonly symbol: string;
+}
+export interface CheckOrigin {
+	readonly checkId: string;
+	readonly pipeline: CheckPipeline;
+	readonly family: string;
+	readonly table?: string;
+	readonly tables: readonly string[];
+	readonly formats: readonly string[];
+	readonly kind: 'finding' | 'information';
+	readonly publicReachability: string;
+	readonly source: CheckSource;
+	readonly references: readonly string[];
+	readonly severities: readonly ('error' | 'warning' | 'info')[];
+	readonly expression?: string;
+	readonly expansionEvidence?: readonly (CheckSource & { readonly expression: string })[];
+	readonly profiles?: readonly string[];
+}
+export interface CheckDescriptor extends CheckOrigin {
+	readonly id: string;
+	readonly pipelines: readonly CheckPipeline[];
+	readonly checkIds: readonly string[];
+	readonly repairIds: readonly string[];
+	readonly noFixReason?: string;
+	readonly status: 'active' | 'legacy';
+	readonly baseline: boolean;
+	readonly retirementReason?: string;
+	readonly sourceRevision?: string;
+	readonly origins: readonly CheckOrigin[];
 }
 export interface RepairInput {
 	readonly key: string;
@@ -242,7 +350,11 @@ export interface InspectionReport {
 	schemaVersion: 1;
 	scope: 'binary';
 	format: 'sfnt' | 'collection' | 'woff' | 'woff2' | 'cff' | 'type1' | 'unknown';
-	profile: 'structural';
+	profile: QualityProfileId;
+	profileVersion: 1;
+	profileReport: ProfileReport;
+	complete: false;
+	checks: CheckExecution[];
 	diagnostics: DiagnosticReport | null;
 	coverage: { domain: string; status: 'partial' | 'blocked' | 'unsupported'; reason: string }[];
 	repairs: RepairOffer[];
@@ -256,7 +368,8 @@ export interface RepairRequest {
 export interface RepairPlan {
 	readonly schemaVersion: 1;
 	readonly inputFingerprint: string;
-	readonly profile: 'structural';
+	readonly profile: QualityProfileId;
+	readonly profileVersion: 1;
 	readonly format: 'sfnt';
 	readonly steps: readonly (RepairOffer & {
 		readonly implicit: boolean;
@@ -274,13 +387,32 @@ export interface RepairResult {
 	outputFingerprint: string | null;
 }
 export interface PreflightResult {
+	schemaVersion: 1;
 	state: 'verified' | 'failed' | 'unsupported';
 	buffer: ArrayBuffer | null;
 	validation: ValidationReport;
 	output: InspectionReport | null;
 	effects: string[];
 	error: string | null;
+	stages: PreflightStage[];
+	normalizations: {
+		kind: 'validation-copy-only' | 'finding-not-observed-in-output';
+		code: string;
+		path?: string;
+		originalFindingId?: string;
+		executionId?: string;
+		description: string;
+	}[];
 }
+export interface PreflightOptions extends ExportOptions, InspectionOptions {}
+export type PreflightStage = {
+	status: 'checked' | 'skipped' | 'blocked' | 'failed' | 'unsupported';
+	reasonCode: string;
+	reason?: string;
+} & (
+	{ id: 'original' | 'output'; report: InspectionReport | null } |
+	{ id: 'project' | 'resolved'; report: ValidationReport | null }
+);
 export class FontFlux {
 	constructor(data: FontData);
 	static create(options?: {
@@ -306,6 +438,8 @@ export class FontFlux {
 	): ArrayBuffer;
 	static diagnose(buffer: ArrayBuffer, options?: ImportOptions): DiagnosticReport;
 	static inspect(input: ArrayBuffer | Uint8Array, options?: InspectionOptions): InspectionReport;
+	static checkCatalog(): Readonly<Record<string, CheckDescriptor>>;
+	static qualityProfiles(): readonly QualityProfile[];
 	static repairCatalog(): readonly RepairDescriptor[];
 	static planRepairs(input: ArrayBuffer | Uint8Array, requests: RepairRequest[], options?: InspectionOptions): Promise<RepairPlan>;
 	static applyRepairs(input: ArrayBuffer | Uint8Array, plan: RepairPlan): Promise<RepairResult>;
@@ -382,7 +516,7 @@ export class FontFlux {
 	convertOutlines(target: 'truetype' | 'cff'): this;
 	toJSON(indent?: number): string;
 	validate(): ValidationReport;
-	preflight(options?: ExportOptions): Promise<PreflightResult>;
+	preflight(options?: PreflightOptions): Promise<PreflightResult>;
 	detach(): this;
 }
 export function initWoff2(): Promise<void>;

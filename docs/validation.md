@@ -13,13 +13,18 @@ Additional binary-import limits are listed in [Import Options](./api.md#import-o
 For actual-output checking, use [`await font.preflight(options)`](./font-quality.md#preflight-an-edited-or-authored-project).
 For source-preserving, explicitly selected repairs, use the [font-quality workflow](./font-quality.md).
 Neither changes the observational contract of `validate()`.
+Versioned profile policy, required-table differences (including OS/2), original
+binary provenance, and explicit check execution coverage are documented in
+[Font Quality](./font-quality.md). The [generated identifier inventory](./check-inventory.md)
+covers all pipelines, including internal-only and informational identifiers.
 
 Use `.validate()` to catch structural and cross-table issues before export.
 It builds and checks a detached export candidate, including generated tables
 for fonts created from scratch. Validation does not mutate the live font or
 change how subsequent edits are exported. Recoverable problems in the candidate
 (missing headers, wrong directory fields, mismatched counts) are repaired and
-reported as `info`-level issues. These repairs do not modify the source data.
+reported as `info`-level issues explicitly scoped to a detached validation copy.
+These repairs do not modify the source data or authorize a later export repair.
 
 ## API
 
@@ -71,11 +76,13 @@ table data (including collections) and applies repairs directly to that input;
 the public `.validate()` method isolates those repairs from the live font.
 
 For binary cmap checks, use `FontFlux.diagnose(output)` after export. Its format-4
-checks include strictly increasing `endCode` values and the required final
+checks include non-overlapping increasing ranges and the required final
 `[0xFFFF, 0xFFFF]` segment. Duplicate terminal segments are reported as
 `CMAP_FORMAT4_RANGES_OUT_OF_ORDER`; `.validate()` does not perform these deep
 cmap checks. Direct terminal mappings are checked for out-of-range glyph IDs,
-just like other direct mappings. Invalid binary format-4 lengths cause a
+just like other direct mappings. Indirect mappings are checked after `idDelta`,
+with zero preserved as unmapped and out-of-bounds range offsets reported.
+Invalid binary format-4 lengths cause a
 `TABLE_PARSE_FAILED` diagnostic instead of being parsed beyond the declared
 subtable length.
 

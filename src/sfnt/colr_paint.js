@@ -14,6 +14,11 @@
  */
 
 import { DataReader } from '../reader.js';
+import {
+	consumeStructure,
+	StructureLimitError,
+	StructureLimits,
+} from '../structure_limits.js';
 import { DataWriter } from '../writer.js';
 import {
 	parseItemVariationStore,
@@ -84,6 +89,7 @@ function parseDeltaSetIndexMap(reader, absOffset) {
 	const format = reader.uint8();
 	const entryFormat = reader.uint8();
 	const mapCount = format === 1 ? reader.uint32() : reader.uint16();
+	consumeStructure(reader, mapCount);
 	const innerBitCount = (entryFormat & INNER_BIT_MASK) + 1;
 	const entrySize = ((entryFormat & ENTRY_SIZE_MASK) >> 4) + 1;
 	const entries = [];
@@ -152,6 +158,7 @@ function writeDeltaSetIndexMap(map) {
  * @returns {object} { baseGlyphPaintRecords, layerPaints, clipList, varIndexMap, itemVariationStore }
  */
 export function parseV1Data(reader, v1Header) {
+	reader.structureLimits ??= new StructureLimits();
 	const cache = new Map(); // absolute offset -> parsed paint node
 
 	const baseGlyphPaintRecords = parseBaseGlyphList(
@@ -163,6 +170,8 @@ export function parseV1Data(reader, v1Header) {
 	const layerPaints = v1Header.layerListOffset
 		? parseLayerList(reader, v1Header.layerListOffset, cache)
 		: null;
+
+	validatePaintGraph(reader.structureLimits, baseGlyphPaintRecords, layerPaints);
 
 	const clipList = v1Header.clipListOffset
 		? parseClipList(reader, v1Header.clipListOffset)
@@ -201,8 +210,10 @@ export function parseV1Data(reader, v1Header) {
 // ----- BaseGlyphList ------------------------------------------------
 
 function parseBaseGlyphList(reader, offset, cache) {
+	if (!offset) return [];
 	reader.seek(offset);
 	const numRecords = reader.uint32();
+	consumeStructure(reader, numRecords);
 	const records = [];
 	const rawRecords = [];
 
@@ -228,6 +239,7 @@ function parseBaseGlyphList(reader, offset, cache) {
 function parseLayerList(reader, offset, cache) {
 	reader.seek(offset);
 	const numLayers = reader.uint32();
+	consumeStructure(reader, numLayers);
 	const offsets = [];
 	for (let i = 0; i < numLayers; i++) {
 		offsets.push(reader.uint32());
@@ -245,6 +257,7 @@ function parseClipList(reader, offset) {
 	reader.seek(offset);
 	const format = reader.uint8();
 	const numClips = reader.uint32();
+	consumeStructure(reader, numClips);
 	// Read all clip records first (reader position advances sequentially)
 	const rawClips = [];
 	for (let i = 0; i < numClips; i++) {
@@ -283,6 +296,7 @@ function parseColorLine(reader, offset, isVar) {
 	reader.seek(offset);
 	const extend = reader.uint8();
 	const numStops = reader.uint16();
+	consumeStructure(reader, numStops);
 	const colorStops = [];
 	for (let i = 0; i < numStops; i++) {
 		const stop = {
@@ -315,8 +329,15 @@ function parseAffine2x3(reader, offset, isVar) {
 // ----- Paint (recursive, cached) ------------------------------------
 
 function parsePaint(reader, offset, cache) {
+	consumeStructure(reader);
 	if (cache.has(offset)) return cache.get(offset);
 
+	return reader.structureLimits.parse(`COLR paint ${offset}`, () =>
+		parsePaintData(reader, offset, cache),
+	);
+}
+
+function parsePaintData(reader, offset, cache) {
 	reader.seek(offset);
 	const format = reader.uint8();
 	let paint;
@@ -427,6 +448,60 @@ function parsePaint(reader, offset, cache) {
 	paint.format = format;
 	cache.set(offset, paint);
 	return paint;
+}
+
+// Include indirect LayerList and PaintColrGlyph edges, without expanding shared
+// subgraphs. Cached heights still enforce depth when a DAG is reached via a
+// longer path than its first visit.
+function validatePaintGraph(limits, records, layers) {
+	const glyphs = new Map(records.map((record) => [record.glyphID, record.paint]));
+	const heights = new Map();
+	const active = new Set();
+	const roots = [...records.map((record) => record.paint), ...(layers ?? [])];
+	for (const root of roots) {
+		if (heights.has(root)) continue;
+		const stack = [{ paint: root, children: null, index: 0, height: 1 }];
+		while (stack.length) {
+			const frame = stack[stack.length - 1];
+			if (frame.children === null) {
+				limits.checkDepth(stack.length);
+				limits.consume();
+				active.add(frame.paint);
+				const paint = frame.paint;
+				frame.children = [];
+				if (paint.paint) frame.children.push(paint.paint);
+				if (paint.sourcePaint) frame.children.push(paint.sourcePaint);
+				if (paint.backdropPaint) frame.children.push(paint.backdropPaint);
+				if (paint.format === 1) {
+					limits.consume(paint.numLayers);
+					for (let i = 0; i < paint.numLayers; i++) {
+						const child = layers?.[paint.firstLayerIndex + i];
+						if (child) frame.children.push(child);
+					}
+				}
+				if (paint.format === 11 && glyphs.has(paint.glyphID))
+					frame.children.push(glyphs.get(paint.glyphID));
+			}
+			if (frame.index < frame.children.length) {
+				const child = frame.children[frame.index];
+				if (active.has(child))
+					throw new StructureLimitError('COLR paint cycle detected.');
+				if (heights.has(child)) {
+					limits.consume();
+					const height = heights.get(child);
+					limits.checkDepth(stack.length + height);
+					frame.height = Math.max(frame.height, height + 1);
+					frame.index++;
+				} else {
+					stack.push({ paint: child, children: null, index: 0, height: 1 });
+				}
+			} else {
+				heights.set(frame.paint, frame.height);
+				active.delete(frame.paint);
+				stack.pop();
+			}
+		}
+	}
 }
 
 // ---- Individual paint parsers (format byte already consumed) -------

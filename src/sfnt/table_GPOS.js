@@ -15,7 +15,11 @@
  *   9 — Extension positioning (format 1)
  */
 
-import { DataReader } from '../reader.js';
+import {
+	consumeStructure,
+	StructureLimitError,
+	StructureReader,
+} from '../structure_limits.js';
 import { DataWriter } from '../writer.js';
 import {
 	parseChainedSequenceContext,
@@ -83,10 +87,13 @@ function parseValueRecord(reader, valueFormat, subtableOffset) {
 		try {
 			return parseDevice(reader, primaryOffset);
 		} catch (primaryError) {
+			if (primaryError instanceof StructureLimitError) throw primaryError;
 			if (fallbackOffset !== primaryOffset) {
 				try {
 					return parseDevice(reader, fallbackOffset);
-				} catch {
+				} catch (fallbackError) {
+					if (fallbackError instanceof StructureLimitError)
+						throw fallbackError;
 					// fall through to contextual error below
 				}
 			}
@@ -152,6 +159,7 @@ function parseAnchor(reader, offset) {
 function parseMarkArray(reader, offset) {
 	reader.seek(offset);
 	const markCount = reader.uint16();
+	consumeStructure(reader, markCount);
 	const records = [];
 	for (let i = 0; i < markCount; i++) {
 		const markClass = reader.uint16();
@@ -172,10 +180,11 @@ function parseMarkArray(reader, offset) {
 /**
  * Parse a GPOS table from raw bytes.
  * @param {number[]} rawBytes
+ * @param {object} [options] - maxStructureDepth and maxStructureNodes limits
  * @returns {object}
  */
-export function parseGPOS(rawBytes) {
-	const reader = new DataReader(rawBytes);
+export function parseGPOS(rawBytes, options = {}) {
+	const reader = new StructureReader(rawBytes, options);
 
 	const majorVersion = reader.uint16();
 	const minorVersion = reader.uint16();
@@ -209,6 +218,12 @@ export function parseGPOS(rawBytes) {
 // --- GPOS Lookup subtable dispatcher ----------------------------------------
 
 function parseGPOSSubtable(reader, offset, lookupType) {
+	return reader.structureLimits.parse(`GPOS subtable ${offset}`, () =>
+		parseGPOSSubtableData(reader, offset, lookupType),
+	);
+}
+
+function parseGPOSSubtableData(reader, offset, lookupType) {
 	switch (lookupType) {
 		case 1:
 			return parseSinglePos(reader, offset);
@@ -250,6 +265,7 @@ function parseSinglePos(reader, offset) {
 		const coverageOffset = reader.uint16();
 		const valueFormat = reader.uint16();
 		const valueCount = reader.uint16();
+		consumeStructure(reader, valueCount);
 		const valueRecords = [];
 		for (let i = 0; i < valueCount; i++) {
 			valueRecords.push(parseValueRecord(reader, valueFormat, offset));
@@ -277,6 +293,7 @@ function parsePairPos(reader, offset) {
 			const pairSetOffset = offset + pso;
 			reader.seek(pairSetOffset);
 			const pvCount = reader.uint16();
+			consumeStructure(reader, pvCount);
 			const pvRecords = [];
 			for (let i = 0; i < pvCount; i++) {
 				const secondGlyph = reader.uint16();
@@ -304,6 +321,7 @@ function parsePairPos(reader, offset) {
 		const classDef2Offset = reader.uint16();
 		const class1Count = reader.uint16();
 		const class2Count = reader.uint16();
+		consumeStructure(reader, class1Count * (class2Count + 1));
 
 		const class1Records = [];
 		for (let i = 0; i < class1Count; i++) {
@@ -345,6 +363,7 @@ function parseCursivePos(reader, offset) {
 
 	const coverageOffset = reader.uint16();
 	const entryExitCount = reader.uint16();
+	consumeStructure(reader, entryExitCount);
 	const records = [];
 	for (let i = 0; i < entryExitCount; i++) {
 		const entryAnchorOff = reader.uint16();

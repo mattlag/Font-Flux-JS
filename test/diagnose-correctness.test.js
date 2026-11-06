@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { writeCOLR } from '../src/sfnt/table_COLR.js';
 import { _internal, diagnoseFont } from '../src/validate/diagnoseFont.js';
 import { wrapWOFF1 } from '../src/woff/woff1.js';
 import { initBrotli } from '../src/woff/woff2.js';
@@ -370,6 +371,8 @@ describe('diagnostic import-compatible limits', () => {
 		{ maxInputBytes: 0 }, { maxTableBytes: -1 }, { maxTables: 1.5 },
 		{ maxFonts: Infinity }, { maxGlyphs: NaN }, { maxPoints: '2' },
 		{ maxCharStringOperations: Number.MAX_SAFE_INTEGER + 1 },
+		{ maxStructureDepth: 0 }, { maxStructureDepth: 1.5 },
+		{ maxStructureNodes: -1 }, { maxStructureNodes: Number.MAX_SAFE_INTEGER + 1 },
 		{ maxUncompressedBytes: 0 }, { faceIndex: -1 }, { faceIndex: 0.5 }, null,
 	])('reports invalid options %j without throwing', (options) => {
 		const report = diagnoseFont(new ArrayBuffer(12), options);
@@ -469,6 +472,33 @@ describe('diagnostic import-compatible limits', () => {
 		expect(report.errors.some((issue) =>
 			issue.code === 'TABLE_PARSE_FAILED' && issue.message.includes('maxPoints'))).toBe(true);
 	});
+
+	it.each(['maxStructureDepth', 'maxStructureNodes'])(
+		'passes %s through to COLR parsing and preserves the source', (limit) => {
+			const colr = new Uint8Array(writeCOLR({
+				version: 1,
+				baseGlyphRecords: [],
+				layerRecords: [],
+				baseGlyphPaintRecords: [{
+					glyphID: 1,
+					paint: {
+						format: 10,
+						glyphID: 1,
+						paint: { format: 2, paletteIndex: 0, alpha: 1 },
+					},
+				}],
+				layerPaints: null,
+			}));
+			const buffer = singleTableFont('COLR', colr.buffer);
+			const original = buffer.slice(0);
+			expect(codes(diagnoseFont(buffer))).not.toContain('TABLE_PARSE_FAILED');
+			const report = diagnoseFont(buffer, { [limit]: 1 });
+			expect(report.errors.some((issue) =>
+				issue.code === 'TABLE_PARSE_FAILED' && issue.faceIndex === 0 &&
+				issue.message.includes(limit))).toBe(true);
+			expect(new Uint8Array(buffer)).toEqual(new Uint8Array(original));
+		},
+	);
 
 	it('bounds CFF diagnostic operations including subroutine calls', () => {
 		const cff = {

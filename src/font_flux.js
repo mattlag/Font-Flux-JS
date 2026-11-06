@@ -32,19 +32,24 @@ import {
 } from './otf/charstring_interpreter.js';
 import { createSubstitution, getSubstitutions } from './substitution.js';
 import { contoursToSVGPath, svgPathToContours } from './svg_path.js';
+import { CHECK_CATALOG } from './validate/check-catalog.js';
 import { diagnoseFont, validateJSON } from './validate/index.js';
+import { qualityProfiles } from './validate/profiles.js';
 import {
 	applyRepairs,
 	inspectFont,
 	planRepairs,
 	preflightFont,
 	repairCatalog,
+	scopedValidation,
 } from './validate/quality.js';
 import {
 	buildReport,
 	validateSimplifiedJSON,
 } from './validate/validateJSON.js';
 import { initBrotli } from './woff/woff2.js';
+
+const originalSources = new WeakMap();
 
 // ============================================================================
 //  INPUT DETECTION — distinguish JSON vs. binary font input
@@ -290,7 +295,11 @@ export class FontFlux {
 			);
 		}
 
-		return new FontFlux(result);
+		const font = new FontFlux(result);
+		originalSources.set(font, {
+			bytes: detected.buffer.slice(0), options: structuredClone(options),
+		});
+		return font;
 	}
 
 	/**
@@ -316,11 +325,15 @@ export class FontFlux {
 			faceIndex: undefined,
 		});
 
-		if (result.collection && result.fonts) {
-			return result.fonts.map((face) => new FontFlux(face));
-		}
-
-		return [new FontFlux(result)];
+		const bytes = detected.buffer.slice(0);
+		const faces = result.collection && result.fonts ? result.fonts : [result];
+		return faces.map((face, faceIndex) => {
+			const font = new FontFlux(face);
+			originalSources.set(font, {
+				bytes, options: { ...structuredClone(options), faceIndex },
+			});
+			return font;
+		});
 	}
 
 	/**
@@ -393,6 +406,14 @@ export class FontFlux {
 
 	static inspect(input, options) {
 		return inspectFont(input, options);
+	}
+
+	static checkCatalog() {
+		return CHECK_CATALOG;
+	}
+
+	static qualityProfiles() {
+		return qualityProfiles();
 	}
 
 	static repairCatalog() {
@@ -1166,29 +1187,32 @@ export class FontFlux {
 	 * @returns {object} { valid, errors, warnings, infos }
 	 */
 	validate() {
-		const report = validateSimplifiedJSON(this._data);
+		const report = scopedValidation(validateSimplifiedJSON(this._data), 'editable-project');
 		if (!report.valid) return report;
+		let resolved;
 		try {
-			const resolved = validateJSON(
+			resolved = scopedValidation(validateJSON(
 				resolveExportSource(structuredClone(this._data)),
-			);
-			return buildReport([...report.issues, ...resolved.issues]);
+			), 'resolved-candidate');
 		} catch (error) {
-			return buildReport([
-				...report.issues,
+			resolved = scopedValidation(buildReport([
 				{
 					severity: 'error',
 					code: 'EXPORT_RESOLUTION_FAILED',
 					message: error.message,
 					path: '$',
 				},
-			]);
+			]), 'resolved-candidate');
 		}
+		return {
+			...buildReport([...report.issues, ...resolved.issues]),
+			schemaVersion: 1, source: 'validation-candidate', complete: false,
+			checks: [...report.checks, ...resolved.checks],
+		};
 	}
 
 	async preflight(options) {
-		const candidate = new FontFlux(structuredClone(this._data));
-		return preflightFont(candidate.data, candidate.validate(), options);
+		return preflightFont(this._data, options, originalSources.get(this));
 	}
 
 	/**

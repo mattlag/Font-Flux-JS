@@ -43,6 +43,7 @@ export default defineConfig({
 					{ text: 'Validation', link: '/validation' },
 					{ text: 'Diagnostics', link: '/diagnostics' },
 					{ text: 'Font Quality', link: '/font-quality' },
+					{ text: 'Check Inventory', link: '/check-inventory' },
 				],
 			},
 			{

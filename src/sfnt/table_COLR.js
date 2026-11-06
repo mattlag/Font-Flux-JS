@@ -18,7 +18,7 @@
  *   reconstructed during writing.
  */
 
-import { DataReader } from '../reader.js';
+import { consumeStructure, StructureReader } from '../structure_limits.js';
 import { DataWriter } from '../writer.js';
 import { parseV1Data, writeV1Data } from './colr_paint.js';
 
@@ -53,16 +53,18 @@ import { parseV1Data, writeV1Data } from './colr_paint.js';
  *   Offset32 itemVariationStoreOffset
  *
  * @param {number[]} rawBytes
+ * @param {object} [options] - maxStructureDepth and maxStructureNodes limits
  * @returns {object}
  */
-export function parseCOLR(rawBytes) {
-	const reader = new DataReader(rawBytes);
+export function parseCOLR(rawBytes, options = {}) {
+	const reader = new StructureReader(rawBytes, options);
 
 	const version = reader.uint16();
 	const numBaseGlyphRecords = reader.uint16();
 	const baseGlyphRecordsOffset = reader.uint32();
 	const layerRecordsOffset = reader.uint32();
 	const numLayerRecords = reader.uint16();
+	consumeStructure(reader, numBaseGlyphRecords + numLayerRecords);
 
 	// -- Read v0 BaseGlyph records ---------------------------------------
 	const baseGlyphRecords = [];

@@ -19,15 +19,73 @@ for (const fix of inspection.repairs) {
 ```
 
 `inspect` accepts an `ArrayBuffer` or `Uint8Array`, including a sliced view, and
-the [diagnostic import limits](./diagnostics.md). Its only implemented profile is
-`structural`; unsupported profile names are rejected rather than silently treated
-as structural. Findings retain legacy diagnostic IDs. In particular, the
+the [diagnostic import limits](./diagnostics.md). Versioned profiles are described
+below; unsupported names or versions reject rather than silently becoming
+structural. Findings retain legacy diagnostic IDs. In particular, the
 `OS2_WEIGHT_CLAMPED` and `OS2_WIDTH_CLAMPED` IDs describe out-of-range values,
 **not a clamp FFJS has applied**.
 
 The report includes format, diagnostic findings, applicable repair offers, and
 partial/unsupported coverage. Original standalone CFF/Type 1 diagnosis is marked
 unsupported instead of misrepresenting those inputs as malformed SFNTs.
+
+### Inventory, outcomes, and profiles
+
+[`FontFlux.checkCatalog()`](./check-inventory.md) lists every diagnostic identifier,
+its pipeline, source/specification evidence, public reachability, and registered
+repairs or no-fix reason. Informational identifiers are separate from findings.
+Identifier counts are **not coverage percentages**. A catalog entry does not
+mean its check ran against the current font.
+
+`inspection.checks` records actual execution groups: stable `id`, `revision`,
+`source`, `location`, `outcome`, `coverage`, `reasonCode`, `reason`, and
+`findingIds`. Outcomes are `passed`, `failed`, `skipped`, `blocked`, or
+`unsupported`; coverage is `complete`, `partial`, or `not-checked` **for that
+group's declared scope**. A pass never fills in a skipped dependent check.
+Parsing an unknown/opaque table is not semantic validation. Layout execution,
+rendering, complete CFF evaluation, and unsupported cmap formats remain explicit
+gaps. Top-level inspection `complete` remains false: this is not full font
+certification.
+
+Findings retain legacy fields and add stable `id`, catalog `checkId`, runtime
+`executionId`, structured `location`, `source`, `outcome`, and `evidence`.
+Severity does not indicate whether a repair was executed. `valid` still means
+no **error-severity** findings, not that every check passed or completed.
+
+`FontFlux.qualityProfiles()` lists these version-1 profiles:
+
+| Profile | Scope and decisions |
+| --- | --- |
+| `structural` (default) | Implemented binary diagnostics and OpenType required tables. Missing OS/2 is a profile error for OpenType flavors, but not Apple's legacy `true` flavor. No publisher/family assumptions. |
+| `interoperability` | Structural checks plus Windows Unicode family/style naming recommendations and legacy sanitizer compatibility thresholds. |
+| `publishing` | Interoperability plus caller-declared filename and family expectations. This is not a Google Fonts profile or a complete family QA suite. |
+
+```js
+const report = FontFlux.inspect(bytes, {
+	profile: 'publishing',
+	profileVersion: 1,
+	context: {
+		fileName: 'Example-Regular.ttf',
+		expectedFileName: 'Example-Regular.ttf',
+		expectedFamilyName: 'Example',
+	},
+});
+console.log(report.profileReport);
+```
+
+Missing context yields **blocked**, not passed. The family rule checks for at
+least one matching family/typographic-family record; it does not demand that all
+localizations be identical or assume that collection faces form a family.
+Each policy check carries provenance, rationale, and consequences. Filename
+errors are external packaging policy, not corrupt bytes. Selecting a profile
+never selects or consents to a repair.
+
+**Compatibility:** low-level `diagnose()` retains legacy severity and required-table
+behavior. Modern `inspect()` adds the flavor-specific OS/2 requirement. The legacy
+`CMAP_NO_SUPPORTED_SUBTABLE` and 16-level `GLYF_COMPOSITE_DEPTH_EXCEEDED` findings
+are interoperability advisories under `structural`, retaining `originalSeverity`;
+the interoperability/publishing profiles retain their legacy severity. Actual
+execution-budget failures remain errors in every profile.
 
 ## Plan, apply to a copy, and verify
 
@@ -155,8 +213,37 @@ detached project, serializes the selected format, and diagnoses those exact byte
 Invalid fields that survive normal `validate()`/`export()` cannot earn a clean
 preflight merely because serialization succeeded. The live font is unchanged.
 
+`stages` retains four separate reports:
+
+| Stage | What was checked |
+| --- | --- |
+| `original` | An immutable binary snapshot retained by `open`/`openAll`, using the structural profile and original face index. Unsupported originals remain explicit. |
+| `project` | Observational simplified-data validation. |
+| `resolved` | Detached target-specific resolution and validation; legacy normalizations affect a separate validation copy. |
+| `output` | The exact chosen-format bytes, with the selected profile and caller-supplied output context. |
+
+`create`, `fromJSON`, and JSON `open` have no original binary: that stage is
+`skipped` with `no-original-bytes`. Original bytes are private, are not serialized
+into project JSON, and remain independent of later caller-buffer mutations.
+Collection source face indices are not reused as standalone output indices.
+Retaining originals costs one binary snapshot (shared among `openAll` faces).
+
+Stage `checked` means the inspection ran, not that every finding passed.
+`normalizations` distinguishes changes made only in the detached validation copy
+from original findings no longer observed by a comparable, completed output
+check. The latter can result from import/export normalization **or project
+edits**; it is evidence, not an automatically applied repair or proof of semantic
+equivalence. A skipped target check (such as the standalone checksum for WOFF)
+cannot masquerade as resolving an original defect.
+
 Possible states are `verified`, `failed`, and `unsupported`. Only `verified`
 includes downloadable bytes; warnings and partial coverage can still be present.
+An implemented check that actually aborts (for example unsupported CFF execution
+context) yields `unsupported`, even when its legacy finding is only a warning.
+This differs from a disclosed domain for which no complete validator exists.
+Missing required publishing context yields `unsupported`, without a downloadable
+buffer. Publishing mismatches yield policy errors; interoperability
+recommendations can remain warnings.
 Existing DSIG blocks preflight rather than silently losing authentication.
 Standalone CFF output diagnosis remains unsupported. Ordinary `validate()` and
 `export()` retain their existing contracts.

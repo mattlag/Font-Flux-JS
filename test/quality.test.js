@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { FontFlux } from '../src/font_flux.js';
 import { exportFont } from '../src/export.js';
+import * as exportPipeline from '../src/export.js';
 import { importFontTables } from '../src/import.js';
 import { parseName } from '../src/sfnt/table_name.js';
 import * as diagnostics from '../src/validate/diagnoseFont.js';
@@ -77,7 +78,7 @@ describe('quality inspection and repair contracts', () => {
 		}
 		expect(() =>
 			FontFlux.inspect(fontBytes(), { profile: 'googlefonts' }),
-		).toThrow(/Only the structural profile/);
+		).toThrow(/Unknown quality profile/);
 		expect(() => FontFlux.inspect(fontBytes(), { maxInputBytes: 1 })).toThrow(
 			/maxInputBytes/,
 		);
@@ -444,6 +445,45 @@ describe('quality inspection and repair contracts', () => {
 });
 
 describe('actual-output project preflight', () => {
+	it('preserves editable finding scope when detached export resolution fails', () => {
+		const font = FontFlux.open(fontBytes());
+		font.data.glyphs[2].name = font.data.glyphs[1].name;
+		const spy = vi.spyOn(exportPipeline, 'resolveExportSource').mockImplementationOnce(() => {
+			throw new Error('Injected resolution failure.');
+		});
+		try {
+			const report = font.validate();
+			expect(report.warnings.length).toBeGreaterThan(0);
+			expect(report.warnings.every((issue) => issue.source === 'editable-project')).toBe(true);
+			expect(report.errors.find((issue) => issue.code === 'EXPORT_RESOLUTION_FAILED').source).toBe('resolved-candidate');
+			expect(report.checks.map((check) => check.id)).toEqual([
+				'validation.editable-project', 'validation.resolved-candidate',
+			]);
+		} finally {
+			spy.mockRestore();
+		}
+	});
+
+	it('does not verify output when an implemented check stopped with only a warning', async () => {
+		const actualDiagnose = diagnostics.diagnoseFont;
+		const spy = vi.spyOn(diagnostics, 'diagnoseFont').mockImplementationOnce((buffer, options) => {
+			const report = actualDiagnose(buffer, options);
+			const issue = { severity: 'warning', code: 'CFF_CONTEXT_UNSUPPORTED',
+				message: 'Injected incomplete execution context.' };
+			return { ...report, issues: [...report.issues, issue],
+				warnings: [...report.warnings, issue] };
+		});
+		try {
+			const result = await FontFlux.create({ family: 'Incomplete output' }).preflight();
+			expect(result.state).toBe('unsupported');
+			expect(result.buffer).toBeNull();
+			expect(result.output.diagnostics.valid).toBe(true);
+			expect(result.error).toMatch(/could not finish/);
+		} finally {
+			spy.mockRestore();
+		}
+	});
+
 	it('checks authored projects without mutation and returns exact diagnosed bytes', async () => {
 		const font = FontFlux.create({ family: 'Authored' });
 		const before = structuredClone(font.data);

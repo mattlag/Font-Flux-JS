@@ -14,7 +14,7 @@
  *   8 — Reverse chained contexts single substitution (format 1)
  */
 
-import { DataReader } from '../reader.js';
+import { StructureReader } from '../structure_limits.js';
 import { DataWriter } from '../writer.js';
 import {
 	parseChainedSequenceContext,
@@ -40,10 +40,11 @@ import {
 /**
  * Parse a GSUB table from raw bytes.
  * @param {number[]} rawBytes
+ * @param {object} [options] - maxStructureDepth and maxStructureNodes limits
  * @returns {object}
  */
-export function parseGSUB(rawBytes) {
-	const reader = new DataReader(rawBytes);
+export function parseGSUB(rawBytes, options = {}) {
+	const reader = new StructureReader(rawBytes, options);
 
 	const majorVersion = reader.uint16();
 	const minorVersion = reader.uint16();
@@ -77,6 +78,12 @@ export function parseGSUB(rawBytes) {
 // --- GSUB Lookup subtable dispatcher ----------------------------------------
 
 function parseGSUBSubtable(reader, offset, lookupType) {
+	return reader.structureLimits.parse(`GSUB subtable ${offset}`, () =>
+		parseGSUBSubtableData(reader, offset, lookupType),
+	);
+}
+
+function parseGSUBSubtableData(reader, offset, lookupType) {
 	switch (lookupType) {
 		case 1:
 			return parseSingleSubst(reader, offset);

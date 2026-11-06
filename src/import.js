@@ -52,6 +52,7 @@ import { parseVhea } from './sfnt/table_vhea.js';
 import { parseVmtx } from './sfnt/table_vmtx.js';
 import { parseVVAR } from './sfnt/table_VVAR.js';
 import { buildSimplified } from './simplify.js';
+import { DEFAULT_STRUCTURE_LIMITS } from './structure_limits.js';
 import { parseCvar } from './ttf/table_cvar.js';
 import { parseCvt } from './ttf/table_cvt.js';
 import { parseFpgm } from './ttf/table_fpgm.js';
@@ -65,9 +66,9 @@ import { unwrapWOFF2 } from './woff/woff2.js';
 
 /**
  * Registry of table parsers.
- * Each key is a table tag; the value is a function (number[], tables?) -> object.
+ * Each key is a table tag; the value is (rawBytes, tables?, options?) -> object.
  * Tables not listed here are stored as raw bytes.
- * Parsers may accept a second argument: the tables object (for cross-table deps).
+ * Parsers may accept parsed tables (for cross-table deps) and import options.
  */
 export const tableParsers = {
 	cmap: parseCmap,
@@ -103,8 +104,8 @@ export const tableParsers = {
 	glyf: parseGlyf,
 	gvar: parseGvar,
 	GDEF: parseGDEF,
-	GPOS: parseGPOS,
-	GSUB: parseGSUB,
+	GPOS: (rawBytes, _tables, options) => parseGPOS(rawBytes, options),
+	GSUB: (rawBytes, _tables, options) => parseGSUB(rawBytes, options),
 	'cvt ': parseCvt,
 	cvar: parseCvar,
 	fpgm: parseFpgm,
@@ -113,7 +114,7 @@ export const tableParsers = {
 	vhea: parseVhea,
 	VVAR: parseVVAR,
 	vmtx: parseVmtx,
-	COLR: parseCOLR,
+	COLR: (rawBytes, _tables, options) => parseCOLR(rawBytes, options),
 	CPAL: parseCPAL,
 	EBLC: parseEBLC,
 	EBDT: parseEBDT,
@@ -260,6 +261,7 @@ function importLimits(buffer, options) {
 		maxGlyphs: 65535,
 		maxPoints: 10000000,
 		maxCharStringOperations: 1000000,
+		...DEFAULT_STRUCTURE_LIMITS,
 		...options,
 	};
 	for (const key of [
@@ -270,6 +272,8 @@ function importLimits(buffer, options) {
 		'maxGlyphs',
 		'maxPoints',
 		'maxCharStringOperations',
+		'maxStructureDepth',
+		'maxStructureNodes',
 	]) {
 		if (!Number.isSafeInteger(limits[key]) || limits[key] < 1)
 			throw new Error(`Invalid import limit: ${key}`);

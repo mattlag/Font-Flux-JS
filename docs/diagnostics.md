@@ -45,10 +45,13 @@ only `faceIndex: 0` is valid for a standalone font.
 | `maxGlyphs` | 65535 | Parsed `maxp` count and CFF/CFF2 CharStrings counts; remaining parsing stops when exceeded |
 | `maxPoints` | 10000000 | Passed to the TrueType `glyf` parser; cumulative simple-glyph points per face |
 | `maxCharStringOperations` | 1000000 | Diagnostic CFF/CFF2 bytecode steps per glyph, including operands and recursive subroutine calls |
+| `maxStructureDepth` | 64 | Nested GSUB/GPOS lookup-subtable, COLR paint, and diagnostic composite traversal depth; root depth is 1 |
+| `maxStructureNodes` | 1000000 | Per-table GSUB/GPOS/COLR parse work; separately bounds composite nodes/edges, indirect cmap mappings, and UVS entries |
 
 Limit failures are visible errors. `DIAGNOSTIC_LIMIT_EXCEEDED` identifies
 input/count/table-byte/glyph limits; decoder limits use `WOFF1_UNWRAP_FAILED` or
-`WOFF2_UNWRAP_FAILED`; `glyf` point limits use `TABLE_PARSE_FAILED`; CFF diagnostic
+`WOFF2_UNWRAP_FAILED`; `glyf` point limits and GSUB/GPOS/COLR structure limits use
+`TABLE_PARSE_FAILED`; CFF diagnostic
 step limits use `CFF_OPERATION_LIMIT_EXCEEDED`. Messages describe skipped work.
 One failed face does not discard independently readable face reports.
 
@@ -56,15 +59,28 @@ These are **partial resource controls, not a comprehensive security guarantee**.
 They do not bound every parser allocation, recursion path, issue count, or
 elapsed time. CFF glyph counts are checked after parsing the CFF table.
 WOFF2's per-face table-byte check follows bounded decompression.
-Shared tables may be decoded/checked again for each face; table/point/operation
+Structure budgets reset for each table; they are not byte or total-memory caps.
+Shared tables may be decoded/checked again for each face; table/point/operation/structure
 limits are not a single aggregate collection budget. `maxPoints` does not
 perform or bound CFF outline execution, which diagnosis does not run.
+
+Composite diagnosis uses an iterative, memoized graph walk rather than
+exponentially re-expanding shared components. Its legacy 16-level **sanitizer
+compatibility** finding is distinct from the configurable 64-level execution
+budget and import/expansion's deeper traversal allowance. Modern structural
+inspection makes that compatibility finding advisory; changing a budget neither
+fixes a font nor authorizes flattening. Cycles and exhausted budgets remain
+explicit. The limits are not a sandbox or wall-clock/process-memory guarantee.
 
 ## Report format
 
 ```js
 {
+  schemaVersion: 1,
   valid: false,                     // true iff errors.length === 0
+  complete: false,                  // gaps remain even when valid is true
+  source: 'original-bytes',
+  checks: [{ id, revision, source, location, outcome, coverage, reasonCode, reason, findingIds }],
   errors:   [{ severity, code, message, faceIndex? }],
   warnings: [{ severity, code, message, faceIndex? }],
   infos:    [{ severity, code, message, faceIndex? }],
@@ -83,6 +99,22 @@ including malformed-face errors; container/options findings have no `faceIndex`.
 A face report contains the same legacy fields plus `faceIndex` (no nested
 `faces`). Fatal input/limit failures may yield `faces: []`. An unreadable selected
 face still receives an error report when its declared index is known.
+
+Findings additionally have `id`, catalog `checkId`, runtime `executionId`,
+`outcome`, `source`, structured `location`, and `evidence`. Locations contain
+face/table/glyph/subtable/lookup/byte coordinates where known, rather than
+requiring clients to parse messages. IDs and report ordering are deterministic
+for the same input/options; there is no implicit run timestamp.
+
+`checks` describes executed **groups**, not a fabricated pass for every catalog
+identifier that was absent. `outcome` is `passed`, `failed`, `skipped`, `blocked`,
+or `unsupported`; `coverage` is `complete`, `partial`, or `not-checked`. Reasons
+have machine-readable `reasonCode`s. Unsupported formats, failed table parsing,
+missing prerequisites, and incomplete CFF execution cannot become passes.
+Original WOFF wrapper findings have `source: 'original-bytes'`; checks against
+the decoder's reconstruction have `source: 'decoded-sfnt'`. These sources are
+relative to the input of that inspection, including when inspecting emitted
+output during preflight.
 
 ## Severity levels
 
@@ -113,8 +145,18 @@ reconstruction whose table placement may differ from the original SFNT.
 Missing/truncated `head` tables cannot receive that check. Checksum findings
 remain warnings; therefore `valid: true` does not imply checksum correctness.
 Diagnosis is not exhaustive font certification, shaping validation, or a full
-upstream sanitizer implementation. No standardized per-check coverage/outcome
-ledger is provided by this API.
+upstream sanitizer implementation. See the [complete identifier/provenance
+inventory](./check-inventory.md) and [versioned profile rules](./font-quality.md#inventory-outcomes-and-profiles).
+The inventory is not evidence that every check executed on a particular input.
+
+The M0 cmap audit also checks indirect format-4 mappings **after** applying
+`idDelta` (zero remains unmapped), range-offset array bounds, direct-delta wrap
+maxima, Unicode scalar boundaries, and default/non-default UVS ordering,
+overlap/conflicts, and glyph bounds. Selector data follows Unicode 17.0, including
+U+180F. Legacy/non-Unicode subtables are not reinterpreted as Unicode scalar
+ranges; formats without deep validators have explicit unsupported coverage.
+Legal layout flag bits and GDEF mark-filter/class relationships are separate
+checks; unavailable GDEF context is blocked, not proof of a valid reference.
 
 ## Diagnostic code reference
 

@@ -4,6 +4,12 @@
 
 Binary imports accept positive safe-integer limits: `maxInputBytes` (256 MiB), `maxUncompressedBytes` (256 MiB), `maxTableBytes` (256 MiB of table data per face), `maxTables` (4,096), `maxFonts` (64), `maxGlyphs` (65,535), `maxPoints` (10,000,000 TrueType points per face), and `maxCharStringOperations` (1,000,000 interpreter steps per CFF/Type 1 glyph). WOFF2 directory counts are checked before reconstruction. Collection work is bounded per face plus the face-count limit, not by a total process-memory limit. JSON input is checked at validation/export time; these binary-parser limits do not bound JSON parsing.
 
+`maxStructureDepth` (64, root depth 1) and `maxStructureNodes` (1,000,000)
+bound nested GSUB/GPOS and COLR parsing per table. Diagnosis shares those
+defaults and separately bounds composite graph traversal, indirect cmap
+mapping work, and UVS entries. See [diagnostic coverage and limits](./diagnostics.md).
+These controls do not establish a total-memory or wall-clock sandbox.
+
 The npm package ships declarations for `FontFlux`, all five public exports, common editable fields, and import/export options. Advanced table fields use an explicit `Record<string, unknown>` escape hatch. `axes`, `instances`, `features`, and `tables` can be undefined. `format` distinguishes `truetype`, `cff`, and `cff2`; static outline conversion remains limited to TrueType and CFF1.
 
 # API Reference
@@ -508,8 +514,10 @@ Serialize the font to a JSON string.
 
 Check the font data for structural issues.
 
-**Returns** `object` — `{ valid, errors, warnings, infos }`. Only call
-`.export()` when `valid === true`.
+**Returns** a versioned observational report retaining
+`{ valid, errors, warnings, infos }`, with source-scoped findings and coverage.
+Use `.preflight()` to inspect the actual chosen-format output; a passing
+`.validate()` alone does not establish binary validity.
 
 ### `.detach()`
 
@@ -523,10 +531,12 @@ Non-decomposed tables (COLR, gvar, bitmap data, etc.) are lost.
 | Method | Result |
 | --- | --- |
 | `FontFlux.inspect(bytes, options?)` | Observational findings, applicable repair offers, and coverage |
+| `FontFlux.checkCatalog()` | Read-only diagnostic identifier/provenance inventory, including informational codes and no-fix reasons |
+| `FontFlux.qualityProfiles()` | Versioned structural, interoperability, and opt-in publishing profile descriptions |
 | `FontFlux.repairCatalog()` | Immutable repair descriptions, input constraints, risks, and consequences |
 | `await FontFlux.planRepairs(bytes, requests, options?)` | Frozen, source-bound plan with explicit decisions and companion operations |
 | `await FontFlux.applyRepairs(bytes, plan)` | Verified candidate bytes or an explicit failed verification; never mutates the source |
-| `await font.preflight(exportOptions?)` | Detached project validation plus diagnosis of the exact selected-format output |
+| `await font.preflight(options?)` | Original/project/resolved/emitted reports, normalization evidence, and exact selected-format output; accepts export and inspection/profile options |
 
 See [Font Quality](./font-quality.md) for supported fixes, signature and opaque-data
 guards, assisted inputs, errors, and important verification limitations. Repair

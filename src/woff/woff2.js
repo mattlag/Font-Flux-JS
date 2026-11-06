@@ -1139,6 +1139,10 @@ export function unwrapWOFF2(
 		throw new Error('WOFF2 transformed data exceeds decompression budget.');
 	if (dirPos > bytes.length || totalCompressedSize > bytes.length - dirPos)
 		throw new Error('WOFF2 compressed data range outside input bounds.');
+	for (const [offset, length] of [[metaOffset, metaLength], [privOffset, privLength]]) {
+		if (length && offset < compressedStart + totalCompressedSize)
+			throw new Error('WOFF2 ancillary range overlaps its directory or compressed font data.');
+	}
 	const decompressed = _brotliDecompress(
 		compressedData,
 		Math.max(1, transformedSize),

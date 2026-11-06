@@ -2,8 +2,13 @@
 import { tableParseOrder, tableParsers } from '../import.js';
 import { getCFFGlyphContext } from '../otf/cff_common.js';
 import { DataReader } from '../reader.js';
+import { DEFAULT_STRUCTURE_LIMITS } from '../structure_limits.js';
 import { unwrapWOFF1 } from '../woff/woff1.js';
 import { unwrapWOFF2 } from '../woff/woff2.js';
+import {
+	completeDiagnosticReport, diagnosticIssue, diagnosticState,
+	runDiagnosticCheck, skipDiagnosticCheck, trackDiagnosticIssues,
+} from './coverage.js';
 import { ALL_SUPPORTED_TABLES, REQUIRED_CORE_TABLES } from './tables.js';
 
 // =========================================================================
@@ -25,14 +30,15 @@ const DIAGNOSTIC_LIMITS = {
 	maxPoints: 10000000,
 	maxCharStringOperations: 1000000,
 	maxUncompressedBytes: 256 * 1024 * 1024,
+	...DEFAULT_STRUCTURE_LIMITS,
 };
 
 // =========================================================================
 //  Helpers
 // =========================================================================
 
-function addIssue(list, severity, code, message) {
-	list.push({ severity, code, message });
+function addIssue(list, severity, code, message, location) {
+	diagnosticIssue(list, severity, code, message, location);
 }
 
 function buildReport(issues) {
@@ -137,7 +143,8 @@ function phaseSignature(buffer, issues, options) {
 	// WOFF1
 	if (sig === 'wOFF') {
 		addIssue(issues, 'info', 'FORMAT_WOFF1', 'File is WOFF1-wrapped.');
-		validateWoff1Wrapper(buffer, issues);
+		runDiagnosticCheck(issues, 'binary.woff1-wrapper',
+			() => validateWoff1Wrapper(buffer, issues));
 		try {
 			const { sfnt } = unwrapWOFF1(buffer, options);
 			addIssue(
@@ -161,7 +168,10 @@ function phaseSignature(buffer, issues, options) {
 	// WOFF2
 	if (sig === 'wOF2') {
 		addIssue(issues, 'info', 'FORMAT_WOFF2', 'File is WOFF2-wrapped.');
-		validateWoff2Wrapper(buffer, issues);
+		runDiagnosticCheck(issues, 'binary.woff2-wrapper',
+			() => validateWoff2Wrapper(buffer, issues), {
+				partial: 'Header and auxiliary-block checks; transform decoding is separately inspected.',
+			});
 		// The current decoder assembles collection members with face-relative
 		// table offsets. Do not attribute those reconstruction defects to input.
 		if (new DataView(buffer).getUint32(4) === 0x74746366) {
@@ -373,12 +383,25 @@ function phaseDirectory(sfnt, header, issues, sfntOffset) {
 		seenTags.add(entry.tag);
 
 		// Bounds check
+		const directoryEnd = sfntOffset + 12 + header.numTables * 16;
+		const collectionHeaderEnd = new DataView(sfnt).getUint32(0) === 0x74746366
+			? 12 + new DataView(sfnt).getUint32(8) * 4 +
+				(new DataView(sfnt).getUint32(4) === 0x00020000 ? 12 : 0)
+			: 0;
+		if (entry.length > 0 &&
+			((entry.offset < directoryEnd && entry.offset + entry.length > sfntOffset) ||
+				entry.offset < collectionHeaderEnd)) {
+			addIssue(issues, 'error', 'TABLE_OVERLAPS_DIRECTORY',
+				`Table '${entry.tag}' overlaps a font or collection header/directory.`,
+				{ table: entry.tag, byteOffset: entry.offset, directoryIndex: i });
+		}
 		if (entry.offset + entry.length > sfnt.byteLength) {
 			addIssue(
 				issues,
 				'error',
 				'TABLE_OUT_OF_BOUNDS',
 				`Table '${entry.tag}' extends beyond end of file (offset ${entry.offset} + length ${entry.length} = ${entry.offset + entry.length}, but file is ${sfnt.byteLength} bytes).`,
+				{ table: entry.tag, byteOffset: entry.offset, directoryIndex: i },
 			);
 		}
 
@@ -516,20 +539,22 @@ function phaseChecksums(sfnt, entries, issues, standalone) {
 	const bytes = new Uint8Array(sfnt);
 
 	for (const entry of entries) {
-		if (entry.offset + entry.length > sfnt.byteLength) continue; // already flagged
-		if (entry.length === 0) continue;
-
-		const actual = computeChecksum(
-			bytes, entry.offset, entry.length, entry.tag === 'head',
-		);
-		if (actual !== entry.checksum) {
-			addIssue(
-				issues,
-				'warning',
-				'BAD_CHECKSUM',
-				`Table '${entry.tag}' checksum mismatch: directory says 0x${entry.checksum.toString(16).padStart(8, '0')}, computed 0x${actual.toString(16).padStart(8, '0')}.`,
-			);
+		const id = `binary.table-checksum.${entry.tag}`;
+		const location = { table: entry.tag, byteOffset: entry.offset };
+		if (entry.offset + entry.length > sfnt.byteLength) {
+			skipDiagnosticCheck(issues, id, 'blocked', 'table-out-of-bounds',
+				'The declared table bytes are not readable.', location);
+			continue;
 		}
+		runDiagnosticCheck(issues, id, () => {
+			const actual = computeChecksum(
+				bytes, entry.offset, entry.length, entry.tag === 'head',
+			);
+			if (actual !== entry.checksum) {
+				addIssue(issues, 'warning', 'BAD_CHECKSUM',
+					`Table '${entry.tag}' checksum mismatch: directory says 0x${entry.checksum.toString(16).padStart(8, '0')}, computed 0x${actual.toString(16).padStart(8, '0')}.`);
+			}
+		}, { location });
 	}
 
 	// A TTC has no standalone checksumAdjustment sum. WOFF reconstruction may
@@ -537,11 +562,19 @@ function phaseChecksums(sfnt, entries, issues, standalone) {
 	if (standalone && entries.some((entry) =>
 		entry.tag === 'head' && entry.length >= 12 &&
 		entry.offset + entry.length <= sfnt.byteLength)) {
-		const actual = computeChecksum(bytes, 0, bytes.length);
-		if (actual !== 0xb1b0afba) {
-			addIssue(issues, 'warning', 'BAD_CHECKSUM_ADJUSTMENT',
-				`Whole-font checksum is 0x${actual.toString(16).padStart(8, '0')}, expected 0xb1b0afba; head.checksumAdjustment or other font bytes are inconsistent.`);
-		}
+		runDiagnosticCheck(issues, 'binary.sfnt-adjustment', () => {
+			const actual = computeChecksum(bytes, 0, bytes.length);
+			if (actual !== 0xb1b0afba) {
+				addIssue(issues, 'warning', 'BAD_CHECKSUM_ADJUSTMENT',
+					`Whole-font checksum is 0x${actual.toString(16).padStart(8, '0')}, expected 0xb1b0afba; head.checksumAdjustment or other font bytes are inconsistent.`);
+			}
+		}, { location: { table: 'head' } });
+	} else {
+		skipDiagnosticCheck(issues, 'binary.sfnt-adjustment',
+			standalone ? 'blocked' : 'skipped',
+			standalone ? 'head-unreadable' : 'not-applicable',
+			standalone ? 'A readable head table is required.'
+				: 'The standalone checksum formula does not apply to collections or reconstructed wrappers.');
 	}
 }
 
@@ -559,14 +592,27 @@ function phaseParseTables(sfnt, entries, issues, options) {
 		.filter((tag) => !orderedTags.includes(tag));
 	const sortedTags = [...orderedTags, ...remainingTags];
 
+	let limitReached = false;
 	for (const tag of sortedTags) {
 		const entry = entryByTag.get(tag);
-		if (entry.offset + entry.length > sfnt.byteLength) continue; // already flagged
+		const id = `binary.parse.${tag}`;
+		const location = { table: tag, byteOffset: entry.offset };
+		if (limitReached || entry.offset + entry.length > sfnt.byteLength) {
+			skipDiagnosticCheck(issues, id, 'blocked',
+				limitReached ? 'resource-limit' : 'table-out-of-bounds',
+				limitReached ? 'An earlier table exceeded an execution limit.'
+					: 'The declared table bytes are not readable.', location);
+			continue;
+		}
 
 		const parser = tableParsers[tag];
-		if (!parser) continue; // no parser for this table
+		if (!parser) {
+			skipDiagnosticCheck(issues, id, 'unsupported', 'parser-unavailable',
+				'No table parser is registered; payload semantics were not checked.', location);
+			continue;
+		}
 
-		try {
+		runDiagnosticCheck(issues, id, () => { try {
 			const raw = new Uint8Array(sfnt, entry.offset, entry.length);
 			const rawArray = Array.from(raw);
 			parsedTables[tag] = parser(rawArray, parsedTables, options);
@@ -582,7 +628,8 @@ function phaseParseTables(sfnt, entries, issues, options) {
 				delete parsedTables[tag];
 				addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED',
 					`Table '${tag}' glyph count ${glyphCount} exceeds maxGlyphs (${options.maxGlyphs}); remaining table parsing was skipped.`);
-				break;
+				limitReached = true;
+				return;
 			}
 			addIssue(
 				issues,
@@ -597,7 +644,7 @@ function phaseParseTables(sfnt, entries, issues, options) {
 				'TABLE_PARSE_FAILED',
 				`Table '${tag}' failed to parse: ${err.message}`,
 			);
-		}
+		} }, { location });
 	}
 
 	return parsedTables;
@@ -608,7 +655,7 @@ function phaseParseTables(sfnt, entries, issues, options) {
 // =========================================================================
 
 /**
- * Unicode 16.0 PropList.txt Variation_Selector property (cmap format 14).
+ * Unicode 17.0 PropList.txt Variation_Selector property (cmap format 14).
  * Mongolian Free Variation Selectors: 0x180B–0x180D and 0x180F
  * Variation Selectors (VS1–VS16):     0xFE00–0xFE0F
  * Variation Selectors Supplement:     0xE0100–0xE01EF (VS17–VS256)
@@ -623,21 +670,25 @@ function isValidVariationSelector(cp) {
 
 /**
  * Compute the maximum glyph ID a cmap format-4 segment can produce.
- * Returns null when the segment uses idRangeOffset (we'd need the raw
- * glyphIdArray to walk it, but the parser already inlines mappings into
- * `glyphIdArray`; deep walking is left to a future tier).
+ * Indirect segments are checked against the actual glyphIdArray separately.
  */
 function format4MaxGlyphId(seg) {
 	if (seg.idRangeOffset === 0) {
 		// Direct mapping: glyph = (charCode + idDelta) & 0xFFFF
 		const lo = (seg.startCode + seg.idDelta) & 0xffff;
 		const hi = (seg.endCode + seg.idDelta) & 0xffff;
-		return Math.max(lo, hi);
+		return hi < lo ? 0xffff : hi;
 	}
 	return null;
 }
 
-function validateCmapDeep(cmap, maxp, issues) {
+function validScalarRange(start, end) {
+	return Number.isInteger(start) && Number.isInteger(end) &&
+		start >= 0 && end <= 0x10ffff && start <= end &&
+		!(start <= 0xdfff && end >= 0xd800);
+}
+
+function validateCmapDeep(cmap, maxp, issues, options = DIAGNOSTIC_LIMITS) {
 	// Per spec, cmap.version must be 0.
 	if (typeof cmap.version === 'number' && cmap.version !== 0) {
 		addIssue(
@@ -678,6 +729,9 @@ function validateCmapDeep(cmap, maxp, issues) {
 			key === '3-10-12' ||
 			key === '3-10-13' ||
 			key === '0-3-4' ||
+			key === '0-4-12' ||
+			key === '0-6-12' ||
+			key === '0-6-13' ||
 			key === '3-0-4'
 		) {
 			hasSupported = true;
@@ -689,7 +743,7 @@ function validateCmapDeep(cmap, maxp, issues) {
 			issues,
 			'error',
 			'CMAP_NO_SUPPORTED_SUBTABLE',
-			'cmap has no supported Unicode subtable (expected one of (3,1,4), (3,10,12), (3,10,13), (0,3,4), or (3,0,4)).',
+			'cmap has no implemented interoperable Unicode/symbol mapping (Windows 3/1/4, 3/10/12 or 13, 3/0/4; Unicode 0/3/4, 0/4/12, 0/6/12 or 13).',
 		);
 	}
 
@@ -710,12 +764,37 @@ function validateCmapDeep(cmap, maxp, issues) {
 	}
 
 	const numGlyphs = maxp?.numGlyphs;
+	let mappingWork = 0;
+	const unicodeSubtables = new Set(recs.filter((record) =>
+		record.platformID === 0 || (record.platformID === 3 && [1, 10].includes(record.encodingID)),
+	).map((record) => record.subtableIndex));
 
 	// Per-subtable structural checks.
 	for (let s = 0; s < subs.length; s++) {
 		const sub = subs[s];
 		if (!sub) continue;
 		const fmt = sub.format;
+		const unicode = unicodeSubtables.has(s);
+		if (unicode && [4, 12, 13].includes(fmt)) {
+			const ranges = fmt === 4 ? sub.segments ?? [] : sub.groups ?? [];
+			for (let rangeIndex = 0; rangeIndex < ranges.length; rangeIndex++) {
+				const range = ranges[rangeIndex];
+				const start = fmt === 4 ? range.startCode : range.startCharCode;
+				const end = fmt === 4 ? range.endCode : range.endCharCode;
+				if (start <= end && !validScalarRange(start, end)) {
+					addIssue(issues, 'error', 'CMAP_UNICODE_SCALAR_INVALID',
+						`Unicode cmap format-${fmt} subtable ${s} range ${rangeIndex} includes non-scalar values.`,
+						{ table: 'cmap', subtableIndex: s });
+					break;
+				}
+			}
+		}
+		if (![4, 12, 13, 14].includes(fmt)) {
+			skipDiagnosticCheck(issues, `binary.cmap-format.${s}`, 'unsupported',
+				'semantic-check-unavailable',
+				`Format ${fmt} was parsed, but no deep mapping validator is implemented for it.`,
+				{ table: 'cmap', subtableIndex: s });
+		}
 
 		if (fmt === 4) {
 			const segs = sub.segments || [];
@@ -779,17 +858,32 @@ function validateCmapDeep(cmap, maxp, issues) {
 						flagged = true;
 					}
 				}
-				// Also walk the inlined glyphIdArray for any explicit overflows.
-				const gids = sub.glyphIdArray || [];
-				for (let i = 0; i < gids.length && !flagged; i++) {
-					if (gids[i] !== 0 && gids[i] >= numGlyphs) {
-						addIssue(
-							issues,
-							'error',
-							'CMAP_GLYPH_OUT_OF_RANGE',
-							`cmap format-4 subtable ${s} glyphIdArray[${i}] = ${gids[i]} >= numGlyphs (${numGlyphs}).`,
-						);
-						flagged = true;
+			}
+			const gids = sub.glyphIdArray || [];
+			for (let i = 0; i < segs.length; i++) {
+				const seg = segs[i];
+				if (!seg.idRangeOffset || seg.startCode > seg.endCode) continue;
+				const first = seg.idRangeOffset / 2 - (segs.length - i);
+				const lastIndex = first + seg.endCode - seg.startCode;
+				if (!Number.isInteger(first) || first < 0 || lastIndex >= gids.length) {
+					addIssue(issues, 'error', 'CMAP_FORMAT4_RANGE_OFFSET_INVALID',
+						`cmap format-4 subtable ${s} segment ${i} points outside glyphIdArray.`,
+						{ table: 'cmap', subtableIndex: s, segmentIndex: i });
+					continue;
+				}
+				for (let index = first; index <= lastIndex; index++) {
+					if (++mappingWork > (options.maxStructureNodes ?? DEFAULT_STRUCTURE_LIMITS.maxStructureNodes)) {
+						addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED',
+							'cmap indirect mapping checks exceed maxStructureNodes; remaining mappings were skipped.',
+							{ table: 'cmap', subtableIndex: s });
+						return;
+					}
+					const gid = gids[index] === 0 ? 0 : (gids[index] + seg.idDelta) & 0xffff;
+					if (numGlyphs !== undefined && gid >= numGlyphs) {
+						addIssue(issues, 'error', 'CMAP_GLYPH_OUT_OF_RANGE',
+							`cmap format-4 subtable ${s} segment ${i} maps to glyph ${gid} after idDelta.`,
+							{ table: 'cmap', subtableIndex: s, segmentIndex: i, glyphIndex: gid });
+						break;
 					}
 				}
 			}
@@ -1241,13 +1335,38 @@ function validateWoff1Wrapper(buffer, issues) {
 	// against header.totalSfntSize.  SFNT size = 12 (offset table)
 	// + 16 * numTables (table directory) + sum of origLength padded to 4.
 	const dirEnd = WOFF1_HEADER_SIZE + numTables * WOFF1_DIR_ENTRY_SIZE;
+	let tableEnd = dirEnd;
+	const ranges = [];
 	if (dirEnd <= buffer.byteLength) {
 		let sfntSize = 12 + 16 * numTables;
+		const seen = new Set();
+		let previousTag = '';
 		for (let i = 0; i < numTables; i++) {
+			const record = WOFF1_HEADER_SIZE + i * WOFF1_DIR_ENTRY_SIZE;
+			const tag = String.fromCharCode(...new Uint8Array(buffer, record, 4));
+			const offset = view.getUint32(record + 4);
+			const compressedLength = view.getUint32(record + 8);
 			const origLength = view.getUint32(
-				WOFF1_HEADER_SIZE + i * WOFF1_DIR_ENTRY_SIZE + 12,
+				record + 12,
 			);
-			sfntSize += (origLength + 3) & ~3;
+			const location = { table: tag, byteOffset: record, directoryIndex: i };
+			if (seen.has(tag)) addIssue(issues, 'error', 'DUPLICATE_TABLE',
+				`WOFF1 directory repeats table '${tag}'.`, location);
+			if (previousTag && previousTag >= tag) addIssue(issues, 'error', 'DIRECTORY_NOT_SORTED',
+				'Original WOFF1 directory is not sorted by table tag.', location);
+			if (offset < dirEnd && compressedLength > 0) addIssue(issues, 'error', 'TABLE_OVERLAPS_DIRECTORY',
+				`WOFF1 table '${tag}' overlaps its wrapper directory.`, location);
+			if (offset + compressedLength > buffer.byteLength) addIssue(issues, 'error', 'TABLE_OUT_OF_BOUNDS',
+				`WOFF1 table '${tag}' compressed range is outside the input.`, location);
+			if (compressedLength > origLength) addIssue(issues, 'error', 'WOFF1_COMPRESSED_LENGTH_INVALID',
+				`WOFF1 table '${tag}' compressed length exceeds its original length.`, location);
+			if (offset % 4) addIssue(issues, 'warning', 'TABLE_MISALIGNED',
+				`Original WOFF1 table '${tag}' is not four-byte aligned.`, location);
+			seen.add(tag);
+			previousTag = tag;
+			sfntSize += Math.ceil(origLength / 4) * 4;
+			tableEnd = Math.max(tableEnd, offset + compressedLength);
+			if (compressedLength) ranges.push({ tag, offset, end: offset + compressedLength });
 		}
 		if (sfntSize !== totalSfntSize) {
 			addIssue(
@@ -1257,10 +1376,12 @@ function validateWoff1Wrapper(buffer, issues) {
 				`WOFF1 header.totalSfntSize (${totalSfntSize}) does not match computed size from directory (${sfntSize}).`,
 			);
 		}
-	}
+	} else addIssue(issues, 'error', 'DIRECTORY_TRUNCATED',
+		'The original WOFF1 table directory extends beyond the file.');
 
 	// Metadata block: offset+length must be in-bounds and consistent.
-	if ((metaOffset === 0) !== (metaLength === 0)) {
+	if ((metaOffset === 0) !== (metaLength === 0) ||
+		(metaOffset === 0) !== (view.getUint32(32) === 0)) {
 		addIssue(
 			issues,
 			'error',
@@ -1268,7 +1389,7 @@ function validateWoff1Wrapper(buffer, issues) {
 			`WOFF1 metadata block has inconsistent offset/length (offset=${metaOffset}, length=${metaLength}); both must be zero or both non-zero.`,
 		);
 	} else if (metaLength > 0) {
-		if (metaOffset < dirEnd || metaOffset + metaLength > buffer.byteLength) {
+		if (metaOffset < tableEnd || metaOffset % 4 || metaOffset + metaLength > buffer.byteLength) {
 			addIssue(
 				issues,
 				'error',
@@ -1287,13 +1408,26 @@ function validateWoff1Wrapper(buffer, issues) {
 			`WOFF1 private block has inconsistent offset/length (offset=${privOffset}, length=${privLength}); both must be zero or both non-zero.`,
 		);
 	} else if (privLength > 0) {
-		if (privOffset < dirEnd || privOffset + privLength > buffer.byteLength) {
+		if (privOffset < Math.max(tableEnd, metaOffset + metaLength) ||
+			privOffset % 4 || privOffset + privLength > buffer.byteLength) {
 			addIssue(
 				issues,
 				'error',
 				'WOFF1_PRIVATE_BLOCK_INVALID',
 				`WOFF1 private block (offset ${privOffset}, length ${privLength}) is out of bounds (file size ${buffer.byteLength}, directory ends at ${dirEnd}).`,
 			);
+		}
+		if (metaLength) ranges.push({ tag: 'metadata', offset: metaOffset, end: metaOffset + metaLength });
+		if (privLength) ranges.push({ tag: 'private', offset: privOffset, end: privOffset + privLength });
+		ranges.sort((a, b) => a.offset - b.offset);
+		let previousRange;
+		for (const range of ranges) {
+			if (previousRange && range.offset < previousRange.end) {
+				addIssue(issues, 'error', 'TABLES_OVERLAPPING',
+					`Original WOFF1 blocks '${previousRange.tag}' and '${range.tag}' overlap.`,
+					{ byteOffset: range.offset });
+			}
+			if (!previousRange || range.end > previousRange.end) previousRange = range;
 		}
 	}
 
@@ -1306,12 +1440,12 @@ function validateWoff1Wrapper(buffer, issues) {
 			const compLen = view.getUint32(
 				WOFF1_HEADER_SIZE + i * WOFF1_DIR_ENTRY_SIZE + 8,
 			);
-			const padded = (off + compLen + 3) & ~3;
+			const padded = Math.ceil((off + compLen) / 4) * 4;
 			if (padded > lastEnd) lastEnd = padded;
 		}
 	}
 	if (metaLength > 0) {
-		const padded = (metaOffset + metaLength + 3) & ~3;
+		const padded = Math.ceil((metaOffset + metaLength) / 4) * 4;
 		if (padded > lastEnd) lastEnd = padded;
 	}
 	if (privLength > 0) {
@@ -1341,6 +1475,26 @@ function validateWoff2Wrapper(buffer, issues) {
 	const reserved = view.getUint16(14);
 	const totalSfntSize = view.getUint32(16);
 	const totalCompressedSize = view.getUint32(20);
+	const metaOffset = view.getUint32(28);
+	const metaLength = view.getUint32(32);
+	const metaOriginalLength = view.getUint32(36);
+	const privateOffset = view.getUint32(40);
+	const privateLength = view.getUint32(44);
+	if ((metaOffset === 0) !== (metaLength === 0) ||
+		(metaOffset === 0) !== (metaOriginalLength === 0) ||
+		(metaLength > 0 && (metaOffset < WOFF2_HEADER_SIZE || metaOffset % 4 ||
+			metaOffset + metaLength > buffer.byteLength))) {
+		addIssue(issues, 'error', 'WOFF2_METADATA_BLOCK_INVALID',
+			'WOFF2 metadata offset/length/original length is inconsistent, unaligned, or outside the file.',
+			{ byteOffset: 28 });
+	}
+	if ((privateOffset === 0) !== (privateLength === 0) ||
+		(privateLength > 0 && (privateOffset < Math.max(WOFF2_HEADER_SIZE, metaOffset + metaLength) ||
+			privateOffset % 4 || privateOffset + privateLength > buffer.byteLength))) {
+		addIssue(issues, 'error', 'WOFF2_PRIVATE_BLOCK_INVALID',
+			'WOFF2 private data range is inconsistent, unaligned, outside the file, or precedes metadata.',
+			{ byteOffset: 40 });
+	}
 
 	if (reserved !== 0) {
 		addIssue(
@@ -1383,6 +1537,37 @@ function validateWoff2Wrapper(buffer, issues) {
 // =========================================================================
 
 const LAYOUT_LOOKUP_FLAG_RESERVED_MASK = 0x00e0;
+
+function validateLayoutReferences(layout, gdef, table, issues) {
+	const lookups = layout.lookupList?.lookups ?? [];
+	for (let lookupIndex = 0; lookupIndex < lookups.length; lookupIndex++) {
+		const lookup = lookups[lookupIndex];
+		const flag = lookup.lookupFlag ?? 0;
+		if ((flag & 8) || !(flag & 0xff10)) continue;
+		const location = { table, lookupIndex };
+		const id = `binary.${table}.mark-references.${lookupIndex}`;
+		if (!gdef) {
+			skipDiagnosticCheck(issues, id, 'blocked', 'gdef-unavailable',
+				'Flag bits are legal, but mark relationships need a readable GDEF table.', location);
+			continue;
+		}
+		runDiagnosticCheck(issues, id, () => {
+			if (flag & 0x10) {
+				const sets = gdef.markGlyphSetsDef?.coverages ?? [];
+				if (!Number.isInteger(lookup.markFilteringSet) ||
+					lookup.markFilteringSet < 0 || lookup.markFilteringSet >= sets.length) {
+					addIssue(issues, 'error', 'LAYOUT_MARK_FILTER_SET_INVALID',
+						`${table} lookup ${lookupIndex} references mark filtering set ${lookup.markFilteringSet}, but GDEF contains ${sets.length} sets.`,
+						location);
+				}
+			} else if (!gdef.markAttachClassDef) {
+				addIssue(issues, 'warning', 'LAYOUT_MARK_ATTACHMENT_CLASS_UNAVAILABLE',
+					`${table} lookup ${lookupIndex} selects a mark attachment class but GDEF has no mark attachment class definition; filtering may exclude all marks.`,
+					location);
+			}
+		}, { location });
+	}
+}
 
 function validateFvarDeep(fvar, issues) {
 	const axes = fvar.axes ?? [];
@@ -2412,10 +2597,11 @@ function validateCffCharStrings(
 	// We report only the first occurrence per code per call to avoid noise on
 	// systemically broken fonts.
 	const reported = new Set();
+	let location = { table: isCff2 ? 'CFF2' : 'CFF ' };
 	function report(code, severity, message) {
 		if (reported.has(code)) return;
 		reported.add(code);
-		addIssue(issues, severity, code, message);
+		addIssue(issues, severity, code, message, location);
 	}
 
 	for (let f = 0; f < fontList.length; f++) {
@@ -2423,6 +2609,7 @@ function validateCffCharStrings(
 		const charStrings = font.charStrings || [];
 
 		for (let gid = 0; gid < charStrings.length; gid++) {
+			location = { table: isCff2 ? 'CFF2' : 'CFF ', fontIndex: f, glyphIndex: gid };
 			const cs = charStrings[gid];
 			const label = `${owner} font ${f}, glyph ${gid}`;
 			const context = resolveDiagnosticCffContext(
@@ -2841,65 +3028,77 @@ function decodeCffNumber(bytes, offset) {
 
 const GLYF_MAX_COMPOSITE_DEPTH = 16;
 
-function validateGlyfComposites(glyf, numGlyphs, issues) {
+function validateGlyfComposites(glyf, numGlyphs, issues, options = DIAGNOSTIC_LIMITS) {
 	const glyphs = glyf?.glyphs;
 	if (!Array.isArray(glyphs)) return;
-
+	const states = new Uint8Array(glyphs.length);
+	const depths = new Uint32Array(glyphs.length);
+	let work = 0;
 	let cycleReported = false;
 	let depthReported = false;
 	let outOfRangeReported = false;
-
-	function walk(gid, stack) {
-		if (cycleReported || depthReported) return;
-		const g = glyphs[gid];
-		if (!g || !Array.isArray(g.components)) return;
-		if (stack.length >= GLYF_MAX_COMPOSITE_DEPTH) {
-			depthReported = true;
-			addIssue(
-				issues,
-				'error',
-				'GLYF_COMPOSITE_DEPTH_EXCEEDED',
-				`glyf composite glyph chain starting at glyph ${stack[0]} exceeds maximum nesting depth ${GLYF_MAX_COMPOSITE_DEPTH}.`,
-			);
-			return;
-		}
-		for (const comp of g.components) {
-			const childGid = comp.glyphIndex ?? comp.glyphID;
-			if (typeof childGid !== 'number') continue;
-			if (numGlyphs > 0 && (childGid < 0 || childGid >= numGlyphs)) {
+	const exhausted = (gid, depth) => {
+		if (++work <= (options.maxStructureNodes ?? DEFAULT_STRUCTURE_LIMITS.maxStructureNodes) &&
+			depth <= (options.maxStructureDepth ?? DEFAULT_STRUCTURE_LIMITS.maxStructureDepth)) return false;
+		addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED',
+			'Composite traversal exceeds maxStructureNodes or maxStructureDepth; remaining graph checks were skipped.',
+			{ table: 'glyf', glyphIndex: gid });
+		return true;
+	};
+	for (let root = 0; root < glyphs.length; root++) {
+		if (states[root]) continue;
+		if (exhausted(root, 1)) return;
+		const stack = [{ gid: root, next: 0, depth: 0 }];
+		states[root] = 1;
+		while (stack.length) {
+			const frame = stack[stack.length - 1];
+			const components = glyphs[frame.gid]?.components ?? [];
+			if (frame.next === components.length) {
+				if (frame.depth + 1 > (options.maxStructureDepth ?? DEFAULT_STRUCTURE_LIMITS.maxStructureDepth)) {
+					exhausted(frame.gid, frame.depth + 1);
+					return;
+				}
+				states[frame.gid] = 2;
+				depths[frame.gid] = frame.depth;
+				if (frame.depth > GLYF_MAX_COMPOSITE_DEPTH && !depthReported) {
+					depthReported = true;
+					addIssue(issues, 'error', 'GLYF_COMPOSITE_DEPTH_EXCEEDED',
+						`glyf composite glyph ${frame.gid} has nesting depth ${frame.depth}, exceeding the sanitizer interoperability limit ${GLYF_MAX_COMPOSITE_DEPTH}.`,
+						{ table: 'glyf', glyphIndex: frame.gid });
+				}
+				stack.pop();
+				if (stack.length) stack[stack.length - 1].depth = Math.max(
+					stack[stack.length - 1].depth, frame.depth + 1);
+				continue;
+			}
+			const component = components[frame.next++];
+			if (exhausted(frame.gid, stack.length)) return;
+			const child = component.glyphIndex ?? component.glyphID;
+			if (typeof child !== 'number') continue;
+			if (!Number.isInteger(child) || child < 0 || child >= glyphs.length ||
+				(numGlyphs > 0 && child >= numGlyphs)) {
 				if (!outOfRangeReported) {
 					outOfRangeReported = true;
-					addIssue(
-						issues,
-						'error',
-						'GLYF_COMPOSITE_GLYPH_OUT_OF_RANGE',
-						`glyf composite glyph ${gid} references component glyph ${childGid}, which is out of range [0, ${numGlyphs}).`,
-					);
+					addIssue(issues, 'error', 'GLYF_COMPOSITE_GLYPH_OUT_OF_RANGE',
+						`glyf composite glyph ${frame.gid} references out-of-range component glyph ${child}.`,
+						{ table: 'glyf', glyphIndex: frame.gid });
 				}
 				continue;
 			}
-			if (stack.includes(childGid)) {
-				cycleReported = true;
-				addIssue(
-					issues,
-					'error',
-					'GLYF_COMPOSITE_CYCLE',
-					`glyf composite glyph chain forms a cycle: ${[...stack, childGid].join(' → ')}.`,
-				);
-				return;
+			if (states[child] === 1) {
+				if (!cycleReported) {
+					cycleReported = true;
+					addIssue(issues, 'error', 'GLYF_COMPOSITE_CYCLE',
+						`glyf composite glyph ${frame.gid} forms a cycle through glyph ${child}.`,
+						{ table: 'glyf', glyphIndex: frame.gid });
+				}
+			} else if (states[child] === 2) {
+				frame.depth = Math.max(frame.depth, depths[child] + 1);
+			} else {
+				if (exhausted(child, stack.length + 1)) return;
+				states[child] = 1;
+				stack.push({ gid: child, next: 0, depth: 0 });
 			}
-			stack.push(childGid);
-			walk(childGid, stack);
-			stack.pop();
-			if (cycleReported || depthReported) return;
-		}
-	}
-
-	for (let gid = 0; gid < glyphs.length; gid++) {
-		const g = glyphs[gid];
-		if (g && Array.isArray(g.components)) {
-			walk(gid, [gid]);
-			if (cycleReported || depthReported) break;
 		}
 	}
 }
@@ -2987,10 +3186,11 @@ function validateGlyfHeaders(glyf, head, issues) {
 //  what Tier 2's validateCmapDeep already covers).
 // -------------------------------------------------------------------------
 
-function validateCmapFormat14(cmap, issues) {
+function validateCmapFormat14(cmap, issues, options = DIAGNOSTIC_LIMITS) {
 	const subs = cmap?.subTables ?? cmap?.subtables ?? [];
 	let outOfRangeReported = false;
 	let outOfOrderReported = false;
+	let work = 0;
 	for (const sub of subs) {
 		if (sub?.format !== 14) continue;
 		const records = sub.varSelectorRecords ?? sub.variationSelectors ?? [];
@@ -3019,6 +3219,61 @@ function validateCmapFormat14(cmap, issues) {
 				);
 			}
 			prevVs = vs;
+			const defaults = r.defaultUVS ?? [];
+			const mappings = r.nonDefaultUVS ?? [];
+			let previousEnd = -1;
+			let ordered = true;
+			for (const range of defaults) {
+				if (++work > (options.maxStructureNodes ?? DEFAULT_STRUCTURE_LIMITS.maxStructureNodes)) {
+					addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED',
+						'UVS mapping checks exceed maxStructureNodes; remaining mappings were skipped.',
+						{ table: 'cmap' });
+					return;
+				}
+				const start = range.startUnicodeValue;
+				const end = start + range.additionalCount;
+				if (!validScalarRange(start, end)) {
+					addIssue(issues, 'error', 'CMAP_UNICODE_SCALAR_INVALID',
+						`Default UVS range for selector U+${vs.toString(16)} includes a non-scalar value.`,
+						{ table: 'cmap' });
+				}
+				if (start <= previousEnd) {
+					ordered = false;
+					addIssue(issues, 'error', 'CMAP_FORMAT14_UVS_ORDER_INVALID',
+						'Default UVS ranges must be sorted and non-overlapping.', { table: 'cmap' });
+				}
+				previousEnd = end;
+			}
+			let previousValue = -1;
+			let defaultIndex = 0;
+			for (const mapping of mappings) {
+				if (++work > (options.maxStructureNodes ?? DEFAULT_STRUCTURE_LIMITS.maxStructureNodes)) {
+					addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED',
+						'UVS mapping checks exceed maxStructureNodes; remaining mappings were skipped.',
+						{ table: 'cmap' });
+					return;
+				}
+				const value = mapping.unicodeValue;
+				if (!validScalarRange(value, value)) {
+					addIssue(issues, 'error', 'CMAP_UNICODE_SCALAR_INVALID',
+						'Non-default UVS mapping contains a non-scalar value.', { table: 'cmap' });
+				}
+				if (value <= previousValue) {
+					ordered = false;
+					addIssue(issues, 'error', 'CMAP_FORMAT14_UVS_ORDER_INVALID',
+						'Non-default UVS mappings must be sorted with unique Unicode values.', { table: 'cmap' });
+				}
+				previousValue = value;
+				if (!ordered) continue;
+				while (defaultIndex < defaults.length &&
+					defaults[defaultIndex].startUnicodeValue + defaults[defaultIndex].additionalCount < value)
+					defaultIndex++;
+				if (defaultIndex < defaults.length && defaults[defaultIndex].startUnicodeValue <= value) {
+					addIssue(issues, 'error', 'CMAP_FORMAT14_UVS_CONFLICT',
+						'A Unicode value occurs in both default and non-default UVS mappings for the same selector.',
+						{ table: 'cmap' });
+				}
+			}
 		}
 	}
 }
@@ -3312,6 +3567,23 @@ function validateTrueTypeProgramTables(parsedTables, issues) {
 
 function phaseCrossTableChecks(parsedTables, entries, issues, sfnt, options) {
 	const tags = new Set(entries.map((e) => e.tag));
+	const checkTable = (id, dependencies, callback, partial) => {
+		const table = dependencies[0];
+		if (!parsedTables[table]) {
+			skipDiagnosticCheck(issues, id, tags.has(table) ? 'blocked' : 'skipped',
+				tags.has(table) ? 'table-not-parsed' : 'not-applicable',
+				tags.has(table) ? 'The prerequisite table could not be parsed.'
+					: 'This optional table is absent.', { table });
+			return;
+		}
+		const missing = dependencies.filter((tag) => !parsedTables[tag]);
+		runDiagnosticCheck(issues, id, callback, {
+			location: { table },
+			partial: missing.length
+				? `Missing parsed prerequisites: ${missing.join(', ')}; dependent checks could not run.`
+				: partial,
+		});
+	};
 
 	// head.magicNumber
 	if (parsedTables.head) {
@@ -3498,9 +3770,9 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt, options) {
 	// OS/2 sanitization checks (Tier 3 — Firefox/OTS parity).
 	// OTS auto-fixes most of these via Warning(); FFJS reports them as
 	// `warning` so users can fix the JSON or rely on a future autoFix pass.
-	if (parsedTables['OS/2']) {
+	checkTable('binary.os2', ['OS/2', 'head'], () => {
 		validateOS2Sanitization(parsedTables['OS/2'], parsedTables.head, issues);
-	}
+	});
 
 	// maxp.numGlyphs vs hmtx
 	if (parsedTables.maxp && parsedTables.hmtx) {
@@ -3570,7 +3842,8 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt, options) {
 
 	// name table: should have family & style names
 	if (parsedTables.name) {
-		validateNameDeep(parsedTables.name, entries, sfnt, issues);
+		checkTable('binary.name', ['name'], () =>
+			validateNameDeep(parsedTables.name, entries, sfnt, issues));
 		const records =
 			parsedTables.name.nameRecords ??
 			parsedTables.name.names ??
@@ -3644,9 +3917,9 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt, options) {
 	}
 
 	// cmap deep structural validation (Tier 2 — Firefox/OTS parity).
-	if (parsedTables.cmap) {
-		validateCmapDeep(parsedTables.cmap, parsedTables.maxp, issues);
-	}
+	checkTable('binary.cmap', ['cmap', 'maxp'], () => {
+		validateCmapDeep(parsedTables.cmap, parsedTables.maxp, issues, options);
+	});
 
 	// CFF + post version compatibility.  Per OpenType spec, CFF-flavored
 	// fonts (those with a CFF or CFF2 table) MUST use post version 3.0 —
@@ -3685,7 +3958,7 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt, options) {
 	if (parsedTables.vhea && parsedTables.vmtx) {
 		const expected =
 			parsedTables.vhea.numOfLongVerMetrics ?? parsedTables.vhea.numberOfVMetrics;
-		const actual = parsedTables.vmtx.metrics?.length ?? 0;
+		const actual = parsedTables.vmtx.vMetrics?.length ?? 0;
 		if (expected !== undefined && actual !== expected) {
 			addIssue(
 				issues,
@@ -3720,30 +3993,31 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt, options) {
 	const numGlyphs = parsedTables.maxp?.numGlyphs ?? 0;
 	const fvar = parsedTables.fvar;
 	const structCtx = makeStructuralCtx();
-	if (fvar) {
+	checkTable('binary.fvar', ['fvar', 'name'], () => {
 		validateFvarDeep(fvar, issues);
 		validateFvarNamesAndFlags(fvar, parsedTables.name, issues);
-	}
-	if (parsedTables.STAT) {
+	});
+	checkTable('binary.STAT', ['STAT'], () => {
 		validateSTAT(parsedTables.STAT, fvar, issues);
-	}
-	if (parsedTables.avar) {
+	});
+	checkTable('binary.avar', ['avar', 'fvar'], () => {
 		validateAvar(parsedTables.avar, fvar, issues);
-	}
-	if (parsedTables.HVAR) {
+	});
+	checkTable('binary.HVAR', ['HVAR', 'fvar'], () => {
 		validateHVVAR(parsedTables.HVAR, 'HVAR', fvar, issues);
-	}
-	if (parsedTables.VVAR) {
+	});
+	checkTable('binary.VVAR', ['VVAR', 'fvar'], () => {
 		validateHVVAR(parsedTables.VVAR, 'VVAR', fvar, issues);
-	}
-	if (parsedTables.MVAR) {
+	});
+	checkTable('binary.MVAR', ['MVAR', 'fvar'], () => {
 		validateMVAR(parsedTables.MVAR, fvar, issues);
-	}
-	if (parsedTables.GDEF) {
+	});
+	checkTable('binary.GDEF', ['GDEF', 'maxp'], () => {
 		validateGDEFTable(parsedTables.GDEF, numGlyphs, fvar, issues, structCtx);
-	}
-	if (parsedTables.GSUB) {
+	});
+	checkTable('binary.GSUB', ['GSUB', 'maxp'], () => {
 		validateLayoutLookups(parsedTables.GSUB, 'GSUB', issues);
+		validateLayoutReferences(parsedTables.GSUB, parsedTables.GDEF, 'GSUB', issues);
 		validateLayoutSubtables(
 			parsedTables.GSUB,
 			'GSUB',
@@ -3751,9 +4025,10 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt, options) {
 			issues,
 			structCtx,
 		);
-	}
-	if (parsedTables.GPOS) {
+	}, 'Implemented coverage/class/selected lookup checks; not a complete shaping evaluator.');
+	checkTable('binary.GPOS', ['GPOS', 'maxp'], () => {
 		validateLayoutLookups(parsedTables.GPOS, 'GPOS', issues);
+		validateLayoutReferences(parsedTables.GPOS, parsedTables.GDEF, 'GPOS', issues);
 		validateLayoutSubtables(
 			parsedTables.GPOS,
 			'GPOS',
@@ -3761,33 +4036,36 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt, options) {
 			issues,
 			structCtx,
 		);
-	}
-	if (parsedTables.MATH) {
+	}, 'Implemented coverage/class/selected lookup checks; not a complete positioning evaluator.');
+	checkTable('binary.MATH', ['MATH'], () => {
 		validateMATH(parsedTables.MATH, issues);
-	}
+	}, 'Version and retained-data checks only; mathematical layout is not evaluated.');
 
 	// Tier 7 second-pass: deep CFF charstring opcode validation.
-	if (parsedTables['CFF ']) {
+	checkTable('binary.CFF', ['CFF '], () => {
 		validateCffCharStrings(parsedTables['CFF '], 'CFF', issues, false, options);
-	}
-	if (parsedTables.CFF2) {
+	}, 'Context-aware opcode checks; full outlines and unsupported arithmetic are not executed.');
+	checkTable('binary.CFF2', ['CFF2'], () => {
 		validateCffCharStrings(parsedTables.CFF2, 'CFF2', issues, true, options);
-	}
+	}, 'Context-aware opcode/blend checks; full variation outlines are not evaluated.');
 
 	// Tier 7 second-pass: glyf composite cycle / depth + header bounds.
-	if (parsedTables.glyf) {
-		validateGlyfComposites(parsedTables.glyf, numGlyphs, issues);
+	checkTable('binary.glyf', ['glyf', 'maxp', 'head'], () => {
+		validateGlyfComposites(parsedTables.glyf, numGlyphs, issues, options);
 		validateGlyfHeaders(parsedTables.glyf, parsedTables.head, issues);
-	}
+	});
 
 	// Tier 7 second-pass: cmap format-14 variation selector validation.
-	if (parsedTables.cmap) {
-		validateCmapFormat14(parsedTables.cmap, issues);
+	checkTable('binary.cmap-unicode', ['cmap'], () => {
+		validateCmapFormat14(parsedTables.cmap, issues, options);
 		validateCmapFormat12And13(parsedTables.cmap, issues);
-	}
+	});
 
 	// Tier 7 third-pass: TrueType instruction stream safety.
-	validateTrueTypeProgramTables(parsedTables, issues);
+	runDiagnosticCheck(issues, 'binary.truetype-programs',
+		() => validateTrueTypeProgramTables(parsedTables, issues), {
+			partial: 'Instruction encoding and selected control-flow checks only; bytecode is not executed.',
+		});
 }
 
 // =========================================================================
@@ -3837,6 +4115,7 @@ function diagnoseCollection(buffer, issues, options, addFace) {
 	const end = options.faceIndex === undefined ? numFonts : first + 1;
 	for (let faceIndex = first; faceIndex < end; faceIndex++) {
 		const faceIssues = [];
+		trackDiagnosticIssues(faceIssues, diagnosticState(issues)?.source);
 		if (faceIndex >= readableOffsets) {
 			addIssue(faceIssues, 'error', 'TTC_FACE_OFFSET_UNREADABLE',
 				`Collection offset for face ${faceIndex} is missing.`);
@@ -3856,33 +4135,71 @@ function diagnoseCollection(buffer, issues, options, addFace) {
 }
 
 function diagnoseFace(sfnt, sfntOffset, issues, options, standalone) {
+	if (!diagnosticState(issues)) trackDiagnosticIssues(issues);
 	try {
 		runFaceChecks(sfnt, sfntOffset, issues, options, standalone);
 	} catch (err) {
 		addIssue(issues, 'error', 'DIAGNOSTIC_CHECK_FAILED',
 			`Face diagnosis could not complete: ${err.message}. Remaining checks for this face were skipped.`);
+	} finally {
+		const state = diagnosticState(issues);
+		for (const id of ['binary.header', 'binary.directory', 'binary.required-tables',
+			'binary.checksums', 'binary.parsing', 'binary.cross-tables']) {
+			if (!state.checks.some((check) => check.id === id)) {
+				skipDiagnosticCheck(issues, id, 'blocked', 'prerequisite-failed',
+					'An earlier phase prevented this check from running.');
+			}
+		}
 	}
 }
 
 function runFaceChecks(sfnt, sfntOffset, issues, options, standalone) {
-	const header = phaseHeader(sfnt, issues, sfntOffset, options);
+	const state = diagnosticState(issues);
+	const header = runDiagnosticCheck(issues, 'binary.header',
+		() => phaseHeader(sfnt, issues, sfntOffset, options),
+		{ location: { byteOffset: sfntOffset } });
 	if (!header) return;
-	const entries = phaseDirectory(sfnt, header, issues, sfntOffset);
+	state.metadata.sfVersion = header.sfVersion;
+	const entries = runDiagnosticCheck(issues, 'binary.directory',
+		() => phaseDirectory(sfnt, header, issues, sfntOffset));
+	state.metadata.tableTags = entries.map((entry) => entry.tag);
+	state.metadata.directoryComplete = entries.length === header.numTables;
 	if (entries.length === 0 && header.numTables > 0) {
 		addIssue(issues, 'error', 'NO_READABLE_ENTRIES',
 			'Could not read any table directory entries.');
 		return;
 	}
-	phaseRequiredTables(entries, issues);
+	runDiagnosticCheck(issues, 'binary.required-tables',
+		() => phaseRequiredTables(entries, issues));
 	const tableBytes = entries.reduce((total, entry) => total + entry.length, 0);
 	if (tableBytes > options.maxTableBytes) {
 		addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED',
 			`Face table data ${tableBytes} exceeds maxTableBytes (${options.maxTableBytes}); checksum, parsing, and cross-table checks were skipped.`);
 		return;
 	}
-	phaseChecksums(sfnt, entries, issues, standalone);
-	const parsedTables = phaseParseTables(sfnt, entries, issues, options);
-	phaseCrossTableChecks(parsedTables, entries, issues, sfnt, options);
+	runDiagnosticCheck(issues, 'binary.checksums',
+		() => phaseChecksums(sfnt, entries, issues, standalone));
+	const parsedTables = runDiagnosticCheck(issues, 'binary.parsing',
+		() => phaseParseTables(sfnt, entries, issues, options));
+	if (parsedTables.name) {
+		state.metadata.names = (parsedTables.name.names ?? []).filter((name) =>
+			[1, 2, 16, 17].includes(name.nameID),
+		).map(({ nameID, platformID, encodingID, languageID, value }) =>
+			({ nameID, platformID, encodingID, languageID, value }));
+	}
+	runDiagnosticCheck(issues, 'binary.cross-tables',
+		() => phaseCrossTableChecks(parsedTables, entries, issues, sfnt, options), {
+			partial: 'Implemented field and cross-table invariants only; not exhaustive font semantics.',
+		});
+	for (const tag of ['COLR', 'CPAL', 'SVG ', 'gvar', 'cvar', 'CBDT', 'CBLC',
+		'EBDT', 'EBLC', 'sbix', 'BASE', 'JSTF', 'MERG', 'bdat', 'bloc', 'ltag']) {
+		if (entries.some((entry) => entry.tag === tag)) {
+			skipDiagnosticCheck(issues, `binary.semantics.${tag}`, 'unsupported',
+				'semantic-check-unavailable',
+				'Parsing and resource guards are not a semantic/rendering validation of this table.',
+				{ table: tag });
+		}
+	}
 }
 
 // =========================================================================
@@ -3903,13 +4220,28 @@ function runFaceChecks(sfnt, sfntOffset, issues, options, standalone) {
 export function diagnoseFont(buffer, options = {}) {
 	const issues = [];
 	const faces = [];
-	const finish = () => ({ ...buildReport(issues), faces });
+	const state = trackDiagnosticIssues(issues);
+	const finish = () => {
+		if (!faces.length) {
+			skipDiagnosticCheck(issues, 'binary.faces', 'blocked',
+				'no-inspectable-face', 'No face could reach binary table inspection.');
+		}
+		return { ...completeDiagnosticReport(buildReport(issues), state), faces };
+	};
 	const addFace = (faceIndex, faceIssues) => {
+		const faceState = diagnosticState(faceIssues) ?? trackDiagnosticIssues(faceIssues);
+		if (!faceState.checks.length) {
+			skipDiagnosticCheck(faceIssues, 'binary.header', 'blocked',
+				'face-header-unreadable', 'The face header cannot be located or read.');
+		}
 		for (const issue of faceIssues) {
 			issue.faceIndex = faceIndex;
+			issue.location = { ...issue.location, faceIndex };
 			issues.push(issue);
 		}
-		faces.push({ faceIndex, ...buildReport(faceIssues) });
+		for (const check of faceState.checks) check.location = { ...check.location, faceIndex };
+		state.checks.push(...faceState.checks);
+		faces.push({ faceIndex, ...completeDiagnosticReport(buildReport(faceIssues), faceState) });
 	};
 
 	if (options === null || typeof options !== 'object' || Array.isArray(options)) {
@@ -3942,20 +4274,25 @@ export function diagnoseFont(buffer, options = {}) {
 			return finish();
 		}
 	}
-	const sig = phaseSignature(buffer, issues, options);
+	const sig = runDiagnosticCheck(issues, 'binary.signature',
+		() => phaseSignature(buffer, issues, options));
 	if (!sig) return finish();
+	state.metadata.format = sig.format;
 	const sfnt = sig.sfnt;
 	if (sfnt.byteLength >= 12 && new DataView(sfnt).getUint32(0) === 0x74746366) {
 		if (sig.format !== 'collection') {
 			addIssue(issues, 'info', 'FORMAT_COLLECTION',
 				'Decoded font is a collection (TTC/OTC).');
 		}
-		diagnoseCollection(sfnt, issues, options, addFace);
+		runDiagnosticCheck(issues, 'binary.collection',
+			() => diagnoseCollection(sfnt, issues, options, addFace));
 	} else if (options.faceIndex !== undefined && options.faceIndex !== 0) {
 		addIssue(issues, 'error', 'FACE_INDEX_OUT_OF_RANGE',
 			`faceIndex ${options.faceIndex} is outside this single-face font.`);
 	} else {
 		const faceIssues = [];
+		trackDiagnosticIssues(faceIssues, sig.format === 'sfnt'
+			? 'original-bytes' : 'decoded-sfnt');
 		diagnoseFace(sfnt, 0, faceIssues, options, sig.format === 'sfnt');
 		addFace(0, faceIssues);
 	}
@@ -3975,6 +4312,7 @@ export const _internal = {
 	validateFvarDeep,
 	validateFvarNamesAndFlags,
 	validateLayoutLookups,
+	validateLayoutReferences,
 	validateSTAT,
 	validateAvar,
 	validateItemVariationStore,
