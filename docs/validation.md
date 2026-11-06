@@ -10,6 +10,10 @@ Additional binary-import limits are listed in [Import Options](./api.md#import-o
 
 # Validation Guide
 
+For actual-output checking, use [`await font.preflight(options)`](./font-quality.md#preflight-an-edited-or-authored-project).
+For source-preserving, explicitly selected repairs, use the [font-quality workflow](./font-quality.md).
+Neither changes the observational contract of `validate()`.
+
 Use `.validate()` to catch structural and cross-table issues before export.
 It builds and checks a detached export candidate, including generated tables
 for fonts created from scratch. Validation does not mutate the live font or

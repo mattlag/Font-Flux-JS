@@ -34,6 +34,13 @@ import { createSubstitution, getSubstitutions } from './substitution.js';
 import { contoursToSVGPath, svgPathToContours } from './svg_path.js';
 import { diagnoseFont, validateJSON } from './validate/index.js';
 import {
+	applyRepairs,
+	inspectFont,
+	planRepairs,
+	preflightFont,
+	repairCatalog,
+} from './validate/quality.js';
+import {
 	buildReport,
 	validateSimplifiedJSON,
 } from './validate/validateJSON.js';
@@ -380,8 +387,24 @@ export class FontFlux {
 	 * @param {ArrayBuffer} buffer - Raw font file bytes.
 	 * @returns {object} Report: `{ valid, errors, warnings, infos, issues, summary }`.
 	 */
-	static diagnose(buffer) {
-		return diagnoseFont(buffer);
+	static diagnose(buffer, options) {
+		return diagnoseFont(buffer, options);
+	}
+
+	static inspect(input, options) {
+		return inspectFont(input, options);
+	}
+
+	static repairCatalog() {
+		return repairCatalog();
+	}
+
+	static planRepairs(input, requests, options) {
+		return planRepairs(input, requests, options);
+	}
+
+	static applyRepairs(input, plan) {
+		return applyRepairs(input, plan);
 	}
 
 	/** Convert an SVG path `d` string to font contours. */
@@ -1161,6 +1184,11 @@ export class FontFlux {
 				},
 			]);
 		}
+	}
+
+	async preflight(options) {
+		const candidate = new FontFlux(structuredClone(this._data));
+		return preflightFont(candidate.data, candidate.validate(), options);
 	}
 
 	/**

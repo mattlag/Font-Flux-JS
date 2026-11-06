@@ -518,12 +518,27 @@ Non-decomposed tables (COLR, gvar, bitmap data, etc.) are lost.
 
 **Returns** `FontFlux` — `this`, for chaining.
 
+## Font quality workflow
+
+| Method | Result |
+| --- | --- |
+| `FontFlux.inspect(bytes, options?)` | Observational findings, applicable repair offers, and coverage |
+| `FontFlux.repairCatalog()` | Immutable repair descriptions, input constraints, risks, and consequences |
+| `await FontFlux.planRepairs(bytes, requests, options?)` | Frozen, source-bound plan with explicit decisions and companion operations |
+| `await FontFlux.applyRepairs(bytes, plan)` | Verified candidate bytes or an explicit failed verification; never mutates the source |
+| `await font.preflight(exportOptions?)` | Detached project validation plus diagnosis of the exact selected-format output |
+
+See [Font Quality](./font-quality.md) for supported fixes, signature and opaque-data
+guards, assisted inputs, errors, and important verification limitations. Repair
+currently targets standalone SFNT. These APIs do not replace the existing
+`validate()` or `export()` contracts.
+
 ## Static utilities
 
 Font-independent helpers for diagnostics, SVG conversion, and low-level
 charstring work.
 
-### `FontFlux.diagnose(buffer)`
+### `FontFlux.diagnose(buffer, options)`
 
 Diagnose a binary font file and return a detailed problem report. Unlike
 `FontFlux.open()`, which throws on corruption, this catches errors at each phase

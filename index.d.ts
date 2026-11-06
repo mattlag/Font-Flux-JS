@@ -191,6 +191,7 @@ export interface ValidationIssue {
 	code: string;
 	message: string;
 	path?: string;
+	faceIndex?: number;
 	[key: string]: unknown;
 }
 export interface ValidationReport {
@@ -205,6 +206,80 @@ export interface ValidationReport {
 		infoCount: number;
 		issueCount: number;
 	};
+}
+export interface DiagnosticReport extends ValidationReport {
+	faces?: (ValidationReport & { faceIndex: number })[];
+}
+export interface InspectionOptions extends ImportOptions {
+	profile?: 'structural';
+}
+export interface RepairInput {
+	readonly key: string;
+	readonly label: string;
+	readonly type: 'string' | 'integer';
+	readonly min?: number;
+	readonly max?: number;
+	readonly maxLength?: number;
+}
+export interface RepairDescriptor {
+	readonly id: string;
+	readonly revision: number;
+	readonly title: string;
+	readonly risk: 'safe' | 'assisted' | 'potentially-lossy';
+	readonly formats: readonly string[];
+	readonly codes: readonly string[];
+	readonly description: string;
+	readonly prerequisites: string;
+	readonly ifApplied: string;
+	readonly ifUnfixed: string;
+	readonly inputs: readonly RepairInput[];
+}
+export interface RepairOffer extends RepairDescriptor {
+	readonly availability: 'available' | 'needs-input' | 'blocked' | 'unsupported';
+	readonly reason: string;
+}
+export interface InspectionReport {
+	schemaVersion: 1;
+	scope: 'binary';
+	format: 'sfnt' | 'collection' | 'woff' | 'woff2' | 'cff' | 'type1' | 'unknown';
+	profile: 'structural';
+	diagnostics: DiagnosticReport | null;
+	coverage: { domain: string; status: 'partial' | 'blocked' | 'unsupported'; reason: string }[];
+	repairs: RepairOffer[];
+	limitations: string[];
+}
+export interface RepairRequest {
+	id: string;
+	inputs?: Record<string, string | number>;
+	consent?: boolean;
+}
+export interface RepairPlan {
+	readonly schemaVersion: 1;
+	readonly inputFingerprint: string;
+	readonly profile: 'structural';
+	readonly format: 'sfnt';
+	readonly steps: readonly (RepairOffer & {
+		readonly implicit: boolean;
+		readonly values: Readonly<Record<string, string | number>>;
+	})[];
+}
+export interface RepairResult {
+	state: 'verified' | 'failed';
+	buffer: ArrayBuffer | null;
+	before: InspectionReport;
+	after: InspectionReport;
+	changes: { id: string; description: string }[];
+	verification: { passed: boolean; failures: string[]; evidence: string[] };
+	inputFingerprint: string;
+	outputFingerprint: string | null;
+}
+export interface PreflightResult {
+	state: 'verified' | 'failed' | 'unsupported';
+	buffer: ArrayBuffer | null;
+	validation: ValidationReport;
+	output: InspectionReport | null;
+	effects: string[];
+	error: string | null;
 }
 export class FontFlux {
 	constructor(data: FontData);
@@ -229,7 +304,11 @@ export class FontFlux {
 		fonts: FontFlux[],
 		options?: ExportOptions,
 	): ArrayBuffer;
-	static diagnose(buffer: ArrayBuffer): ValidationReport;
+	static diagnose(buffer: ArrayBuffer, options?: ImportOptions): DiagnosticReport;
+	static inspect(input: ArrayBuffer | Uint8Array, options?: InspectionOptions): InspectionReport;
+	static repairCatalog(): readonly RepairDescriptor[];
+	static planRepairs(input: ArrayBuffer | Uint8Array, requests: RepairRequest[], options?: InspectionOptions): Promise<RepairPlan>;
+	static applyRepairs(input: ArrayBuffer | Uint8Array, plan: RepairPlan): Promise<RepairResult>;
 	static svgToContours(path: string, format?: 'truetype' | 'cff'): Contours;
 	static contoursToSVG(contours: Contours): string;
 	static compileCharString(contours: Contours): number[];
@@ -303,9 +382,10 @@ export class FontFlux {
 	convertOutlines(target: 'truetype' | 'cff'): this;
 	toJSON(indent?: number): string;
 	validate(): ValidationReport;
+	preflight(options?: ExportOptions): Promise<PreflightResult>;
 	detach(): this;
 }
 export function initWoff2(): Promise<void>;
-export function diagnoseFont(buffer: ArrayBuffer): ValidationReport;
+export function diagnoseFont(buffer: ArrayBuffer, options?: ImportOptions): DiagnosticReport;
 export function fontToJSON(data: FontDocument, indent?: number): string;
 export function fontFromJSON(json: string): FontDocument;

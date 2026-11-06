@@ -1,4 +1,4 @@
-import { diagnoseFont, FontFlux, initWoff2 } from 'font-flux-js';
+import { FontFlux, initWoff2 } from 'font-flux-js';
 import { createLoadingScreen } from './components/loading.js';
 import { createSaveDialog } from './components/save-dialog.js';
 import { createTabBar } from './components/tab-bar.js';
@@ -14,6 +14,43 @@ const app = document.getElementById('app');
 let fontFaceURL = null;
 let previewFontFace = null;
 let currentFontData = null;
+let currentPreviewBuffer = null;
+let navigationVersion = 0;
+const documentStates = new WeakMap();
+const transientKeys = new Set([
+	'_fileName', '_originalBuffer', '_dirty', '_collection', '_collectionFonts',
+	'_collectionIndex', '_collectionInstances', '_loadError', '_diagnoseOnly',
+]);
+
+function projectData(data) {
+	return Object.fromEntries(Object.entries(data).filter(([key]) => !transientKeys.has(key)));
+}
+
+function snapshot(data) {
+	return structuredClone(projectData(data));
+}
+
+function projectKey(data) {
+	return new FontFlux(projectData(data)).toJSON(0);
+}
+
+function stateFor(data) {
+	if (!documentStates.has(data)) {
+		documentStates.set(data, {
+			revision: 0,
+			original: snapshot(data),
+			originalDiagnoseOnly: !!data._diagnoseOnly,
+			originalError: data._loadError,
+			originalPreview: null,
+			originalPreviewFace: null,
+			originalPreviewWasCSS: false,
+			undo: null,
+			binary: data._originalBuffer ?? null,
+			binaryKey: projectKey(data),
+		});
+	}
+	return documentStates.get(data);
+}
 
 /**
  * Bridge between FontFlux class instances and the demo's tab UI.
@@ -34,18 +71,22 @@ let currentFontData = null;
 function prepareFromInstances(instances, fileName, originalBuffer) {
 	const dataObjects = instances.map((inst) => inst.data);
 	const isCollection = dataObjects.length > 1;
+	const preservedBuffer = originalBuffer?.slice(0) ?? null;
 
 	for (let i = 0; i < dataObjects.length; i++) {
 		const d = dataObjects[i];
+		if (instances[i] instanceof FontFlux) {
+			for (const key of transientKeys) delete d[key];
+		}
 		d._fileName = fileName;
-		if (originalBuffer) d._originalBuffer = originalBuffer;
+		if (preservedBuffer) d._originalBuffer = preservedBuffer;
 		d._dirty = false;
 		if (isCollection) {
 			d._collection = { numFonts: dataObjects.length };
 			d._collectionFonts = dataObjects;
 			d._collectionIndex = i;
-			d._collectionInstances = instances;
 		}
+		stateFor(d);
 	}
 	return dataObjects[0];
 }
@@ -83,12 +124,37 @@ function showLoadingScreen() {
 				return;
 			}
 
-			const instances = FontFlux.openAll(buffer);
+			let instances;
+			try {
+				instances = FontFlux.openAll(buffer);
+			} catch (error) {
+				// A corrupt later face must not hide readable faces. The bounded
+				// header is used only for host navigation; core owns diagnosis.
+				const view = new DataView(buffer);
+				const count = buffer.byteLength >= 12 && view.getUint32(0) === 0x74746366
+					? view.getUint32(8) : 0;
+				if (!count || count > 64 || 12 + count * 4 > buffer.byteLength) throw error;
+				instances = Array.from({ length: count }, (_, faceIndex) => {
+					try {
+						return FontFlux.open(buffer, { faceIndex });
+					} catch (faceError) {
+						return { data: { _diagnoseOnly: true, _loadError: faceError } };
+					}
+				});
+			}
 
-			// Inject @font-face from original binary for live preview
-			injectFontFace(buffer, fileName);
-
-			showApp(prepareFromInstances(instances, fileName, buffer));
+			const prepared = prepareFromInstances(instances, fileName, buffer);
+			const first = prepared._collectionFonts?.find((face) => !face._diagnoseOnly) || prepared;
+			if (!first._diagnoseOnly) {
+				try {
+					const preview = prepared._collectionFonts
+						? new FontFlux(projectData(first)).export({ format: 'sfnt' }) : buffer;
+					injectFontFace(preview, fileName);
+				} catch (previewError) {
+					console.warn('Font imported without a browser preview:', previewError);
+				}
+			}
+			showApp(first, { initialTab: first._diagnoseOnly ? 'diagnose' : 'overview' });
 		} catch (err) {
 			console.error('Import error:', err);
 			if (typeof buffer === 'string') {
@@ -100,7 +166,7 @@ function showLoadingScreen() {
 			// tab so the user immediately sees what went wrong.
 			let canDiagnose = false;
 			try {
-				diagnoseFont(buffer);
+				FontFlux.inspect(buffer);
 				canDiagnose = true;
 			} catch (_) {
 				// diagnose itself blew up — fall back to a flat error.
@@ -108,7 +174,7 @@ function showLoadingScreen() {
 			if (canDiagnose) {
 				const stub = {
 					_fileName: fileName,
-					_originalBuffer: buffer,
+					_originalBuffer: buffer.slice(0),
 					_dirty: false,
 					_diagnoseOnly: true,
 					_loadError: err,
@@ -128,17 +194,20 @@ function clearFontPreview() {
 	fontFaceURL = null;
 	if (previewFontFace) document.fonts.delete(previewFontFace);
 	previewFontFace = null;
+	currentPreviewBuffer = null;
 }
 
 async function refreshFontPreview(buffer, expectedFontData) {
+	const expectedNavigation = navigationVersion;
 	const replacement = new FontFace('DemoLoadedFont', buffer);
 	await replacement.load();
-	if (currentFontData !== expectedFontData) {
+	if (currentFontData !== expectedFontData || navigationVersion !== expectedNavigation) {
 		throw new Error('The active font changed while loading the preview');
 	}
 	clearFontPreview();
 	document.fonts.add(replacement);
 	previewFontFace = replacement;
+	currentPreviewBuffer = buffer.slice(0);
 }
 
 function injectFontFace(buffer, fileName) {
@@ -167,11 +236,19 @@ function injectFontFace(buffer, fileName) {
 		}
 	`;
 	document.head.appendChild(style);
+	currentPreviewBuffer = buffer.slice(0);
 }
 
 function showApp(fontData, options = {}) {
-	const { initialTab = 'overview', errorMode = false } = options;
+	const { initialTab = 'overview', errorMode = !!fontData._diagnoseOnly } = options;
+	navigationVersion++;
 	currentFontData = fontData;
+	const state = stateFor(fontData);
+	if (!state.originalPreview && !fontData._dirty && currentPreviewBuffer) {
+		state.originalPreview = currentPreviewBuffer.slice(0);
+		state.originalPreviewFace = previewFontFace;
+		state.originalPreviewWasCSS = !!document.getElementById('demo-font-face');
+	}
 	app.className = 'app-loaded';
 	app.innerHTML = '';
 
@@ -179,6 +256,8 @@ function showApp(fontData, options = {}) {
 
 	function markDirty() {
 		fontData._dirty = true;
+		state.revision++;
+		window.dispatchEvent(new Event('fontflux:project-change'));
 	}
 
 	function invalidateL1Cache(key) {
@@ -195,11 +274,95 @@ function showApp(fontData, options = {}) {
 		}
 	}
 
+	function capture() {
+		return { data: fontData, revision: state.revision, navigation: navigationVersion, key: projectKey(fontData) };
+	}
+
+	function isCurrent(token) {
+		return !!token && currentFontData === token.data && state.revision === token.revision
+			&& navigationVersion === token.navigation && projectKey(fontData) === token.key;
+	}
+
+	let diagnoseLeave = null;
+	let inspectionFace = '';
+
+	async function installProject(next, buffer, token, restore = null, isAllowed = () => true) {
+		// Prepare everything before changing either live data or the visible face.
+		// Undo restores the previous preview resource, including an original
+		// CSS fallback for damaged fonts; it must not require repairing it first.
+		const replacement = restore ? restore.previewFace
+			: buffer ? new FontFace('DemoLoadedFont', buffer) : null;
+		if (replacement && !restore) await replacement.load();
+		if (!isCurrent(token) || !isAllowed()) throw new Error('The project, active view, or decision changed; candidate is stale');
+		const previous = {
+			data: snapshot(fontData),
+			dirty: fontData._dirty,
+			diagnoseOnly: fontData._diagnoseOnly,
+			loadError: fontData._loadError,
+			preview: currentPreviewBuffer?.slice(0) ?? null,
+			previewFace: previewFontFace,
+			previewWasCSS: !!document.getElementById('demo-font-face'),
+			binary: state.binary,
+			binaryKey: state.binaryKey,
+		};
+		diagnoseLeave?.();
+		for (const key of Object.keys(fontData)) if (!transientKeys.has(key)) delete fontData[key];
+		Object.assign(fontData, next);
+		fontData._dirty = restore ? restore.dirty : true;
+		fontData._diagnoseOnly = restore?.diagnoseOnly ?? false;
+		fontData._loadError = restore?.loadError;
+		state.revision++;
+		state.binary = restore ? restore.binary : buffer.slice(0);
+		state.binaryKey = restore ? restore.binaryKey : projectKey(fontData);
+		state.undo = restore ? null : previous;
+		clearFontPreview();
+		if (replacement) {
+			document.fonts.add(replacement);
+			previewFontFace = replacement;
+			currentPreviewBuffer = buffer.slice(0);
+		} else if (restore?.previewWasCSS && buffer) {
+			injectFontFace(buffer, fontData._fileName);
+		}
+		window.dispatchEvent(new Event('fontflux:project-change'));
+		showApp(fontData, { initialTab: 'diagnose' });
+		const heading = app.querySelector('.diagnose-page h2');
+		if (heading) {
+			heading.tabIndex = -1;
+			heading.focus();
+		}
+	}
+
 	const appContext = {
 		fontData,
 		markDirty,
 		invalidateL1Cache,
 		refreshPreview: (buffer) => refreshFontPreview(buffer, fontData),
+		capture,
+		isCurrent,
+		projectFont: () => new FontFlux(snapshot(fontData)),
+		repairInput: () => state.binary && state.binaryKey === projectKey(fontData) ? state.binary.slice(0) : null,
+		canUndo: () => !!state.undo,
+		canRevert: () => !!state.original,
+		onDiagnoseLeave: (handler) => { diagnoseLeave = handler; },
+		get inspectionFace() { return inspectionFace; },
+		commit: async (buffer, token, isAllowed) => {
+			if (!isCurrent(token)) throw new Error('Candidate is stale');
+			const next = FontFlux.open(buffer).data;
+			await installProject(next, buffer, token, null, isAllowed);
+		},
+		undo: async () => {
+			const previous = state.undo;
+			if (!previous) throw new Error('No undo step is available');
+			await installProject(structuredClone(previous.data), previous.preview, capture(), previous);
+		},
+		revert: async () => {
+			const original = {
+				dirty: false, diagnoseOnly: state.originalDiagnoseOnly, loadError: state.originalError,
+				binary: fontData._originalBuffer ?? null, binaryKey: new FontFlux(state.original).toJSON(0),
+				previewFace: state.originalPreviewFace, previewWasCSS: state.originalPreviewWasCSS,
+			};
+			await installProject(structuredClone(state.original), state.originalPreview, capture(), original);
+		},
 	};
 
 	// Header
@@ -242,8 +405,18 @@ function showApp(fontData, options = {}) {
 		chooser.addEventListener('change', async () => {
 			const idx = parseInt(chooser.value, 10);
 			const nextFont = fontData._collectionFonts[idx];
+			if (nextFont._diagnoseOnly) {
+				chooser.value = String(fontData._collectionIndex ?? 0);
+				inspectionFace = idx;
+				delete l1Cache.diagnose;
+				activeL1 = null;
+				setL1Active('diagnose');
+				return;
+			}
 			chooser.disabled = true;
 			try {
+				diagnoseLeave?.();
+				navigationVersion++;
 				const buffer = new FontFlux(nextFont).export({ format: 'sfnt' });
 				await refreshFontPreview(buffer, fontData);
 				showApp(nextFont);
@@ -290,9 +463,9 @@ function showApp(fontData, options = {}) {
 	// Diagnose tab badge: red error count, or orange warning count.
 	if (fontData._originalBuffer) {
 		try {
-			const diag = diagnoseFont(fontData._originalBuffer);
-			const errs = diag.summary.errorCount || 0;
-			const warns = diag.summary.warningCount || 0;
+			const diag = FontFlux.inspect(fontData._originalBuffer).diagnostics;
+			const errs = diag?.summary.errorCount || 0;
+			const warns = diag?.summary.warningCount || 0;
 			if (errs > 0 || warns > 0) {
 				const badge = document.createElement('span');
 				badge.className =
@@ -339,8 +512,7 @@ function showApp(fontData, options = {}) {
 				'font';
 			// Wrap the live simplified object back into a FontFlux instance
 			// so we go through the public toJSON() serializer.
-			const snapshot = new FontFlux(fontData);
-			const json = snapshot.toJSON();
+			const json = new FontFlux(projectData(fontData)).toJSON();
 			const blob = new Blob([json], { type: 'application/json' });
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
@@ -354,7 +526,7 @@ function showApp(fontData, options = {}) {
 		exportBtn.className = 'header-btn header-btn-primary';
 		exportBtn.textContent = 'Export Font';
 		exportBtn.addEventListener('click', () => {
-			createSaveDialog(app, fontData);
+			createSaveDialog(app, fontData, appContext);
 		});
 
 		headerRight.append(jsonBtn, exportBtn);
@@ -373,7 +545,10 @@ function showApp(fontData, options = {}) {
 
 	function setL1Active(key) {
 		if (activeL1 === key) return;
+		if (activeL1 === 'diagnose') diagnoseLeave?.();
+		navigationVersion++;
 		activeL1 = key;
+		if (key === 'diagnose') delete l1Cache.diagnose;
 
 		Object.entries(l1Buttons).forEach(([k, btn]) => {
 			btn.classList.toggle('active', k === key);

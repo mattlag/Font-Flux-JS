@@ -53,10 +53,13 @@ export const TTF_SPECIFIC_TABLES = [
 	'prep',
 ];
 
+export const APPLE_AAT_TABLES = ['bdat', 'bloc', 'ltag'];
+
 export const ALL_SUPPORTED_TABLES = new Set([
 	...SHARED_SFNT_TABLES,
 	...OTF_SPECIFIC_TABLES,
 	...TTF_SPECIFIC_TABLES,
+	...APPLE_AAT_TABLES,
 ]);
 
 export const REQUIRED_CORE_TABLES = [

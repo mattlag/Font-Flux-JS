@@ -42,6 +42,7 @@ export default defineConfig({
 					{ text: 'Authoring JSON From Scratch', link: '/authoring-json' },
 					{ text: 'Validation', link: '/validation' },
 					{ text: 'Diagnostics', link: '/diagnostics' },
+					{ text: 'Font Quality', link: '/font-quality' },
 				],
 			},
 			{

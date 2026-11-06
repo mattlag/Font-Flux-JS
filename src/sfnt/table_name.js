@@ -133,7 +133,7 @@ function decodeUtf16BE(bytes) {
 /**
  * Encode a JS string to UTF-16BE bytes.
  */
-function encodeUtf16BE(str) {
+export function encodeUtf16BE(str) {
 	const bytes = [];
 	for (let i = 0; i < str.length; i++) {
 		const code = str.charCodeAt(i);

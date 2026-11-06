@@ -427,3 +427,12 @@ Legacy Type 1 fonts are converted to CFF outlines on import. They can then be ex
 `bloc`, `bdat`, `ltag`
 
 > Tables not in this list (e.g. vendor-specific tables like `FFTM`) are preserved as raw bytes for lossless round-trip.
+
+## Planned font-quality work
+
+The [font-quality workflow](./docs/font-quality.md) provides inspection, explicit
+repair plans, verified SFNT candidates, and actual-output export preflight.
+The [font-quality backlog](./FONT-QUALITY-BACKLOG.md) tracks planned detection and
+repair improvements, fix safety and user decisions, verification requirements,
+and core-first Demo integration. Its implementation status distinguishes shipped
+increments from remaining work; it is not a claim that the full roadmap is done.

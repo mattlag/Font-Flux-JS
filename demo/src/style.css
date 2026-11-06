@@ -465,6 +465,109 @@ body {
 	font-style: italic;
 }
 
+.dx-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.dx-action {
+	padding: 8px 12px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--text);
+	cursor: pointer;
+}
+
+.dx-action:hover:not(:disabled) {
+	border-color: var(--accent);
+	color: var(--accent);
+}
+
+.dx-action:disabled,
+.save-dialog-actions button:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.dx-action:focus-visible,
+.dx-decision input:focus-visible,
+.dx-offer input:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 3px;
+}
+
+.dx-original,
+.dx-current,
+.dx-repairs,
+.dx-candidate {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	min-width: 0;
+}
+
+.dx-status,
+.dx-card-msg,
+.dx-fingerprint {
+	overflow-wrap: anywhere;
+}
+
+.dx-status:empty,
+.dx-current:empty,
+.dx-candidate:empty {
+	display: none;
+}
+
+.dx-status {
+	padding: 12px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	font-size: 0.85rem;
+}
+
+.dx-risk {
+	font-size: 0.8rem;
+	color: var(--text-secondary);
+}
+
+.dx-decision {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	font-size: 0.85rem;
+}
+
+.dx-decision input:not([type='checkbox']),
+.dx-face-chooser {
+	min-width: 0;
+	max-width: 100%;
+	padding: 8px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--text);
+}
+
+.dx-consent {
+	flex-wrap: nowrap;
+	align-items: flex-start;
+}
+
+.dx-candidate-preview {
+	font-size: 32px;
+	padding: 16px;
+	border: 1px solid var(--border);
+	overflow-wrap: anywhere;
+}
+
+.dx-fingerprint {
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+}
+
 /* Parse-error banner (shown when the font failed to fully import) */
 .dx-parse-error {
 	background: #fef2f2;
@@ -2004,6 +2107,7 @@ pre.data-string-long.data-expanded {
 
 .save-dialog-actions {
 	display: flex;
+	flex-wrap: wrap;
 	justify-content: flex-end;
 	gap: 8px;
 	margin-top: 4px;

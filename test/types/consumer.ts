@@ -34,6 +34,22 @@ const selected: FontFlux = FontFlux.open(bytes, {
 	faceIndex: 0,
 	maxUncompressedBytes: 1024 * 1024,
 });
+const preflight = await font.preflight({ format: 'sfnt' });
+if (preflight.buffer) {
+	const inspection = FontFlux.inspect(preflight.buffer);
+	const safe = inspection.repairs
+		.filter((fix) => fix.risk === 'safe' && fix.availability === 'available')
+		.map((fix) => ({ id: fix.id }));
+	if (safe.length) {
+		const plan = await FontFlux.planRepairs(preflight.buffer, safe);
+		const repair = await FontFlux.applyRepairs(preflight.buffer, plan);
+		const candidate: ArrayBuffer | null = repair.buffer;
+		void candidate;
+	}
+}
+FontFlux.diagnose(bytes, { faceIndex: 0, maxFonts: 4 });
+// @ts-expect-error Only the implemented structural profile is exposed.
+FontFlux.inspect(bytes, { profile: 'googlefonts' });
 fontFromJSON(restored.toJSON());
 void [valid, count, selected];
 // @ts-expect-error Advances must be numeric.

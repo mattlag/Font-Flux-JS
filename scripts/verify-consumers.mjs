@@ -12,6 +12,9 @@ import { parse as parseYAML } from 'yaml';
 
 const root = resolve(import.meta.dirname, '..');
 const temporary = await mkdtemp(join(tmpdir(), 'font-flux-consumer-'));
+const local = process.argv.includes('--local');
+const packageRoot = local ? root : join(temporary, 'node_modules/font-flux-js');
+const packageLabel = local ? 'Local-build (package installation not tested)' : 'Installed-package';
 let server;
 
 function shape(bytes, text, coordinates = {}) {
@@ -39,13 +42,16 @@ function shape(bytes, text, coordinates = {}) {
 try {
 	const npm = process.env.npm_execpath;
 	assert(npm, 'Run this gate through npm run test:consumers.');
-	const packed = JSON.parse(
+	if (!local) {
+		const packed = JSON.parse(
 		execFileSync(
 			process.execPath,
 			[npm, 'pack', '--json', '--pack-destination', temporary],
 			{ cwd: root, encoding: 'utf8' },
 		),
 	);
+	const packedPackage = Array.isArray(packed) ? packed[0] : packed['font-flux-js'];
+	assert(packedPackage?.filename, 'npm pack must report the font-flux-js tarball filename.');
 	await writeFile(
 		join(temporary, 'package.json'),
 		JSON.stringify({ private: true, type: 'module' }),
@@ -58,15 +64,13 @@ try {
 			'--ignore-scripts',
 			'--no-audit',
 			'--no-fund',
-			join(temporary, packed[0].filename),
+			join(temporary, packedPackage.filename),
 		],
 		{ cwd: temporary, stdio: 'inherit' },
 	);
-	const typeConsumer = join(temporary, 'consumer.ts');
-	await writeFile(
-		typeConsumer,
-		await readFile(join(root, 'test/types/consumer.ts')),
-	);
+	}
+	const typeConsumer = local ? join(root, 'test/types/consumer.ts') : join(temporary, 'consumer.ts');
+	if (!local) await writeFile(typeConsumer, await readFile(join(root, 'test/types/consumer.ts')));
 	execFileSync(
 		process.execPath,
 		[
@@ -83,7 +87,7 @@ try {
 	);
 	const schema = JSON.parse(
 		await readFile(
-			join(temporary, 'node_modules/font-flux-js/font-flux.schema.json'),
+			join(packageRoot, 'font-flux.schema.json'),
 			'utf8',
 		),
 	);
@@ -95,11 +99,8 @@ try {
 				await readFile(join(root, '.github/workflows', workflow), 'utf8'),
 			).jobs,
 		);
-	console.log('Installed-package declarations and schema passed.');
-	const packageEntry = join(
-		temporary,
-		'node_modules/font-flux-js/dist/font-flux-js.js',
-	);
+	console.log(`${packageLabel} declarations and schema passed.`);
+	const packageEntry = join(packageRoot, 'dist/font-flux-js.js');
 	const api = await import(pathToFileURL(packageEntry).href);
 	assert.deepEqual(
 		Object.keys(api).sort(),
@@ -112,6 +113,22 @@ try {
 		].sort(),
 	);
 	await api.initWoff2();
+	const repairFont = api.FontFlux.create({ family: 'Repair Consumer' });
+	repairFont.addGlyph({
+		name: 'A', unicode: 65, advanceWidth: 500,
+		path: 'M0 0 L100 400 L200 0 Z', format: 'truetype',
+	});
+	const repairSource = repairFont.export({ format: 'sfnt' });
+	const originalShape = shape(new Uint8Array(repairSource), 'AA');
+	new DataView(repairSource).setUint16(6, 0);
+	const repairOriginal = repairSource.slice(0);
+	const repairPlan = await api.FontFlux.planRepairs(repairSource, [{ id: 'sfnt.search-fields' }]);
+	const repair = await api.FontFlux.applyRepairs(repairSource, repairPlan);
+	assert.equal(repair.state, 'verified', JSON.stringify(repair.verification));
+	assert.deepEqual(shape(new Uint8Array(repair.buffer), 'AA'), originalShape);
+	assert.deepEqual(repairSource, repairOriginal);
+	assert.equal((await repairFont.preflight({ format: 'woff2' })).state, 'verified');
+	console.log(`${packageLabel} repair, source preservation, HarfBuzz, and WOFF2 preflight passed.`);
 	const samples = [];
 	for (const name of [
 		'oblegg.ttf',
@@ -365,7 +382,7 @@ try {
 	);
 	server = await createServer({
 		configFile: false,
-		root: temporary,
+		root: local ? root : temporary,
 		server: { host: '127.0.0.1', port: 0 },
 		optimizeDeps: { include: ['brotli-wasm'] },
 		plugins: [
@@ -375,7 +392,7 @@ try {
 					vite.middlewares.use('/consumer', (_request, response) => {
 						response.setHeader('Content-Type', 'text/html');
 						response.end(
-							'<!doctype html><html><body><canvas width="600" height="160"></canvas><script type="module">import * as api from "/node_modules/font-flux-js/dist/font-flux-js.js"; window.fontAPI = api;</script></body></html>',
+							`<!doctype html><html><body><canvas width="600" height="160"></canvas><script type="module">import * as api from "${local ? '/dist/font-flux-js.js' : '/node_modules/font-flux-js/dist/font-flux-js.js'}"; window.fontAPI = api;</script></body></html>`,
 						);
 					});
 				},
@@ -465,7 +482,7 @@ try {
 			await browser.close();
 		}
 	}
-	console.log('Installed-package Node/browser/WOFF2 checks passed.');
+	console.log(`${packageLabel} Node/browser/WOFF2 checks passed.`);
 } finally {
 	await server?.close();
 	await rm(temporary, { recursive: true, force: true });

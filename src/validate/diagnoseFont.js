@@ -1,5 +1,6 @@
 // Re-use the import pipeline's table parser registry and parse order
 import { tableParseOrder, tableParsers } from '../import.js';
+import { getCFFGlyphContext } from '../otf/cff_common.js';
 import { DataReader } from '../reader.js';
 import { unwrapWOFF1 } from '../woff/woff1.js';
 import { unwrapWOFF2 } from '../woff/woff2.js';
@@ -14,6 +15,17 @@ const SFNT_SIGNATURES = new Map([
 	[0x4f54544f, 'OpenType (CFF)'], // 'OTTO'
 	[0x74727565, 'TrueType (Apple)'], // 'true'
 ]);
+
+const DIAGNOSTIC_LIMITS = {
+	maxInputBytes: 256 * 1024 * 1024,
+	maxTableBytes: 256 * 1024 * 1024,
+	maxTables: 4096,
+	maxFonts: 64,
+	maxGlyphs: 65535,
+	maxPoints: 10000000,
+	maxCharStringOperations: 1000000,
+	maxUncompressedBytes: 256 * 1024 * 1024,
+};
 
 // =========================================================================
 //  Helpers
@@ -55,17 +67,19 @@ function isPrintableASCII(str) {
  * The checksum is the low 32 bits of the sum of uint32 values,
  * with the last partial word padded with zeroes.
  */
-function computeChecksum(bytes, offset, length) {
+function computeChecksum(bytes, offset, length, zeroAdjustment = false) {
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 	let sum = 0;
-	const aligned = length & ~3;
+	const aligned = length - (length % 4);
 	for (let i = 0; i < aligned; i += 4) {
+		if (zeroAdjustment && i === 8) continue;
 		sum = (sum + view.getUint32(offset + i)) >>> 0;
 	}
 	// Pad the remaining bytes as a final uint32
 	if (length & 3) {
 		let last = 0;
 		for (let i = aligned; i < length; i++) {
+			if (zeroAdjustment && i >= 8 && i < 12) continue;
 			last |= bytes[offset + i] << (24 - 8 * (i - aligned));
 		}
 		sum = (sum + last) >>> 0;
@@ -82,7 +96,7 @@ function computeChecksum(bytes, offset, length) {
  * Returns the format string and the SFNT ArrayBuffer to continue with
  * (unwrapped if WOFF), or null if unrecoverable.
  */
-function phaseSignature(buffer, issues) {
+function phaseSignature(buffer, issues, options) {
 	if (!(buffer instanceof ArrayBuffer)) {
 		addIssue(issues, 'error', 'NOT_ARRAYBUFFER', 'Input is not an ArrayBuffer.');
 		return null;
@@ -100,12 +114,32 @@ function phaseSignature(buffer, issues) {
 	const bytes = new Uint8Array(buffer);
 	const sig = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
 
+	if ((sig === 'wOFF' || sig === 'wOF2') && buffer.byteLength >= 14) {
+		const view = new DataView(buffer);
+		if (view.getUint16(12) > options.maxTables) {
+			addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED',
+				'Wrapper table count exceeds maxTables; decompression was skipped.');
+			return null;
+		}
+		if (sig === 'wOFF' && 44 + view.getUint16(12) * 20 <= buffer.byteLength) {
+			let tableBytes = 0;
+			for (let i = 0; i < view.getUint16(12); i++) {
+				tableBytes += view.getUint32(44 + i * 20 + 12);
+			}
+			if (tableBytes > options.maxTableBytes) {
+				addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED',
+					'WOFF1 table data exceeds maxTableBytes; decompression was skipped.');
+				return null;
+			}
+		}
+	}
+
 	// WOFF1
 	if (sig === 'wOFF') {
 		addIssue(issues, 'info', 'FORMAT_WOFF1', 'File is WOFF1-wrapped.');
 		validateWoff1Wrapper(buffer, issues);
 		try {
-			const { sfnt } = unwrapWOFF1(buffer);
+			const { sfnt } = unwrapWOFF1(buffer, options);
 			addIssue(
 				issues,
 				'info',
@@ -128,8 +162,15 @@ function phaseSignature(buffer, issues) {
 	if (sig === 'wOF2') {
 		addIssue(issues, 'info', 'FORMAT_WOFF2', 'File is WOFF2-wrapped.');
 		validateWoff2Wrapper(buffer, issues);
+		// The current decoder assembles collection members with face-relative
+		// table offsets. Do not attribute those reconstruction defects to input.
+		if (new DataView(buffer).getUint32(4) === 0x74746366) {
+			addIssue(issues, 'error', 'WOFF2_COLLECTION_UNSUPPORTED',
+				'WOFF2 collection diagnosis is unavailable: the decoder does not yet reconstruct file-relative TTC table offsets. Face checks were skipped.');
+			return null;
+		}
 		try {
-			const { sfnt } = unwrapWOFF2(buffer);
+			const { sfnt } = unwrapWOFF2(buffer, options);
 			addIssue(
 				issues,
 				'info',
@@ -154,7 +195,7 @@ function phaseSignature(buffer, issues) {
 			issues,
 			'info',
 			'FORMAT_COLLECTION',
-			'File is a font collection (TTC/OTC). Diagnosing the first font in the collection.',
+			'File is a font collection (TTC/OTC).',
 		);
 		return { format: 'collection', sfnt: buffer };
 	}
@@ -166,9 +207,9 @@ function phaseSignature(buffer, issues) {
 /**
  * Phase 2: Read and validate the SFNT header.
  */
-function phaseHeader(sfnt, issues) {
+function phaseHeader(sfnt, issues, sfntOffset, options) {
 	const bytes = new Uint8Array(sfnt);
-	const reader = new DataReader(bytes);
+	const reader = new DataReader(bytes, sfntOffset);
 
 	let header;
 	try {
@@ -225,8 +266,14 @@ function phaseHeader(sfnt, issues) {
 		);
 	}
 
+	if (header.numTables > options.maxTables) {
+		addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED',
+			`Face table count ${header.numTables} exceeds maxTables (${options.maxTables}); remaining face checks were skipped.`);
+		return null;
+	}
+
 	// Check that the file is large enough for the table directory
-	const directoryEnd = 12 + header.numTables * 16;
+	const directoryEnd = sfntOffset + 12 + header.numTables * 16;
 	if (directoryEnd > sfnt.byteLength) {
 		addIssue(
 			issues,
@@ -276,9 +323,9 @@ function phaseHeader(sfnt, issues) {
 /**
  * Phase 3: Read and validate the table directory.
  */
-function phaseDirectory(sfnt, header, issues) {
+function phaseDirectory(sfnt, header, issues, sfntOffset) {
 	const bytes = new Uint8Array(sfnt);
-	const reader = new DataReader(bytes, 12); // skip header
+	const reader = new DataReader(bytes, sfntOffset + 12);
 	const entries = [];
 	const seenTags = new Set();
 
@@ -465,17 +512,16 @@ function phaseRequiredTables(entries, issues) {
 /**
  * Phase 5: Table checksum verification.
  */
-function phaseChecksums(sfnt, entries, issues) {
+function phaseChecksums(sfnt, entries, issues, standalone) {
 	const bytes = new Uint8Array(sfnt);
 
 	for (const entry of entries) {
 		if (entry.offset + entry.length > sfnt.byteLength) continue; // already flagged
 		if (entry.length === 0) continue;
 
-		// head table has a special checksumAdjustment field — skip verification
-		if (entry.tag === 'head') continue;
-
-		const actual = computeChecksum(bytes, entry.offset, entry.length);
+		const actual = computeChecksum(
+			bytes, entry.offset, entry.length, entry.tag === 'head',
+		);
 		if (actual !== entry.checksum) {
 			addIssue(
 				issues,
@@ -485,12 +531,24 @@ function phaseChecksums(sfnt, entries, issues) {
 			);
 		}
 	}
+
+	// A TTC has no standalone checksumAdjustment sum. WOFF reconstruction may
+	// change the directory/data placement, so only check original SFNT bytes.
+	if (standalone && entries.some((entry) =>
+		entry.tag === 'head' && entry.length >= 12 &&
+		entry.offset + entry.length <= sfnt.byteLength)) {
+		const actual = computeChecksum(bytes, 0, bytes.length);
+		if (actual !== 0xb1b0afba) {
+			addIssue(issues, 'warning', 'BAD_CHECKSUM_ADJUSTMENT',
+				`Whole-font checksum is 0x${actual.toString(16).padStart(8, '0')}, expected 0xb1b0afba; head.checksumAdjustment or other font bytes are inconsistent.`);
+		}
+	}
 }
 
 /**
  * Phase 6: Try to parse each table, catching per-table errors.
  */
-function phaseParseTables(sfnt, entries, issues) {
+function phaseParseTables(sfnt, entries, issues, options) {
 	const entryByTag = new Map(entries.map((e) => [e.tag, e]));
 	const parsedTables = {};
 
@@ -511,7 +569,21 @@ function phaseParseTables(sfnt, entries, issues) {
 		try {
 			const raw = new Uint8Array(sfnt, entry.offset, entry.length);
 			const rawArray = Array.from(raw);
-			parsedTables[tag] = parser(rawArray, parsedTables);
+			parsedTables[tag] = parser(rawArray, parsedTables, options);
+			const glyphCount = tag === 'maxp'
+				? parsedTables.maxp.numGlyphs
+				: tag === 'CFF2'
+					? parsedTables.CFF2.charStrings?.length
+					: tag === 'CFF '
+						? (parsedTables[tag].fonts || []).reduce((count, font) =>
+							Math.max(count, font.charStrings?.length || 0), 0)
+						: 0;
+			if (glyphCount > options.maxGlyphs) {
+				delete parsedTables[tag];
+				addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED',
+					`Table '${tag}' glyph count ${glyphCount} exceeds maxGlyphs (${options.maxGlyphs}); remaining table parsing was skipped.`);
+				break;
+			}
 			addIssue(
 				issues,
 				'info',
@@ -536,13 +608,14 @@ function phaseParseTables(sfnt, entries, issues) {
 // =========================================================================
 
 /**
- * Valid Unicode variation-selector ranges (cmap format 14).
- * Mongolian Free Variation Selectors: 0x180B–0x180D
+ * Unicode 16.0 PropList.txt Variation_Selector property (cmap format 14).
+ * Mongolian Free Variation Selectors: 0x180B–0x180D and 0x180F
  * Variation Selectors (VS1–VS16):     0xFE00–0xFE0F
  * Variation Selectors Supplement:     0xE0100–0xE01EF (VS17–VS256)
  */
 function isValidVariationSelector(cp) {
 	if (cp >= 0x180b && cp <= 0x180d) return true;
+	if (cp === 0x180f) return true;
 	if (cp >= 0xfe00 && cp <= 0xfe0f) return true;
 	if (cp >= 0xe0100 && cp <= 0xe01ef) return true;
 	return false;
@@ -679,12 +752,12 @@ function validateCmapDeep(cmap, maxp, issues) {
 					);
 					break;
 				}
-				if (seg.endCode <= prevEnd) {
+				if (seg.startCode <= prevEnd) {
 					addIssue(
 						issues,
 						'error',
 						'CMAP_FORMAT4_RANGES_OUT_OF_ORDER',
-						`cmap format-4 subtable ${s} segment ${i}: endCode (0x${seg.endCode.toString(16)}) is not greater than previous endCode (0x${prevEnd.toString(16)}).`,
+						`cmap format-4 subtable ${s} segment ${i}: startCode (0x${seg.startCode.toString(16)}) is not greater than previous endCode (0x${prevEnd.toString(16)}); segments overlap or are out of order.`,
 					);
 					break;
 				}
@@ -826,8 +899,8 @@ function validateCmapDeep(cmap, maxp, issues) {
 //
 //  OTS treats most of these as Warning() with silent auto-fix (clamp or
 //  bit-mask).  FFJS reports them at `warning` severity so they're visible
-//  but don't block export.  Future work: thread an `autoFix` option that
-//  mutates the parsed table in-place.
+//  but do not modify the source. Historical *_CLAMPED codes are retained for
+//  compatibility; they do not mean a repair was performed.
 // =========================================================================
 
 /**
@@ -850,7 +923,7 @@ function validateOS2Sanitization(os2, head, issues) {
 				issues,
 				'warning',
 				'OS2_WEIGHT_CLAMPED',
-				`OS/2.usWeightClass is ${os2.usWeightClass}; must be in [1, 1000].`,
+				`OS/2.usWeightClass is ${os2.usWeightClass}, outside [1, 1000]; diagnosis does not clamp or repair it.`,
 			);
 		}
 	}
@@ -862,7 +935,7 @@ function validateOS2Sanitization(os2, head, issues) {
 				issues,
 				'warning',
 				'OS2_WIDTH_CLAMPED',
-				`OS/2.usWidthClass is ${os2.usWidthClass}; must be in [1, 9].`,
+				`OS/2.usWidthClass is ${os2.usWidthClass}, outside [1, 9]; diagnosis does not clamp or repair it.`,
 			);
 		}
 	}
@@ -1309,7 +1382,6 @@ function validateWoff2Wrapper(buffer, issues) {
 //  fvar / GSUB / GPOS deep validation (Tier 7 — Firefox/OTS parity)
 // =========================================================================
 
-const LAYOUT_LOOKUP_FLAG_VALID_MASK = 0x00ff;
 const LAYOUT_LOOKUP_FLAG_RESERVED_MASK = 0x00e0;
 
 function validateFvarDeep(fvar, issues) {
@@ -1399,16 +1471,17 @@ function validateLayoutLookups(layoutTable, tableName, issues) {
 			);
 			invalidFlagReported = true;
 		}
-		// Bits above 0x00FF should never be set in a lookupFlag uint16.
+		// The high byte is the legal MarkAttachmentType field. Only values
+		// outside uint16 are invalid; reserved low-byte bits remain warnings.
 		if (
 			typeof lk.lookupFlag === 'number' &&
-			(lk.lookupFlag & ~LAYOUT_LOOKUP_FLAG_VALID_MASK & 0xffff) !== 0
+			(!Number.isInteger(lk.lookupFlag) || lk.lookupFlag < 0 || lk.lookupFlag > 0xffff)
 		) {
 			addIssue(
 				issues,
 				'error',
 				'LAYOUT_LOOKUP_FLAG_INVALID',
-				`${tableName} lookup ${i} has bits set outside the valid lookupFlag mask 0x00FF (got 0x${lk.lookupFlag.toString(16).padStart(4, '0')}).`,
+				`${tableName} lookup ${i} has lookupFlag ${lk.lookupFlag}, outside the uint16 range.`,
 			);
 			break;
 		}
@@ -2216,9 +2289,9 @@ const CFF_TYPE2_OPS = new Set([
 	// 12 is the escape byte; valid two-byte ops are checked separately.
 ]);
 
-// CFF2 adds vsindex (15) and blend (16); removes endchar (14).
+// CFF2 returns/terminates at the end of the byte string, not with 11/14.
 const CFF2_TYPE2_OPS = new Set([
-	1, 3, 4, 5, 6, 7, 8, 10, 11, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+	1, 3, 4, 5, 6, 7, 8, 10, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
 	29, 30, 31,
 ]);
 
@@ -2227,9 +2300,8 @@ const CFF_TYPE2_OPS_TWOBYTE = new Set([
 	35,
 	36,
 	37, // hflex, flex, hflex1, flex1
-	// Plus arithmetic/storage ops 0,3,4,5,9,10,11,12,14,15,18,20,21,22,23,24,
-	// 26,27,28,29,30 — but the interpreter doesn't decode those, so we don't
-	// require them. We only flag operators that are not in either set.
+	// Recognized CFF1 arithmetic/storage operators require an execution
+	// context this diagnostic walker does not implement.
 	0,
 	3,
 	4,
@@ -2253,24 +2325,87 @@ const CFF_TYPE2_OPS_TWOBYTE = new Set([
 	30,
 ]);
 
-// Operators that exist in CFF1 but were removed in CFF2: endchar (14) and
-// the legacy hsbw/seac path. The CFF2 op set above already excludes them, so
-// they will be reported as CFF_INVALID_OPERATOR in CFF2 contexts — no
-// separate code is needed.
-
 const CFF_MAX_SUBR_DEPTH = 10; // Type 2 spec limit
 const CFF_MAX_STACK = 48; // Type 2 / CFF1 spec stack depth
 const CFF2_MAX_STACK = 513; // CFF2 spec stack depth
+const CFF_BLEND_VALUE = Symbol('blended design coordinate');
 
-function validateCffCharStrings(cffTable, owner, issues, isCff2 = false) {
-	const fontList = isCff2
-		? [
-				{
-					charStrings: cffTable.charStrings || [],
-					localSubrs: cffTable.fontDicts?.[0]?.localSubrs || [],
-				},
-			]
-		: cffTable.fonts || [];
+function resolveDiagnosticCffContext(cffTable, font, gid, isCff2, report, label) {
+	const dictionaries = isCff2 ? font.fontDicts : font.fdArray;
+	const needsFD = isCff2 || font.isCIDFont || font.topDict?.ROS !== undefined ||
+		dictionaries !== undefined || font.fdSelect != null;
+	let dictionary = font;
+	if (needsFD) {
+		if (!Array.isArray(dictionaries) || dictionaries.length === 0) {
+			report('CFF_FDARRAY_MISSING', 'error',
+				`${label}: no font dictionaries are available; bytecode checks were skipped.`);
+			return null;
+		}
+		const selection = font.fdSelect;
+		// Only CFF2 permits an omitted FDSelect, with exactly one Font DICT.
+		if (selection == null && !(isCff2 && dictionaries.length === 1)) {
+			report('CFF_FDSELECT_MISSING', 'error',
+				`${label}: FDSelect is required; bytecode checks were skipped.`);
+			return null;
+		}
+		const fd = selection == null ? 0 : selection[gid];
+		if (!Number.isInteger(fd) || fd < 0 || !dictionaries[fd]) {
+			report('CFF_FD_INDEX_OUT_OF_RANGE', 'error',
+				`${label}: FDSelect references missing font dictionary ${fd}; bytecode checks were skipped.`);
+			return null;
+		}
+		dictionary = dictionaries[fd];
+	}
+	if (!isCff2) {
+		if ((font.topDict?.CharstringType ?? 2) !== 2) {
+			report('CFF_CONTEXT_UNSUPPORTED', 'warning',
+				`${label}: only Type 2 charstrings are checked; bytecode checks were skipped.`);
+			return null;
+		}
+		// Validate above before using the import helper: its permissive fallback
+		// to FD 0 / the top-level Private DICT must not hide an invalid reference.
+		return getCFFGlyphContext({ ...cffTable, fonts: [font] }, gid);
+	}
+	if (dictionary.privateDict?.blend !== undefined ||
+		dictionary.privateDictEntries?.some((entry) => entry.operator === 23)) {
+		report('CFF_CONTEXT_UNSUPPORTED', 'warning',
+			`${label}: Private DICT blend programs are not evaluated; bytecode checks were skipped.`);
+		return null;
+	}
+	return {
+		localSubrs: dictionary.localSubrs || [],
+		vsindex: dictionary.privateDict?.vsindex ?? 0,
+		hasPrivateVsindex: dictionary.privateDict?.vsindex !== undefined,
+	};
+}
+
+function cffBlendRegionCount(store, vsindex, report, label) {
+	if (!store) {
+		report('CFF_VARIATION_CONTEXT_MISSING', 'error',
+			`${label}: vsindex/blend requires a CFF2 VariationStore.`);
+		return null;
+	}
+	if (!Number.isInteger(vsindex) || vsindex < 0 ||
+		vsindex >= (store.itemVariationData?.length ?? 0)) {
+		report('CFF_VSINDEX_OUT_OF_RANGE', 'error',
+			`${label}: vsindex ${vsindex} does not select an ItemVariationData subtable.`);
+		return null;
+	}
+	const regions = store.variationRegionList?.regions;
+	const indexes = store.itemVariationData[vsindex]?.regionIndexes;
+	if (store.format !== 1 || !Array.isArray(regions) || !Array.isArray(indexes) ||
+		indexes.some((index) => !Number.isInteger(index) || index < 0 || index >= regions.length)) {
+		report('CFF_VARIATION_CONTEXT_INVALID', 'error',
+			`${label}: the selected ItemVariationData has missing or invalid region references.`);
+		return null;
+	}
+	return indexes.length;
+}
+
+function validateCffCharStrings(
+	cffTable, owner, issues, isCff2 = false, options = DIAGNOSTIC_LIMITS,
+) {
+	const fontList = isCff2 ? [cffTable] : cffTable.fonts || [];
 	const globalSubrs = cffTable.globalSubrs || [];
 	const globalBias = calcCffSubrBias(globalSubrs.length);
 
@@ -2286,21 +2421,49 @@ function validateCffCharStrings(cffTable, owner, issues, isCff2 = false) {
 	for (let f = 0; f < fontList.length; f++) {
 		const font = fontList[f];
 		const charStrings = font.charStrings || [];
-		const localSubrs = font.localSubrs || [];
-		const localBias = calcCffSubrBias(localSubrs.length);
 
 		for (let gid = 0; gid < charStrings.length; gid++) {
 			const cs = charStrings[gid];
-			if (!cs || cs.length === 0) continue; // Caught by CFF_EMPTY_CHARSTRING
+			const label = `${owner} font ${f}, glyph ${gid}`;
+			const context = resolveDiagnosticCffContext(
+				cffTable, font, gid, isCff2, report, label,
+			);
+			if (!context) continue;
+			if (!cs || (!isCff2 && cs.length === 0)) {
+				report('CFF_EMPTY_CHARSTRING', 'error',
+					`${label}: charstring is missing or empty (CFF1 requires endchar).`);
+				continue;
+			}
+			const localSubrs = context.localSubrs;
+			const localBias = calcCffSubrBias(localSubrs.length);
 
 			const ctx = {
 				stack: [],
 				maxStackSeen: 0,
 				stemCount: 0,
 				depth: 0,
-				returned: false,
-				saw: { endchar: false, anyDraw: false },
+				ended: false,
+				aborted: false,
+				widthSeen: isCff2,
+				vsindex: context.vsindex,
+				blendRegionCount: undefined,
+				sawVsindex: false,
+				sawBlend: false,
+				variationStore: cffTable.variationStore,
+				operations: 0,
+				maxOperations: options.maxCharStringOperations,
+				exhausted: false,
 			};
+			const glyphReport = (code, severity, message) => {
+				ctx.aborted = true;
+				report(code, severity, message);
+			};
+			if (isCff2 && context.hasPrivateVsindex) {
+				ctx.blendRegionCount = cffBlendRegionCount(
+					ctx.variationStore, ctx.vsindex, glyphReport, label,
+				);
+				if (ctx.blendRegionCount === null) continue;
+			}
 
 			validateCharStringBytecode(
 				cs,
@@ -2312,9 +2475,13 @@ function validateCffCharStrings(cffTable, owner, issues, isCff2 = false) {
 				owner,
 				f,
 				gid,
-				report,
+				glyphReport,
 				isCff2,
 			);
+			if (!isCff2 && !ctx.aborted && !ctx.ended) {
+				report('CFF_CHARSTRING_NO_ENDCHAR', 'warning',
+					`${label}: execution reaches the end of the glyph without endchar.`);
+			}
 
 			if (ctx.maxStackSeen > (isCff2 ? CFF2_MAX_STACK : CFF_MAX_STACK)) {
 				report(
@@ -2357,6 +2524,12 @@ function validateCharStringBytecode(
 
 	let i = 0;
 	while (i < bytes.length) {
+		if (ctx.operations++ >= ctx.maxOperations) {
+			ctx.exhausted = true;
+			report('CFF_OPERATION_LIMIT_EXCEEDED', 'error',
+				`${owner}: glyph ${gid} exceeds maxCharStringOperations (${ctx.maxOperations}); remaining bytecode checks for this glyph were skipped.`);
+			return;
+		}
 		const b0 = bytes[i];
 
 		// Numeric operand?
@@ -2382,6 +2555,11 @@ function validateCharStringBytecode(
 			if (ctx.stack.length > ctx.maxStackSeen) {
 				ctx.maxStackSeen = ctx.stack.length;
 			}
+			if (ctx.stack.length > (isCff2 ? CFF2_MAX_STACK : CFF_MAX_STACK)) {
+				// Stop allocating immediately; the caller reports the stack limit.
+				ctx.aborted = true;
+				return;
+			}
 			i += num.bytesConsumed;
 			continue;
 		}
@@ -2397,7 +2575,8 @@ function validateCharStringBytecode(
 				return;
 			}
 			const b1 = bytes[i + 1];
-			if (!CFF_TYPE2_OPS_TWOBYTE.has(b1)) {
+			const flexArgs = { 34: 7, 35: 13, 36: 9, 37: 11 }[b1];
+			if (!CFF_TYPE2_OPS_TWOBYTE.has(b1) || (isCff2 && flexArgs === undefined)) {
 				report(
 					'CFF_INVALID_OPERATOR',
 					'error',
@@ -2405,10 +2584,12 @@ function validateCharStringBytecode(
 				);
 				return;
 			}
-			// Flex operators each consume a fixed number of operands; check
-			// stack underflow only for those four.
-			const flexArgs = { 34: 7, 35: 13, 36: 9, 37: 11 }[b1];
-			if (flexArgs !== undefined && ctx.stack.length < flexArgs) {
+			if (flexArgs === undefined) {
+				report('CFF_CONTEXT_UNSUPPORTED', 'warning',
+					`${owner}: glyph ${gid} uses Type 2 operator 12 ${b1}, whose stack effects are not evaluated; remaining bytecode checks were skipped.`);
+				return;
+			}
+			if (ctx.stack.length < flexArgs) {
 				report(
 					'CFF_STACK_UNDERFLOW',
 					'error',
@@ -2417,7 +2598,6 @@ function validateCharStringBytecode(
 				return;
 			}
 			ctx.stack.length = 0;
-			ctx.saw.anyDraw = true;
 			i += 2;
 			continue;
 		}
@@ -2443,14 +2623,28 @@ function validateCharStringBytecode(
 				);
 				return;
 			}
-			ctx.stack.pop();
+			if (ctx.stack.length !== 1) {
+				report('CFF_INVALID_OPERAND_COUNT', 'error',
+					`${owner}: glyph ${gid} vsindex requires exactly one operand.`);
+				return;
+			}
+			if (ctx.sawVsindex || ctx.sawBlend) {
+				report('CFF_VSINDEX_ORDER_INVALID', 'error',
+					`${owner}: glyph ${gid} vsindex must occur only once and before blend, including subroutine calls.`);
+				return;
+			}
+			ctx.vsindex = ctx.stack.pop();
+			ctx.blendRegionCount = cffBlendRegionCount(ctx.variationStore, ctx.vsindex, report,
+				`${owner} font ${fontIndex}, glyph ${gid}`);
+			if (ctx.blendRegionCount === null) return;
+			ctx.sawVsindex = true;
 			i++;
 			continue;
 		}
 
-		// CFF2 blend (16): pops top operand n, then n*(k+1) blend operands,
-		// leaves n on stack. We can't know k without reading ItemVariationStore;
-		// just treat as stack-modifying with no underflow check beyond "≥ 1".
+		// Count operands with the selected Private DICT / CharString vsindex.
+		// Design coordinates need no interpolation for structural checks, but
+		// must never be treated as concrete control operands (e.g. subr indices).
 		if (isCff2 && b0 === 16) {
 			if (ctx.stack.length < 1) {
 				report(
@@ -2461,30 +2655,60 @@ function validateCharStringBytecode(
 				return;
 			}
 			const n = ctx.stack.pop();
-			// We don't know k; conservatively keep n operands and discard the rest.
-			if (typeof n === 'number' && n >= 0 && n <= ctx.stack.length) {
-				ctx.stack.length = n;
-			} else {
-				ctx.stack.length = 0;
+			if (n === CFF_BLEND_VALUE) {
+				report('CFF_CONTEXT_UNSUPPORTED', 'warning',
+					`${owner}: glyph ${gid} uses a blended value as a blend count; remaining bytecode checks were skipped.`);
+				return;
 			}
+			if (!Number.isInteger(n) || n < 1) {
+				report('CFF_BLEND_INVALID_COUNT', 'error',
+					`${owner}: glyph ${gid} blend count ${n} must be a positive integer.`);
+				return;
+			}
+			const k = ctx.blendRegionCount ??= cffBlendRegionCount(ctx.variationStore, ctx.vsindex, report,
+				`${owner} font ${fontIndex}, glyph ${gid}`);
+			if (k === null) return;
+			const required = n * (k + 1);
+			if (required > ctx.stack.length) {
+				report('CFF_STACK_UNDERFLOW', 'error',
+					`${owner}: glyph ${gid} blend requires ${required} operands for ${k} regions, but stack has ${ctx.stack.length}.`);
+				return;
+			}
+			const start = ctx.stack.length - required;
+			if (ctx.stack.slice(start).includes(CFF_BLEND_VALUE)) {
+				report('CFF_CONTEXT_UNSUPPORTED', 'warning',
+					`${owner}: glyph ${gid} blends an already blended value; remaining bytecode checks were skipped.`);
+				return;
+			}
+			ctx.stack.length = start;
+			for (let j = 0; j < n; j++) ctx.stack.push(CFF_BLEND_VALUE);
+			ctx.sawBlend = true;
 			i++;
 			continue;
 		}
 
-		// Stem operators — count stems for hintmask byte calculation
-		if (b0 === 1 || b0 === 3 || b0 === 18 || b0 === 23) {
-			ctx.stemCount += ctx.stack.length >> 1;
-			ctx.stack.length = 0;
-			i++;
-			continue;
+		const stemOp = b0 === 1 || b0 === 3 || b0 === 18 || b0 === 23 ||
+			b0 === 19 || b0 === 20;
+		const moveArgs = b0 === 21 ? 2 : b0 === 4 || b0 === 22 ? 1 : 0;
+		if (!ctx.widthSeen && (stemOp || moveArgs || b0 === 14)) {
+			const hasWidth = stemOp ? ctx.stack.length % 2 !== 0 :
+				moveArgs ? ctx.stack.length === moveArgs + 1 :
+					ctx.stack.length === 1 || ctx.stack.length === 5;
+			if (hasWidth) ctx.stack.shift();
+			ctx.widthSeen = true;
+		}
+		if ((stemOp && ctx.stack.length % 2 !== 0) ||
+			(moveArgs && ctx.stack.length !== moveArgs)) {
+			report('CFF_INVALID_OPERAND_COUNT', 'error',
+				`${owner}: glyph ${gid} operator ${b0} has ${ctx.stack.length} operands after ${isCff2 ? 'CFF2 (no width)' : 'CFF1 width'} handling.`);
+			return;
 		}
 
-		// hintmask / cntrmask have N follow-on bytes (one per 8 stems).
-		if (b0 === 19 || b0 === 20) {
+		if (stemOp) {
 			ctx.stemCount += ctx.stack.length >> 1;
 			ctx.stack.length = 0;
 			i++;
-			const maskBytes = Math.ceil(ctx.stemCount / 8);
+			const maskBytes = b0 === 19 || b0 === 20 ? Math.ceil(ctx.stemCount / 8) : 0;
 			if (i + maskBytes > bytes.length) {
 				report(
 					'CFF_TRUNCATED_OPERATOR',
@@ -2508,9 +2732,15 @@ function validateCharStringBytecode(
 				return;
 			}
 			const sIdx = ctx.stack.pop();
+			if (sIdx === CFF_BLEND_VALUE) {
+				report('CFF_CONTEXT_UNSUPPORTED', 'warning',
+					`${owner}: glyph ${gid} uses a blended value as a subroutine index; remaining bytecode checks were skipped.`);
+				return;
+			}
 			const subrIdx = sIdx + (b0 === 10 ? localBias : globalBias);
 			const subrTable = b0 === 10 ? localSubrs : globalSubrs;
-			if (subrIdx < 0 || subrIdx >= subrTable.length) {
+			if (!Number.isInteger(subrIdx) || subrIdx < 0 ||
+				subrIdx >= subrTable.length || !subrTable[subrIdx]) {
 				report(
 					'CFF_SUBR_INDEX_OUT_OF_RANGE',
 					'error',
@@ -2533,28 +2763,39 @@ function validateCharStringBytecode(
 				isCff2,
 			);
 			ctx.depth--;
+			if (ctx.exhausted || ctx.aborted || ctx.ended) return;
 			i++;
 			continue;
 		}
 
 		if (b0 === 11) {
-			// return
-			ctx.returned = true;
+			if (ctx.depth === 0) {
+				report('CFF_RETURN_OUTSIDE_SUBR', 'error',
+					`${owner}: glyph ${gid} uses return outside a subroutine.`);
+			}
 			return;
 		}
 
 		if (b0 === 14) {
-			// endchar
-			ctx.saw.endchar = true;
+			ctx.ended = true;
+			if (ctx.stack.length === 4) {
+				report('CFF_CONTEXT_UNSUPPORTED', 'warning',
+					`${owner}: glyph ${gid} uses endchar composite operands; component execution is not checked.`);
+			} else if (ctx.stack.length !== 0) {
+				report('CFF_INVALID_OPERAND_COUNT', 'error',
+					`${owner}: glyph ${gid} endchar has ${ctx.stack.length} operands after width handling.`);
+			}
 			ctx.stack.length = 0;
-			i++;
-			continue;
+			return;
 		}
 
 		// Drawing/move operators — clear stack
 		ctx.stack.length = 0;
-		ctx.saw.anyDraw = true;
 		i++;
+	}
+	if (!isCff2 && ctx.depth > 0) {
+		report('CFF_SUBR_NO_RETURN', 'error',
+			`${owner}: glyph ${gid} reaches the end of a CFF1 subroutine without return or endchar.`);
 	}
 }
 
@@ -2746,12 +2987,6 @@ function validateGlyfHeaders(glyf, head, issues) {
 //  what Tier 2's validateCmapDeep already covers).
 // -------------------------------------------------------------------------
 
-const CMAP_FORMAT14_VALID_VS_RANGES = [
-	[0x180b, 0x180d], // Mongolian Free Variation Selectors
-	[0xfe00, 0xfe0f], // Variation Selectors
-	[0xe0100, 0xe01ef], // Variation Selectors Supplement
-];
-
 function validateCmapFormat14(cmap, issues) {
 	const subs = cmap?.subTables ?? cmap?.subtables ?? [];
 	let outOfRangeReported = false;
@@ -2764,9 +2999,7 @@ function validateCmapFormat14(cmap, issues) {
 			const r = records[i];
 			const vs = r.varSelector ?? r.variationSelector;
 			if (typeof vs !== 'number') continue;
-			const inRange = CMAP_FORMAT14_VALID_VS_RANGES.some(
-				([lo, hi]) => vs >= lo && vs <= hi,
-			);
+			const inRange = isValidVariationSelector(vs);
 			if (!inRange && !outOfRangeReported) {
 				outOfRangeReported = true;
 				addIssue(
@@ -3077,7 +3310,7 @@ function validateTrueTypeProgramTables(parsedTables, issues) {
 	}
 }
 
-function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
+function phaseCrossTableChecks(parsedTables, entries, issues, sfnt, options) {
 	const tags = new Set(entries.map((e) => e.tag));
 
 	// head.magicNumber
@@ -3415,43 +3648,6 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 		validateCmapDeep(parsedTables.cmap, parsedTables.maxp, issues);
 	}
 
-	// CFF CharStrings INDEX: every charstring must end with the endchar
-	// operator (0x0E = 14) at top level, otherwise font sanitizers will
-	// reject the table with "Failed validating CharStrings INDEX".
-	const cffParsed = parsedTables['CFF '];
-	if (cffParsed?.fonts) {
-		for (let f = 0; f < cffParsed.fonts.length; f++) {
-			const cs = cffParsed.fonts[f].charStrings || [];
-			for (let i = 0; i < cs.length; i++) {
-				const bytes = cs[i];
-				if (!bytes || bytes.length === 0) {
-					addIssue(
-						issues,
-						'error',
-						'CFF_EMPTY_CHARSTRING',
-						`CFF font ${f}: charstring for glyph ${i} is empty (must contain at least an endchar operator).`,
-					);
-					break;
-				}
-				const last = bytes[bytes.length - 1];
-				// 14 = endchar (Type 2). Charstrings using subroutines may end
-				// with the endchar inside the subr, but the last byte of the
-				// outer string is normally still endchar after our parser
-				// converts items to byte arrays.  Operator 11 (return) is also
-				// permitted as a tail when a subr is the final call site.
-				if (last !== 14 && last !== 11) {
-					addIssue(
-						issues,
-						'warning',
-						'CFF_CHARSTRING_NO_ENDCHAR',
-						`CFF font ${f}: charstring for glyph ${i} does not terminate with endchar (last byte = 0x${last.toString(16).padStart(2, '0')}).`,
-					);
-					break;
-				}
-			}
-		}
-	}
-
 	// CFF + post version compatibility.  Per OpenType spec, CFF-flavored
 	// fonts (those with a CFF or CFF2 table) MUST use post version 3.0 —
 	// glyph names live in the CFF Charset, so the post table omits them.
@@ -3572,10 +3768,10 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 
 	// Tier 7 second-pass: deep CFF charstring opcode validation.
 	if (parsedTables['CFF ']) {
-		validateCffCharStrings(parsedTables['CFF '], 'CFF', issues, false);
+		validateCffCharStrings(parsedTables['CFF '], 'CFF', issues, false, options);
 	}
 	if (parsedTables.CFF2) {
-		validateCffCharStrings(parsedTables.CFF2, 'CFF2', issues, true);
+		validateCffCharStrings(parsedTables.CFF2, 'CFF2', issues, true, options);
 	}
 
 	// Tier 7 second-pass: glyf composite cycle / depth + header bounds.
@@ -3598,15 +3794,95 @@ function phaseCrossTableChecks(parsedTables, entries, issues, sfnt) {
 //  Collection handling
 // =========================================================================
 
-function getCollectionFirstFontBuffer(buffer) {
-	const reader = new DataReader(new Uint8Array(buffer));
-	reader.skip(4); // 'ttcf'
-	const majorVersion = reader.uint16();
-	reader.skip(2); // minorVersion
-	const numFonts = reader.uint32();
-	if (numFonts === 0) return null;
-	const firstOffset = reader.uint32();
-	return { majorVersion, numFonts, firstOffset };
+function diagnoseCollection(buffer, issues, options, addFace) {
+	const view = new DataView(buffer);
+	const version = view.getUint32(4);
+	const numFonts = view.getUint32(8);
+	if (version !== 0x00010000 && version !== 0x00020000) {
+		addIssue(issues, 'error', 'TTC_VERSION_INVALID',
+			`TTC version is 0x${version.toString(16).padStart(8, '0')}; must be 0x00010000 or 0x00020000.`);
+	}
+	if (numFonts === 0) {
+		addIssue(issues, 'error', 'EMPTY_COLLECTION', 'Collection contains no fonts.');
+		return;
+	}
+	if (numFonts > 0x10000) {
+		addIssue(issues, 'error', 'TTC_TOO_MANY_FONTS',
+			`TTC numFonts is ${numFonts}; must be ≤ ${0x10000}.`);
+	}
+	const offsetArrayEnd = 12 + numFonts * 4;
+	const readableOffsets = Math.min(numFonts, Math.floor((buffer.byteLength - 12) / 4));
+	if (offsetArrayEnd > buffer.byteLength) {
+		addIssue(issues, 'error', 'TTC_OFFSETS_TRUNCATED',
+			`Collection declares ${numFonts} face offsets, but only ${readableOffsets} fit in the file.`);
+	}
+	const headerEnd = offsetArrayEnd + (version === 0x00020000 ? 12 : 0);
+	if (version === 0x00020000 && headerEnd > buffer.byteLength) {
+		addIssue(issues, 'error', 'COLLECTION_HEADER_UNREADABLE',
+			'Version 2 collection is missing its complete DSIG header fields.');
+	}
+	if (numFonts > options.maxFonts) {
+		addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED',
+			`Collection count ${numFonts} exceeds maxFonts (${options.maxFonts}); face checks were skipped.`);
+		return;
+	}
+	addIssue(issues, 'info', 'COLLECTION_INFO',
+		`Collection contains ${numFonts} font(s). Diagnosing ${options.faceIndex === undefined ? 'all faces' : `face ${options.faceIndex}`}.`);
+	if (options.faceIndex !== undefined && options.faceIndex >= numFonts) {
+		addIssue(issues, 'error', 'FACE_INDEX_OUT_OF_RANGE',
+			`faceIndex ${options.faceIndex} is outside this collection (${numFonts} faces).`);
+		return;
+	}
+	const first = options.faceIndex ?? 0;
+	const end = options.faceIndex === undefined ? numFonts : first + 1;
+	for (let faceIndex = first; faceIndex < end; faceIndex++) {
+		const faceIssues = [];
+		if (faceIndex >= readableOffsets) {
+			addIssue(faceIssues, 'error', 'TTC_FACE_OFFSET_UNREADABLE',
+				`Collection offset for face ${faceIndex} is missing.`);
+			addFace(faceIndex, faceIssues);
+			continue;
+		}
+		const offset = view.getUint32(12 + faceIndex * 4);
+		if (offset < headerEnd || offset > buffer.byteLength - 12) {
+			addIssue(faceIssues, 'error', 'TTC_FACE_OFFSET_INVALID',
+				`Face ${faceIndex} SFNT header offset ${offset} overlaps the collection header or is outside the file.`);
+			addFace(faceIndex, faceIssues);
+			continue;
+		}
+		diagnoseFace(buffer, offset, faceIssues, options, false);
+		addFace(faceIndex, faceIssues);
+	}
+}
+
+function diagnoseFace(sfnt, sfntOffset, issues, options, standalone) {
+	try {
+		runFaceChecks(sfnt, sfntOffset, issues, options, standalone);
+	} catch (err) {
+		addIssue(issues, 'error', 'DIAGNOSTIC_CHECK_FAILED',
+			`Face diagnosis could not complete: ${err.message}. Remaining checks for this face were skipped.`);
+	}
+}
+
+function runFaceChecks(sfnt, sfntOffset, issues, options, standalone) {
+	const header = phaseHeader(sfnt, issues, sfntOffset, options);
+	if (!header) return;
+	const entries = phaseDirectory(sfnt, header, issues, sfntOffset);
+	if (entries.length === 0 && header.numTables > 0) {
+		addIssue(issues, 'error', 'NO_READABLE_ENTRIES',
+			'Could not read any table directory entries.');
+		return;
+	}
+	phaseRequiredTables(entries, issues);
+	const tableBytes = entries.reduce((total, entry) => total + entry.length, 0);
+	if (tableBytes > options.maxTableBytes) {
+		addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED',
+			`Face table data ${tableBytes} exceeds maxTableBytes (${options.maxTableBytes}); checksum, parsing, and cross-table checks were skipped.`);
+		return;
+	}
+	phaseChecksums(sfnt, entries, issues, standalone);
+	const parsedTables = phaseParseTables(sfnt, entries, issues, options);
+	phaseCrossTableChecks(parsedTables, entries, issues, sfnt, options);
 }
 
 // =========================================================================
@@ -3617,118 +3893,73 @@ function getCollectionFirstFontBuffer(buffer) {
  * Diagnose a binary font file and produce a detailed report of any problems.
  *
  * Unlike `importFont()` which throws on corruption, this function catches
- * errors at each phase and continues, building a comprehensive diagnostic
- * report that explains exactly what's wrong.
+ * table/face errors and continues where possible, retaining best-effort
+ * findings without modifying the input.
  *
  * @param {ArrayBuffer} buffer - Raw font file bytes.
- * @returns {object} Report: `{ valid, errors, warnings, infos, issues, summary }`.
+ * @param {object} [options] - Optional faceIndex and import-compatible limits.
+ * @returns {object} Report with legacy fields and a `faces` array.
  */
-export function diagnoseFont(buffer) {
+export function diagnoseFont(buffer, options = {}) {
 	const issues = [];
+	const faces = [];
+	const finish = () => ({ ...buildReport(issues), faces });
+	const addFace = (faceIndex, faceIssues) => {
+		for (const issue of faceIssues) {
+			issue.faceIndex = faceIndex;
+			issues.push(issue);
+		}
+		faces.push({ faceIndex, ...buildReport(faceIssues) });
+	};
 
-	// Tier 4: oversize file guard.  Firefox/OTS rejects fonts larger than
-	// 1 GiB outright (`OTS_PARSER_BAILED`), so flag the file but continue
-	// best-effort diagnosis.
-	if (buffer && typeof buffer.byteLength === 'number') {
-		const ONE_GB = 1024 * 1024 * 1024;
-		if (buffer.byteLength > ONE_GB) {
-			addIssue(
-				issues,
-				'error',
-				'FILE_EXCEEDS_1GB',
-				`Font file is ${buffer.byteLength} bytes (> 1 GiB); Firefox/OTS will reject it.`,
-			);
+	if (options === null || typeof options !== 'object' || Array.isArray(options)) {
+		addIssue(issues, 'error', 'INVALID_DIAGNOSTIC_OPTIONS', 'Diagnostic options must be an object.');
+		return finish();
+	}
+	options = { ...DIAGNOSTIC_LIMITS, ...options };
+	for (const key of Object.keys(DIAGNOSTIC_LIMITS)) {
+		if (!Number.isSafeInteger(options[key]) || options[key] < 1) {
+			addIssue(issues, 'error', 'INVALID_DIAGNOSTIC_OPTIONS',
+				`Invalid diagnostic limit: ${key}; expected a positive safe integer.`);
+			return finish();
 		}
 	}
-
-	// --- Phase 1: Signature & format detection --------------------------
-	const sig = phaseSignature(buffer, issues);
-	if (!sig) return buildReport(issues);
-
-	let sfnt = sig.sfnt;
-
-	// Handle collections: diagnose the first font
-	if (sig.format === 'collection') {
-		try {
-			const info = getCollectionFirstFontBuffer(sfnt);
-			if (!info || info.numFonts === 0) {
-				addIssue(
-					issues,
-					'error',
-					'EMPTY_COLLECTION',
-					'Collection contains no fonts.',
-				);
-				return buildReport(issues);
-			}
-			// TTC majorVersion must be 1 or 2 (Firefox/OTS rejects other values).
-			if (info.majorVersion !== 1 && info.majorVersion !== 2) {
-				addIssue(
-					issues,
-					'error',
-					'TTC_VERSION_INVALID',
-					`TTC majorVersion is ${info.majorVersion}; must be 1 or 2.`,
-				);
-				return buildReport(issues);
-			}
-			// Sanity-cap numFonts (OTS rejects > 0x10000).
-			if (info.numFonts > 0x10000) {
-				addIssue(
-					issues,
-					'error',
-					'TTC_TOO_MANY_FONTS',
-					`TTC numFonts is ${info.numFonts}; must be ≤ ${0x10000}.`,
-				);
-				return buildReport(issues);
-			}
-			addIssue(
-				issues,
-				'info',
-				'COLLECTION_INFO',
-				`Collection contains ${info.numFonts} font(s). Diagnosing the first font at offset ${info.firstOffset}.`,
-			);
-			// For collections, we diagnose at the SFNT offset within the same buffer
-			// We create a virtual sub-reader starting at firstOffset
-			sfnt = buffer; // Use the full buffer — phases must account for offset
-		} catch (err) {
-			addIssue(
-				issues,
-				'error',
-				'COLLECTION_HEADER_UNREADABLE',
-				`Could not read collection header: ${err.message}`,
-			);
-			return buildReport(issues);
+	if (options.faceIndex !== undefined &&
+		(!Number.isSafeInteger(options.faceIndex) || options.faceIndex < 0)) {
+		addIssue(issues, 'error', 'INVALID_DIAGNOSTIC_OPTIONS',
+			'faceIndex must be a non-negative safe integer.');
+		return finish();
+	}
+	if (buffer && typeof buffer.byteLength === 'number' &&
+		buffer.byteLength > 1024 * 1024 * 1024) {
+		addIssue(issues, 'error', 'FILE_EXCEEDS_1GB',
+			`Font file is ${buffer.byteLength} bytes (> 1 GiB); Firefox/OTS will reject it.`);
+	}
+	if (buffer instanceof ArrayBuffer) {
+		if (buffer.byteLength > options.maxInputBytes) {
+			addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED',
+				`Font input exceeds maxInputBytes (${options.maxInputBytes}); diagnosis was skipped.`);
+			return finish();
 		}
 	}
-
-	// --- Phase 2: SFNT header -------------------------------------------
-	const header = phaseHeader(sfnt, issues);
-	if (!header) return buildReport(issues);
-
-	// --- Phase 3: Table directory ---------------------------------------
-	const entries = phaseDirectory(sfnt, header, issues);
-	if (entries.length === 0 && header.numTables > 0) {
-		addIssue(
-			issues,
-			'error',
-			'NO_READABLE_ENTRIES',
-			'Could not read any table directory entries.',
-		);
-		return buildReport(issues);
+	const sig = phaseSignature(buffer, issues, options);
+	if (!sig) return finish();
+	const sfnt = sig.sfnt;
+	if (sfnt.byteLength >= 12 && new DataView(sfnt).getUint32(0) === 0x74746366) {
+		if (sig.format !== 'collection') {
+			addIssue(issues, 'info', 'FORMAT_COLLECTION',
+				'Decoded font is a collection (TTC/OTC).');
+		}
+		diagnoseCollection(sfnt, issues, options, addFace);
+	} else if (options.faceIndex !== undefined && options.faceIndex !== 0) {
+		addIssue(issues, 'error', 'FACE_INDEX_OUT_OF_RANGE',
+			`faceIndex ${options.faceIndex} is outside this single-face font.`);
+	} else {
+		const faceIssues = [];
+		diagnoseFace(sfnt, 0, faceIssues, options, sig.format === 'sfnt');
+		addFace(0, faceIssues);
 	}
-
-	// --- Phase 4: Required tables & outlines ----------------------------
-	phaseRequiredTables(entries, issues);
-
-	// --- Phase 5: Checksums ---------------------------------------------
-	phaseChecksums(sfnt, entries, issues);
-
-	// --- Phase 6: Per-table parsing ------------------------------------
-	const parsedTables = phaseParseTables(sfnt, entries, issues);
-
-	// --- Phase 7: Cross-table consistency -------------------------------
-	phaseCrossTableChecks(parsedTables, entries, issues, sfnt);
-
-	return buildReport(issues);
+	return finish();
 }
 
 // =========================================================================

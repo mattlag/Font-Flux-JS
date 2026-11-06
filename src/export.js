@@ -154,7 +154,7 @@ function compareSfntTag(a, b) {
  * @param {Uint8Array} data
  * @returns {number}
  */
-function computeTableChecksum(data) {
+export function computeTableChecksum(data) {
 	let sum = 0;
 	const len = data.length;
 	const aligned = len & ~3;

@@ -1,6 +1,6 @@
 # Diagnostics Guide
 
-Use `diagnoseFont(buffer)` to inspect a binary font file (TTF/OTF/WOFF/WOFF2/TTC/OTC) and get a structured report of structural problems, spec violations, and cross-table inconsistencies. Unlike `font.validate()` (which works on the parsed JSON), `diagnoseFont()` reads the raw bytes directly — making it the right tool for analyzing fonts that fail to import or that other tools (browsers, sanitizers) reject.
+Use `diagnoseFont(buffer, options?)` to inspect a binary font file (TTF/OTF/WOFF/WOFF2/TTC/OTC) and get a structured report of structural problems, spec violations, and cross-table inconsistencies. Unlike `font.validate()` (which works on the parsed JSON), `diagnoseFont()` reads the raw bytes directly — making it the right tool for analyzing fonts that fail to import or that other tools (browsers, sanitizers) reject. Diagnosis is observational: it does not change the supplied buffer or apply repairs.
 
 ## API
 
@@ -8,6 +8,7 @@ Use `diagnoseFont(buffer)` to inspect a binary font file (TTF/OTF/WOFF/WOFF2/TTC
 import { diagnoseFont } from 'font-flux-js';
 
 const report = diagnoseFont(buffer); // ArrayBuffer
+const selected = diagnoseFont(collectionBuffer, { faceIndex: 1 }); // second face only
 if (!report.valid) {
 	for (const e of report.errors) {
 		console.error(`[${e.code}] ${e.message}`);
@@ -15,18 +16,73 @@ if (!report.valid) {
 }
 ```
 
+By default, every TTC/OTC face is diagnosed. Collection directories are read at
+their declared SFNT offsets; table offsets remain relative to the **whole file**.
+Tables can be shared between faces, including tables located before a face's
+directory. There is no heuristic reinterpretation of invalid file-relative
+offsets as face-relative offsets. Standalone WOFF2 requires `await initWoff2()`
+before diagnosis. **WOFF2 collections are currently unsupported**: the decoder
+does not reconstruct file-relative TTC table offsets, so diagnosis reports
+`WOFF2_COLLECTION_UNSUPPORTED` and skips face checks rather than blaming the
+input for reconstruction defects. Raw TTC/OTC collections are supported.
+
+### Options and bounded work
+
+The optional object uses the same limit names/defaults as import. Limits must
+be positive safe integers; `faceIndex` must be a non-negative safe integer.
+Invalid options produce `INVALID_DIAGNOSTIC_OPTIONS`, not an exception.
+An index beyond the number of faces produces `FACE_INDEX_OUT_OF_RANGE`;
+only `faceIndex: 0` is valid for a standalone font.
+
+| Option | Default | Scope |
+| --- | --- | --- |
+| `faceIndex` | omitted | Diagnose all collection faces, or only this zero-based face |
+| `maxInputBytes` | 268435456 (256 MiB) | Original input bytes, checked before directory traversal or decompression |
+| `maxFonts` | 64 | Declared collection face count, including when selecting one face |
+| `maxTables` | 4096 | Entries per SFNT face and WOFF wrapper table directory |
+| `maxTableBytes` | 268435456 | Sum of declared table lengths per diagnosed face (including duplicate/shared references within that face); checked before checksumming/parsing. WOFF1 also checks this before decompression |
+| `maxUncompressedBytes` | 268435456 | Passed to WOFF1/WOFF2 decoders to bound declared/reconstructed font and metadata output; separate from compressed input size |
+| `maxGlyphs` | 65535 | Parsed `maxp` count and CFF/CFF2 CharStrings counts; remaining parsing stops when exceeded |
+| `maxPoints` | 10000000 | Passed to the TrueType `glyf` parser; cumulative simple-glyph points per face |
+| `maxCharStringOperations` | 1000000 | Diagnostic CFF/CFF2 bytecode steps per glyph, including operands and recursive subroutine calls |
+
+Limit failures are visible errors. `DIAGNOSTIC_LIMIT_EXCEEDED` identifies
+input/count/table-byte/glyph limits; decoder limits use `WOFF1_UNWRAP_FAILED` or
+`WOFF2_UNWRAP_FAILED`; `glyf` point limits use `TABLE_PARSE_FAILED`; CFF diagnostic
+step limits use `CFF_OPERATION_LIMIT_EXCEEDED`. Messages describe skipped work.
+One failed face does not discard independently readable face reports.
+
+These are **partial resource controls, not a comprehensive security guarantee**.
+They do not bound every parser allocation, recursion path, issue count, or
+elapsed time. CFF glyph counts are checked after parsing the CFF table.
+WOFF2's per-face table-byte check follows bounded decompression.
+Shared tables may be decoded/checked again for each face; table/point/operation
+limits are not a single aggregate collection budget. `maxPoints` does not
+perform or bound CFF outline execution, which diagnosis does not run.
+
 ## Report format
 
 ```js
 {
   valid: false,                     // true iff errors.length === 0
-  errors:   [{ severity, code, message }],
-  warnings: [{ severity, code, message }],
-  infos:    [{ severity, code, message }],
+  errors:   [{ severity, code, message, faceIndex? }],
+  warnings: [{ severity, code, message, faceIndex? }],
+  infos:    [{ severity, code, message, faceIndex? }],
   issues:   [...],                  // all issues, in the order discovered
-  summary: { errorCount, warningCount, infoCount, issueCount }
+  summary: { errorCount, warningCount, infoCount, issueCount },
+  faces: [{
+    faceIndex: 0,
+    valid, errors, warnings, infos, issues, summary
+  }]
 }
 ```
+
+All legacy top-level fields remain. They aggregate container findings and the
+requested faces. Every issue generated for a face carries its `faceIndex`,
+including malformed-face errors; container/options findings have no `faceIndex`.
+A face report contains the same legacy fields plus `faceIndex` (no nested
+`faces`). Fatal input/limit failures may yield `faces: []`. An unreadable selected
+face still receives an error report when its declared index is known.
 
 ## Severity levels
 
@@ -38,17 +94,29 @@ if (!report.valid) {
 
 ## Diagnostic phases
 
-`diagnoseFont()` runs the following phases in order. A fatal failure in an earlier phase short-circuits the rest.
+`diagnoseFont()` detects the container once, then runs the face phases for each
+requested face. A fatal face failure short-circuits that face, not the others.
 
 1. **Signature** — buffer basics, magic-bytes detection, WOFF unwrapping.
 2. **Header** — `sfVersion`, `numTables`, directory hint fields.
 3. **Directory** — per-entry tag/offset/length validation, sort order.
 4. **Required tables** — core + outline table presence.
-5. **Checksums** — per-table OpenType checksum verification.
+5. **Checksums** — per-table OpenType checksum verification, including `head`
+   with its `checksumAdjustment` field treated as zero. Original standalone
+   SFNT files with an in-bounds `head` adjustment field are also checked for the
+   whole-font sum `0xB1B0AFBA` (zero-padding a final partial word).
 6. **Parse tables** — runs each table's parser to surface format errors.
 7. **Cross-table checks** — consistency between related tables.
 
-## Complete check reference
+The standalone whole-font sum is **not** imposed on TTC/OTC, or on WOFF/WOFF2
+reconstruction whose table placement may differ from the original SFNT.
+Missing/truncated `head` tables cannot receive that check. Checksum findings
+remain warnings; therefore `valid: true` does not imply checksum correctness.
+Diagnosis is not exhaustive font certification, shaping validation, or a full
+upstream sanitizer implementation. No standardized per-check coverage/outcome
+ledger is provided by this API.
+
+## Diagnostic code reference
 
 ### Phase 1 — Signature & format
 
@@ -62,7 +130,7 @@ if (!report.valid) {
 | `FORMAT_WOFF2`        | info     | File is WOFF2-wrapped                                            |
 | `WOFF2_UNWRAPPED`     | info     | WOFF2 successfully unwrapped (requires `await initWoff2()`)      |
 | `WOFF2_UNWRAP_FAILED` | error    | WOFF2 unwrap threw (decoder not initialized, corrupted Brotli)   |
-| `FORMAT_COLLECTION`   | info     | File is a TTC/OTC collection — diagnosed at the collection level |
+| `FORMAT_COLLECTION`   | info     | File is a TTC/OTC collection; requested faces are diagnosed separately |
 
 ### Phase 2 — Header
 
@@ -103,7 +171,8 @@ if (!report.valid) {
 
 | Code           | Severity | What it catches                                                                                                |
 | -------------- | -------- | -------------------------------------------------------------------------------------------------------------- |
-| `BAD_CHECKSUM` | warning  | A table's stored `checksum` does not match the recomputed OpenType checksum (often safe; auto-fixed on export) |
+| `BAD_CHECKSUM` | warning  | A table's stored checksum differs from its recomputed checksum; `head.checksumAdjustment` is treated as zero |
+| `BAD_CHECKSUM_ADJUSTMENT` | warning | An original standalone SFNT's whole-font sum is not `0xB1B0AFBA`; the adjustment or other font bytes are inconsistent |
 
 ### Phase 6 — Per-table parsing
 
@@ -143,13 +212,13 @@ if (!report.valid) {
 | `CMAP_LANGUAGE_NONZERO_FOR_WINDOWS`       | error    | A Windows-platform (`platformID = 3`) subtable has `language ≠ 0` — Firefox/OTS rejects this                                                                                |
 | `CMAP_FORMAT4_INVALID_TERMINATOR`         | error    | The final segment of a `cmap` format-4 subtable is not `[0xFFFF, 0xFFFF]`                                                                                                   |
 | `CMAP_FORMAT4_SEGCOUNT_INVALID`           | error    | A `cmap` format-4 subtable has zero segments                                                                                                                                |
-| `CMAP_FORMAT4_RANGES_OUT_OF_ORDER`        | error    | `cmap` format-4 segments are not in ascending order, or `startCode > endCode`                                                                                               |
+| `CMAP_FORMAT4_RANGES_OUT_OF_ORDER`        | error    | `cmap` format-4 segments overlap or are out of order (`startCode <= previous endCode`), or `startCode > endCode` |
 | `CMAP_FORMAT12_END_BEFORE_START`          | error    | A `cmap` format-12/13 group has `endCharCode < startCharCode`                                                                                                               |
 | `CMAP_FORMAT12_GROUPS_OUT_OF_ORDER`       | error    | `cmap` format-12/13 groups are not in ascending order or overlap                                                                                                            |
-| `CMAP_FORMAT14_VS_OUT_OF_RANGE`           | error    | A `cmap` format-14 record uses a code point outside the valid variation-selector ranges (Mongolian 180B-180D, VS1-16 FE00-FE0F, VS17-256 E0100-E01EF)                       |
+| `CMAP_FORMAT14_VS_OUT_OF_RANGE`           | error    | A `cmap` format-14 record is outside Unicode 16.0's Variation_Selector property: 180B-180D, **180F**, FE00-FE0F, E0100-E01EF; 180E is not a selector |
 | `CMAP_FORMAT14_VS_OUT_OF_ORDER`           | error    | `cmap` format-14 variation-selector records are not in ascending order                                                                                                      |
-| `OS2_WEIGHT_CLAMPED`                      | warning  | `OS/2.usWeightClass` is outside `[1, 1000]` — OTS clamps silently                                                                                                           |
-| `OS2_WIDTH_CLAMPED`                       | warning  | `OS/2.usWidthClass` is outside `[1, 9]` — OTS clamps silently                                                                                                               |
+| `OS2_WEIGHT_CLAMPED`                      | warning  | `OS/2.usWeightClass` is outside `[1, 1000]`; historical code retained, **no clamp or repair is performed** |
+| `OS2_WIDTH_CLAMPED`                       | warning  | `OS/2.usWidthClass` is outside `[1, 9]`; historical code retained, **no clamp or repair is performed** |
 | `OS2_FSTYPE_RESERVED_BITS_SET`            | warning  | `OS/2.fsType` has bits set outside the valid mask `0x030F` — OTS strips these                                                                                               |
 | `OS2_NEGATIVE_SIZE`                       | warning  | A subscript, superscript, or strikeout size in `OS/2` is negative — OTS clamps to 0                                                                                         |
 | `OS2_FIRST_LAST_CHAR_INVERTED`            | warning  | `OS/2.usFirstCharIndex > OS/2.usLastCharIndex`                                                                                                                              |
@@ -188,7 +257,7 @@ if (!report.valid) {
 | `GSUB_LOOKUP_TYPE_INVALID`                | error    | A `GSUB` lookup has a `lookupType` outside [1, 8]                                                                                                                           |
 | `GPOS_LOOKUP_TYPE_INVALID`                | error    | A `GPOS` lookup has a `lookupType` outside [1, 9]                                                                                                                           |
 | `LAYOUT_LOOKUP_FLAG_RESERVED`             | warning  | A `GSUB`/`GPOS` lookup has reserved bits set in `lookupFlag` (mask `0x00E0`)                                                                                                |
-| `LAYOUT_LOOKUP_FLAG_INVALID`              | error    | A `GSUB`/`GPOS` lookup has bits set above `0x00FF` in `lookupFlag`                                                                                                          |
+| `LAYOUT_LOOKUP_FLAG_INVALID`              | error    | A lookup flag value is outside uint16 (internal helper guard); legal high-byte mark-attachment classes are accepted |
 | `FVAR_AXIS_FLAGS_RESERVED`                | warning  | An `fvar` axis has reserved bits set in `flags` (only bit 0, `HIDDEN_AXIS`, is defined)                                                                                     |
 | `FVAR_AXIS_NAMEID_RESERVED`               | warning  | An `fvar` axis `axisNameID` is < 256 (axis names should use IDs ≥ 256)                                                                                                      |
 | `FVAR_AXIS_NAMEID_MISSING`                | warning  | An `fvar` axis `axisNameID` has no matching record in the `name` table                                                                                                      |
@@ -234,6 +303,18 @@ if (!report.valid) {
 | `CFF_STACK_OVERFLOW`                      | error    | A CFF/CFF2 charstring exceeded the Type 2 operand-stack limit (48 for CFF1, 513 for CFF2)                                                                                   |
 | `CFF_SUBR_INDEX_OUT_OF_RANGE`             | error    | A CFF/CFF2 `callsubr`/`callgsubr` referenced a (biased) subroutine index outside the subroutine INDEX                                                                       |
 | `CFF_SUBR_DEPTH_EXCEEDED`                 | error    | A CFF/CFF2 charstring exceeded the Type 2 subroutine recursion limit (10)                                                                                                   |
+| `CFF_FDARRAY_MISSING`                    | error    | CID CFF1 / CFF2 glyph context has no font dictionaries; bytecode checks are skipped |
+| `CFF_FDSELECT_MISSING`                   | error    | Required glyph-to-FD mapping is missing (only single-dictionary CFF2 may omit it) |
+| `CFF_FD_INDEX_OUT_OF_RANGE`              | error    | A glyph's FDSelect entry is missing, nonintegral, or references a nonexistent dictionary; no fallback is used |
+| `CFF_RETURN_OUTSIDE_SUBR`                | error    | CFF1 `return` occurs at glyph level, not inside a subroutine |
+| `CFF_SUBR_NO_RETURN`                     | error    | Execution reaches the end of a CFF1 subroutine without `return` or `endchar` |
+| `CFF_INVALID_OPERAND_COUNT`              | error    | Move, stem/mask, `endchar`, or `vsindex` has an invalid operand count for its CFF1/CFF2 context |
+| `CFF_VARIATION_CONTEXT_MISSING`          | error    | CFF2 `vsindex`/`blend` requires a missing VariationStore |
+| `CFF_VARIATION_CONTEXT_INVALID`          | error    | The selected CFF2 variation subtable or its region references are missing/invalid |
+| `CFF_VSINDEX_OUT_OF_RANGE`               | error    | CFF2 `vsindex` is not a valid ItemVariationData index |
+| `CFF_VSINDEX_ORDER_INVALID`              | error    | Charstring `vsindex` occurs more than once or after `blend`, including across calls |
+| `CFF_BLEND_INVALID_COUNT`               | error    | CFF2 `blend` count is not a positive integer |
+| `CFF_CONTEXT_UNSUPPORTED`               | warning  | A recognized context cannot be evaluated; the message identifies the skipped checks, not successful validation |
 | `GLYF_COMPOSITE_CYCLE`                    | error    | A `glyf` composite chain forms a cycle (a composite directly or indirectly references itself)                                                                               |
 | `GLYF_COMPOSITE_DEPTH_EXCEEDED`           | error    | A `glyf` composite chain nests deeper than the spec maximum of 16 levels                                                                                                    |
 | `GLYF_COMPOSITE_GLYPH_OUT_OF_RANGE`       | error    | A `glyf` composite component references a glyph ID ≥ `numGlyphs`                                                                                                            |
@@ -243,7 +324,7 @@ if (!report.valid) {
 | `CMAP_FORMAT14_VS_OUT_OF_RANGE`           | error    | A `cmap` format-14 record uses a variation selector outside Mongolian FVS, FE00–FE0F, or E0100–E01EF                                                                        |
 | `CMAP_FORMAT14_VS_OUT_OF_ORDER`           | error    | `cmap` format-14 variation-selector records are not strictly ascending                                                                                                      |
 | `CFF_EMPTY_CHARSTRING`                    | error    | A CFF glyph charstring is empty (must contain at least an `endchar` operator) — Firefox/OTS reports `Failed validating CharStrings INDEX`                                   |
-| `CFF_CHARSTRING_NO_ENDCHAR`               | warning  | A CFF glyph charstring does not terminate with `endchar` (0x0E) or `return` (0x0B)                                                                                          |
+| `CFF_CHARSTRING_NO_ENDCHAR`               | warning  | CFF1 glyph execution reaches its byte-string end without executing `endchar`, including in called subroutines |
 | `POST_VERSION_INVALID_FOR_CFF`            | error    | A CFF-flavored font (with `CFF` or `CFF2`) uses a `post` version other than 3.0 — Firefox rejects this with "Only version supported for fonts with CFF table is 0x00030000" |
 | `VHEA_VMTX_MISMATCH`                      | warning  | `vhea.numOfLongVerMetrics` does not equal the number of full metric entries in `vmtx`                                                                                       |
 | `GVAR_WITHOUT_FVAR`                       | error    | `gvar` is present without `fvar` — glyph variations require an axis definition                                                                                              |
@@ -257,19 +338,77 @@ if (!report.valid) {
 | `TT_INSTR_STRAY_ENDF`                     | error    | A TrueType `ENDF` appears outside any `FDEF`                                                                                                                                |
 | `TT_INSTR_UNCLOSED_FDEF`                  | error    | A TrueType `FDEF` was never closed by `ENDF` before end of stream                                                                                                           |
 
+### CFF/CFF2 execution coverage
+
+Charstring checks select each glyph's FDSelect and Private DICT local subroutines,
+including local calls made inside global subroutines. CFF1 uses the import
+pipeline's glyph-context helper after validating FD references; invalid mappings
+never fall back to the font-global Private DICT or FD 0. Only single-dictionary
+CFF2 permits omitted FDSelect.
+
+CFF1 `endchar` ends glyph execution even inside a subroutine; `return` is valid
+only in a subroutine. CFF2 glyphs and subroutines end implicitly, and empty CFF2
+programs are allowed. CFF1 `return`, `endchar`, and arithmetic/storage operators
+are not CFF2 operators. CFF1 optional widths and shared stem counts are tracked
+across calls; CFF2 does not accept width operands.
+
+CFF2 blend checks inherit `vsindex` from the selected Private DICT (default 0),
+allow one charstring override before blending, and use that VariationStore
+subtable's region count to check stack consumption while preserving earlier
+operands. These are structural checks, not variation interpolation. Blended
+coordinates are not guessed when used as subroutine indices or blend counts.
+
+`CFF_CONTEXT_UNSUPPORTED` explicitly marks incomplete checking for CFF1
+arithmetic/storage operations, non-Type-2 programs, `endchar` composite components,
+CFF2 Private DICT blend programs, or blended control/nested-blend operands.
+This bounded walker is **not** a complete Type 2 VM, outline renderer, or
+INDEX/DICT/charset/encoding validator. INDEX bounds failures are surfaced through
+the existing parser as `TABLE_PARSE_FAILED`; raw FDSelect range/sentinel
+validation and complete drawing/hint ordering or operand-count checks remain
+outside this coverage. Warnings must not be interpreted as certification.
+Diagnosis never appends terminators, replaces programs, or modifies source bytes.
+Per-glyph operation, stack, and subroutine-depth limits still apply.
+
 ### Collection (TTC/OTC) checks
 
 | Code                           | Severity | What it catches                                                   |
 | ------------------------------ | -------- | ----------------------------------------------------------------- |
 | `EMPTY_COLLECTION`             | error    | TTC/OTC declares zero contained fonts                             |
-| `COLLECTION_INFO`              | info     | Reports the collection version and font count                     |
-| `COLLECTION_HEADER_UNREADABLE` | error    | Could not read the collection header                              |
-| `NO_READABLE_ENTRIES`          | error    | None of the offsets in the collection header point to valid SFNTs |
-| `TTC_VERSION_INVALID`          | error    | TTC `majorVersion` is not `1` or `2` — Firefox/OTS rejects this   |
+| `COLLECTION_INFO`              | info     | Reports the declared face count and requested scope |
+| `COLLECTION_HEADER_UNREADABLE` | error    | Version-2 collection DSIG header fields are truncated |
+| `NO_READABLE_ENTRIES`          | error    | A face's declared table directory has no readable entries |
+| `TTC_VERSION_INVALID`          | error    | TTC version is not exactly `0x00010000` or `0x00020000` |
 | `TTC_TOO_MANY_FONTS`           | error    | TTC `numFonts` exceeds `0x10000` — Firefox/OTS rejects this       |
+| `TTC_OFFSETS_TRUNCATED`        | error    | The declared face-offset array does not fit in the file |
+| `TTC_FACE_OFFSET_UNREADABLE`   | error    | The requested face's offset entry is missing |
+| `TTC_FACE_OFFSET_INVALID`      | error    | Face header offset overlaps the collection header or cannot contain a 12-byte SFNT header within the file |
+| `FACE_INDEX_OUT_OF_RANGE`      | error    | Requested face is outside the declared face count |
+
+### Options and incomplete checks
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `INVALID_DIAGNOSTIC_OPTIONS` | error | Invalid options object, limit value, or face-index value |
+| `DIAGNOSTIC_LIMIT_EXCEEDED` | error | An input/count/table-byte/glyph limit prevented further work |
+| `CFF_OPERATION_LIMIT_EXCEEDED` | error | Per-glyph CFF diagnostic step budget exceeded |
+| `DIAGNOSTIC_CHECK_FAILED` | error | An unexpected face-check failure prevented remaining checks; findings and other faces are retained |
+| `WOFF2_COLLECTION_UNSUPPORTED` | error | WOFF2 collection reconstruction currently prevents trustworthy face checks; no faces are diagnosed |
+
+### Specification basis and regression scope
+
+- [OpenType font file and collection organization](https://learn.microsoft.com/en-us/typography/opentype/spec/otff): file-relative TTC table offsets, shared tables, and checksum rules.
+- [OpenType `head`](https://learn.microsoft.com/en-us/typography/opentype/spec/head): zero the adjustment for the table checksum; standalone adjustment target.
+- [OpenType common layout formats](https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2#lookup-table): `0xFF00` is the legal mark-attachment-class field, not invalid flags. Reserved low bits `0x00E0` retain warning severity.
+- [OpenType `cmap`](https://learn.microsoft.com/en-us/typography/opentype/spec/cmap): disjoint format-4 segments and format-14 variation selectors.
+- [Unicode 16.0 PropList.txt](https://www.unicode.org/Public/16.0.0/ucd/PropList.txt): the pinned `Variation_Selector` property, including U+180F but excluding U+180E.
+
+Corrections and regression constructions are original FFJS implementations, not
+copied upstream fixer code. Focused tests construct shared-table TTC/OTC
+containers from existing repository samples, mutate specific bytes, and check
+selector/range/flag boundaries, limits, per-face reports, and source immutability.
 
 ## Best practices
 
-- Run `diagnoseFont()` on any font that fails to load in a browser. The error codes correspond directly to the messages browsers/sanitizers (Firefox/OTS) emit.
-- For fonts you've authored or modified through Font Flux, an exported binary should produce zero errors when re-diagnosed — Font Flux automatically fixes the most common spec violations on export (directory ordering, cmap/name sort order, charstring termination).
+- Run `diagnoseFont()` on fonts that fail to load. Codes are FFJS identifiers, not a guarantee of matching every browser/sanitizer result.
+- Re-diagnose the actual exported binary. Export normalization is not proof that all problems were repaired; check warnings and any limit/parse failures too.
 - Use `font.validate()` instead when working with hand-authored JSON, before calling `font.export()`.

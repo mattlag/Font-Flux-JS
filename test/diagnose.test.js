@@ -1448,7 +1448,7 @@ describe('diagnoseFont — Tier 7 layout lookup validation', () => {
 		);
 	});
 
-	it('flags LAYOUT_LOOKUP_FLAG_INVALID for bits above 0x00FF', () => {
+	it('accepts legal mark-attachment-class bits above 0x00FF', () => {
 		const issues = [];
 		diagInternal.validateLayoutLookups(
 			{ lookupList: { lookups: [{ lookupType: 1, lookupFlag: 0x0100 }] } },
@@ -1456,7 +1456,7 @@ describe('diagnoseFont — Tier 7 layout lookup validation', () => {
 			issues,
 		);
 		expect(issues.some((i) => i.code === 'LAYOUT_LOOKUP_FLAG_INVALID')).toBe(
-			true,
+			false,
 		);
 	});
 

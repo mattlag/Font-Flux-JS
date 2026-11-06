@@ -1,9 +1,9 @@
 import { chromium, firefox } from '@playwright/test';
 import assert from 'node:assert/strict';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { createServer } from 'vite';
 import { FontFlux } from '../src/font_flux.js';
+import { verifyDemoQuality } from './verify-demo-quality.mjs';
 
 function makeFont(composite = false, advanceWidth = 600) {
 	const font = FontFlux.create({ family: `Demo Test ${advanceWidth}` });
@@ -150,6 +150,7 @@ async function removeLatin(page) {
 
 async function downloadFont(page) {
 	await page.getByRole('button', { name: 'Export Font', exact: true }).click();
+	await page.locator('.btn-validate').click();
 	const pending = page.waitForEvent('download');
 	await page.locator('.btn-download').click();
 	const download = await pending;
@@ -161,7 +162,7 @@ async function downloadFont(page) {
 
 const server = await createServer({
 	configFile: resolve('demo/vite.config.js'),
-	server: { host: '127.0.0.1', port: 0, open: false },
+	server: { host: '127.0.0.1', port: 0, open: false, watch: null, hmr: false },
 });
 
 try {
@@ -174,6 +175,13 @@ try {
 	]) {
 		const browser = await browserType.launch();
 		try {
+			if (process.argv.includes('--quality')) {
+				const page = await browser.newPage();
+				page.on('dialog', (dialog) => dialog.accept());
+				await verifyDemoQuality(page, url, makeFont, engine);
+				await page.close();
+				continue;
+			}
 			for (const viewport of [
 				{ width: 1440, height: 1000 },
 				{ width: 390, height: 844 },
@@ -225,10 +233,6 @@ try {
 					await page
 						.getByRole('button', { name: 'Preview', exact: true })
 						.click();
-					const screenshot = join(
-						tmpdir(),
-						`font-flux-demo-${engine}-${viewport.width}-${composite ? 'rejected' : 'subset'}.png`,
-					);
 					assert.equal(await page.locator('.l1-tab.active').count(), 1);
 					assert.equal(
 						await page.locator('.l1-tab.active').textContent(),
@@ -246,14 +250,14 @@ try {
 							'i',
 						),
 					);
-					await page.screenshot({
-						path: screenshot,
+					const screenshot = await page.screenshot({
 						fullPage: true,
 						animations: 'disabled',
 					});
+					assert(screenshot.byteLength > 0);
 					assert.deepEqual(errors, []);
 					console.log(
-						`${engine} ${viewport.width}px ${composite ? 'rejected' : 'successful'} subset: passed; ${screenshot}`,
+						`${engine} ${viewport.width}px ${composite ? 'rejected' : 'successful'} subset: passed`,
 					);
 					await page.close();
 				}
@@ -301,6 +305,7 @@ try {
 			assert(Math.abs((await measure(page)).width - removedWidth) < 0.1);
 			assert.equal((await downloadFont(page)).glyphCount, 2);
 			console.log(`${engine} collection preview switching: passed`);
+			await verifyDemoQuality(page, url, makeFont, engine);
 			await page.close();
 		} finally {
 			await browser.close();

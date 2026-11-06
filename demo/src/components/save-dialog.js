@@ -1,7 +1,6 @@
 /**
  * Save / Export dialog — modal overlay for downloading the font.
- * Supports format selection (OTF, TTF, WOFF, WOFF2), optional validation,
- * and triggers a browser download.
+ * Preflights the selected target, then downloads those exact inspected bytes.
  */
 
 import { FontFlux } from 'font-flux-js';
@@ -10,16 +9,17 @@ import { FontFlux } from 'font-flux-js';
  * @param {HTMLElement} root - Append overlay to this element
  * @param {object} fontData - The font data object
  */
-export function createSaveDialog(root, fontData) {
-	// Wrap the live simplified data object in a fresh FontFlux instance so
-	// validation and export go through the public class API (the same one
-	// an external npm consumer would use).
-	const font = new FontFlux(fontData);
+export function createSaveDialog(root, fontData, context) {
+	let operation = 0;
+	let verified = null;
+	let closed = false;
+	const previousFocus = document.activeElement;
+	const capture = () => context?.capture() ?? new FontFlux(fontData).toJSON(0);
+	const isCurrent = (token) => context ? context.isCurrent(token) : capture() === token;
 
 	// Determine default format from source
 	const hasCFF = !!(fontData.tables?.['CFF '] || fontData.tables?.CFF2);
 	const isStandaloneCFF = fontData._standalone === 'cff';
-	const isType1 = fontData._standalone === 'type1';
 	const woffVersion = fontData._woff?.version;
 
 	const formats = [
@@ -84,6 +84,9 @@ export function createSaveDialog(root, fontData) {
 
 	const dialog = document.createElement('div');
 	dialog.className = 'save-dialog';
+	dialog.setAttribute('role', 'dialog');
+	dialog.setAttribute('aria-modal', 'true');
+	dialog.setAttribute('aria-label', 'Export Font');
 
 	// Title
 	const title = document.createElement('h2');
@@ -99,7 +102,9 @@ export function createSaveDialog(root, fontData) {
 	const fileInput = document.createElement('input');
 	fileInput.className = 'field-input';
 	fileInput.type = 'text';
+	fileInput.setAttribute('aria-label', 'Filename');
 	fileInput.value = baseName + formats[selectedIdx].ext;
+	fileInput.addEventListener('input', invalidate);
 	fileGroup.append(fileLabel, fileInput);
 	dialog.appendChild(fileGroup);
 
@@ -123,6 +128,7 @@ export function createSaveDialog(root, fontData) {
 		radio.value = fmt.id;
 		radio.checked = i === selectedIdx;
 		radio.addEventListener('change', () => {
+			invalidate();
 			selectedIdx = i;
 			for (const el of optionEls) el.classList.remove('selected');
 			opt.classList.add('selected');
@@ -151,6 +157,8 @@ export function createSaveDialog(root, fontData) {
 	// Validation results area (hidden initially)
 	const valResults = document.createElement('div');
 	valResults.className = 'validation-results';
+	valResults.setAttribute('role', 'status');
+	valResults.setAttribute('aria-live', 'polite');
 	valResults.style.display = 'none';
 	dialog.appendChild(valResults);
 
@@ -165,14 +173,15 @@ export function createSaveDialog(root, fontData) {
 
 	const validateBtn = document.createElement('button');
 	validateBtn.className = 'btn-validate';
-	validateBtn.textContent = 'Validate';
+	validateBtn.textContent = 'Preflight';
 	validateBtn.addEventListener('click', () => {
-		runValidation();
+		runPreflight();
 	});
 
 	const downloadBtn = document.createElement('button');
 	downloadBtn.className = 'btn-download';
 	downloadBtn.textContent = 'Download';
+	downloadBtn.disabled = true;
 	downloadBtn.addEventListener('click', () => {
 		doExport();
 	});
@@ -190,48 +199,114 @@ export function createSaveDialog(root, fontData) {
 	// Close on Escape
 	function onKeyDown(e) {
 		if (e.key === 'Escape') close();
+		if (e.key === 'Tab') {
+			const focusable = [...dialog.querySelectorAll('button:not(:disabled), input:not(:disabled)')];
+			const first = focusable[0];
+			const last = focusable.at(-1);
+			if (e.shiftKey && document.activeElement === first) {
+				e.preventDefault();
+				last.focus();
+			} else if (!e.shiftKey && document.activeElement === last) {
+				e.preventDefault();
+				first.focus();
+			}
+		}
 	}
 	document.addEventListener('keydown', onKeyDown);
+	window.addEventListener('fontflux:project-change', invalidate);
+	const observer = new MutationObserver(() => {
+		if (!overlay.isConnected) close();
+	});
+	observer.observe(root, { childList: true });
 
 	function close() {
+		if (closed) return;
+		closed = true;
+		operation++;
+		verified = null;
 		document.removeEventListener('keydown', onKeyDown);
+		window.removeEventListener('fontflux:project-change', invalidate);
+		observer.disconnect();
 		overlay.remove();
+		if (previousFocus?.isConnected) previousFocus.focus();
 	}
 
-	function runValidation() {
+	function invalidate() {
+		operation++;
+		verified = null;
+		downloadBtn.disabled = true;
+		validateBtn.disabled = false;
 		valResults.style.display = '';
-		try {
-			const report = font.validate();
-			if (report.valid && report.warnings.length === 0) {
-				valResults.className = 'validation-results valid';
-				valResults.textContent = 'Validation passed — no errors or warnings.';
-			} else {
-				valResults.className = report.valid
-					? 'validation-results valid'
-					: 'validation-results invalid';
+		valResults.className = 'validation-results';
+		valResults.textContent = 'Target, filename, or project changed. Run preflight again before downloading.';
+	}
 
-				let html = report.valid
-					? '<strong>Valid</strong> with warnings:'
-					: `<strong>Invalid</strong> — ${report.summary.errorCount} error(s):`;
-				html += '<ul>';
-				for (const issue of report.issues) {
-					const cls = issue.severity === 'error' ? 'val-error' : 'val-warning';
-					html += `<li class="${cls}">[${issue.severity}] ${escapeHtml(issue.message)}</li>`;
-				}
-				html += '</ul>';
-				valResults.innerHTML = html;
+	async function runPreflight() {
+		const id = ++operation;
+		const token = capture();
+		const fmt = formats[selectedIdx];
+		verified = null;
+		downloadBtn.disabled = true;
+		validateBtn.disabled = true;
+		valResults.style.display = '';
+		valResults.className = 'validation-results';
+		valResults.textContent = `Preflighting ${fmt.label} — export and verification pending…`;
+		try {
+			const font = context?.projectFont() ?? new FontFlux(structuredClone(fontData));
+			const result = await font.preflight({ format: fmt.format });
+			if (closed || id !== operation) return;
+			if (!isCurrent(token)) {
+				invalidate();
+				return;
+			}
+			const ok = result.state === 'verified' && result.buffer;
+			valResults.className = `validation-results ${ok ? 'valid' : 'invalid'}`;
+			valResults.replaceChildren();
+			const summary = document.createElement('strong');
+			summary.textContent = `${fmt.label}: ${result.state}. ${ok ? 'Exact output verified for covered structural checks only; not full font certification.' : (result.error || 'No verified output available.')}`;
+			valResults.appendChild(summary);
+			const list = document.createElement('ul');
+			const add = (text, className = '') => {
+				const item = document.createElement('li');
+				item.className = className;
+				item.textContent = text;
+				list.appendChild(item);
+			};
+			add(`Target: ${fmt.format}; face ${Number(fontData._collectionIndex ?? 0) + 1}; structural profile.`);
+			for (const effect of result.effects) add(`Export effect: ${effect}`);
+			const findings = [...(result.validation?.issues ?? []), ...(result.output?.diagnostics?.issues ?? [])];
+			const seen = new Set();
+			for (const issue of findings) {
+				const text = `[${issue.severity}] ${issue.code}: ${issue.message}`;
+				if (seen.has(text)) continue;
+				seen.add(text);
+				add(text, issue.severity === 'error' ? 'val-error' : issue.severity === 'warning' ? 'val-warning' : '');
+			}
+			add('Partial coverage — review skipped and unsupported checks:');
+			for (const coverage of result.output?.coverage ?? []) add(`${coverage.domain}: ${coverage.status} — ${coverage.reason}`);
+			for (const limitation of result.output?.limitations ?? []) add(limitation);
+			valResults.appendChild(list);
+			if (ok) {
+				verified = { buffer: result.buffer, token, format: fmt.id, filename: fileInput.value };
+				downloadBtn.disabled = false;
 			}
 		} catch (err) {
+			if (closed || id !== operation) return;
 			valResults.className = 'validation-results invalid';
-			valResults.textContent = `Validation error: ${err.message}`;
+			valResults.textContent = `Preflight failed: ${err.message}. Project unchanged.`;
+		} finally {
+			if (!closed && id === operation) validateBtn.disabled = false;
 		}
 	}
 
 	function doExport() {
 		const fmt = formats[selectedIdx];
+		if (!verified || !isCurrent(verified.token) || verified.format !== fmt.id || verified.filename !== fileInput.value) {
+			invalidate();
+			return;
+		}
 		try {
-			const buffer = font.export({ format: fmt.format });
-			const blob = new Blob([buffer], {
+			const blob = new Blob([verified.buffer], {
 				type: 'application/octet-stream',
 			});
 			const url = URL.createObjectURL(blob);
@@ -241,7 +316,7 @@ export function createSaveDialog(root, fontData) {
 			document.body.appendChild(a);
 			a.click();
 			a.remove();
-			URL.revokeObjectURL(url);
+			setTimeout(() => URL.revokeObjectURL(url), 1000);
 			close();
 		} catch (err) {
 			valResults.style.display = '';
@@ -253,8 +328,4 @@ export function createSaveDialog(root, fontData) {
 
 function sanitizeFilename(name) {
 	return name.replace(/[<>:"/\\|?*]/g, '_').trim() || 'font';
-}
-
-function escapeHtml(str) {
-	return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

@@ -17,6 +17,7 @@ Learn the basics of Font Flux JS and how to create fonts from scratch.
 - [Authoring JSON From Scratch](./authoring-json.md) — Hand-write a complete font JSON document, no class API required.
 - [Validation](./validation.md) — Check for structural issues in JSON before exporting.
 - [Diagnostics](./diagnostics.md) — Inspect a binary font file for spec violations and corruption.
+- [Font Quality](./font-quality.md) — Plan explicit repairs, verify candidates, and preflight actual export bytes.
 
 ## Workflow Support
 
@@ -47,6 +48,11 @@ Mutators and live-array edits do not perform a complete dependency check immedia
 `npm test` runs codec and public-workflow regressions. `npm run test:consumers` packs and installs the package outside the repository, type-checks its declarations, validates its schema, and compares first-export glyph sequences, positions, and outline paths using HarfBuzz. It covers no-op, metadata, validation, JSON, minimum/default/maximum variation coordinates, authored glyph edit/add/remove, clears, collection faces, and standalone CFF. Chromium and Firefox check actual SFNT/WOFF/WOFF2 loading, nonblank rendering, and advance widths. Install those browsers with `npx playwright install chromium firefox` first. Browser sanitization is used here; this is not a standalone OTS executable test or pixel-identical rasterization test.
 
 `npm run test:large` tests the five-face Noto Serif CJK collection serially, using a 3 GiB V8 heap limit and a 180-second timeout per child. Each 65,535-glyph face passed metadata-export shaping and sampled outline comparisons, including every CID font dictionary. The measured Windows run took about 18-20 seconds per face and peaked at 3.6-3.7 GiB RSS. Heap limits do not cap native process memory. Fixtures retain their existing provenance in the sample-font directory. This is sampled semantic coverage, not proof for every font or variation coordinate.
+
+If dependency-fetch policy prevents the installed-package gate, `npm run test:consumers -- --local`
+runs the same declarations, built-library, shaping, and browser assertions against
+the local build and already installed dependencies. It explicitly does **not**
+verify isolated package installation and is not a substitute for that release gate.
 
 `npm run test:demo` starts a temporary demo server and checks transactional
 subsetting, rejected dependencies, downloaded fonts, updated previews, and
