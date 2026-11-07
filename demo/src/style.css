@@ -2135,13 +2135,15 @@ pre.data-string-long.data-expanded {
 	color: var(--text);
 }
 
-.btn-validate {
+.btn-validate,
+.btn-report {
 	background: none;
 	border: 1px solid var(--border);
 	color: var(--text-secondary);
 }
 
-.btn-validate:hover {
+.btn-validate:hover,
+.btn-report:hover {
 	border-color: var(--accent);
 	color: var(--accent);
 }

@@ -55,6 +55,1423 @@ Registered repairs support guarded SFNT, WOFF1/WOFF2 and explicitly selected col
 Availability is per action and input: signatures, opaque dependencies, incomplete structures and unknown context can block an offer.
 Legacy source replacement is not an in-place repair. Optional policy/loss actions without finding codes remain listed in the public repair registry, not falsely attached to unrelated findings.
 
+## Registered repair contracts
+
+Generated from the same runtime descriptors used by the public API and Demo.
+Every action below retains its decisions, apply/decline consequences, limitations
+and regression links, including optional actions without diagnostic trigger codes.
+These are bounded contracts, not evidence that every input is repairable.
+
+### `sfnt.checksums` {#repair-sfnt-checksums}
+
+**Recalculate checksums** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Recalculate table checksums and the standalone font checksum adjustment.
+
+
+
+**Prerequisites / limitations:** An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. Existing signatures require explicitly authorized removal. Original input is never overwritten.
+
+**Risk rationale:** Only established structural fields change under the stated preservation prerequisites.
+
+**If applied:** Only directory checksum fields and head.checksumAdjustment change.
+
+**If unfixed:** Integrity checks may fail in font consumers.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** All unselected table payloads remain byte-preserved. Glyph order, outlines, instructions and all unselected names/mappings are unchanged.
+
+**Implementation:** [`<module>:24`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js#L24).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `sfnt.search-fields` {#repair-sfnt-search-fields}
+
+**Correct directory search fields** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Derive searchRange, entrySelector, and rangeShift from numTables.
+
+
+
+**Prerequisites / limitations:** An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. Existing signatures require explicitly authorized removal. Original input is never overwritten.
+
+**Risk rationale:** Only established structural fields change under the stated preservation prerequisites.
+
+**If applied:** Directory search fields and companion checksums change; table payloads stay intact.
+
+**If unfixed:** Consumers may reject or misread the directory.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** All unselected table payloads remain byte-preserved. Glyph order, outlines, instructions and all unselected names/mappings are unchanged.
+
+**Implementation:** [`<module>:36`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js#L36).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `sfnt.directory-order` {#repair-sfnt-directory-order}
+
+**Sort table directory records** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Sort directory records by tag without moving their table data.
+
+
+
+**Prerequisites / limitations:** An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. Existing signatures require explicitly authorized removal. Original input is never overwritten.
+
+**Risk rationale:** Only established structural fields change under the stated preservation prerequisites.
+
+**If applied:** Record order and companion checksums change; table offsets and payloads stay intact.
+
+**If unfixed:** Consumers requiring sorted records may reject the font.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** All unselected table payloads remain byte-preserved. Glyph order, outlines, instructions and all unselected names/mappings are unchanged.
+
+**Implementation:** [`<module>:48`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js#L48).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `sfnt.alignment` {#repair-sfnt-alignment}
+
+**Align table payloads** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Rebuild table placement on four-byte boundaries while retaining every table payload.
+
+
+
+**Prerequisites / limitations:** An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. Existing signatures require explicitly authorized removal. Original input is never overwritten.
+
+**Risk rationale:** Only established structural fields change under the stated preservation prerequisites.
+
+**If applied:** Offsets, directory fields, and checksums change. Unknown dependencies or nonzero unreferenced data block this operation.
+
+**If unfixed:** Consumers may reject misaligned table storage.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** All unselected table payloads remain byte-preserved. Glyph order, outlines, instructions and all unselected names/mappings are unchanged.
+
+**Implementation:** [`<module>:60`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js#L60).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `name.order` {#repair-name-order}
+
+**Sort name records without re-encoding strings** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Sort complete name records by their platform, encoding, language, and name IDs.
+
+
+
+**Prerequisites / limitations:** An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. Existing signatures require explicitly authorized removal. Original input is never overwritten.
+
+**Risk rationale:** Only established structural fields change under the stated preservation prerequisites.
+
+**If applied:** Only record order and companion checksums change. String bytes and their record associations stay intact.
+
+**If unfixed:** Consumers requiring sorted naming records may reject or misread the table.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** All unselected table payloads remain byte-preserved. Glyph order, outlines, instructions and all unselected names/mappings are unchanged.
+
+**Implementation:** [`<module>:72`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js#L72).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `cmap.order` {#repair-cmap-order}
+
+**Sort cmap encoding records** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Sort uniquely identified platform/encoding records without changing subtable bytes or offsets.
+
+
+
+**Prerequisites / limitations:** An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. Existing signatures require explicitly authorized removal. Original input is never overwritten.
+
+**Risk rationale:** Only established structural fields change under the stated preservation prerequisites.
+
+**If applied:** Only encoding-record order and companion checksums change. Ambiguous duplicate encodings are blocked.
+
+**If unfixed:** Consumers may select mappings inconsistently or reject the encoding-record order.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** All unselected table payloads remain byte-preserved. Glyph order, outlines, instructions and all unselected names/mappings are unchanged.
+
+**Implementation:** [`<module>:85`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js#L85).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `head.magic` {#repair-head-magic}
+
+**Restore the head magic constant** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Set the normative head.magicNumber constant to 0x5F0F3CF5.
+
+
+
+**Prerequisites / limitations:** An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. Existing signatures require explicitly authorized removal. Original input is never overwritten.
+
+**Risk rationale:** Only established structural fields change under the stated preservation prerequisites.
+
+**If applied:** The constant and companion checksums change; outlines and metrics do not.
+
+**If unfixed:** Consumers may reject the head table.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** All unselected table payloads remain byte-preserved. Glyph order, outlines, instructions and all unselected names/mappings are unchanged.
+
+**Implementation:** [`<module>:98`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js#L98).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `head.glyph-data-format` {#repair-head-glyph-data-format}
+
+**Correct the glyph data format constant** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Declare the existing supported glyph representation as glyphDataFormat zero.
+
+
+
+**Prerequisites / limitations:** An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. Existing signatures require explicitly authorized removal. Original input is never overwritten.
+
+**Risk rationale:** An authoritative value is required; font identity or consumer behavior can change.
+
+**If applied:** The declaration changes, not the glyph data. Confirm the font uses the supported representation.
+
+**If unfixed:** The unsupported declaration can cause rejection; recover source if its meaning is unknown.
+
+**Decisions:**
+- `value`: Confirmed glyph data format (0); integer; 0..0.
+
+**Verification invariants:** All unselected table payloads remain byte-preserved. Glyph order, outlines, instructions and all unselected names/mappings are unchanged.
+
+**Implementation:** [`<module>:109`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js#L109).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `cmap.version` {#repair-cmap-version}
+
+**Correct the cmap version declaration** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Declare an otherwise readable cmap structure as the supported version zero.
+
+
+
+**Prerequisites / limitations:** An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. Existing signatures require explicitly authorized removal. Original input is never overwritten.
+
+**Risk rationale:** An authoritative value is required; font identity or consumer behavior can change.
+
+**If applied:** The version declaration changes; every mapping byte is retained.
+
+**If unfixed:** The unsupported version can cause rejection; unknown structures require source recovery.
+
+**Decisions:**
+- `value`: Confirmed cmap version (0); integer; 0..0.
+
+**Verification invariants:** All unselected table payloads remain byte-preserved. Glyph order, outlines, instructions and all unselected names/mappings are unchanged.
+
+**Implementation:** [`<module>:130`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js#L130).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `name.family` {#repair-name-family}
+
+**Supply a missing family name** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Append a Windows Unicode family-name record in the explicitly chosen language.
+
+
+
+**Prerequisites / limitations:** An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. Existing signatures require explicitly authorized removal. Original input is never overwritten.
+
+**Risk rationale:** An authoritative value is required; font identity or consumer behavior can change.
+
+**If applied:** Font identity may change. Existing localized name bytes are retained; related naming policy is not inferred.
+
+**If unfixed:** Applications may be unable to identify or group the font correctly.
+
+**Decisions:**
+- `value`: Intended family name; string; maximum 255 UTF-16 units.
+- `languageID`: Windows language ID (for example 1033 for en-US); integer; 0..32767.
+
+**Verification invariants:** All unselected table payloads remain byte-preserved. Glyph order, outlines, instructions and all unselected names/mappings are unchanged.
+
+**Implementation:** [`<module>:151`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js#L151).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `name.style` {#repair-name-style}
+
+**Supply a missing style name** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Append a Windows Unicode style-name record in the explicitly chosen language.
+
+
+
+**Prerequisites / limitations:** An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. Existing signatures require explicitly authorized removal. Original input is never overwritten.
+
+**Risk rationale:** An authoritative value is required; font identity or consumer behavior can change.
+
+**If applied:** Style identification may change. No style is guessed, and existing localized name bytes are retained.
+
+**If unfixed:** Applications may group or select the style incorrectly.
+
+**Decisions:**
+- `value`: Intended style name; string; maximum 255 UTF-16 units.
+- `languageID`: Windows language ID (for example 1033 for en-US); integer; 0..32767.
+
+**Verification invariants:** All unselected table payloads remain byte-preserved. Glyph order, outlines, instructions and all unselected names/mappings are unchanged.
+
+**Implementation:** [`<module>:178`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js#L178).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `os2.weight` {#repair-os2-weight}
+
+**Choose the intended weight class** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Replace an out-of-range weight class with the user-supplied value, without clamping or guessing.
+
+
+
+**Prerequisites / limitations:** An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. Existing signatures require explicitly authorized removal. Original input is never overwritten.
+
+**Risk rationale:** An authoritative value is required; font identity or consumer behavior can change.
+
+**If applied:** Application weight classification may change. Other style fields and variation axes are not changed.
+
+**If unfixed:** Applications may reject or inconsistently classify the weight.
+
+**Decisions:**
+- `value`: Intended weight class; integer; 1..1000.
+
+**Verification invariants:** All unselected table payloads remain byte-preserved. Glyph order, outlines, instructions and all unselected names/mappings are unchanged.
+
+**Implementation:** [`<module>:204`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js#L204).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `os2.width` {#repair-os2-width}
+
+**Choose the intended width class** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Replace an out-of-range width class with the user-supplied value.
+
+
+
+**Prerequisites / limitations:** An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. Existing signatures require explicitly authorized removal. Original input is never overwritten.
+
+**Risk rationale:** An authoritative value is required; font identity or consumer behavior can change.
+
+**If applied:** Application width classification may change. Glyph advances and outlines do not.
+
+**If unfixed:** Applications may reject or inconsistently classify the width.
+
+**Decisions:**
+- `value`: Intended width class; integer; 1..9.
+
+**Verification invariants:** All unselected table payloads remain byte-preserved. Glyph order, outlines, instructions and all unselected names/mappings are unchanged.
+
+**Implementation:** [`<module>:224`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js#L224).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `os2.typo-linegap` {#repair-os2-typo-linegap}
+
+**Choose a typographic line gap** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Replace the negative OS/2 typographic line gap with an explicitly chosen value.
+
+
+
+**Prerequisites / limitations:** An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. Existing signatures require explicitly authorized removal. Original input is never overwritten.
+
+**Risk rationale:** An authoritative value is required; font identity or consumer behavior can change.
+
+**If applied:** Line spacing and text layout may change. hhea metrics remain unchanged.
+
+**If unfixed:** Negative line gaps can produce inconsistent line layout.
+
+**Decisions:**
+- `value`: Intended typographic line gap; integer; 0..32767.
+
+**Verification invariants:** All unselected table payloads remain byte-preserved. Glyph order, outlines, instructions and all unselected names/mappings are unchanged.
+
+**Implementation:** [`<module>:244`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js#L244).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `dsig.remove` {#repair-dsig-remove}
+
+**Remove the digital signature** — potentially-lossy; revision 1; formats: sfnt, woff, woff2, collection.
+
+Remove DSIG so an edited output does not retain an invalid signature. This is not re-signing.
+
+
+
+**Prerequisites / limitations:** An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. Existing signatures require explicitly authorized removal. Original input is never overwritten.
+
+**Risk rationale:** Authentication evidence is removed and cannot be restored without external re-signing.
+
+**If applied:** The output loses its signature and authentication evidence. External re-signing is a separate operation.
+
+**If unfixed:** Retain the signed original; other repairs remain blocked to avoid invalidating its signature.
+
+**Decisions:**
+- Explicit `consent: true` required for this plan; not an inferred permission.
+
+**Verification invariants:** All unselected table payloads remain byte-preserved. Glyph order, outlines, instructions and all unselected names/mappings are unchanged.
+
+**Implementation:** [`<module>:264`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js#L264).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `name.record` {#repair-name-record}
+
+**Set an authoritative localized name** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Replace or add one Windows Unicode name record in an explicitly chosen language; retain all other encodings and locales.
+
+**Affected tables:** name.
+
+**Prerequisites / limitations:** Complete unambiguous parsed dependencies; unchanged unknown tables; explicit signature policy. Unsupported variation or point dependencies block affected operations.
+
+**Risk rationale:** The authoritative value and its application consequences must be chosen by the caller.
+
+**If applied:** The chosen identity or rights text changes. Installation, style grouping or license display can change; no legal permission is inferred.
+
+**If unfixed:** The existing localized value and its naming or rights issues remain.
+
+**Decisions:**
+- `nameID`: Name ID; integer; 0..65535.
+- `languageID`: Windows language ID; integer; 0..32767.
+- `value`: Authoritative name or rights text; string; maximum 4096 UTF-16 units.
+- `authority`: I have authority to choose these metadata values; boolean; explicit true/false; explicit authority confirmation required.
+
+**Verification invariants:** All unselected tables and fields remain byte-preserved. Glyph count, order, outlines, instructions and all unselected mappings remain unchanged.
+
+**Implementation:** [`<module>:17`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L17).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `name.remove-record` {#repair-name-remove-record}
+
+**Remove one explicitly chosen name record** — potentially-lossy; revision 1; formats: sfnt, woff, woff2, collection.
+
+Remove a single unambiguous platform/encoding/language/name record. This is not a blanket cleanup of legacy names.
+
+**Affected tables:** name.
+
+**Prerequisites / limitations:** Complete unambiguous parsed dependencies; unchanged unknown tables; explicit signature policy. Unsupported variation or point dependencies block affected operations.
+
+**Risk rationale:** Explicitly selected compatibility or naming information is removed; consent is mandatory.
+
+**If applied:** The selected localization or compatibility name is no longer available to applications; every other record and string is retained.
+
+**If unfixed:** The selected record remains available, including any policy warning it causes.
+
+**Decisions:**
+- `platformID`: Unicode platform (0 or 3); integer; 0..3.
+- `encodingID`: Existing encoding ID; integer; 0..10.
+- `nameID`: Name ID; integer; 0..65535.
+- `languageID`: Windows language ID; integer; 0..32767.
+- Explicit `consent: true` required for this plan; not an inferred permission.
+
+**Verification invariants:** All unselected tables and fields remain byte-preserved. Glyph count, order, outlines, instructions and all unselected mappings remain unchanged.
+
+**Implementation:** [`<module>:26`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L26).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `metadata.style` {#repair-metadata-style}
+
+**Coordinate chosen style-linking metadata** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Set explicit weight, width, bold, italic and regular choices in OS/2 and matching head style bits.
+
+**Affected tables:** OS/2, head.
+
+**Prerequisites / limitations:** Complete unambiguous parsed dependencies; unchanged unknown tables; explicit signature policy. Unsupported variation or point dependencies block affected operations.
+
+**Risk rationale:** The authoritative value and its application consequences must be chosen by the caller.
+
+**If applied:** Style selection and installation grouping may change. Names, outlines and unrelated flag bits remain unchanged.
+
+**If unfixed:** Existing style-linking declarations, including disagreements, remain.
+
+**Decisions:**
+- `weight`: Intended weight; integer; 1..1000.
+- `width`: Intended width class; integer; 1..9.
+- `bold`: Bold style-linking bit; boolean; explicit true/false.
+- `italic`: Italic style-linking bit; boolean; explicit true/false.
+- `regular`: Regular style-linking bit; boolean; explicit true/false.
+- `authority`: I have authority to choose these metadata values; boolean; explicit true/false; explicit authority confirmation required.
+
+**Verification invariants:** All unselected tables and fields remain byte-preserved. Glyph count, order, outlines, instructions and all unselected mappings remain unchanged.
+
+**Implementation:** [`<module>:33`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L33).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `metadata.italic` {#repair-metadata-italic}
+
+**Set italic angle and caret direction** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Set an authoritative italic angle and caret slope without changing outlines or guessing slant from geometry.
+
+**Affected tables:** post, hhea.
+
+**Prerequisites / limitations:** Complete unambiguous parsed dependencies; unchanged unknown tables; explicit signature policy. Unsupported variation or point dependencies block affected operations.
+
+**Risk rationale:** The authoritative value and its application consequences must be chosen by the caller.
+
+**If applied:** Caret appearance and italic metadata change. Existing style-linking bits are not silently changed.
+
+**If unfixed:** Existing angle and caret behavior remain.
+
+**Decisions:**
+- `angle`: Italic angle in degrees; number; -90..90.
+- `rise`: Caret slope rise; integer; -32768..32767.
+- `run`: Caret slope run; integer; -32768..32767.
+- `authority`: I have authority to choose these metadata values; boolean; explicit true/false; explicit authority confirmation required.
+
+**Verification invariants:** All unselected tables and fields remain byte-preserved. Glyph count, order, outlines, instructions and all unselected mappings remain unchanged.
+
+**Implementation:** [`<module>:42`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L42).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `metadata.fixed-pitch` {#repair-metadata-fixed-pitch}
+
+**Set the fixed-pitch declaration** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Set post.isFixedPitch; claiming fixed pitch additionally requires equal nonzero advances in a static font.
+
+**Affected tables:** post.
+
+**Prerequisites / limitations:** Complete unambiguous parsed dependencies; unchanged unknown tables; explicit signature policy. Unsupported variation or point dependencies block affected operations.
+
+**Risk rationale:** The authoritative value and its application consequences must be chosen by the caller.
+
+**If applied:** Applications may change their spacing classification; advance widths and artwork do not change.
+
+**If unfixed:** The existing spacing classification remains.
+
+**Decisions:**
+- `value`: Declare fixed pitch; boolean; explicit true/false.
+- `authority`: I have authority to choose these metadata values; boolean; explicit true/false; explicit authority confirmation required.
+
+**Verification invariants:** All unselected tables and fields remain byte-preserved. Glyph count, order, outlines, instructions and all unselected mappings remain unchanged.
+
+**Implementation:** [`<module>:51`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L51).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `rights.embedding` {#repair-rights-embedding}
+
+**Set authorized embedding permissions** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Set explicitly authorized OS/2 embedding flags. FFJS cannot establish ownership or grant a license.
+
+**Affected tables:** OS/2.
+
+**Prerequisites / limitations:** Complete unambiguous parsed dependencies; unchanged unknown tables; explicit signature policy. Unsupported variation or point dependencies block affected operations.
+
+**Risk rationale:** The authoritative value and its application consequences must be chosen by the caller.
+
+**If applied:** Applications may permit or restrict embedding differently. Relaxing restrictions requires your explicit authority.
+
+**If unfixed:** The current embedding restrictions remain in force in consumers that honor them.
+
+**Decisions:**
+- `value`: Authorized fsType bit mask; integer; 0..65535.
+- `authority`: I have authority to choose these metadata values; boolean; explicit true/false; explicit authority confirmation required.
+
+**Verification invariants:** All unselected tables and fields remain byte-preserved. Glyph count, order, outlines, instructions and all unselected mappings remain unchanged.
+
+**Implementation:** [`<module>:59`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L59).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `metrics.line` {#repair-metrics-line}
+
+**Coordinate explicit line metrics** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Set explicit hhea and OS/2 typographic metrics, Windows clipping extents, and the USE_TYPO_METRICS choice.
+
+**Affected tables:** OS/2, hhea.
+
+**Prerequisites / limitations:** Complete unambiguous parsed dependencies; unchanged unknown tables; explicit signature policy. Unsupported variation or point dependencies block affected operations.
+
+**Risk rationale:** The authoritative value and its application consequences must be chosen by the caller.
+
+**If applied:** Line height, wrapping and clipping can change. Glyph geometry, UPM and advance widths remain unchanged; this is not rescaling.
+
+**If unfixed:** Existing line layout and clipping behavior remain; an intentional CJK metric policy is not overridden.
+
+**Decisions:**
+- `ascender`: Chosen ascender; integer; -32768..32767.
+- `descender`: Chosen descender; integer; -32768..32767.
+- `lineGap`: Chosen line gap; integer; 0..32767.
+- `winAscent`: Chosen Windows ascent; integer; 0..65535.
+- `winDescent`: Chosen Windows descent; integer; 0..65535.
+- `useTypoMetrics`: Use OS/2 typographic metrics; boolean; explicit true/false.
+- `authority`: I have authority to choose these metadata values; boolean; explicit true/false; explicit authority confirmation required.
+
+**Verification invariants:** All unselected tables and fields remain byte-preserved. Glyph count, order, outlines, instructions and all unselected mappings remain unchanged.
+
+**Implementation:** [`<module>:66`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L66).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `os2.average-width` {#repair-os2-average-width}
+
+**Recalculate version-3+ average advance** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+For OS/2 version 3 or later, round the arithmetic mean of all nonzero horizontal advances. Earlier weighted heuristics are not substituted.
+
+**Affected tables:** OS/2.
+
+**Prerequisites / limitations:** Complete unambiguous parsed dependencies; unchanged unknown tables; explicit signature policy. Unsupported variation or point dependencies block affected operations.
+
+**Risk rationale:** Only a specification-defined value derived from complete static data is changed.
+
+**If applied:** Only xAvgCharWidth and checksums change. Compact trailing metrics are expanded observationally, not padded or rewritten.
+
+**If unfixed:** Consumers may use an inaccurate average-width estimate.
+
+**Policy version:** `OpenType-OS2-v3-nonzero-advances`
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** All unselected tables and fields remain byte-preserved. Glyph count, order, outlines, instructions and all unselected mappings remain unchanged.
+
+**Implementation:** [`<module>:76`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L76).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `os2.character-range` {#repair-os2-character-range}
+
+**Recalculate Unicode character bounds** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Derive first/last character indices from nonzero Windows symbol/Unicode format 4/12/13 mappings, saturating supplementary values at 65535.
+
+**Affected tables:** OS/2.
+
+**Prerequisites / limitations:** Complete unambiguous parsed dependencies; unchanged unknown tables; explicit signature policy. Unsupported variation or point dependencies block affected operations.
+
+**Risk rationale:** Only a specification-defined value derived from complete static data is changed.
+
+**If applied:** Only the two OS/2 character bounds and checksums change; mappings and UVS bytes are unchanged.
+
+**If unfixed:** Consumers may receive inaccurate character-bound metadata.
+
+**Policy version:** `OpenType-OS2-character-indices-v1`
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** All unselected tables and fields remain byte-preserved. Glyph count, order, outlines, instructions and all unselected mappings remain unchanged.
+
+**Implementation:** [`<module>:85`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L85).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `os2.unicode-ranges` {#repair-os2-unicode-ranges}
+
+**Choose mapped-character Unicode range declarations** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+For OS/2 v4/v5, explicitly choose the OpenType 1.5 / Unicode 5.1 bit assignments using presence in Windows Unicode mappings. Functional range support is a designer decision, not inferred conformance.
+
+**Affected tables:** OS/2.
+
+**Prerequisites / limitations:** Complete unambiguous parsed dependencies; unchanged unknown tables; explicit signature policy. Unsupported variation or point dependencies block affected operations.
+
+**Risk rationale:** The authoritative value and its application consequences must be chosen by the caller.
+
+**If applied:** Only the four Unicode-range words and checksums change. Reserved bits are cleared; consumer coverage classification can change. Newer Unicode blocks without assigned bits are not invented.
+
+**If unfixed:** The existing designer-selected Unicode-range declarations remain; they need not equal a presence-based policy.
+
+**Policy version:** `OpenType-1.5-Unicode-5.1-mapped-characters-v1`
+
+**Decisions:**
+- `authority`: I have authority to choose these metadata values; boolean; explicit true/false; explicit authority confirmation required.
+
+**Verification invariants:** All unselected tables and fields remain byte-preserved. Glyph count, order, outlines, instructions and all unselected mappings remain unchanged.
+
+**Implementation:** [`<module>:94`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L94).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js), [unicode-ranges.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/unicode-ranges.test.js).
+
+### `os2.code-pages` {#repair-os2-code-pages}
+
+**Declare an evidenced code-page policy** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Set caller-selected code-page masks with recorded evidence; this is a policy declaration, not proof of complete language support.
+
+**Affected tables:** OS/2.
+
+**Prerequisites / limitations:** Complete unambiguous parsed dependencies; unchanged unknown tables; explicit signature policy. Unsupported variation or point dependencies block affected operations.
+
+**Risk rationale:** The authoritative value and its application consequences must be chosen by the caller.
+
+**If applied:** Legacy consumers may classify coverage differently. No character or artwork is added.
+
+**If unfixed:** Existing code-page declarations remain, regardless of actual coverage.
+
+**Decisions:**
+- `range1`: Code-page range 1; integer; 0..4294967295.
+- `range2`: Code-page range 2; integer; 0..4294967295.
+- `evidence`: Authority/repertoire and version supporting this policy; string; maximum 1024 UTF-16 units.
+- `authority`: I have authority to choose these metadata values; boolean; explicit true/false; explicit authority confirmation required.
+
+**Verification invariants:** All unselected tables and fields remain byte-preserved. Glyph count, order, outlines, instructions and all unselected mappings remain unchanged.
+
+**Implementation:** [`<module>:102`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L102).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `cmap.mapping` {#repair-cmap-mapping}
+
+**Map a character to an existing glyph** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Set one mapping in a chosen existing Unicode format 4/12 encoding. Confirm glyph suitability; missing artwork is not invented.
+
+**Affected tables:** cmap.
+
+**Prerequisites / limitations:** Complete unambiguous parsed dependencies; unchanged unknown tables; explicit signature policy. Unsupported variation or point dependencies block affected operations.
+
+**Risk rationale:** The authoritative value and its application consequences must be chosen by the caller.
+
+**If applied:** Text using this character, including space or NBSP, may shape differently. All other encodings and UVS remain byte-preserved.
+
+**If unfixed:** The selected encoding retains its previous mapping or missing coverage.
+
+**Decisions:**
+- `platformID`: Unicode platform (0 or 3); integer; 0..3.
+- `encodingID`: Existing encoding ID; integer; 0..10.
+- `codePoint`: Unicode scalar value (decimal); integer; 0..1114111.
+- `glyphID`: Authoritative existing glyph ID; integer; 1..65535.
+- `authority`: I have authority to choose these metadata values; boolean; explicit true/false; explicit authority confirmation required.
+
+**Verification invariants:** All unselected tables and fields remain byte-preserved. Glyph count, order, outlines, instructions and all unselected mappings remain unchanged.
+
+**Implementation:** [`<module>:110`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L110).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `cmap.remove-mapping` {#repair-cmap-remove-mapping}
+
+**Remove an explicitly chosen mapping** — potentially-lossy; revision 1; formats: sfnt, woff, woff2, collection.
+
+Remove one scalar mapping from one selected Unicode encoding, for example an explicitly chosen control/soft-hyphen policy.
+
+**Affected tables:** cmap.
+
+**Prerequisites / limitations:** Complete unambiguous parsed dependencies; unchanged unknown tables; explicit signature policy. Unsupported variation or point dependencies block affected operations.
+
+**Risk rationale:** Explicitly selected compatibility or naming information is removed; consent is mandatory.
+
+**If applied:** The selected character is unmapped in this encoding; fallback and shaping may change. Glyphs and all other encodings/UVS remain.
+
+**If unfixed:** The existing mapping and its compatibility behavior remain.
+
+**Decisions:**
+- `platformID`: Unicode platform (0 or 3); integer; 0..3.
+- `encodingID`: Existing encoding ID; integer; 0..10.
+- `codePoint`: Unicode scalar value (decimal); integer; 0..1114111.
+- Explicit `consent: true` required for this plan; not an inferred permission.
+
+**Verification invariants:** All unselected tables and fields remain byte-preserved. Glyph count, order, outlines, instructions and all unselected mappings remain unchanged.
+
+**Implementation:** [`<module>:119`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L119).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `metrics.advance` {#repair-metrics-advance}
+
+**Set an explicit glyph advance** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Set an existing glyph advance and recalculate horizontal metric extrema. A shared space/NBSP glyph affects both characters.
+
+**Affected tables:** hmtx, hhea.
+
+**Prerequisites / limitations:** Complete unambiguous parsed dependencies; unchanged unknown tables; explicit signature policy. Unsupported variation or point dependencies block affected operations.
+
+**Risk rationale:** The authoritative value and its application consequences must be chosen by the caller.
+
+**If applied:** Text spacing and reflow can change for every mapping or shaping rule using this glyph. Bearings, outlines and all other advances remain.
+
+**If unfixed:** The existing spacing remains; unequal whitespace widths may be intentional.
+
+**Decisions:**
+- `glyphID`: Existing glyph ID; integer; 0..65535.
+- `value`: Chosen advance width; integer; 0..65535.
+- `authority`: I have authority to choose these metadata values; boolean; explicit true/false; explicit authority confirmation required.
+
+**Verification invariants:** All unselected tables and fields remain byte-preserved. Glyph count, order, outlines, instructions and all unselected mappings remain unchanged.
+
+**Implementation:** [`<module>:127`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L127).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `post.drop-names` {#repair-post-drop-names}
+
+**Use post format 3 without glyph names** — potentially-lossy; revision 1; formats: sfnt, woff, woff2, collection.
+
+Replace a supported post 1/2/2.5/3 representation with format 3 while preserving its common header.
+
+**Affected tables:** post.
+
+**Prerequisites / limitations:** Complete unambiguous parsed dependencies; unchanged unknown tables; explicit signature policy. Unsupported variation or point dependencies block affected operations.
+
+**Risk rationale:** Explicitly selected compatibility or naming information is removed; consent is mandatory.
+
+**If applied:** post glyph names are unavailable; naming-dependent workflows may change. Glyph order, mappings and outlines remain.
+
+**If unfixed:** Existing post names and their representation remain available.
+
+**Decisions:**
+- Explicit `consent: true` required for this plan; not an inferred permission.
+
+**Verification invariants:** All unselected tables and fields remain byte-preserved. Glyph count, order, outlines, instructions and all unselected mappings remain unchanged.
+
+**Implementation:** [`<module>:137`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L137).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `container.length` {#repair-container-length}
+
+**Correct the declared wrapper length** — safe; revision 1; formats: woff, woff2.
+
+Set the WOFF file-length field to the complete, validated original byte length.
+
+
+
+**Prerequisites / limitations:** A complete unambiguous supported WOFF wrapper; decoding must finish within limits. Signature and auxiliary-data preservation must be established.
+
+**Risk rationale:** Only a fixed or fully derived header field is changed in place.
+
+**If applied:** Only the four-byte wrapper length changes; compressed tables, metadata and private bytes are retained exactly.
+
+**If unfixed:** Consumers may reject the mismatched wrapper length.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** All bytes outside the selected wrapper fields remain identical.
+
+**Implementation:** [`<module>:7`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-containers.js#L7).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `container.reserved` {#repair-container-reserved}
+
+**Clear the reserved wrapper field** — safe; revision 1; formats: woff, woff2.
+
+Set the normative WOFF reserved field to zero without rewriting the compressed data.
+
+
+
+**Prerequisites / limitations:** A complete unambiguous supported WOFF wrapper; decoding must finish within limits. Signature and auxiliary-data preservation must be established.
+
+**Risk rationale:** Only a fixed or fully derived header field is changed in place.
+
+**If applied:** Only the two reserved bytes change; all other wrapper bytes remain unchanged.
+
+**If unfixed:** Consumers may reject a nonzero reserved field.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** All bytes outside the selected wrapper fields remain identical.
+
+**Implementation:** [`<module>:14`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-containers.js#L14).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `container.sfnt-size` {#repair-container-sfnt-size}
+
+**Correct the WOFF1 decoded-size declaration** — safe; revision 1; formats: woff.
+
+Set totalSfntSize from successfully decompressed, complete WOFF1 table data and SFNT alignment.
+
+
+
+**Prerequisites / limitations:** A complete unambiguous supported WOFF wrapper; decoding must finish within limits. Signature and auxiliary-data preservation must be established.
+
+**Risk rationale:** Only a fixed or fully derived header field is changed in place.
+
+**If applied:** Only the decoded-size declaration changes; compressed table and auxiliary bytes are unchanged.
+
+**If unfixed:** Consumers may reject the inconsistent decoded-size declaration.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** All bytes outside the selected wrapper fields remain identical.
+
+**Implementation:** [`<module>:21`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-containers.js#L21).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [quality.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality.test.js).
+
+### `tt.bounds` {#repair-tt-bounds}
+
+**Recalculate static TrueType control-point bounds** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Set per-glyph and font bounds from complete recursively transformed control points; empty glyphs do not enlarge font bounds.
+
+**Affected tables:** glyf, head.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Static complete geometry determines the fields; variation and ambiguous transforms are blocked.
+
+**If applied:** Only stored bounds change. These are control-point hulls, not tight curve extrema or all-instance variation bounds.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:18`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L18).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `tt.maxp-geometry` {#repair-tt-maxp-geometry}
+
+**Recalculate geometric maxp fields** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Recalculate point/contour/component counts, component depth and maximum glyph instruction byte length.
+
+**Affected tables:** maxp.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Only representation-derived maxima change; TrueType VM execution is not inferred.
+
+**If applied:** VM-dependent maxZones, twilight, storage, functions, instruction definitions and stack maxima remain untouched.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:26`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L26).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `hhea.extrema` {#repair-hhea-extrema}
+
+**Recalculate horizontal metric extrema** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Derive advance maximum and bearing/extent extrema from complete stored metrics and static glyph geometry, including compact trailing metrics.
+
+**Affected tables:** hhea.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Missing metrics and unrepresentable or variable geometry are blocked rather than padded or clamped.
+
+**If applied:** Only four extrema fields change; intended advances and bearings remain exact.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:34`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L34).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `vhea.extrema` {#repair-vhea-extrema}
+
+**Recalculate vertical metric extrema** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Derive advance maximum and bearing/extent extrema from complete stored metrics and static glyph geometry, including compact trailing metrics.
+
+**Affected tables:** vhea.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Missing metrics and unrepresentable or variable geometry are blocked rather than padded or clamped.
+
+**If applied:** Only four extrema fields change; intended advances and bearings remain exact.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:34`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L34).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `hmtx.compact` {#repair-hmtx-compact}
+
+**Compact horizontal trailing metrics** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Encode repeated trailing advances using the normative compact representation and coordinate the long-metric count.
+
+**Affected tables:** hmtx, hhea.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** The existing valid count establishes every authoritative metric; no count is inferred from ambiguous byte length.
+
+**If applied:** Glyph-indexed advances/bearings and opaque suffix bytes remain exact; missing metrics cannot be recovered.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:43`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L43).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `vmtx.compact` {#repair-vmtx-compact}
+
+**Compact vertical trailing metrics** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Encode repeated trailing advances using the normative compact representation and coordinate the long-metric count.
+
+**Affected tables:** vmtx, vhea.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** The existing valid count establishes every authoritative metric; no count is inferred from ambiguous byte length.
+
+**If applied:** Glyph-indexed advances/bearings and opaque suffix bytes remain exact; missing metrics cannot be recovered.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:43`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L43).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `tt.loca-format` {#repair-tt-loca-format}
+
+**Choose a coordinated loca representation** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Re-encode valid original glyph offsets and change head.indexToLocFormat together.
+
+**Affected tables:** loca, head.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Representation is explicit; damaged offsets and opaque loca suffixes cannot be reconstructed.
+
+**If applied:** Glyph bytes and every glyph extent remain unchanged. Odd or overflowing short offsets are refused.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- `format`: loca representation; enum; short, long.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:51`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L51).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `cff.maxp` {#repair-cff-maxp}
+
+**Coordinate CFF glyph count and maxp version** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Use a complete supported CFF1/CFF2 CharStrings INDEX for maxp.numGlyphs and the CFF maxp version.
+
+**Affected tables:** maxp.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Corrupted or unsupported programs, uncertain INDEX boundaries, unknown maxp versions and incomplete version-1 records block this action.
+
+**If applied:** Only the first six maxp bytes change. Every CFF program, FD assignment, subroutine and opaque byte is retained.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:60`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L60).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `cff.charstrings-index` {#repair-cff-charstrings-index}
+
+**Re-encode a complete CFF CharStrings INDEX** — safe; revision 1; formats: sfnt, woff, woff2, collection.
+
+Append a canonical INDEX with identical complete programs and redirect its existing fixed-width Top DICT offset.
+
+**Affected tables:** CFF , CFF2.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** No existing program/dictionary is relocated or recompiled; unsupported offset encodings are blocked.
+
+**If applied:** File size increases. Original bytes, including the old INDEX, stay intact except the selected offset operand. This cannot recover corrupt offsets.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:** No user values; applicability guards must still pass.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:69`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L69).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `cff.empty-glyph` {#repair-cff-empty-glyph}
+
+**Terminate a source-confirmed empty CFF1 glyph** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Replace only a zero-byte CFF1 CharString with endchar after explicit source-intent confirmation; all other programs must validate.
+
+**Affected tables:** CFF .
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Empty-glyph intent cannot be inferred. CFF2 empty programs are valid and categorically excluded.
+
+**If applied:** The empty glyph uses its existing Private DICT default width. No SFNT advance changes, and no truncated nonempty program is discarded.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- `glyphIndex`: Glyph index (existing glyph order); integer; 0..65535.
+- `confirmedEmpty`: Source confirms this zero-byte program is intentionally empty; boolean; explicit true/false.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:77`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L77).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `tt.dehint` {#repair-tt-dehint}
+
+**Explicitly remove TrueType hint programs** — potentially-lossy; revision 1; formats: sfnt, woff, woff2, collection.
+
+Remove glyph instructions and fpgm/prep/cvt while retaining encoded contours, components and existing rasterizer gasp policy.
+
+**Affected tables:** glyf, loca, head, maxp, fpgm, prep, cvt .
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Hinting behavior is intentionally lost. Variable, device-metric and opaque dependencies are refused.
+
+**If applied:** Small-size rasterization may change. Instruction maxima and loca are coordinated; VM maxima are conservatively retained, not guessed.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- Explicit `consent: true` required for this plan; not an inferred permission.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:85`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L85).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `tt.decompose` {#repair-tt-decompose}
+
+**Explicitly decompose one static composite glyph** — potentially-lossy; revision 1; formats: sfnt, woff, woff2, collection.
+
+Flatten complete nested/transformed and point-attached components into simple contours in an already dehinted font.
+
+**Affected tables:** glyf, loca, head, maxp, hhea, vhea.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Topology, rounding, rasterization and file size may change. USE_MY_METRICS, variation, hints and point-index/opaque dependencies are blocked.
+
+**If applied:** Point order within flattened contours is retained; fractional points round to integer font units. Component structure is lost and overlap is marked, not unioned. Dependent bounds, geometric maxima and existing metric extrema are coordinated.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- `glyphIndex`: Glyph index (existing glyph order); integer; 0..65535.
+- Explicit `consent: true` required for this plan; not an inferred permission.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:93`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L93).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `tt.overlap-flag` {#repair-tt-overlap-flag}
+
+**Choose one glyph overlap flag** — potentially-lossy; revision 1; formats: sfnt, woff, woff2, collection.
+
+Set or clear only the first simple-point/composite-component overlap flag.
+
+**Affected tables:** glyf.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Overlap intent is supplied explicitly, never inferred from a flag or treated as geometry repair.
+
+**If applied:** Rasterizer interpretation may change; geometry is not altered and contour union is not performed.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- `glyphIndex`: Glyph index (existing glyph order); integer; 0..65535.
+- `overlap`: Authoritative overlap flag; boolean; explicit true/false.
+- Explicit `consent: true` required for this plan; not an inferred permission.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:102`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L102).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `fvar.axis-name` {#repair-fvar-axis-name}
+
+**Choose an existing variable axis name** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Change one fvar axisNameID reference to authoritative existing localized names.
+
+**Affected tables:** fvar.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** A display-name reference is not an axis tag rename or topology change.
+
+**If applied:** Axis tags, order, ranges, defaults, flags, instances and deltas remain byte-identical.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- `axisIndex`: Axis index in the existing order; integer; 0..65535.
+- `nameID`: Authoritative existing name ID; integer; 2..32767.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:111`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L111).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `fvar.instance-name` {#repair-fvar-instance-name}
+
+**Choose an existing instance name reference** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Change a selected subfamily or existing PostScript name field without overwriting custom instance coordinates.
+
+**Affected tables:** fvar.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Installation/display naming can change; geometry, instance coordinates and variation programs do not.
+
+**If applied:** Only the selected two-byte reference changes. PostScript sentinel 65535 explicitly means no name.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- `instanceIndex`: Existing instance index; integer; 0..65535.
+- `field`: Instance name field; enum; subfamily, postscript.
+- `nameID`: Authoritative existing name ID; integer; 2..65535.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:120`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L120).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `stat.axis-name` {#repair-stat-axis-name}
+
+**Choose an existing STAT axis name** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Change one supported STAT axis name reference using authoritative existing localized names.
+
+**Affected tables:** STAT.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Supported versions/formats are structurally checked; unknown and aliased structures are blocked.
+
+**If applied:** Only that reference changes; axis order, ranges, values, flags and opaque extension bytes stay intact.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- `axisIndex`: Axis index; integer; 0..65535.
+- `nameID`: Authoritative existing name ID; integer; 2..32767.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:133`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L133).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `stat.value-name` {#repair-stat-value-name}
+
+**Choose an existing STAT value name** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Change one supported STAT value name reference using authoritative existing localized names.
+
+**Affected tables:** STAT.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Supported versions/formats are structurally checked; unknown and aliased structures are blocked.
+
+**If applied:** Only that reference changes; axis order, ranges, values, flags and opaque extension bytes stay intact.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- `valueIndex`: Axis value index; integer; 0..65535.
+- `nameID`: Authoritative existing name ID; integer; 2..32767.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:133`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L133).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `stat.fallback-name` {#repair-stat-fallback-name}
+
+**Choose an existing STAT fallback name** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Change the existing STAT 1.1/1.2 elidedFallbackNameID.
+
+**Affected tables:** STAT.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Fallback display naming is an explicit author decision.
+
+**If applied:** Only the fallback name reference changes; no STAT 1.0 upgrade or fabricated axis value is performed.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- `nameID`: Authoritative existing name ID; integer; 2..32767.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:141`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L141).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `fvar.default-style` {#repair-fvar-default-style}
+
+**Make an existing axis default authoritative for OS/2 style** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Use the existing default wght coordinate or exact standard wdth percentage for the matching OS/2 class.
+
+**Affected tables:** OS/2.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** This is selected class consistency, not full style linking. Contradictory ranges and inexact width classes are blocked.
+
+**If applied:** Only the matching OS/2 class changes; axis defaults, STAT, names and deltas are not modified.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- `axis`: Authoritative default axis; enum; wght, wdth.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:149`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L149).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `fvar.add-instance` {#repair-fvar-add-instance}
+
+**Append one explicit named instance** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Append an explicitly specified standard or custom instance; never infer or overwrite existing custom instances.
+
+**Affected tables:** fvar.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Named-instance metadata is added without evaluating interpolation or statically instancing the font.
+
+**If applied:** Existing instances, axis order, all deltas and opaque suffix bytes are retained. Coordinates must be exactly 16.16-representable and in range.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- `nameID`: Authoritative existing name ID; integer; 2..32767.
+- `coordinates`: Exact decimal coordinates in existing axis order, comma separated; string; maximum 8192 UTF-16 units.
+- `postScriptNameID`: Existing PostScript name ID or 65535 for no name; integer; 6..65535.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:159`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L159).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `fvar.standard-instance` {#repair-fvar-standard-instance}
+
+**Opt into one standard weight instance** — assisted; revision 1; formats: sfnt, woff, woff2, collection.
+
+Append one explicitly selected standard weight instance using existing defaults for all other axes and authoritative existing names.
+
+**Affected tables:** fvar.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** The opt-in policy only adds metadata; unsupported axes/ranges and missing names are blocked.
+
+**If applied:** Every existing custom instance and variation delta remains intact. Duplicate coordinate tuples are refused, never overwritten or reported as a successful addition.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- `nameID`: Authoritative existing name ID; integer; 2..32767.
+- `weight`: Standard wght coordinate; other axes use their existing defaults; enum; 100, 200, 300, 400, 500, 600, 700, 800, 900.
+- `postScriptNameID`: Existing PostScript name ID or 65535 for no name; integer; 6..65535.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:170`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L170).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `tables.remove-optional` {#repair-tables-remove-optional}
+
+**Explicitly remove one optional table** — potentially-lossy; revision 1; formats: sfnt, woff, woff2, collection.
+
+Remove exactly the chosen optional color, kerning, rasterizer/device-policy or metadata table. No other optional table is implicitly purged.
+
+**Affected tables:** gasp, kern, SVG , COLR, CPAL, meta, hdmx, LTSH, VDMX.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Rendering, kerning, device behavior or metadata can be lost. Unknown/variable dependencies block removal.
+
+**If applied:** The selected table feature is lost. Palette removal is blocked while COLR/SVG may reference it; color removal requires supported fallback outlines.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- `tag`: Exactly one table to remove; enum; gasp, kern, SVG , COLR, CPAL, meta, hdmx, LTSH, VDMX.
+- Explicit `consent: true` required for this plan; not an inferred permission.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:182`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L182).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `tt.remove-last-glyph` {#repair-tt-remove-last-glyph}
+
+**Remove one provably isolated final TrueType glyph** — potentially-lossy; revision 1; formats: sfnt, woff, woff2, collection.
+
+Remove only the final non-.notdef glyph after complete supported cmap, composite and COLR-v0 reference proof; all retained glyph IDs remain unchanged.
+
+**Affected tables:** glyf, loca, maxp, head, hhea, hmtx, vhea, vmtx, OS/2.
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** A glyph is intentionally lost. Hinting, names, unsupported layout/UVS, variation and opaque reference dependencies require separate source-aware work.
+
+**If applied:** Only the chosen glyph and its metric records disappear. Font bounds, geometric maxima, metric counts/extrema and OS/2 v3+ average advance are coordinated; retained glyph bytes/positions and metrics remain intact.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- `glyphIndex`: Glyph index (existing glyph order); integer; 0..65535.
+- Explicit `consent: true` required for this plan; not an inferred permission.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:190`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L190).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+### `outlines.to-cff` {#repair-outlines-to-cff}
+
+**Convert guarded static TrueType outlines to CFF** — potentially-lossy; revision 1; formats: sfnt, woff, woff2, collection.
+
+Reuse the existing converter only for complete static dehinted simple contours with explicit endpoints, compatible bearings, post format 3, and fully supported dependencies.
+
+**Affected tables:** glyf, loca, maxp, head, CFF .
+
+**Prerequisites / limitations:** Complete, bounded authoritative table structures. No guessed geometry, missing metrics, or recovered variation deltas. Parent SFNT/signature guards and explicit lossy consent still apply.
+
+**Risk rationale:** Rasterization and outline representation change. An independent Bézier control-point bound verifies the chosen tolerance; unsupported closure, composite, vertical or opaque dependencies are refused.
+
+**If applied:** glyf/loca become CFF, maxp becomes the six-byte CFF encoding, and head.indexToLocFormat becomes zero. Glyph IDs, advances/bearings and common post metadata stay unchanged; the parent must emit OTTO SFNT flavor. No other table is rebuilt or purged.
+
+**If unfixed:** Retain the original; unsupported or missing authoritative data requires source-aware editing.
+
+**Decisions:**
+- `tolerance`: Maximum Euclidean geometric deviation in font units (0–1); number; 0..1.
+- `allowOutlineLoss`: Authorize outline/program representation loss; boolean; explicit true/false; explicit authority confirmation required.
+- `postScriptName`: Authoritative PostScript font name; string; maximum 63 UTF-16 units.
+- Explicit `consent: true` required for this plan; not an inferred permission.
+
+**Verification invariants:** Every unrelated byte, glyph ID, mapping, advance, bearing, instruction and variation program is retained unless the selected action explicitly lists that loss.
+
+**Implementation:** [`<module>:201`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-extensions.js#L201).
+**Regression evidence:** [quality-m1.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/quality-m1.test.js), [repair-extensions.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/repair-extensions.test.js).
+
+
 ### Operational worker errors (not font findings)
 
 These errors reject the asynchronous operation and never certify or commit a candidate:
@@ -96,13 +1513,13 @@ Forwarding helper parameters are traced to concrete caller sites rather than cou
 
 | Emission | Expression | Expanded identifiers | Domain/call-site evidence |
 | --- | --- | --- | --- |
-| [validateLayoutLookups:1661](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1661) | ``${tableName}_LOOKUP_TYPE_INVALID`` | `GPOS_LOOKUP_TYPE_INVALID`, `GSUB_LOOKUP_TYPE_INVALID` | [phaseCrossTableChecks:4086](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4086), [phaseCrossTableChecks:4097](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4097) |
-| [phaseCrossTableChecks:4053](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4053) | ``${dep.toUpperCase()}_WITHOUT_FVAR`` | `AVAR_WITHOUT_FVAR`, `HVAR_WITHOUT_FVAR`, `MVAR_WITHOUT_FVAR`, `VVAR_WITHOUT_FVAR` | [phaseCrossTableChecks:4048](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4048) |
-| [runFaceChecks:4311](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4311) | `code` | `QUALITY_AVERAGE_WIDTH_MISMATCH`, `QUALITY_CHARACTER_RANGE_MISMATCH`, `QUALITY_NAME_ENCODING_INVALID`, `QUALITY_NAME_WHITESPACE`, `QUALITY_POSTSCRIPT_NAME_INVALID` | [runFaceChecks:4304](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4304) |
-| [runFaceChecks:4367](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4367) | `code` | `CFF_DERIVED_MAXP_MISMATCH`, `HHEA_DERIVED_EXTREMA_MISMATCH`, `TT_DERIVED_BOUNDS_MISMATCH`, `TT_DERIVED_MAXP_MISMATCH`, `VHEA_DERIVED_EXTREMA_MISMATCH` | [runFaceChecks:4359](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4359) |
-| [inspectFamily:83](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L83) | `code` | `FAMILY_DUPLICATE_IDENTITY`, `FAMILY_DUPLICATE_STYLE` | [inspectFamily:71](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L71) |
-| [inspectTT:543](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-tt.js#L543) | `vertical ? 'VHEA_DERIVED_EXTREMA_MISMATCH' : 'HHEA_DERIVED_EXTREMA_MISMATCH'` | `HHEA_DERIVED_EXTREMA_MISMATCH`, `VHEA_DERIVED_EXTREMA_MISMATCH` |  |
-| [inspectLegacy:389](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L389) | `/max[A-Z]/.test(error.message) ? 'LEGACY_RESOURCE_LIMIT' : 'LEGACY_STRUCTURE_INVALID'` | `LEGACY_RESOURCE_LIMIT`, `LEGACY_STRUCTURE_INVALID` |  |
+| [`validateLayoutLookups:1661`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1661) | ``${tableName}_LOOKUP_TYPE_INVALID`` | `GPOS_LOOKUP_TYPE_INVALID`, `GSUB_LOOKUP_TYPE_INVALID` | [`phaseCrossTableChecks:4086`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4086), [`phaseCrossTableChecks:4097`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4097) |
+| [`phaseCrossTableChecks:4053`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4053) | ``${dep.toUpperCase()}_WITHOUT_FVAR`` | `AVAR_WITHOUT_FVAR`, `HVAR_WITHOUT_FVAR`, `MVAR_WITHOUT_FVAR`, `VVAR_WITHOUT_FVAR` | [`phaseCrossTableChecks:4048`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4048) |
+| [`runFaceChecks:4311`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4311) | `code` | `QUALITY_AVERAGE_WIDTH_MISMATCH`, `QUALITY_CHARACTER_RANGE_MISMATCH`, `QUALITY_NAME_ENCODING_INVALID`, `QUALITY_NAME_WHITESPACE`, `QUALITY_POSTSCRIPT_NAME_INVALID` | [`runFaceChecks:4304`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4304) |
+| [`runFaceChecks:4367`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4367) | `code` | `CFF_DERIVED_MAXP_MISMATCH`, `HHEA_DERIVED_EXTREMA_MISMATCH`, `TT_DERIVED_BOUNDS_MISMATCH`, `TT_DERIVED_MAXP_MISMATCH`, `VHEA_DERIVED_EXTREMA_MISMATCH` | [`runFaceChecks:4359`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4359) |
+| [`inspectFamily:83`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L83) | `code` | `FAMILY_DUPLICATE_IDENTITY`, `FAMILY_DUPLICATE_STYLE` | [`inspectFamily:71`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L71) |
+| [`inspectTT:543`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-tt.js#L543) | `vertical ? 'VHEA_DERIVED_EXTREMA_MISMATCH' : 'HHEA_DERIVED_EXTREMA_MISMATCH'` | `HHEA_DERIVED_EXTREMA_MISMATCH`, `VHEA_DERIVED_EXTREMA_MISMATCH` |  |
+| [`inspectLegacy:389`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L389) | `/max[A-Z]/.test(error.message) ? 'LEGACY_RESOURCE_LIMIT' : 'LEGACY_STRUCTURE_INVALID'` | `LEGACY_RESOURCE_LIMIT`, `LEGACY_STRUCTURE_INVALID` |  |
 
 ## Original implementation and upstream provenance
 
@@ -132,401 +1549,401 @@ No baseline identifiers are currently removed: all 228 are retained as active so
 
 | Identifier | Status | Kind | Pipeline(s) | Family | Tables/context | Emission evidence | Repair IDs |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `ADVANCED_CLASS_RANGE_INVALID` | active | finding | binary | advanced-shared-structures | * | [classValues:171](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L171) | No registered fix¹ |
-| `ADVANCED_COVERAGE_INVALID` | active | finding | binary | advanced-shared-structures | * | [coverageGlyphs:135](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L135)<br>[coverageGlyphs:150](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L150) | No registered fix¹ |
-| `ADVANCED_DEVICE_INVALID` | active | finding | binary | advanced-shared-structures | * | [deviceReference:199](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L199) | No registered fix¹ |
-| `ADVANCED_GLYPH_REFERENCE_INVALID` | active | finding | binary | advanced-shared-structures | * | [advancedContext:29](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L29)<br>[outlinePointCount:58](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L58) | No registered fix¹ |
-| `ADVANCED_PARALLEL_ARRAY_MISMATCH` | active | finding | binary | advanced-shared-structures | * | [advancedContext:35](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L35) | No registered fix¹ |
-| `ADVANCED_STRUCTURE_CYCLE` | active | finding | binary | advanced-shared-structures | * | [outlinePointCount:63](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L63)<br>[walkObjects:108](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L108) | No registered fix¹ |
-| `ADVANCED_STRUCTURE_INVALID` | active | finding | binary | diagnostic-execution | * | [runAdvancedDiagnostics:59](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-diagnostics.js#L59) | No registered fix¹ |
-| `ADVANCED_VARIATION_REFERENCE_INVALID` | active | finding | binary | advanced-shared-structures | * | [variationReference:187](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L187) | No registered fix¹ |
-| `ARRAY_SHAPE_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:137](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L137) | No registered fix¹ |
-| `AVAR_COORD_OUT_OF_RANGE` | active · baseline | finding | binary | variation-axis-mapping | avar | [validateAvar:1938](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1938) | No registered fix¹ |
-| `AVAR_FROM_COORD_NOT_INCREASING` | active · baseline | finding | binary | variation-axis-mapping | avar | [validateAvar:1947](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1947) | No registered fix¹ |
-| `AVAR_MISSING_REQUIRED_ENDPOINTS` | active · baseline | finding | binary | variation-axis-mapping | avar | [validateAvar:1964](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1964) | No registered fix¹ |
-| `AVAR_SEGMENT_COUNT_MISMATCH` | active · baseline | finding | binary | variation-axis-mapping | avar, fvar | [validateAvar:1911](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1911) | No registered fix¹ |
-| `AVAR_WITHOUT_FVAR` | active · baseline | finding | binary | variation-dependencies | avar, fvar | [phaseCrossTableChecks:4053](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4053) | No registered fix¹ |
-| `AXIS_RANGE_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:508](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L508) | No registered fix¹ |
-| `AXIS_TAG_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:496](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L496) | No registered fix¹ |
-| `BAD_CHECKSUM` | active · baseline | finding | binary | checksums | *, head | [phaseChecksums:560](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L560) | `sfnt.checksums` |
-| `BAD_CHECKSUM_ADJUSTMENT` | active | finding | binary | checksums | *, head | [phaseChecksums:574](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L574) | `sfnt.checksums` |
-| `BAD_ENTRY_SELECTOR` | active · baseline | finding | binary | sfnt-directory | — | [phaseHeader:322](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L322) | `sfnt.search-fields` |
-| `BAD_MAGIC_NUMBER` | active · baseline | finding | binary | font-header | head | [phaseCrossTableChecks:3661](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3661) | `head.magic` |
-| `BAD_RANGE_SHIFT` | active · baseline | finding | binary | sfnt-directory | — | [phaseHeader:330](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L330) | `sfnt.search-fields` |
-| `BAD_SEARCH_RANGE` | active · baseline | finding | binary | sfnt-directory | — | [phaseHeader:314](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L314) | `sfnt.search-fields` |
-| `BAD_SF_VERSION` | active · baseline | finding | binary | sfnt-directory | — | [phaseHeader:263](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L263) | No registered fix¹ |
-| `BAD_TABLE_TAG` | active · baseline | finding | binary | sfnt-directory | * | [phaseDirectory:375](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L375) | No registered fix¹ |
-| `BAD_UNITS_PER_EM` | active · baseline | finding | binary | font-header | head | [phaseCrossTableChecks:3672](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3672) | No registered fix¹ |
-| `BASE_DEFAULT_BASELINE_INVALID` | active | finding | binary | specialist-structures | BASE | [validateAdvancedSpecialist:27](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L27) | No registered fix¹ |
-| `BASE_POINT_REFERENCE_INVALID` | active | finding | binary | specialist-structures | BASE | [validateAdvancedSpecialist:38](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L38) | No registered fix¹ |
-| `BITMAP_DATA_OFFSETS_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [validateAdvancedBitmap:79](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L79)<br>[validateAdvancedBitmap:161](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L161) | No registered fix¹ |
-| `BITMAP_DATA_TABLE_MISSING` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [validateAdvancedBitmap:116](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L116) | No registered fix¹ |
-| `BITMAP_DUPLICATE_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [validateAdvancedBitmap:90](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L90) | No registered fix¹ |
-| `BITMAP_GLYPH_REFERENCE_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [referenceGraph:54](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L54)<br>[validateAdvancedBitmap:157](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L157) | No registered fix¹ |
-| `BITMAP_IMAGE_LENGTH_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [validateAdvancedBitmap:175](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L175)<br>[validateAdvancedBitmap:183](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L183) | No registered fix¹ |
-| `BITMAP_IMAGE_METRICS_MISMATCH` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [inspectPng:26](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L26) | No registered fix¹ |
-| `BITMAP_LOCATION_TABLE_MISSING` | active | finding | binary | diagnostic-execution | * | [runAdvancedDiagnostics:109](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-diagnostics.js#L109) | No registered fix¹ |
-| `BITMAP_PNG_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [inspectPng:6](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L6) | No registered fix¹ |
-| `BITMAP_REFERENCE_CYCLE` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [referenceGraph:46](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L46) | No registered fix¹ |
-| `BITMAP_SCALE_REFERENCE_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [validateAdvancedBitmap:108](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L108) | No registered fix¹ |
-| `BITMAP_STRIKE_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [validateAdvancedBitmap:127](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L127) | No registered fix¹ |
-| `BITMAP_SUBTABLE_RANGE_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [validateAdvancedBitmap:135](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L135) | No registered fix¹ |
-| `CFF_ARITHMETIC_OPERAND_INVALID` | active | finding | binary | cff-programs-and-storage | CFF , CFF2 | [executeCffArithmetic:127](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L127) | No registered fix¹ |
-| `CFF_BLEND_INVALID_COUNT` | active | finding | binary | cff-private-dictionaries | CFF2 | [validateCff2PrivateDictionary:83](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L83)<br>[validateCharStringBytecode:2906](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2906) | No registered fix¹ |
-| `CFF_CHARSET_DUPLICATE` | active | finding | binary | cff-programs-and-storage | CFF , CFF2 | [validateCffStructures:388](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L388) | No registered fix¹ |
-| `CFF_CHARSET_REFERENCE_INVALID` | active | finding | binary | cff-programs-and-storage | CFF , CFF2 | [validateCffStructures:345](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L345) | No registered fix¹ |
-| `CFF_CHARSTRING_NO_ENDCHAR` | active · baseline | finding | binary | cff-charstrings | CFF  | [validateCffCharStrings:2716](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2716) | No registered fix¹ |
-| `CFF_CONTEXT_UNSUPPORTED` | active | finding | binary | cff-private-dictionaries | CFF , CFF2 | [validateCff2PrivateDictionary:19](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L19)<br>[executeCffArithmetic:173](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L173)<br>[resolveDiagnosticCffContext:2573](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2573)<br>[validateCharStringBytecode:2825](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2825)<br>[validateCharStringBytecode:2901](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2901)<br>[validateCharStringBytecode:2921](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2921)<br>[validateCharStringBytecode:2978](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2978)<br>[validateCharStringBytecode:3024](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3024) | No registered fix¹ |
-| `CFF_DERIVED_MAXP_MISMATCH` | active | finding | binary | diagnostic-execution | *, CFF , CFF2, maxp | [runFaceChecks:4367](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4367)<br>[inspectCff:261](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-cff.js#L261) | `cff.maxp` |
-| `CFF_EMPTY_CHARSTRING` | active · baseline | finding | binary | cff-charstrings | CFF , CFF2 | [validateCffCharStrings:2667](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2667) | No registered fix¹ |
-| `CFF_ENCODING_INVALID` | active | finding | binary | cff-programs-and-storage | CFF , CFF2 | [validateCffStructures:362](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L362)<br>[validateCffStructures:368](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L368)<br>[validateCffStructures:374](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L374) | No registered fix¹ |
-| `CFF_FDARRAY_MISSING` | active | finding | binary | cff-context | CFF , CFF2 | [resolveDiagnosticCffContext:2551](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2551) | No registered fix¹ |
-| `CFF_FDSELECT_MISSING` | active | finding | binary | cff-context | CFF , CFF2 | [resolveDiagnosticCffContext:2558](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2558) | No registered fix¹ |
-| `CFF_FDSELECT_STRUCTURE_INVALID` | active | finding | binary | cff-programs-and-storage | CFF , CFF2 | [validateCffStructures:298](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L298)<br>[validateCffStructures:315](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L315) | No registered fix¹ |
-| `CFF_FD_INDEX_OUT_OF_RANGE` | active | finding | binary | cff-context | CFF , CFF2 | [resolveDiagnosticCffContext:2564](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2564) | No registered fix¹ |
-| `CFF_GLYPH_MISMATCH` | active · baseline | finding | binary | glyph-count | CFF , CFF2, maxp | [phaseCrossTableChecks:3904](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3904) | No registered fix¹ |
-| `CFF_HEADER_INVALID` | active | finding | binary | cff-programs-and-storage | CFF , CFF2 | [validateCffStructures:191](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L191) | No registered fix¹ |
-| `CFF_INVALID_NUMBER` | active · baseline | finding | binary | cff-private-dictionaries | CFF , CFF2 | [validateCff2PrivateDictionary:74](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L74)<br>[validateCharStringBytecode:2774](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2774) | No registered fix¹ |
-| `CFF_INVALID_OPERAND_COUNT` | active | finding | binary | cff-private-dictionaries | CFF , CFF2 | [validateCff2PrivateDictionary:103](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L103)<br>[validateCff2PrivateDictionary:122](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L122)<br>[validateCff2PrivateDictionary:132](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L132)<br>[validateCharStringBytecode:2838](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2838)<br>[validateCharStringBytecode:2869](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2869)<br>[validateCharStringBytecode:2944](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2944)<br>[validateCharStringBytecode:3027](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3027)<br>[validateCharStringBytecode:3042](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3042) | No registered fix¹ |
-| `CFF_INVALID_OPERATOR` | active · baseline | finding | binary | cff-charstrings | CFF , CFF2 | [validateCharStringBytecode:2815](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2815)<br>[validateCharStringBytecode:2851](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2851) | No registered fix¹ |
-| `CFF_OPERATION_LIMIT_EXCEEDED` | active | finding | binary | cff-charstrings | CFF , CFF2 | [validateCharStringBytecode:2763](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2763) | No registered fix¹ |
-| `CFF_PRIVATE_DICT_BLEND_FORBIDDEN` | active | finding | binary | cff-private-dictionaries | CFF2 | [validateCff2PrivateDictionary:127](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L127) | No registered fix¹ |
-| `CFF_PRIVATE_DICT_TRAILING_VALUES` | active | finding | binary | cff-private-dictionaries | CFF2 | [validateCff2PrivateDictionary:139](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L139) | No registered fix¹ |
-| `CFF_RETURN_OUTSIDE_SUBR` | active | finding | binary | cff-charstrings | CFF  | [validateCharStringBytecode:3015](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3015) | No registered fix¹ |
-| `CFF_STACK_OVERFLOW` | active · baseline | finding | binary | cff-private-dictionaries | CFF , CFF2 | [validateCff2PrivateDictionary:69](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L69)<br>[validateCffCharStrings:2722](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2722) | No registered fix¹ |
-| `CFF_STACK_UNDERFLOW` | active · baseline | finding | binary | cff-private-dictionaries | CFF , CFF2 | [validateCff2PrivateDictionary:91](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L91)<br>[executeCffArithmetic:123](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L123)<br>[validateCharStringBytecode:2831](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2831)<br>[validateCharStringBytecode:2862](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2862)<br>[validateCharStringBytecode:2893](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2893)<br>[validateCharStringBytecode:2915](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2915)<br>[validateCharStringBytecode:2970](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2970) | No registered fix¹ |
-| `CFF_SUBR_DEPTH_EXCEEDED` | active · baseline | finding | binary | cff-charstrings | CFF , CFF2 | [validateCharStringBytecode:2752](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2752) | No registered fix¹ |
-| `CFF_SUBR_INDEX_OUT_OF_RANGE` | active · baseline | finding | binary | cff-charstrings | CFF , CFF2 | [validateCharStringBytecode:2987](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2987) | No registered fix¹ |
-| `CFF_SUBR_NO_RETURN` | active | finding | binary | cff-charstrings | CFF  | [validateCharStringBytecode:3051](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3051) | No registered fix¹ |
-| `CFF_TRUNCATED_OPERAND` | active · baseline | finding | binary | cff-charstrings | CFF , CFF2 | [validateCharStringBytecode:2782](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2782) | No registered fix¹ |
-| `CFF_TRUNCATED_OPERATOR` | active · baseline | finding | binary | cff-charstrings | CFF , CFF2 | [validateCharStringBytecode:2805](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2805)<br>[validateCharStringBytecode:2956](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2956) | No registered fix¹ |
-| `CFF_VARIATION_CONTEXT_INVALID` | active | finding | binary | cff-private-dictionaries | CFF2 | [validateCff2PrivateDictionary:57](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L57)<br>[validateAdvancedStore:25](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L25)<br>[cffBlendRegionCount:2605](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2605) | No registered fix¹ |
-| `CFF_VARIATION_CONTEXT_MISSING` | active | finding | binary | cff-private-dictionaries | CFF2 | [validateCff2PrivateDictionary:41](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L41)<br>[cffBlendRegionCount:2591](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2591) | No registered fix¹ |
-| `CFF_VSINDEX_ORDER_INVALID` | active | finding | binary | cff-charstrings | CFF2 | [validateCharStringBytecode:2874](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2874) | No registered fix¹ |
-| `CFF_VSINDEX_OUT_OF_RANGE` | active | finding | binary | cff-private-dictionaries | CFF2 | [validateCff2PrivateDictionary:47](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L47)<br>[cffBlendRegionCount:2597](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2597) | No registered fix¹ |
-| `CLASSDEF_CLASS_OUT_OF_RANGE` | active · baseline | finding | binary | layout-classes | GDEF | [validateClassDef:2314](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2314)<br>[validateClassDef:2357](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2357) | No registered fix¹ |
-| `CLASSDEF_FORMAT_INVALID` | active · baseline | finding | binary | layout-classes | GDEF, GPOS, GSUB | [validateClassDef:2290](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2290) | No registered fix¹ |
-| `CLASSDEF_GLYPH_OUT_OF_RANGE` | active · baseline | finding | binary | layout-classes | GDEF, GPOS, GSUB, maxp | [validateClassDef:2303](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2303)<br>[validateClassDef:2339](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2339) | No registered fix¹ |
-| `CLASSDEF_RANGES_NOT_SORTED` | active · baseline | finding | binary | layout-classes | GDEF, GPOS, GSUB | [validateClassDef:2348](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2348) | No registered fix¹ |
-| `CLASSDEF_RANGE_INVALID` | active · baseline | finding | binary | layout-classes | GDEF, GPOS, GSUB | [validateClassDef:2330](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2330) | No registered fix¹ |
-| `CMAP_FORMAT12_END_BEFORE_START` | active · baseline | finding | binary | character-mapping | cmap | [validateCmapDeep:927](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L927)<br>[validateCmapFormat12And13:3376](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3376) | No registered fix¹ |
-| `CMAP_FORMAT12_GROUPS_NOT_SORTED` | active · baseline | finding | binary | character-mapping | cmap | [validateCmapFormat12And13:3389](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3389) | No registered fix¹ |
-| `CMAP_FORMAT12_GROUPS_OUT_OF_ORDER` | active · baseline | finding | binary | character-mapping | cmap | [validateCmapDeep:937](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L937) | No registered fix¹ |
-| `CMAP_FORMAT12_GROUPS_OVERLAP` | active · baseline | finding | binary | character-mapping | cmap | [validateCmapFormat12And13:3398](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3398) | No registered fix¹ |
-| `CMAP_FORMAT14_UVS_CONFLICT` | active | finding | binary | variation-selectors | cmap | [validateCmapFormat14:3339](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3339) | No registered fix¹ |
-| `CMAP_FORMAT14_UVS_ORDER_INVALID` | active | finding | binary | variation-selectors | cmap | [validateCmapFormat14:3309](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3309)<br>[validateCmapFormat14:3330](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3330) | No registered fix¹ |
-| `CMAP_FORMAT14_VS_OUT_OF_ORDER` | active · baseline | finding | binary | character-mapping | cmap | [validateCmapDeep:991](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L991)<br>[validateCmapFormat14:3284](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3284) | No registered fix¹ |
-| `CMAP_FORMAT14_VS_OUT_OF_RANGE` | active · baseline | finding | binary | character-mapping | cmap | [validateCmapDeep:981](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L981)<br>[validateCmapFormat14:3275](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3275) | No registered fix¹ |
-| `CMAP_FORMAT4_INVALID_TERMINATOR` | active · baseline | finding | binary | character-mapping | cmap | [validateCmapDeep:842](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L842) | No registered fix¹ |
-| `CMAP_FORMAT4_LENGTH_INVALID` | active · baseline | finding | resolved | resolved-tables | cmap | [validateTables:757](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L757) | No registered fix¹ |
-| `CMAP_FORMAT4_RANGES_OUT_OF_ORDER` | active · baseline | finding | binary | character-mapping | cmap | [validateCmapDeep:855](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L855)<br>[validateCmapDeep:864](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L864) | No registered fix¹ |
-| `CMAP_FORMAT4_RANGE_OFFSET_INVALID` | active | finding | binary | character-mapping | cmap | [validateCmapDeep:895](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L895) | No registered fix¹ |
-| `CMAP_FORMAT4_SEGCOUNT_INVALID` | active · baseline | finding | binary | character-mapping | cmap | [validateCmapDeep:831](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L831) | No registered fix¹ |
-| `CMAP_GLYPH_OUT_OF_RANGE` | active · baseline | finding | binary | character-mapping | cmap, maxp | [validateCmapDeep:881](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L881)<br>[validateCmapDeep:909](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L909)<br>[validateCmapDeep:952](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L952)<br>[validateCmapDeep:962](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L962)<br>[validateCmapDeep:1005](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1005) | No registered fix¹ |
-| `CMAP_LANGUAGE_NONZERO_FOR_WINDOWS` | active · baseline | finding | binary | character-mapping | cmap | [validateCmapDeep:785](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L785) | No registered fix¹ |
-| `CMAP_NO_SUBTABLES` | active · baseline | finding | binary | character-mapping | cmap | [validateCmapDeep:735](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L735) | No registered fix¹ |
-| `CMAP_NO_SUPPORTED_SUBTABLE` | active · baseline | finding | binary | character-mapping | cmap | [validateCmapDeep:771](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L771) | No registered fix¹ |
-| `CMAP_SUBTABLES_NOT_SORTED` | active · baseline | finding | binary | character-mapping | cmap | [phaseCrossTableChecks:3978](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3978) | `cmap.order` |
-| `CMAP_UNICODE_SCALAR_INVALID` | active | finding | binary | character-mapping | cmap | [validateCmapDeep:811](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L811)<br>[validateCmapFormat14:3303](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3303)<br>[validateCmapFormat14:3325](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3325) | No registered fix¹ |
-| `CMAP_VERSION_INVALID` | active · baseline | finding | binary | character-mapping | cmap | [validateCmapDeep:723](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L723) | `cmap.version` |
-| `COLLECTION_FONTS_INVALID` | active · baseline | finding | resolved | raw-collection-shape | — | [validateCollection:960](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L960) | No registered fix¹ |
-| `COLLECTION_HEADER_UNREADABLE` | active · baseline | finding | binary | collection | — | [diagnoseCollection:4166](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4166) | No registered fix¹ |
-| `COLLECTION_INFO` | active · baseline | information | binary | collection | — | [diagnoseCollection:4174](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4174) | No registered fix¹ |
-| `COLLECTION_META_INVALID` | active · baseline | finding | resolved | raw-collection-shape | — | [validateCollection:950](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L950) | No registered fix¹ |
-| `COLLECTION_NUMFONTS_CORRECTED` | active · baseline | information | resolved | raw-collection-shape | — | [validateCollection:976](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L976) | No registered fix¹ |
-| `COLOR_PALETTE_REFERENCE_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [validateAdvancedColor:9](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L9) | No registered fix¹ |
-| `COLR_ALPHA_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [validateAdvancedColor:122](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L122) | No registered fix¹ |
-| `COLR_BASE_GLYPH_ORDER_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [validateAdvancedColor:86](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L86) | No registered fix¹ |
-| `COLR_CLIP_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [validateAdvancedColor:169](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L169) | No registered fix¹ |
-| `COLR_COLOR_LINE_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [validateAdvancedColor:130](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L130)<br>[validateAdvancedColor:135](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L135) | No registered fix¹ |
-| `COLR_COMPOSITE_MODE_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [validateAdvancedColor:149](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L149) | No registered fix¹ |
-| `COLR_LAYER_RANGE_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [validateAdvancedColor:72](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L72)<br>[validateAdvancedColor:142](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L142) | No registered fix¹ |
-| `COLR_PAINT_CYCLE` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [validateAdvancedColor:111](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L111) | No registered fix¹ |
-| `COLR_PAINT_REFERENCE_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [validateAdvancedColor:107](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L107) | No registered fix¹ |
-| `COMPLEXITY_LIMIT` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:104](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L104) | No registered fix¹ |
-| `COMPONENT_REFERENCE_MISSING` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:307](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L307) | No registered fix¹ |
-| `COMPONENT_TRANSFORM_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:327](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L327)<br>[validateSimplifiedJSON:341](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L341) | No registered fix¹ |
-| `CONTOURS_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:228](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L228) | No registered fix¹ |
-| `CONTOUR_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:235](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L235) | No registered fix¹ |
-| `COORDINATE_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:253](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L253)<br>[validateSimplifiedJSON:268](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L268) | No registered fix¹ |
-| `COVERAGE_FORMAT_INVALID` | active · baseline | finding | binary | layout-coverage | GDEF, GPOS, GSUB | [validateCoverage:2209](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2209) | No registered fix¹ |
-| `COVERAGE_GLYPHS_NOT_SORTED` | active · baseline | finding | binary | layout-coverage | GDEF, GPOS, GSUB | [validateCoverage:2232](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2232) | No registered fix¹ |
-| `COVERAGE_GLYPH_OUT_OF_RANGE` | active · baseline | finding | binary | layout-coverage | GDEF, GPOS, GSUB, maxp | [validateCoverage:2223](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2223)<br>[validateCoverage:2261](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2261) | No registered fix¹ |
-| `COVERAGE_RANGES_NOT_SORTED` | active · baseline | finding | binary | layout-coverage | GDEF, GPOS, GSUB | [validateCoverage:2270](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2270) | No registered fix¹ |
-| `COVERAGE_RANGE_INVALID` | active · baseline | finding | binary | layout-coverage | GDEF, GPOS, GSUB | [validateCoverage:2252](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2252) | No registered fix¹ |
-| `CPAL_COLOR_RECORD_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [validateAdvancedColor:20](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L20) | No registered fix¹ |
-| `CPAL_METADATA_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [validateAdvancedColor:30](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L30) | No registered fix¹ |
-| `CPAL_PALETTE_COUNT_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [validateAdvancedColor:14](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L14) | No registered fix¹ |
-| `CYCLIC_DATA` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:112](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L112) | No registered fix¹ |
-| `DIAGNOSTIC_CHECK_FAILED` | active | finding | binary | diagnostic-execution | *, CFF , CFF2 | [runAdvancedDiagnostics:62](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-diagnostics.js#L62)<br>[validateCffCharStrings:2646](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2646)<br>[diagnoseFace:4209](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4209) | No registered fix¹ |
-| `DIAGNOSTIC_LIMIT_EXCEEDED` | active | finding | binary | diagnostic-execution | *, CFF , CFF2, cmap, glyf | [runAdvancedDiagnostics:57](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-diagnostics.js#L57)<br>[runAdvancedDiagnostics:121](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-diagnostics.js#L121)<br>[phaseSignature:132](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L132)<br>[phaseSignature:142](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L142)<br>[phaseHeader:286](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L286)<br>[phaseParseTables:634](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L634)<br>[phaseParseTables:655](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L655)<br>[validateCmapDeep:902](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L902)<br>[validateCffCharStrings:2644](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2644)<br>[validateGlyfComposites:3110](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3110)<br>[validateCmapFormat14:3295](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3295)<br>[validateCmapFormat14:3318](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3318)<br>[diagnoseCollection:4170](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4170)<br>[runFaceChecks:4243](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4243)<br>[runFaceChecks:4291](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4291)<br>[diagnoseFont:4453](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4453) | No registered fix¹ |
-| `DIRECTORY_ENTRY_UNREADABLE` | active · baseline | finding | binary | sfnt-directory | * | [phaseDirectory:361](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L361) | No registered fix¹ |
-| `DIRECTORY_NOT_SORTED` | active · baseline | finding | binary | sfnt-directory | * | [phaseDirectory:447](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L447)<br>[validateWoff1Wrapper:1381](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1381) | `sfnt.directory-order` |
-| `DIRECTORY_TRUNCATED` | active · baseline | finding | binary | sfnt-directory | — | [phaseHeader:297](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L297)<br>[validateWoff1Wrapper:1405](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1405) | No registered fix¹ |
-| `DUPLICATE_TABLE` | active · baseline | finding | binary | sfnt-directory | * | [phaseDirectory:385](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L385)<br>[validateWoff1Wrapper:1379](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1379) | No registered fix¹ |
-| `EMPTY_COLLECTION` | active · baseline | finding | binary | collection | — | [diagnoseCollection:4151](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4151) | No registered fix¹ |
-| `EMPTY_TABLE` | active · baseline | finding | binary | sfnt-directory | * | [phaseDirectory:419](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L419) | No registered fix¹ |
-| `EXCESSIVE_TABLES` | active · baseline | finding | binary | sfnt-directory | — | [phaseHeader:280](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L280) | No registered fix¹ |
-| `EXPECTATION_ADVANCE_WIDTH` | active | finding | profile | repertoire-and-glyph-policy | — | [inspectExpectations:321](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L321) | No registered fix¹ |
-| `EXPECTATION_BEHAVIOR_GLYPH_MISSING` | active | finding | profile | repertoire-and-glyph-policy | — | [inspectExpectations:319](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L319) | No registered fix¹ |
-| `EXPECTATION_DUPLICATE_GLYPH_NAME` | active | finding | profile | repertoire-and-glyph-policy | — | [inspectExpectations:236](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L236) | No registered fix¹ |
-| `EXPECTATION_GLYPH_MISSING` | active | finding | profile | repertoire-and-glyph-policy | — | [inspectExpectations:311](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L311) | No registered fix¹ |
-| `EXPECTATION_GLYPH_NAME_POLICY` | active | finding | profile | repertoire-and-glyph-policy | — | [inspectExpectations:241](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L241) | No registered fix¹ |
-| `EXPECTATION_INVALID_SCALAR` | active | finding | profile | repertoire-and-glyph-policy | — | [inspectExpectations:245](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L245) | No registered fix¹ |
-| `EXPECTATION_REACHABILITY_INCOMPLETE` | active | information | profile | repertoire-and-glyph-policy | — | [inspectExpectations:338](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L338) | No registered fix¹ |
-| `EXPECTATION_REFERENCE_MISSING` | active | finding | profile | repertoire-and-glyph-policy | — | [inspectExpectations:254](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L254) | No registered fix¹ |
-| `EXPECTATION_REPERTOIRE_MISSING` | active | finding | profile | repertoire-and-glyph-policy | — | [inspectExpectations:307](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L307) | No registered fix¹ |
-| `EXPECTATION_SHAPING_RULE_UNSUPPORTED` | active | information | profile | repertoire-and-glyph-policy | — | [inspectExpectations:265](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L265) | No registered fix¹ |
-| `EXPECTATION_UVS_GLYPH_MISSING` | active | finding | profile | repertoire-and-glyph-policy | — | [inspectExpectations:287](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L287) | No registered fix¹ |
-| `EXPECTATION_VISIBLE_WHITESPACE` | active | finding | profile | repertoire-and-glyph-policy | — | [inspectExpectations:324](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L324) | No registered fix¹ |
-| `EXPORT_RESOLUTION_FAILED` | active · baseline | finding | public-validation | export-resolution | — | [validate:1272](https://github.com/mattlag/Font-Flux-JS/blob/main/src/font_flux.js#L1272) | No registered fix¹ |
-| `FACE_INDEX_OUT_OF_RANGE` | active | finding | binary | collection | — | [diagnoseCollection:4177](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4177)<br>[diagnoseFont:4471](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4471) | No registered fix¹ |
-| `FAMILY_AXIS_CONVENTION_DIFFERENCE` | active | finding | profile | family-policy | — | [inspectFamily:139](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L139) | No registered fix¹ |
-| `FAMILY_COMPLETENESS_UNKNOWN` | active | information | profile | family-policy | — | [inspectFamily:65](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L65) | No registered fix¹ |
-| `FAMILY_DUPLICATE_IDENTITY` | active | finding | profile | family-policy | — | [inspectFamily:83](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L83) | No registered fix¹ |
-| `FAMILY_DUPLICATE_STYLE` | active | finding | profile | family-policy | — | [inspectFamily:83](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L83) | No registered fix¹ |
-| `FAMILY_EXPECTATION_MISMATCH` | active | finding | profile | family-policy | — | [inspectFamily:92](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L92) | No registered fix¹ |
-| `FAMILY_INSTANCE_COORDINATE` | active | finding | profile | family-policy | — | [inspectFamily:105](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L105) | No registered fix¹ |
-| `FAMILY_INSTANCE_COORDINATE_MISSING` | active | finding | profile | family-policy | — | [inspectFamily:109](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L109) | No registered fix¹ |
-| `FAMILY_MEMBER_MISSING` | active | finding | profile | family-policy | — | [inspectFamily:67](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L67) | No registered fix¹ |
-| `FAMILY_METADATA_DIFFERENCE` | active | information | profile | family-policy | — | [inspectFamily:126](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L126) | No registered fix¹ |
-| `FAMILY_METADATA_MISSING` | active | finding | profile | family-policy | — | [inspectFamily:77](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L77)<br>[inspectFamily:89](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L89) | No registered fix¹ |
-| `FAMILY_METRIC_DIFFERENCE` | active | information | profile | family-policy | — | [inspectFamily:133](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L133) | No registered fix¹ |
-| `FAMILY_STYLE_LINK_FLAGS` | active | finding | profile | family-policy | — | [inspectFamily:98](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L98) | No registered fix¹ |
-| `FILE_EXCEEDS_1GB` | active · baseline | finding | binary | diagnostic-execution | — | [diagnoseFont:4448](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4448) | No registered fix¹ |
-| `FONTDATA_INVALID` | active · baseline | finding | resolved | resolved-shape | — | [validateSingleFont:922](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L922) | No registered fix¹ |
-| `FORMAT_COLLECTION` | active · baseline | information | binary | container | — | [phaseSignature:213](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L213)<br>[diagnoseFont:4465](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4465) | No registered fix¹ |
-| `FORMAT_WOFF1` | active · baseline | information | binary | container | — | [phaseSignature:151](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L151) | No registered fix¹ |
-| `FORMAT_WOFF2` | active · baseline | information | binary | container | — | [phaseSignature:176](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L176) | No registered fix¹ |
-| `FVAR_AXIS_DUPLICATE_TAG` | active · baseline | finding | binary | variation-axes | fvar | [validateFvarDeep:1615](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1615) | No registered fix¹ |
-| `FVAR_AXIS_FLAGS_RESERVED` | active · baseline | finding | binary | variation-axes | fvar | [validateFvarNamesAndFlags:1728](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1728) | No registered fix¹ |
-| `FVAR_AXIS_NAMEID_MISSING` | active · baseline | finding | binary | variation-axes | fvar, name | [validateFvarNamesAndFlags:1747](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1747) | `fvar.axis-name` |
-| `FVAR_AXIS_NAMEID_RESERVED` | active · baseline | finding | binary | variation-axes | fvar | [validateFvarNamesAndFlags:1736](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1736) | `fvar.axis-name` |
-| `FVAR_AXIS_RANGE_INVALID` | active · baseline | finding | binary | variation-axes | fvar | [validateFvarDeep:1607](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1607) | No registered fix¹ |
-| `FVAR_INSTANCE_FLAGS_RESERVED` | active · baseline | finding | binary | variation-axes | fvar | [validateFvarNamesAndFlags:1762](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1762) | No registered fix¹ |
-| `FVAR_INSTANCE_NAMEID_MISSING` | active · baseline | finding | binary | variation-axes | fvar, name | [validateFvarNamesAndFlags:1784](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1784) | `fvar.instance-name` |
-| `FVAR_INSTANCE_OUT_OF_RANGE` | active · baseline | finding | binary | variation-axes | fvar | [validateFvarDeep:1635](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1635) | No registered fix¹ |
-| `GASP_RANGE_INVALID` | active | finding | binary | truetype-instructions-and-geometry | fpgm, gasp, glyf, loca, maxp, prep | [validateAdvancedTrueType:111](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L111) | No registered fix¹ |
-| `GDEF_POINT_REFERENCE_INVALID` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [validateAdvancedGdef:22](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L22) | No registered fix¹ |
-| `GDEF_VERSION_INVALID` | active · baseline | finding | binary | layout-definition | GDEF | [validateGDEFTable:2128](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2128) | No registered fix¹ |
-| `GLYF_ATTACHMENT_POINT_INVALID` | active | finding | binary | truetype-instructions-and-geometry | fpgm, gasp, glyf, loca, maxp, prep | [validateAdvancedTrueType:73](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L73) | No registered fix¹ |
-| `GLYF_BBOX_INVERTED` | active · baseline | finding | binary | truetype-geometry | glyf | [validateGlyfHeaders:3201](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3201)<br>[validateGlyfHeaders:3215](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3215) | No registered fix¹ |
-| `GLYF_BBOX_OUTSIDE_HEAD` | active · baseline | finding | binary | truetype-geometry | glyf, head | [validateGlyfHeaders:3231](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3231) | No registered fix¹ |
-| `GLYF_COMPONENT_FLAGS_CONFLICT` | active | finding | binary | truetype-instructions-and-geometry | fpgm, gasp, glyf, loca, maxp, prep | [validateAdvancedTrueType:77](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L77) | No registered fix¹ |
-| `GLYF_COMPOSITE_CYCLE` | active · baseline | finding | binary | truetype-composites | glyf | [validateGlyfComposites:3158](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3158) | No registered fix¹ |
-| `GLYF_COMPOSITE_DEPTH_EXCEEDED` | active · baseline | finding | binary | truetype-composites | glyf | [validateGlyfComposites:3132](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3132) | No registered fix¹ |
-| `GLYF_COMPOSITE_GLYPH_OUT_OF_RANGE` | active · baseline | finding | binary | truetype-composites | glyf, maxp | [validateGlyfComposites:3149](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3149) | No registered fix¹ |
-| `GLYF_MAXP_LIMIT_EXCEEDED` | active | finding | binary | truetype-instructions-and-geometry | fpgm, gasp, glyf, loca, maxp, prep | [validateAdvancedTrueType:95](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L95) | No registered fix¹ |
-| `GLYF_NUM_CONTOURS_INVALID` | active · baseline | finding | binary | truetype-geometry | glyf | [validateGlyfHeaders:3244](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3244) | No registered fix¹ |
-| `GLYPH_COUNT_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:178](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L178) | No registered fix¹ |
-| `GLYPH_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:186](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L186) | No registered fix¹ |
-| `GLYPH_NAME_DUPLICATE` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:193](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L193) | No registered fix¹ |
-| `GLYPH_NAME_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:200](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L200) | No registered fix¹ |
-| `GLYPH_REFERENCE_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:297](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L297) | No registered fix¹ |
-| `GPOS_ANCHOR_POINT_INVALID` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [validateAdvancedLayout:112](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L112) | No registered fix¹ |
-| `GPOS_LOOKUP_TYPE_INVALID` | active · baseline | finding | binary | layout-lookups | GPOS | [validateLayoutLookups:1661](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1661) | No registered fix¹ |
-| `GSUB_LIGATURE_COMPONENT_OUT_OF_RANGE` | active · baseline | finding | binary | layout-substitution | GSUB, maxp | [validateLayoutSubtables:2456](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2456) | No registered fix¹ |
-| `GSUB_LIGATURE_GLYPH_OUT_OF_RANGE` | active · baseline | finding | binary | layout-substitution | GSUB, maxp | [validateLayoutSubtables:2445](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2445) | No registered fix¹ |
-| `GSUB_LOOKUP_TYPE_INVALID` | active · baseline | finding | binary | layout-lookups | GSUB | [validateLayoutLookups:1661](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1661) | No registered fix¹ |
-| `GSUB_SUBSTITUTE_GLYPH_OUT_OF_RANGE` | active · baseline | finding | binary | layout-substitution | GSUB, maxp | [validateLayoutSubtables:2424](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2424) | No registered fix¹ |
-| `GVAR_DATA_OFFSETS_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [validateAdvancedVariation:123](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L123) | No registered fix¹ |
-| `GVAR_WITHOUT_FVAR` | active · baseline | finding | binary | variation-dependencies | fvar, gvar | [phaseCrossTableChecks:4044](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4044) | No registered fix¹ |
-| `HEADER_FIELDS_CORRECTED` | active · baseline | information | resolved | resolved-header | — | [validateHeader:638](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L638) | No registered fix¹ |
-| `HEADER_NUMTABLES_CORRECTED` | active · baseline | information | resolved | resolved-header | — | [validateHeader:615](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L615) | No registered fix¹ |
-| `HEADER_NUMTABLES_INVALID` | active · baseline | finding | resolved | resolved-header | — | [validateHeader:603](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L603) | No registered fix¹ |
-| `HEADER_PROMOTED` | active · baseline | information | resolved | resolved-header | — | [validateHeader:557](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L557) | No registered fix¹ |
-| `HEADER_SFVERSION_INFERRED` | active · baseline | information | resolved | resolved-header | — | [validateHeader:589](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L589) | No registered fix¹ |
-| `HEADER_SYNTHESIZED` | active · baseline | information | resolved | resolved-header | — | [validateHeader:574](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L574) | No registered fix¹ |
-| `HEADER_UNREADABLE` | active · baseline | finding | binary | sfnt-directory | — | [phaseHeader:243](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L243) | No registered fix¹ |
-| `HEAD_BBOX_INVERTED` | active · baseline | finding | binary | font-header | head | [phaseCrossTableChecks:3696](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3696)<br>[phaseCrossTableChecks:3704](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3704) | No registered fix¹ |
-| `HEAD_GLYPH_DATA_FORMAT_INVALID` | active · baseline | finding | binary | font-header | head | [phaseCrossTableChecks:3726](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3726) | `head.glyph-data-format` |
-| `HEAD_INDEX_TO_LOC_FORMAT_INVALID` | active · baseline | finding | binary | font-header | head | [phaseCrossTableChecks:3715](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3715) | No registered fix¹ |
-| `HEAD_MACSTYLE_RESERVED_BITS_SET` | active · baseline | finding | binary | metrics-and-style | head | [validateOS2Sanitization:1188](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1188) | No registered fix¹ |
-| `HEAD_MAJOR_VERSION_UNSUPPORTED` | active · baseline | finding | binary | font-header | head | [phaseCrossTableChecks:3685](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3685) | No registered fix¹ |
-| `HHEA_DERIVED_EXTREMA_MISMATCH` | active | finding | binary | diagnostic-execution | *, glyf, hhea, hmtx | [runFaceChecks:4367](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4367)<br>[inspectTT:543](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-tt.js#L543) | `hhea.extrema` |
-| `HHEA_HMTX_MISMATCH` | active · baseline | finding | binary | horizontal-metrics | hhea, hmtx | [phaseCrossTableChecks:3868](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3868) | No registered fix¹ |
-| `HHEA_MAJOR_VERSION_UNSUPPORTED` | active · baseline | finding | binary | horizontal-metrics | hhea | [phaseCrossTableChecks:3786](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3786) | No registered fix¹ |
-| `HMTX_GLYPH_MISMATCH` | active · baseline | finding | binary | horizontal-metrics | hmtx, maxp | [phaseCrossTableChecks:3854](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3854) | No registered fix¹ |
-| `HVAR_WITHOUT_FVAR` | active · baseline | finding | binary | variation-dependencies | HVAR, fvar | [phaseCrossTableChecks:4053](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4053) | No registered fix¹ |
-| `INPUT_INVALID` | active · baseline | finding | resolved | resolved-shape | — | [validateJSON:1019](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L1019) | No registered fix¹ |
-| `INSTANCE_COORDINATES_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:517](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L517)<br>[validateSimplifiedJSON:532](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L532) | No registered fix¹ |
-| `INVALID_DIAGNOSTIC_OPTIONS` | active | finding | binary | diagnostic-execution | — | [diagnoseFont:4429](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4429)<br>[diagnoseFont:4435](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4435)<br>[diagnoseFont:4442](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4442) | No registered fix¹ |
-| `IVS_AXIS_COUNT_MISMATCH` | active · baseline | finding | binary | variation-store | GDEF, HVAR, MVAR, VVAR, fvar | [validateItemVariationStore:1987](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1987) | No registered fix¹ |
-| `IVS_REGION_COORD_OUT_OF_RANGE` | active · baseline | finding | binary | variation-store | GDEF, HVAR, MVAR, VVAR | [validateItemVariationStore:2012](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2012) | No registered fix¹ |
-| `IVS_REGION_INDEX_OUT_OF_RANGE` | active · baseline | finding | binary | variation-store | GDEF, HVAR, MVAR, VVAR | [validateItemVariationStore:2046](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2046) | No registered fix¹ |
-| `IVS_REGION_PEAK_OUT_OF_ORDER` | active · baseline | finding | binary | variation-store | GDEF, HVAR, MVAR, VVAR | [validateItemVariationStore:2027](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2027) | No registered fix¹ |
-| `JSTF_LOOKUP_REFERENCE_INVALID` | active | finding | binary | specialist-structures | JSTF | [validateAdvancedSpecialist:97](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L97) | No registered fix¹ |
-| `JSTF_MAX_LOOKUP_TYPE_INVALID` | active | finding | binary | specialist-structures | JSTF | [validateAdvancedSpecialist:83](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L83) | No registered fix¹ |
-| `KERNING_CLASS_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:365](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L365) | No registered fix¹ |
-| `LAYOUT_CONTEXT_EMPTY` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [validateAdvancedLayout:189](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L189) | No registered fix¹ |
-| `LAYOUT_EXTENSION_CYCLE` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [validateAdvancedLayout:122](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L122) | No registered fix¹ |
-| `LAYOUT_EXTENSION_TYPE_INVALID` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [validateAdvancedLayout:49](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L49)<br>[validateAdvancedLayout:129](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L129) | No registered fix¹ |
-| `LAYOUT_GRAPH_REFERENCE_INVALID` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [validateAdvancedLayout:67](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L67) | No registered fix¹ |
-| `LAYOUT_LANGSYS_RESERVED` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [validateAdvancedLayout:77](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L77) | No registered fix¹ |
-| `LAYOUT_LOOKUP_FLAG_INVALID` | active · baseline | finding | binary | layout-lookups | GPOS, GSUB | [validateLayoutLookups:1694](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1694) | No registered fix¹ |
-| `LAYOUT_LOOKUP_FLAG_RESERVED` | active · baseline | finding | binary | layout-lookups | GPOS, GSUB | [validateLayoutLookups:1675](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1675) | No registered fix¹ |
-| `LAYOUT_MARK_ATTACHMENT_CLASS_UNAVAILABLE` | active | finding | binary | layout-mark-references | GDEF, GPOS, GSUB | [validateLayoutReferences:1590](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1590) | No registered fix¹ |
-| `LAYOUT_MARK_FILTER_SET_INVALID` | active | finding | binary | layout-mark-references | GDEF, GPOS, GSUB | [validateLayoutReferences:1585](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1585) | No registered fix¹ |
-| `LAYOUT_VARIATION_CONDITION_INVALID` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [validateAdvancedLayout:234](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L234) | No registered fix¹ |
-| `LEGACY_CFF_VERSION_UNSUPPORTED` | active | information | binary | legacy-original-structures | — | [inspectLegacy:337](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L337) | No registered fix¹ |
-| `LEGACY_FORMAT_UNSUPPORTED` | active | information | binary | legacy-original-structures | — | [inspectLegacy:384](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L384) | No registered fix¹ |
-| `LEGACY_RESOURCE_LIMIT` | active | finding | binary | legacy-original-structures | — | [inspectLegacy:389](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L389) | No registered fix¹ |
-| `LEGACY_STRUCTURE_INVALID` | active | finding | binary | legacy-original-structures | — | [inspectLegacy:389](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L389) | No registered fix¹ |
-| `LEGACY_TYPE1_FONT_TYPE_UNCONFIRMED` | active | finding | binary | legacy-original-structures | — | [inspectLegacy:362](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L362) | No registered fix¹ |
-| `LEGACY_TYPE1_NOTDEF_MISSING` | active | finding | binary | legacy-original-structures | — | [inspectLegacy:364](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L364) | No registered fix¹ |
-| `LEGACY_TYPE1_NO_ENDCHAR` | active | finding | binary | legacy-original-structures | — | [inspectLegacy:373](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L373) | No registered fix¹ |
-| `LEGACY_TYPE1_OPERATOR_UNSUPPORTED` | active | information | binary | legacy-original-structures | — | [inspectLegacy:370](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L370) | No registered fix¹ |
-| `LEGACY_TYPE1_PROGRAM_INVALID` | active | finding | binary | legacy-original-structures | — | [inspectLegacy:378](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L378) | No registered fix¹ |
-| `LEGACY_TYPE1_WIDTH_MISSING` | active | finding | binary | legacy-original-structures | — | [inspectLegacy:374](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L374) | No registered fix¹ |
-| `LOCA_BEYOND_GLYF` | active · baseline | finding | binary | truetype-offsets | glyf, loca | [phaseCrossTableChecks:3885](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3885) | No registered fix¹ |
-| `MATH_ASSEMBLY_PART_INVALID` | active | finding | binary | specialist-structures | MATH | [validateAdvancedSpecialist:184](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L184) | No registered fix¹ |
-| `MATH_KERN_HEIGHTS_INVALID` | active | finding | binary | specialist-structures | MATH | [validateAdvancedSpecialist:152](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L152) | No registered fix¹ |
-| `MATH_VARIANT_ORDER_INVALID` | active | finding | binary | specialist-structures | MATH | [validateAdvancedSpecialist:173](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L173) | No registered fix¹ |
-| `MATH_VERSION_INVALID` | active · baseline | finding | binary | math-version | MATH | [validateMATH:2479](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2479) | No registered fix¹ |
-| `MAXP_NUMGLYPHS_ZERO` | active · baseline | finding | binary | glyph-count | maxp | [phaseCrossTableChecks:3747](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3747) | No registered fix¹ |
-| `MAXP_VERSION_INVALID` | active · baseline | finding | binary | glyph-count | maxp | [phaseCrossTableChecks:3739](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3739) | No registered fix¹ |
-| `MAXP_VERSION_MISMATCH_FOR_OUTLINE` | active · baseline | finding | binary | outline-dependencies | CFF , CFF2, glyf, loca, maxp | [phaseCrossTableChecks:3759](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3759)<br>[phaseCrossTableChecks:3771](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3771) | `cff.maxp` |
-| `MERG_ENTRY_FLAGS_INVALID` | active | finding | binary | specialist-structures | MERG | [validateAdvancedSpecialist:57](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L57) | No registered fix¹ |
-| `MISSING_REQUIRED_TABLE` | active · baseline | finding | binary | table-presence | * | [phaseRequiredTables:503](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L503) | No registered fix¹ |
-| `MIXED_OUTLINES` | active · baseline | finding | binary | table-presence | * | [phaseRequiredTables:523](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L523) | No registered fix¹ |
-| `MULTIPLE_OUTLINE_TYPES` | active · baseline | finding | resolved | resolved-outline-dependencies | * | [validateOutlineAndRequiredTables:906](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L906) | No registered fix¹ |
-| `MVAR_DELTA_SET_INNER_OUT_OF_RANGE` | active · baseline | finding | binary | variation-metrics | MVAR | [validateMVAR:2096](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2096) | No registered fix¹ |
-| `MVAR_DELTA_SET_OUTER_OUT_OF_RANGE` | active · baseline | finding | binary | variation-metrics | MVAR | [validateMVAR:2081](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2081) | No registered fix¹ |
-| `MVAR_VALUE_RECORD_SIZE_INVALID` | active · baseline | finding | binary | variation-metrics | MVAR | [validateMVAR:2064](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2064) | No registered fix¹ |
-| `MVAR_WITHOUT_FVAR` | active · baseline | finding | binary | variation-dependencies | MVAR, fvar | [phaseCrossTableChecks:4053](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4053) | No registered fix¹ |
-| `NAME_FORMAT_INVALID` | active · baseline | finding | binary | naming | name | [validateNameDeep:1225](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1225) | No registered fix¹ |
-| `NAME_LANG_TAG_TOO_LONG` | active · baseline | finding | binary | naming | name | [validateNameDeep:1294](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1294) | No registered fix¹ |
-| `NAME_POSTSCRIPT_NAME_INVALID_CHARS` | active · baseline | finding | binary | naming | name | [validateNameDeep:1312](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1312) | No registered fix¹ |
-| `NAME_RECORDS_NOT_SORTED` | active · baseline | finding | binary | naming | name | [phaseCrossTableChecks:3953](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3953) | `name.order` |
-| `NAME_RECORD_OUT_OF_BOUNDS` | active · baseline | finding | binary | naming | name | [validateNameDeep:1267](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1267) | No registered fix¹ |
-| `NAME_STRING_OFFSET_INVALID` | active · baseline | finding | binary | naming | name | [validateNameDeep:1247](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1247) | No registered fix¹ |
-| `NAME_STRING_TOO_LONG` | active · baseline | finding | binary | naming | name | [validateNameDeep:1277](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1277) | No registered fix¹ |
-| `NOT_ARRAYBUFFER` | active · baseline | finding | binary | container | — | [phaseSignature:113](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L113) | No registered fix¹ |
-| `NO_FAMILY_NAME` | active · baseline | finding | binary | naming | name | [phaseCrossTableChecks:3925](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3925) | `name.family` |
-| `NO_OUTLINES` | active · baseline | finding | binary | table-presence | * | [phaseRequiredTables:515](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L515) | No registered fix¹ |
-| `NO_READABLE_ENTRIES` | active · baseline | finding | binary | diagnostic-execution | * | [runFaceChecks:4235](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4235) | No registered fix¹ |
-| `NO_STYLE_NAME` | active · baseline | finding | binary | naming | name | [phaseCrossTableChecks:3933](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3933) | `name.style` |
-| `NO_TABLES` | active · baseline | finding | binary | sfnt-directory | — | [phaseHeader:273](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L273) | No registered fix¹ |
-| `NUMBER_OUT_OF_RANGE` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:84](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L84) | No registered fix¹ |
-| `OS2_CAP_HEIGHT_NEGATIVE` | active · baseline | finding | binary | metrics-and-style | OS/2 | [validateOS2Sanitization:1132](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1132) | No registered fix¹ |
-| `OS2_FIRST_LAST_CHAR_INVERTED` | active · baseline | finding | binary | metrics-and-style | OS/2 | [validateOS2Sanitization:1104](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1104) | No registered fix¹ |
-| `OS2_FSSELECTION_HEAD_MACSTYLE_MISMATCH` | active · baseline | finding | binary | metrics-and-style | OS/2, head | [validateOS2Sanitization:1178](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1178) | No registered fix¹ |
-| `OS2_FSTYPE_RESERVED_BITS_SET` | active · baseline | finding | binary | metrics-and-style | OS/2 | [validateOS2Sanitization:1069](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1069) | No registered fix¹ |
-| `OS2_NEGATIVE_SIZE` | active · baseline | finding | binary | metrics-and-style | OS/2 | [validateOS2Sanitization:1088](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1088) | No registered fix¹ |
-| `OS2_OPTICAL_POINTSIZE_OUT_OF_RANGE` | active · baseline | finding | binary | metrics-and-style | OS/2 | [validateOS2Sanitization:1146](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1146)<br>[validateOS2Sanitization:1157](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1157) | No registered fix¹ |
-| `OS2_TYPO_LINEGAP_NEGATIVE` | active · baseline | finding | binary | metrics-and-style | OS/2 | [validateOS2Sanitization:1114](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1114) | `os2.typo-linegap` |
-| `OS2_VERSION_INVALID` | active · baseline | finding | binary | metrics-and-style | OS/2 | [phaseCrossTableChecks:3831](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3831) | No registered fix¹ |
-| `OS2_WEIGHT_CLAMPED` | active · baseline | finding | binary | metrics-and-style | OS/2 | [validateOS2Sanitization:1045](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1045) | `os2.weight` |
-| `OS2_WIDTH_CLAMPED` | active · baseline | finding | binary | metrics-and-style | OS/2 | [validateOS2Sanitization:1057](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1057) | `os2.width` |
-| `OS2_X_HEIGHT_NEGATIVE` | active · baseline | finding | binary | metrics-and-style | OS/2 | [validateOS2Sanitization:1124](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1124) | No registered fix¹ |
-| `OUTLINE_DEGENERATE_CONTOUR` | active | finding | editable | source-outline-evidence | — | [inspectGlyph:51](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L51) | No registered fix¹ |
-| `OUTLINE_EMPTY_CONTOUR` | active | finding | editable | source-outline-evidence | — | [inspectGlyph:30](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L30) | No registered fix¹ |
-| `OUTLINE_MISSING` | active · baseline | finding | resolved | resolved-outline-dependencies | * | [validateOutlineAndRequiredTables:875](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L875) | No registered fix¹ |
-| `OUTLINE_NONFINITE_COORDINATE` | active | finding | editable | source-outline-evidence | — | [inspectGlyph:36](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L36) | No registered fix¹ |
-| `OUTLINE_OVERLAP_POSSIBLE` | active | information | editable | source-outline-evidence | — | [inspectGlyph:70](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L70) | No registered fix¹ |
-| `OUTLINE_SOURCE_UNAVAILABLE` | active | information | editable | source-outline-evidence | — | [inspectGlyph:74](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L74) | No registered fix¹ |
-| `OUTLINE_TINY_SIGNED_AREA` | active | finding | editable | source-outline-evidence | — | [inspectGlyph:59](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L59) | No registered fix¹ |
-| `OUTLINE_ZERO_LENGTH_SEGMENT` | active | finding | editable | source-outline-evidence | — | [inspectGlyph:54](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L54) | No registered fix¹ |
-| `PAINT_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:425](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L425)<br>[validateSimplifiedJSON:449](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L449) | No registered fix¹ |
-| `PALETTE_REFERENCE_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:441](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L441)<br>[validateSimplifiedJSON:478](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L478) | No registered fix¹ |
-| `POINT_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:244](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L244) | No registered fix¹ |
-| `POST_NUMGLYPHS_MISMATCH` | active · baseline | finding | binary | glyph-count | maxp, post | [phaseCrossTableChecks:3818](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3818) | No registered fix¹ |
-| `POST_VERSION_INVALID_FOR_CFF` | active · baseline | finding | binary | outline-dependencies | CFF , CFF2, post | [phaseCrossTableChecks:4018](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4018) | No registered fix¹ |
-| `POST_VERSION_UNSUPPORTED` | active · baseline | finding | binary | postscript-metadata | post | [phaseCrossTableChecks:3803](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3803) | No registered fix¹ |
-| `PROFILE_FAMILY_NAME_MISMATCH` | active | finding | profile | profile-family-expectation | name | [evaluateProfile:260](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/profiles.js#L260) | No registered fix¹ |
-| `PROFILE_FILENAME_MISMATCH` | active | finding | profile | profile-filename-expectation | — | [evaluateProfile:293](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/profiles.js#L293) | No registered fix¹ |
-| `PROFILE_REQUIRED_TABLE_MISSING` | active | finding | profile | profile-required-tables | OS/2 | [evaluateProfile:189](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/profiles.js#L189) | No registered fix¹ |
-| `PROFILE_WINDOWS_NAMES_MISSING` | active | finding | profile | profile-windows-names | name | [evaluateProfile:226](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/profiles.js#L226) | No registered fix¹ |
-| `QUALITY_AVERAGE_WIDTH_MISMATCH` | active | finding | binary | diagnostic-execution | *, OS/2, hhea, hmtx | [runFaceChecks:4311](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4311)<br>[inspectMetadata:507](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L507) | `os2.average-width` |
-| `QUALITY_CHARACTER_RANGE_MISMATCH` | active | finding | binary | diagnostic-execution | *, OS/2, cmap | [runFaceChecks:4311](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4311)<br>[inspectMetadata:511](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L511) | `os2.character-range` |
-| `QUALITY_NAME_ENCODING_INVALID` | active | finding | binary | diagnostic-execution | *, name | [runFaceChecks:4311](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4311)<br>[inspectMetadata:496](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L496) | `name.record` |
-| `QUALITY_NAME_WHITESPACE` | active | finding | binary | diagnostic-execution | *, name | [runFaceChecks:4311](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4311)<br>[inspectMetadata:500](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L500) | `name.record` |
-| `QUALITY_POSTSCRIPT_NAME_INVALID` | active | finding | binary | diagnostic-execution | *, name | [runFaceChecks:4311](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4311)<br>[inspectMetadata:502](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L502) | `name.record` |
-| `RECOMMENDED_TABLE_MISSING` | active · baseline | finding | resolved | resolved-outline-dependencies | * | [validateOutlineAndRequiredTables:862](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L862) | No registered fix¹ |
-| `REQUIRED_TABLE_MISSING` | active · baseline | finding | resolved | resolved-outline-dependencies | * | [validateOutlineAndRequiredTables:851](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L851) | No registered fix¹ |
-| `SF_VERSION` | active · baseline | information | binary | sfnt-directory | — | [phaseHeader:255](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L255) | No registered fix¹ |
-| `SIMPLIFIED_SHAPE_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:92](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L92) | No registered fix¹ |
-| `SOURCE_COMPONENT_SAMPLE_UNSUPPORTED` | active | information | editable | source-outline-evidence | — | [inspectSourceQuality:141](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L141) | No registered fix¹ |
-| `SOURCE_MASTERS_UNAVAILABLE` | active | information | editable | source-outline-evidence | — | [inspectSourceQuality:127](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L127) | No registered fix¹ |
-| `SOURCE_MASTER_GLYPH_MISSING` | active | finding | editable | source-outline-evidence | — | [inspectSourceQuality:113](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L113) | No registered fix¹ |
-| `SOURCE_MASTER_TOPOLOGY_MISMATCH` | active | finding | editable | source-outline-evidence | — | [inspectSourceQuality:119](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L119) | No registered fix¹ |
-| `SOURCE_MASTER_UPEM_MISMATCH` | active | finding | editable | source-outline-evidence | — | [inspectSourceQuality:125](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L125) | No registered fix¹ |
-| `SOURCE_PROVENANCE_UNAVAILABLE` | active | information | editable | source-outline-evidence | — | [inspectSourceQuality:104](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L104) | No registered fix¹ |
-| `STAT_AXIS_DUPLICATE_TAG` | active · baseline | finding | binary | variation-style | STAT | [validateSTAT:1824](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1824) | No registered fix¹ |
-| `STAT_AXIS_VALUE_AXIS_INDEX_OUT_OF_RANGE` | active · baseline | finding | binary | variation-style | STAT | [validateSTAT:1858](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1858)<br>[validateSTAT:1889](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1889) | No registered fix¹ |
-| `STAT_AXIS_VALUE_RANGE_INVALID` | active · baseline | finding | binary | variation-style | STAT | [validateSTAT:1875](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1875) | No registered fix¹ |
-| `STAT_DESIGN_AXIS_SIZE_INVALID` | active · baseline | finding | binary | variation-style | STAT | [validateSTAT:1809](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1809) | No registered fix¹ |
-| `STAT_MISSING_FVAR_AXIS` | active · baseline | finding | binary | variation-style | STAT, fvar | [validateSTAT:1839](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1839) | No registered fix¹ |
-| `STAT_VERSION_INVALID` | active · baseline | finding | binary | variation-style | STAT | [validateSTAT:1801](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1801) | No registered fix¹ |
-| `SUBSTITUTION_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:376](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L376)<br>[validateSimplifiedJSON:381](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L381)<br>[validateSimplifiedJSON:405](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L405) | No registered fix¹ |
-| `SVG_DOCUMENT_OFFSET_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [validateAdvancedColor:58](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L58) | No registered fix¹ |
-| `SVG_DOCUMENT_RANGE_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [validateAdvancedColor:43](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L43) | No registered fix¹ |
-| `SVG_RESERVED_FIELD_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [validateAdvancedColor:53](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L53) | No registered fix¹ |
-| `TABLES_EMPTY` | active · baseline | finding | resolved | resolved-tables | * | [validateTables:697](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L697) | No registered fix¹ |
-| `TABLES_MISSING` | active · baseline | finding | resolved | resolved-tables | * | [validateTables:685](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L685) | No registered fix¹ |
-| `TABLES_OVERLAPPING` | active · baseline | finding | binary | sfnt-directory | * | [phaseDirectory:483](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L483)<br>[validateWoff1Wrapper:1452](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1452) | No registered fix¹ |
-| `TABLE_CHECKSUM_INVALID` | active · baseline | finding | resolved | resolved-tables | * | [validateTables:732](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L732) | No registered fix¹ |
-| `TABLE_DATA_INVALID` | active · baseline | finding | resolved | resolved-tables | * | [validateTables:721](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L721) | No registered fix¹ |
-| `TABLE_DEPENDENCY_MISSING` | active · baseline | finding | resolved | resolved-dependencies | cvar, fvar, glyf, gvar, head, hhea, hmtx, loca, maxp, vhea, vmtx | [validateTableDependencies:805](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L805) | No registered fix¹ |
-| `TABLE_LENGTH_EXCEEDS_1GB` | active · baseline | finding | binary | sfnt-directory | * | [phaseDirectory:461](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L461) | No registered fix¹ |
-| `TABLE_MISALIGNED` | active · baseline | finding | binary | sfnt-directory | * | [phaseDirectory:429](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L429)<br>[validateWoff1Wrapper:1389](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1389) | `sfnt.alignment` |
-| `TABLE_OUT_OF_BOUNDS` | active · baseline | finding | binary | sfnt-directory | * | [phaseDirectory:408](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L408)<br>[validateWoff1Wrapper:1385](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1385) | No registered fix¹ |
-| `TABLE_OVERLAPS_DIRECTORY` | active | finding | binary | sfnt-directory | * | [phaseDirectory:400](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L400)<br>[validateWoff1Wrapper:1383](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1383) | No registered fix¹ |
-| `TABLE_PARSED` | active · baseline | information | binary | table-parsing | * | [phaseParseTables:663](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L663) | No registered fix¹ |
-| `TABLE_PARSE_FAILED` | active · baseline | finding | binary | table-parsing | * | [phaseParseTables:635](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L635)<br>[phaseParseTables:670](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L670) | No registered fix¹ |
-| `TABLE_RAW_INVALID_BYTE` | active · baseline | finding | resolved | raw-table-bytes | * | [validateTableRawBytes:667](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L667) | No registered fix¹ |
-| `TABLE_RAW_INVALID_TYPE` | active · baseline | finding | resolved | raw-table-bytes | * | [validateTableRawBytes:654](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L654) | No registered fix¹ |
-| `TABLE_TAG_INVALID` | active · baseline | finding | resolved | resolved-tables | * | [validateTables:708](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L708) | No registered fix¹ |
-| `TABLE_UNRECOGNIZED_RAW` | active · baseline | information | resolved | resolved-tables | * | [validateTables:780](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L780) | No registered fix¹ |
-| `TABLE_WRITER_UNSUPPORTED` | active · baseline | finding | resolved | resolved-tables | * | [validateTables:771](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L771) | No registered fix¹ |
-| `TOO_SHORT` | active · baseline | finding | binary | container | — | [phaseSignature:120](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L120) | No registered fix¹ |
-| `TRUETYPE_OUTLINE_INCOMPLETE` | active · baseline | finding | resolved | resolved-outline-dependencies | * | [validateOutlineAndRequiredTables:886](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L886)<br>[validateOutlineAndRequiredTables:895](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L895) | No registered fix¹ |
-| `TTC_FACE_OFFSET_INVALID` | active | finding | binary | collection | — | [diagnoseCollection:4194](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4194) | No registered fix¹ |
-| `TTC_FACE_OFFSET_UNREADABLE` | active | finding | binary | collection | — | [diagnoseCollection:4187](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4187) | No registered fix¹ |
-| `TTC_OFFSETS_TRUNCATED` | active | finding | binary | collection | — | [diagnoseCollection:4161](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4161) | No registered fix¹ |
-| `TTC_TOO_MANY_FONTS` | active · baseline | finding | binary | collection | — | [diagnoseCollection:4155](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4155) | No registered fix¹ |
-| `TTC_VERSION_INVALID` | active · baseline | finding | binary | collection | — | [diagnoseCollection:4147](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4147) | No registered fix¹ |
-| `TT_DERIVED_BOUNDS_MISMATCH` | active | finding | binary | diagnostic-execution | *, glyf, head, loca | [runFaceChecks:4367](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4367)<br>[inspectTT:536](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-tt.js#L536) | `tt.bounds` |
-| `TT_DERIVED_MAXP_MISMATCH` | active | finding | binary | diagnostic-execution | *, glyf, loca, maxp | [runFaceChecks:4367](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4367)<br>[inspectTT:528](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-tt.js#L528) | `tt.maxp-geometry` |
-| `TT_INSTR_DEFINITION_LOCATION_INVALID` | active | finding | binary | truetype-instructions-and-geometry | fpgm, gasp, glyf, loca, maxp, prep | [validateAdvancedTrueType:37](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L37) | No registered fix¹ |
-| `TT_INSTR_DEFINITION_SCOPE_INVALID` | active | finding | binary | truetype-instructions-and-geometry | fpgm, gasp, glyf, loca, maxp, prep | [validateAdvancedTrueType:32](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L32)<br>[validateAdvancedTrueType:41](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L41) | No registered fix¹ |
-| `TT_INSTR_ELSE_INVALID` | active | finding | binary | truetype-instructions-and-geometry | fpgm, gasp, glyf, loca, maxp, prep | [validateAdvancedTrueType:26](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L26) | No registered fix¹ |
-| `TT_INSTR_NESTED_FDEF` | active · baseline | finding | binary | truetype-instructions | fpgm, glyf, prep | [validateTrueTypeInstructions:3567](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3567) | No registered fix¹ |
-| `TT_INSTR_STRAY_ENDF` | active · baseline | finding | binary | truetype-instructions | fpgm, glyf, prep | [validateTrueTypeInstructions:3582](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3582) | No registered fix¹ |
-| `TT_INSTR_TRUNCATED_PUSH` | active · baseline | finding | binary | truetype-instructions | fpgm, glyf, prep | [validateTrueTypeInstructions:3439](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3439)<br>[validateTrueTypeInstructions:3459](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3459)<br>[validateTrueTypeInstructions:3478](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3478)<br>[validateTrueTypeInstructions:3492](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3492)<br>[validateTrueTypeInstructions:3511](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3511)<br>[validateTrueTypeInstructions:3525](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3525) | No registered fix¹ |
-| `TT_INSTR_UNBALANCED_EIF` | active · baseline | finding | binary | truetype-instructions | fpgm, glyf, prep | [validateTrueTypeInstructions:3549](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3549) | No registered fix¹ |
-| `TT_INSTR_UNBALANCED_IF` | active · baseline | finding | binary | truetype-instructions | fpgm, glyf, prep | [validateTrueTypeInstructions:3599](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3599) | No registered fix¹ |
-| `TT_INSTR_UNCLOSED_FDEF` | active · baseline | finding | binary | truetype-instructions | fpgm, glyf, prep | [validateTrueTypeInstructions:3607](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3607) | No registered fix¹ |
-| `UNICODE_INVALID` | active · baseline | finding | editable | authoring-data | — | [validateSimplifiedJSON:221](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L221) | No registered fix¹ |
-| `UNKNOWN_TABLE` | active · baseline | information | binary | table-presence | * | [phaseRequiredTables:534](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L534) | No registered fix¹ |
-| `VARIABLE_TABLE_DEPENDENCY` | active · baseline | finding | resolved | resolved-dependencies | cvar, fvar, glyf, gvar, head, hhea, hmtx, loca, maxp, vhea, vmtx | [validateTableDependencies:822](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L822)<br>[validateTableDependencies:832](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L832) | No registered fix¹ |
-| `VARIATION_MAP_ENCODING_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [validateAdvancedVariation:52](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L52) | No registered fix¹ |
-| `VARIATION_POINT_REFERENCE_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [validateAdvancedVariation:101](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L101) | No registered fix¹ |
-| `VARIATION_REGION_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [validateAdvancedStore:16](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L16) | No registered fix¹ |
-| `VARIATION_REGION_REFERENCE_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [validateAdvancedStore:33](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L33) | No registered fix¹ |
-| `VARIATION_SHARED_TUPLE_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [validateTupleBytes:149](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L149) | No registered fix¹ |
-| `VARIATION_TUPLE_COORDINATE_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [validateAdvancedVariation:83](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L83) | No registered fix¹ |
-| `VARIATION_TUPLE_DATA_SIZE_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [validateTupleBytes:193](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L193) | No registered fix¹ |
-| `VARIATION_TUPLE_FLAGS_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [validateTupleBytes:141](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L141)<br>[validateTupleBytes:146](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L146) | No registered fix¹ |
-| `VARIATION_TUPLE_REGION_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [validateAdvancedVariation:94](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L94) | No registered fix¹ |
-| `VARIATION_WORD_DELTA_COUNT_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [validateAdvancedStore:29](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L29) | No registered fix¹ |
-| `VHEA_DERIVED_EXTREMA_MISMATCH` | active | finding | binary | diagnostic-execution | *, glyf, vhea, vmtx | [runFaceChecks:4367](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4367)<br>[inspectTT:543](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-tt.js#L543) | `vhea.extrema` |
-| `VHEA_VMTX_MISMATCH` | active · baseline | finding | binary | vertical-metrics | vhea, vmtx | [phaseCrossTableChecks:4033](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4033) | No registered fix¹ |
-| `VVAR_WITHOUT_FVAR` | active · baseline | finding | binary | variation-dependencies | VVAR, fvar | [phaseCrossTableChecks:4053](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4053) | No registered fix¹ |
-| `WOFF1_COMPRESSED_LENGTH_INVALID` | active | finding | binary | container | — | [validateWoff1Wrapper:1387](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1387) | No registered fix¹ |
-| `WOFF1_FILE_SIZE_MISMATCH` | active · baseline | finding | binary | container | — | [validateWoff1Wrapper:1355](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1355) | `container.length` |
-| `WOFF1_METADATA_BLOCK_INVALID` | active · baseline | finding | binary | container | — | [validateWoff1Wrapper:1414](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1414)<br>[validateWoff1Wrapper:1422](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1422) | No registered fix¹ |
-| `WOFF1_PRIVATE_BLOCK_INVALID` | active · baseline | finding | binary | container | — | [validateWoff1Wrapper:1433](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1433)<br>[validateWoff1Wrapper:1442](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1442) | No registered fix¹ |
-| `WOFF1_RESERVED_FIELD_NONZERO` | active · baseline | finding | binary | container | — | [validateWoff1Wrapper:1345](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1345) | `container.reserved` |
-| `WOFF1_SFNT_SIZE_MISMATCH` | active · baseline | finding | binary | container | — | [validateWoff1Wrapper:1401](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1401) | `container.sfnt-size` |
-| `WOFF1_TRAILING_JUNK` | active · baseline | finding | binary | container | — | [validateWoff1Wrapper:1490](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1490) | No registered fix¹ |
-| `WOFF1_UNWRAPPED` | active · baseline | information | binary | container | — | [phaseSignature:159](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L159) | No registered fix¹ |
-| `WOFF1_UNWRAP_FAILED` | active · baseline | finding | binary | container | — | [phaseSignature:167](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L167) | No registered fix¹ |
-| `WOFF2_COLLECTION_UNSUPPORTED` | active | finding | binary | container | — | [phaseSignature:184](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L184) | No registered fix¹ |
-| `WOFF2_DECOMPRESSED_SIZE_INVALID` | active · baseline | finding | binary | container | — | [validateWoff2Wrapper:1546](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1546)<br>[validateWoff2Wrapper:1555](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1555) | No registered fix¹ |
-| `WOFF2_FILE_SIZE_MISMATCH` | active · baseline | finding | binary | container | — | [validateWoff2Wrapper:1537](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1537) | `container.length` |
-| `WOFF2_METADATA_BLOCK_INVALID` | active | finding | binary | container | — | [validateWoff2Wrapper:1513](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1513) | No registered fix¹ |
-| `WOFF2_PRIVATE_BLOCK_INVALID` | active | finding | binary | container | — | [validateWoff2Wrapper:1520](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1520) | No registered fix¹ |
-| `WOFF2_RESERVED_FIELD_NONZERO` | active · baseline | finding | binary | container | — | [validateWoff2Wrapper:1529](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1529) | `container.reserved` |
-| `WOFF2_UNWRAPPED` | active · baseline | information | binary | container | — | [phaseSignature:193](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L193) | No registered fix¹ |
-| `WOFF2_UNWRAP_FAILED` | active · baseline | finding | binary | container | — | [phaseSignature:201](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L201) | No registered fix¹ |
+| `ADVANCED_CLASS_RANGE_INVALID` | active | finding | binary | advanced-shared-structures | * | [`classValues:171`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L171) | No registered fix¹ |
+| `ADVANCED_COVERAGE_INVALID` | active | finding | binary | advanced-shared-structures | * | [`coverageGlyphs:135`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L135)<br>[`coverageGlyphs:150`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L150) | No registered fix¹ |
+| `ADVANCED_DEVICE_INVALID` | active | finding | binary | advanced-shared-structures | * | [`deviceReference:199`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L199) | No registered fix¹ |
+| `ADVANCED_GLYPH_REFERENCE_INVALID` | active | finding | binary | advanced-shared-structures | * | [`advancedContext:29`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L29)<br>[`outlinePointCount:58`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L58) | No registered fix¹ |
+| `ADVANCED_PARALLEL_ARRAY_MISMATCH` | active | finding | binary | advanced-shared-structures | * | [`advancedContext:35`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L35) | No registered fix¹ |
+| `ADVANCED_STRUCTURE_CYCLE` | active | finding | binary | advanced-shared-structures | * | [`outlinePointCount:63`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L63)<br>[`walkObjects:108`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L108) | No registered fix¹ |
+| `ADVANCED_STRUCTURE_INVALID` | active | finding | binary | diagnostic-execution | * | [`runAdvancedDiagnostics:59`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-diagnostics.js#L59) | No registered fix¹ |
+| `ADVANCED_VARIATION_REFERENCE_INVALID` | active | finding | binary | advanced-shared-structures | * | [`variationReference:187`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-common.js#L187) | No registered fix¹ |
+| `ARRAY_SHAPE_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:137`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L137) | No registered fix¹ |
+| `AVAR_COORD_OUT_OF_RANGE` | active · baseline | finding | binary | variation-axis-mapping | avar | [`validateAvar:1938`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1938) | No registered fix¹ |
+| `AVAR_FROM_COORD_NOT_INCREASING` | active · baseline | finding | binary | variation-axis-mapping | avar | [`validateAvar:1947`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1947) | No registered fix¹ |
+| `AVAR_MISSING_REQUIRED_ENDPOINTS` | active · baseline | finding | binary | variation-axis-mapping | avar | [`validateAvar:1964`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1964) | No registered fix¹ |
+| `AVAR_SEGMENT_COUNT_MISMATCH` | active · baseline | finding | binary | variation-axis-mapping | avar, fvar | [`validateAvar:1911`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1911) | No registered fix¹ |
+| `AVAR_WITHOUT_FVAR` | active · baseline | finding | binary | variation-dependencies | avar, fvar | [`phaseCrossTableChecks:4053`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4053) | No registered fix¹ |
+| `AXIS_RANGE_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:508`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L508) | No registered fix¹ |
+| `AXIS_TAG_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:496`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L496) | No registered fix¹ |
+| `BAD_CHECKSUM` | active · baseline | finding | binary | checksums | *, head | [`phaseChecksums:560`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L560) | [`sfnt.checksums`](#repair-sfnt-checksums) |
+| `BAD_CHECKSUM_ADJUSTMENT` | active | finding | binary | checksums | *, head | [`phaseChecksums:574`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L574) | [`sfnt.checksums`](#repair-sfnt-checksums) |
+| `BAD_ENTRY_SELECTOR` | active · baseline | finding | binary | sfnt-directory | — | [`phaseHeader:322`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L322) | [`sfnt.search-fields`](#repair-sfnt-search-fields) |
+| `BAD_MAGIC_NUMBER` | active · baseline | finding | binary | font-header | head | [`phaseCrossTableChecks:3661`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3661) | [`head.magic`](#repair-head-magic) |
+| `BAD_RANGE_SHIFT` | active · baseline | finding | binary | sfnt-directory | — | [`phaseHeader:330`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L330) | [`sfnt.search-fields`](#repair-sfnt-search-fields) |
+| `BAD_SEARCH_RANGE` | active · baseline | finding | binary | sfnt-directory | — | [`phaseHeader:314`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L314) | [`sfnt.search-fields`](#repair-sfnt-search-fields) |
+| `BAD_SF_VERSION` | active · baseline | finding | binary | sfnt-directory | — | [`phaseHeader:263`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L263) | No registered fix¹ |
+| `BAD_TABLE_TAG` | active · baseline | finding | binary | sfnt-directory | * | [`phaseDirectory:375`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L375) | No registered fix¹ |
+| `BAD_UNITS_PER_EM` | active · baseline | finding | binary | font-header | head | [`phaseCrossTableChecks:3672`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3672) | No registered fix¹ |
+| `BASE_DEFAULT_BASELINE_INVALID` | active | finding | binary | specialist-structures | BASE | [`validateAdvancedSpecialist:27`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L27) | No registered fix¹ |
+| `BASE_POINT_REFERENCE_INVALID` | active | finding | binary | specialist-structures | BASE | [`validateAdvancedSpecialist:38`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L38) | No registered fix¹ |
+| `BITMAP_DATA_OFFSETS_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [`validateAdvancedBitmap:79`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L79)<br>[`validateAdvancedBitmap:161`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L161) | No registered fix¹ |
+| `BITMAP_DATA_TABLE_MISSING` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [`validateAdvancedBitmap:116`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L116) | No registered fix¹ |
+| `BITMAP_DUPLICATE_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [`validateAdvancedBitmap:90`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L90) | No registered fix¹ |
+| `BITMAP_GLYPH_REFERENCE_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [`referenceGraph:54`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L54)<br>[`validateAdvancedBitmap:157`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L157) | No registered fix¹ |
+| `BITMAP_IMAGE_LENGTH_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [`validateAdvancedBitmap:175`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L175)<br>[`validateAdvancedBitmap:183`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L183) | No registered fix¹ |
+| `BITMAP_IMAGE_METRICS_MISMATCH` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [`inspectPng:26`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L26) | No registered fix¹ |
+| `BITMAP_LOCATION_TABLE_MISSING` | active | finding | binary | diagnostic-execution | * | [`runAdvancedDiagnostics:109`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-diagnostics.js#L109) | No registered fix¹ |
+| `BITMAP_PNG_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [`inspectPng:6`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L6) | No registered fix¹ |
+| `BITMAP_REFERENCE_CYCLE` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [`referenceGraph:46`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L46) | No registered fix¹ |
+| `BITMAP_SCALE_REFERENCE_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [`validateAdvancedBitmap:108`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L108) | No registered fix¹ |
+| `BITMAP_STRIKE_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [`validateAdvancedBitmap:127`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L127) | No registered fix¹ |
+| `BITMAP_SUBTABLE_RANGE_INVALID` | active | finding | binary | bitmap-structures | CBDT, CBLC, EBDT, EBLC, EBSC, bdat, bloc, sbix | [`validateAdvancedBitmap:135`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-bitmap.js#L135) | No registered fix¹ |
+| `CFF_ARITHMETIC_OPERAND_INVALID` | active | finding | binary | cff-programs-and-storage | CFF , CFF2 | [`executeCffArithmetic:127`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L127) | No registered fix¹ |
+| `CFF_BLEND_INVALID_COUNT` | active | finding | binary | cff-private-dictionaries | CFF2 | [`validateCff2PrivateDictionary:83`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L83)<br>[`validateCharStringBytecode:2906`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2906) | No registered fix¹ |
+| `CFF_CHARSET_DUPLICATE` | active | finding | binary | cff-programs-and-storage | CFF , CFF2 | [`validateCffStructures:388`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L388) | No registered fix¹ |
+| `CFF_CHARSET_REFERENCE_INVALID` | active | finding | binary | cff-programs-and-storage | CFF , CFF2 | [`validateCffStructures:345`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L345) | No registered fix¹ |
+| `CFF_CHARSTRING_NO_ENDCHAR` | active · baseline | finding | binary | cff-charstrings | CFF  | [`validateCffCharStrings:2716`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2716) | No registered fix¹ |
+| `CFF_CONTEXT_UNSUPPORTED` | active | finding | binary | cff-private-dictionaries | CFF , CFF2 | [`validateCff2PrivateDictionary:19`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L19)<br>[`executeCffArithmetic:173`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L173)<br>[`resolveDiagnosticCffContext:2573`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2573)<br>[`validateCharStringBytecode:2825`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2825)<br>[`validateCharStringBytecode:2901`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2901)<br>[`validateCharStringBytecode:2921`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2921)<br>[`validateCharStringBytecode:2978`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2978)<br>[`validateCharStringBytecode:3024`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3024) | No registered fix¹ |
+| `CFF_DERIVED_MAXP_MISMATCH` | active | finding | binary | diagnostic-execution | *, CFF , CFF2, maxp | [`runFaceChecks:4367`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4367)<br>[`inspectCff:261`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-cff.js#L261) | [`cff.maxp`](#repair-cff-maxp) |
+| `CFF_EMPTY_CHARSTRING` | active · baseline | finding | binary | cff-charstrings | CFF , CFF2 | [`validateCffCharStrings:2667`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2667) | No registered fix¹ |
+| `CFF_ENCODING_INVALID` | active | finding | binary | cff-programs-and-storage | CFF , CFF2 | [`validateCffStructures:362`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L362)<br>[`validateCffStructures:368`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L368)<br>[`validateCffStructures:374`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L374) | No registered fix¹ |
+| `CFF_FDARRAY_MISSING` | active | finding | binary | cff-context | CFF , CFF2 | [`resolveDiagnosticCffContext:2551`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2551) | No registered fix¹ |
+| `CFF_FDSELECT_MISSING` | active | finding | binary | cff-context | CFF , CFF2 | [`resolveDiagnosticCffContext:2558`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2558) | No registered fix¹ |
+| `CFF_FDSELECT_STRUCTURE_INVALID` | active | finding | binary | cff-programs-and-storage | CFF , CFF2 | [`validateCffStructures:298`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L298)<br>[`validateCffStructures:315`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L315) | No registered fix¹ |
+| `CFF_FD_INDEX_OUT_OF_RANGE` | active | finding | binary | cff-context | CFF , CFF2 | [`resolveDiagnosticCffContext:2564`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2564) | No registered fix¹ |
+| `CFF_GLYPH_MISMATCH` | active · baseline | finding | binary | glyph-count | CFF , CFF2, maxp | [`phaseCrossTableChecks:3904`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3904) | No registered fix¹ |
+| `CFF_HEADER_INVALID` | active | finding | binary | cff-programs-and-storage | CFF , CFF2 | [`validateCffStructures:191`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L191) | No registered fix¹ |
+| `CFF_INVALID_NUMBER` | active · baseline | finding | binary | cff-private-dictionaries | CFF , CFF2 | [`validateCff2PrivateDictionary:74`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L74)<br>[`validateCharStringBytecode:2774`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2774) | No registered fix¹ |
+| `CFF_INVALID_OPERAND_COUNT` | active | finding | binary | cff-private-dictionaries | CFF , CFF2 | [`validateCff2PrivateDictionary:103`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L103)<br>[`validateCff2PrivateDictionary:122`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L122)<br>[`validateCff2PrivateDictionary:132`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L132)<br>[`validateCharStringBytecode:2838`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2838)<br>[`validateCharStringBytecode:2869`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2869)<br>[`validateCharStringBytecode:2944`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2944)<br>[`validateCharStringBytecode:3027`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3027)<br>[`validateCharStringBytecode:3042`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3042) | No registered fix¹ |
+| `CFF_INVALID_OPERATOR` | active · baseline | finding | binary | cff-charstrings | CFF , CFF2 | [`validateCharStringBytecode:2815`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2815)<br>[`validateCharStringBytecode:2851`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2851) | No registered fix¹ |
+| `CFF_OPERATION_LIMIT_EXCEEDED` | active | finding | binary | cff-charstrings | CFF , CFF2 | [`validateCharStringBytecode:2763`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2763) | No registered fix¹ |
+| `CFF_PRIVATE_DICT_BLEND_FORBIDDEN` | active | finding | binary | cff-private-dictionaries | CFF2 | [`validateCff2PrivateDictionary:127`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L127) | No registered fix¹ |
+| `CFF_PRIVATE_DICT_TRAILING_VALUES` | active | finding | binary | cff-private-dictionaries | CFF2 | [`validateCff2PrivateDictionary:139`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L139) | No registered fix¹ |
+| `CFF_RETURN_OUTSIDE_SUBR` | active | finding | binary | cff-charstrings | CFF  | [`validateCharStringBytecode:3015`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3015) | No registered fix¹ |
+| `CFF_STACK_OVERFLOW` | active · baseline | finding | binary | cff-private-dictionaries | CFF , CFF2 | [`validateCff2PrivateDictionary:69`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L69)<br>[`validateCffCharStrings:2722`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2722) | No registered fix¹ |
+| `CFF_STACK_UNDERFLOW` | active · baseline | finding | binary | cff-private-dictionaries | CFF , CFF2 | [`validateCff2PrivateDictionary:91`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L91)<br>[`executeCffArithmetic:123`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L123)<br>[`validateCharStringBytecode:2831`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2831)<br>[`validateCharStringBytecode:2862`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2862)<br>[`validateCharStringBytecode:2893`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2893)<br>[`validateCharStringBytecode:2915`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2915)<br>[`validateCharStringBytecode:2970`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2970) | No registered fix¹ |
+| `CFF_SUBR_DEPTH_EXCEEDED` | active · baseline | finding | binary | cff-charstrings | CFF , CFF2 | [`validateCharStringBytecode:2752`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2752) | No registered fix¹ |
+| `CFF_SUBR_INDEX_OUT_OF_RANGE` | active · baseline | finding | binary | cff-charstrings | CFF , CFF2 | [`validateCharStringBytecode:2987`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2987) | No registered fix¹ |
+| `CFF_SUBR_NO_RETURN` | active | finding | binary | cff-charstrings | CFF  | [`validateCharStringBytecode:3051`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3051) | No registered fix¹ |
+| `CFF_TRUNCATED_OPERAND` | active · baseline | finding | binary | cff-charstrings | CFF , CFF2 | [`validateCharStringBytecode:2782`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2782) | No registered fix¹ |
+| `CFF_TRUNCATED_OPERATOR` | active · baseline | finding | binary | cff-charstrings | CFF , CFF2 | [`validateCharStringBytecode:2805`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2805)<br>[`validateCharStringBytecode:2956`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2956) | No registered fix¹ |
+| `CFF_VARIATION_CONTEXT_INVALID` | active | finding | binary | cff-private-dictionaries | CFF2 | [`validateCff2PrivateDictionary:57`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L57)<br>[`validateAdvancedStore:25`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L25)<br>[`cffBlendRegionCount:2605`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2605) | No registered fix¹ |
+| `CFF_VARIATION_CONTEXT_MISSING` | active | finding | binary | cff-private-dictionaries | CFF2 | [`validateCff2PrivateDictionary:41`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L41)<br>[`cffBlendRegionCount:2591`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2591) | No registered fix¹ |
+| `CFF_VSINDEX_ORDER_INVALID` | active | finding | binary | cff-charstrings | CFF2 | [`validateCharStringBytecode:2874`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2874) | No registered fix¹ |
+| `CFF_VSINDEX_OUT_OF_RANGE` | active | finding | binary | cff-private-dictionaries | CFF2 | [`validateCff2PrivateDictionary:47`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-cff-private.js#L47)<br>[`cffBlendRegionCount:2597`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2597) | No registered fix¹ |
+| `CLASSDEF_CLASS_OUT_OF_RANGE` | active · baseline | finding | binary | layout-classes | GDEF | [`validateClassDef:2314`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2314)<br>[`validateClassDef:2357`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2357) | No registered fix¹ |
+| `CLASSDEF_FORMAT_INVALID` | active · baseline | finding | binary | layout-classes | GDEF, GPOS, GSUB | [`validateClassDef:2290`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2290) | No registered fix¹ |
+| `CLASSDEF_GLYPH_OUT_OF_RANGE` | active · baseline | finding | binary | layout-classes | GDEF, GPOS, GSUB, maxp | [`validateClassDef:2303`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2303)<br>[`validateClassDef:2339`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2339) | No registered fix¹ |
+| `CLASSDEF_RANGES_NOT_SORTED` | active · baseline | finding | binary | layout-classes | GDEF, GPOS, GSUB | [`validateClassDef:2348`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2348) | No registered fix¹ |
+| `CLASSDEF_RANGE_INVALID` | active · baseline | finding | binary | layout-classes | GDEF, GPOS, GSUB | [`validateClassDef:2330`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2330) | No registered fix¹ |
+| `CMAP_FORMAT12_END_BEFORE_START` | active · baseline | finding | binary | character-mapping | cmap | [`validateCmapDeep:927`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L927)<br>[`validateCmapFormat12And13:3376`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3376) | No registered fix¹ |
+| `CMAP_FORMAT12_GROUPS_NOT_SORTED` | active · baseline | finding | binary | character-mapping | cmap | [`validateCmapFormat12And13:3389`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3389) | No registered fix¹ |
+| `CMAP_FORMAT12_GROUPS_OUT_OF_ORDER` | active · baseline | finding | binary | character-mapping | cmap | [`validateCmapDeep:937`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L937) | No registered fix¹ |
+| `CMAP_FORMAT12_GROUPS_OVERLAP` | active · baseline | finding | binary | character-mapping | cmap | [`validateCmapFormat12And13:3398`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3398) | No registered fix¹ |
+| `CMAP_FORMAT14_UVS_CONFLICT` | active | finding | binary | variation-selectors | cmap | [`validateCmapFormat14:3339`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3339) | No registered fix¹ |
+| `CMAP_FORMAT14_UVS_ORDER_INVALID` | active | finding | binary | variation-selectors | cmap | [`validateCmapFormat14:3309`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3309)<br>[`validateCmapFormat14:3330`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3330) | No registered fix¹ |
+| `CMAP_FORMAT14_VS_OUT_OF_ORDER` | active · baseline | finding | binary | character-mapping | cmap | [`validateCmapDeep:991`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L991)<br>[`validateCmapFormat14:3284`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3284) | No registered fix¹ |
+| `CMAP_FORMAT14_VS_OUT_OF_RANGE` | active · baseline | finding | binary | character-mapping | cmap | [`validateCmapDeep:981`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L981)<br>[`validateCmapFormat14:3275`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3275) | No registered fix¹ |
+| `CMAP_FORMAT4_INVALID_TERMINATOR` | active · baseline | finding | binary | character-mapping | cmap | [`validateCmapDeep:842`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L842) | No registered fix¹ |
+| `CMAP_FORMAT4_LENGTH_INVALID` | active · baseline | finding | resolved | resolved-tables | cmap | [`validateTables:757`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L757) | No registered fix¹ |
+| `CMAP_FORMAT4_RANGES_OUT_OF_ORDER` | active · baseline | finding | binary | character-mapping | cmap | [`validateCmapDeep:855`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L855)<br>[`validateCmapDeep:864`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L864) | No registered fix¹ |
+| `CMAP_FORMAT4_RANGE_OFFSET_INVALID` | active | finding | binary | character-mapping | cmap | [`validateCmapDeep:895`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L895) | No registered fix¹ |
+| `CMAP_FORMAT4_SEGCOUNT_INVALID` | active · baseline | finding | binary | character-mapping | cmap | [`validateCmapDeep:831`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L831) | No registered fix¹ |
+| `CMAP_GLYPH_OUT_OF_RANGE` | active · baseline | finding | binary | character-mapping | cmap, maxp | [`validateCmapDeep:881`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L881)<br>[`validateCmapDeep:909`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L909)<br>[`validateCmapDeep:952`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L952)<br>[`validateCmapDeep:962`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L962)<br>[`validateCmapDeep:1005`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1005) | No registered fix¹ |
+| `CMAP_LANGUAGE_NONZERO_FOR_WINDOWS` | active · baseline | finding | binary | character-mapping | cmap | [`validateCmapDeep:785`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L785) | No registered fix¹ |
+| `CMAP_NO_SUBTABLES` | active · baseline | finding | binary | character-mapping | cmap | [`validateCmapDeep:735`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L735) | No registered fix¹ |
+| `CMAP_NO_SUPPORTED_SUBTABLE` | active · baseline | finding | binary | character-mapping | cmap | [`validateCmapDeep:771`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L771) | No registered fix¹ |
+| `CMAP_SUBTABLES_NOT_SORTED` | active · baseline | finding | binary | character-mapping | cmap | [`phaseCrossTableChecks:3978`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3978) | [`cmap.order`](#repair-cmap-order) |
+| `CMAP_UNICODE_SCALAR_INVALID` | active | finding | binary | character-mapping | cmap | [`validateCmapDeep:811`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L811)<br>[`validateCmapFormat14:3303`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3303)<br>[`validateCmapFormat14:3325`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3325) | No registered fix¹ |
+| `CMAP_VERSION_INVALID` | active · baseline | finding | binary | character-mapping | cmap | [`validateCmapDeep:723`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L723) | [`cmap.version`](#repair-cmap-version) |
+| `COLLECTION_FONTS_INVALID` | active · baseline | finding | resolved | raw-collection-shape | — | [`validateCollection:960`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L960) | No registered fix¹ |
+| `COLLECTION_HEADER_UNREADABLE` | active · baseline | finding | binary | collection | — | [`diagnoseCollection:4166`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4166) | No registered fix¹ |
+| `COLLECTION_INFO` | active · baseline | information | binary | collection | — | [`diagnoseCollection:4174`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4174) | No registered fix¹ |
+| `COLLECTION_META_INVALID` | active · baseline | finding | resolved | raw-collection-shape | — | [`validateCollection:950`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L950) | No registered fix¹ |
+| `COLLECTION_NUMFONTS_CORRECTED` | active · baseline | information | resolved | raw-collection-shape | — | [`validateCollection:976`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L976) | No registered fix¹ |
+| `COLOR_PALETTE_REFERENCE_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [`validateAdvancedColor:9`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L9) | No registered fix¹ |
+| `COLR_ALPHA_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [`validateAdvancedColor:122`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L122) | No registered fix¹ |
+| `COLR_BASE_GLYPH_ORDER_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [`validateAdvancedColor:86`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L86) | No registered fix¹ |
+| `COLR_CLIP_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [`validateAdvancedColor:169`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L169) | No registered fix¹ |
+| `COLR_COLOR_LINE_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [`validateAdvancedColor:130`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L130)<br>[`validateAdvancedColor:135`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L135) | No registered fix¹ |
+| `COLR_COMPOSITE_MODE_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [`validateAdvancedColor:149`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L149) | No registered fix¹ |
+| `COLR_LAYER_RANGE_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [`validateAdvancedColor:72`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L72)<br>[`validateAdvancedColor:142`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L142) | No registered fix¹ |
+| `COLR_PAINT_CYCLE` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [`validateAdvancedColor:111`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L111) | No registered fix¹ |
+| `COLR_PAINT_REFERENCE_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [`validateAdvancedColor:107`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L107) | No registered fix¹ |
+| `COMPLEXITY_LIMIT` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:104`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L104) | No registered fix¹ |
+| `COMPONENT_REFERENCE_MISSING` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:307`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L307) | No registered fix¹ |
+| `COMPONENT_TRANSFORM_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:327`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L327)<br>[`validateSimplifiedJSON:341`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L341) | No registered fix¹ |
+| `CONTOURS_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:228`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L228) | No registered fix¹ |
+| `CONTOUR_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:235`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L235) | No registered fix¹ |
+| `COORDINATE_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:253`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L253)<br>[`validateSimplifiedJSON:268`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L268) | No registered fix¹ |
+| `COVERAGE_FORMAT_INVALID` | active · baseline | finding | binary | layout-coverage | GDEF, GPOS, GSUB | [`validateCoverage:2209`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2209) | No registered fix¹ |
+| `COVERAGE_GLYPHS_NOT_SORTED` | active · baseline | finding | binary | layout-coverage | GDEF, GPOS, GSUB | [`validateCoverage:2232`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2232) | No registered fix¹ |
+| `COVERAGE_GLYPH_OUT_OF_RANGE` | active · baseline | finding | binary | layout-coverage | GDEF, GPOS, GSUB, maxp | [`validateCoverage:2223`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2223)<br>[`validateCoverage:2261`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2261) | No registered fix¹ |
+| `COVERAGE_RANGES_NOT_SORTED` | active · baseline | finding | binary | layout-coverage | GDEF, GPOS, GSUB | [`validateCoverage:2270`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2270) | No registered fix¹ |
+| `COVERAGE_RANGE_INVALID` | active · baseline | finding | binary | layout-coverage | GDEF, GPOS, GSUB | [`validateCoverage:2252`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2252) | No registered fix¹ |
+| `CPAL_COLOR_RECORD_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [`validateAdvancedColor:20`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L20) | No registered fix¹ |
+| `CPAL_METADATA_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [`validateAdvancedColor:30`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L30) | No registered fix¹ |
+| `CPAL_PALETTE_COUNT_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [`validateAdvancedColor:14`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L14) | No registered fix¹ |
+| `CYCLIC_DATA` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:112`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L112) | No registered fix¹ |
+| `DIAGNOSTIC_CHECK_FAILED` | active | finding | binary | diagnostic-execution | *, CFF , CFF2 | [`runAdvancedDiagnostics:62`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-diagnostics.js#L62)<br>[`validateCffCharStrings:2646`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2646)<br>[`diagnoseFace:4209`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4209) | No registered fix¹ |
+| `DIAGNOSTIC_LIMIT_EXCEEDED` | active | finding | binary | diagnostic-execution | *, CFF , CFF2, cmap, glyf | [`runAdvancedDiagnostics:57`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-diagnostics.js#L57)<br>[`runAdvancedDiagnostics:121`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-diagnostics.js#L121)<br>[`phaseSignature:132`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L132)<br>[`phaseSignature:142`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L142)<br>[`phaseHeader:286`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L286)<br>[`phaseParseTables:634`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L634)<br>[`phaseParseTables:655`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L655)<br>[`validateCmapDeep:902`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L902)<br>[`validateCffCharStrings:2644`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2644)<br>[`validateGlyfComposites:3110`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3110)<br>[`validateCmapFormat14:3295`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3295)<br>[`validateCmapFormat14:3318`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3318)<br>[`diagnoseCollection:4170`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4170)<br>[`runFaceChecks:4243`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4243)<br>[`runFaceChecks:4291`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4291)<br>[`diagnoseFont:4453`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4453) | No registered fix¹ |
+| `DIRECTORY_ENTRY_UNREADABLE` | active · baseline | finding | binary | sfnt-directory | * | [`phaseDirectory:361`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L361) | No registered fix¹ |
+| `DIRECTORY_NOT_SORTED` | active · baseline | finding | binary | sfnt-directory | * | [`phaseDirectory:447`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L447)<br>[`validateWoff1Wrapper:1381`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1381) | [`sfnt.directory-order`](#repair-sfnt-directory-order) |
+| `DIRECTORY_TRUNCATED` | active · baseline | finding | binary | sfnt-directory | — | [`phaseHeader:297`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L297)<br>[`validateWoff1Wrapper:1405`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1405) | No registered fix¹ |
+| `DUPLICATE_TABLE` | active · baseline | finding | binary | sfnt-directory | * | [`phaseDirectory:385`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L385)<br>[`validateWoff1Wrapper:1379`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1379) | No registered fix¹ |
+| `EMPTY_COLLECTION` | active · baseline | finding | binary | collection | — | [`diagnoseCollection:4151`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4151) | No registered fix¹ |
+| `EMPTY_TABLE` | active · baseline | finding | binary | sfnt-directory | * | [`phaseDirectory:419`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L419) | No registered fix¹ |
+| `EXCESSIVE_TABLES` | active · baseline | finding | binary | sfnt-directory | — | [`phaseHeader:280`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L280) | No registered fix¹ |
+| `EXPECTATION_ADVANCE_WIDTH` | active | finding | profile | repertoire-and-glyph-policy | — | [`inspectExpectations:321`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L321) | No registered fix¹ |
+| `EXPECTATION_BEHAVIOR_GLYPH_MISSING` | active | finding | profile | repertoire-and-glyph-policy | — | [`inspectExpectations:319`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L319) | No registered fix¹ |
+| `EXPECTATION_DUPLICATE_GLYPH_NAME` | active | finding | profile | repertoire-and-glyph-policy | — | [`inspectExpectations:236`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L236) | No registered fix¹ |
+| `EXPECTATION_GLYPH_MISSING` | active | finding | profile | repertoire-and-glyph-policy | — | [`inspectExpectations:311`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L311) | No registered fix¹ |
+| `EXPECTATION_GLYPH_NAME_POLICY` | active | finding | profile | repertoire-and-glyph-policy | — | [`inspectExpectations:241`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L241) | No registered fix¹ |
+| `EXPECTATION_INVALID_SCALAR` | active | finding | profile | repertoire-and-glyph-policy | — | [`inspectExpectations:245`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L245) | No registered fix¹ |
+| `EXPECTATION_REACHABILITY_INCOMPLETE` | active | information | profile | repertoire-and-glyph-policy | — | [`inspectExpectations:338`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L338) | No registered fix¹ |
+| `EXPECTATION_REFERENCE_MISSING` | active | finding | profile | repertoire-and-glyph-policy | — | [`inspectExpectations:254`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L254) | No registered fix¹ |
+| `EXPECTATION_REPERTOIRE_MISSING` | active | finding | profile | repertoire-and-glyph-policy | — | [`inspectExpectations:307`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L307) | No registered fix¹ |
+| `EXPECTATION_SHAPING_RULE_UNSUPPORTED` | active | information | profile | repertoire-and-glyph-policy | — | [`inspectExpectations:265`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L265) | No registered fix¹ |
+| `EXPECTATION_UVS_GLYPH_MISSING` | active | finding | profile | repertoire-and-glyph-policy | — | [`inspectExpectations:287`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L287) | No registered fix¹ |
+| `EXPECTATION_VISIBLE_WHITESPACE` | active | finding | profile | repertoire-and-glyph-policy | — | [`inspectExpectations:324`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L324) | No registered fix¹ |
+| `EXPORT_RESOLUTION_FAILED` | active · baseline | finding | public-validation | export-resolution | — | [`validate:1272`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/font_flux.js#L1272) | No registered fix¹ |
+| `FACE_INDEX_OUT_OF_RANGE` | active | finding | binary | collection | — | [`diagnoseCollection:4177`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4177)<br>[`diagnoseFont:4471`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4471) | No registered fix¹ |
+| `FAMILY_AXIS_CONVENTION_DIFFERENCE` | active | finding | profile | family-policy | — | [`inspectFamily:139`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L139) | No registered fix¹ |
+| `FAMILY_COMPLETENESS_UNKNOWN` | active | information | profile | family-policy | — | [`inspectFamily:65`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L65) | No registered fix¹ |
+| `FAMILY_DUPLICATE_IDENTITY` | active | finding | profile | family-policy | — | [`inspectFamily:83`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L83) | No registered fix¹ |
+| `FAMILY_DUPLICATE_STYLE` | active | finding | profile | family-policy | — | [`inspectFamily:83`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L83) | No registered fix¹ |
+| `FAMILY_EXPECTATION_MISMATCH` | active | finding | profile | family-policy | — | [`inspectFamily:92`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L92) | No registered fix¹ |
+| `FAMILY_INSTANCE_COORDINATE` | active | finding | profile | family-policy | — | [`inspectFamily:105`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L105) | No registered fix¹ |
+| `FAMILY_INSTANCE_COORDINATE_MISSING` | active | finding | profile | family-policy | — | [`inspectFamily:109`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L109) | No registered fix¹ |
+| `FAMILY_MEMBER_MISSING` | active | finding | profile | family-policy | — | [`inspectFamily:67`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L67) | No registered fix¹ |
+| `FAMILY_METADATA_DIFFERENCE` | active | information | profile | family-policy | — | [`inspectFamily:126`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L126) | No registered fix¹ |
+| `FAMILY_METADATA_MISSING` | active | finding | profile | family-policy | — | [`inspectFamily:77`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L77)<br>[`inspectFamily:89`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L89) | No registered fix¹ |
+| `FAMILY_METRIC_DIFFERENCE` | active | information | profile | family-policy | — | [`inspectFamily:133`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L133) | No registered fix¹ |
+| `FAMILY_STYLE_LINK_FLAGS` | active | finding | profile | family-policy | — | [`inspectFamily:98`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality-workflows.js#L98) | No registered fix¹ |
+| `FILE_EXCEEDS_1GB` | active · baseline | finding | binary | diagnostic-execution | — | [`diagnoseFont:4448`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4448) | No registered fix¹ |
+| `FONTDATA_INVALID` | active · baseline | finding | resolved | resolved-shape | — | [`validateSingleFont:922`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L922) | No registered fix¹ |
+| `FORMAT_COLLECTION` | active · baseline | information | binary | container | — | [`phaseSignature:213`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L213)<br>[`diagnoseFont:4465`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4465) | No registered fix¹ |
+| `FORMAT_WOFF1` | active · baseline | information | binary | container | — | [`phaseSignature:151`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L151) | No registered fix¹ |
+| `FORMAT_WOFF2` | active · baseline | information | binary | container | — | [`phaseSignature:176`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L176) | No registered fix¹ |
+| `FVAR_AXIS_DUPLICATE_TAG` | active · baseline | finding | binary | variation-axes | fvar | [`validateFvarDeep:1615`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1615) | No registered fix¹ |
+| `FVAR_AXIS_FLAGS_RESERVED` | active · baseline | finding | binary | variation-axes | fvar | [`validateFvarNamesAndFlags:1728`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1728) | No registered fix¹ |
+| `FVAR_AXIS_NAMEID_MISSING` | active · baseline | finding | binary | variation-axes | fvar, name | [`validateFvarNamesAndFlags:1747`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1747) | [`fvar.axis-name`](#repair-fvar-axis-name) |
+| `FVAR_AXIS_NAMEID_RESERVED` | active · baseline | finding | binary | variation-axes | fvar | [`validateFvarNamesAndFlags:1736`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1736) | [`fvar.axis-name`](#repair-fvar-axis-name) |
+| `FVAR_AXIS_RANGE_INVALID` | active · baseline | finding | binary | variation-axes | fvar | [`validateFvarDeep:1607`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1607) | No registered fix¹ |
+| `FVAR_INSTANCE_FLAGS_RESERVED` | active · baseline | finding | binary | variation-axes | fvar | [`validateFvarNamesAndFlags:1762`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1762) | No registered fix¹ |
+| `FVAR_INSTANCE_NAMEID_MISSING` | active · baseline | finding | binary | variation-axes | fvar, name | [`validateFvarNamesAndFlags:1784`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1784) | [`fvar.instance-name`](#repair-fvar-instance-name) |
+| `FVAR_INSTANCE_OUT_OF_RANGE` | active · baseline | finding | binary | variation-axes | fvar | [`validateFvarDeep:1635`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1635) | No registered fix¹ |
+| `GASP_RANGE_INVALID` | active | finding | binary | truetype-instructions-and-geometry | fpgm, gasp, glyf, loca, maxp, prep | [`validateAdvancedTrueType:111`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L111) | No registered fix¹ |
+| `GDEF_POINT_REFERENCE_INVALID` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [`validateAdvancedGdef:22`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L22) | No registered fix¹ |
+| `GDEF_VERSION_INVALID` | active · baseline | finding | binary | layout-definition | GDEF | [`validateGDEFTable:2128`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2128) | No registered fix¹ |
+| `GLYF_ATTACHMENT_POINT_INVALID` | active | finding | binary | truetype-instructions-and-geometry | fpgm, gasp, glyf, loca, maxp, prep | [`validateAdvancedTrueType:73`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L73) | No registered fix¹ |
+| `GLYF_BBOX_INVERTED` | active · baseline | finding | binary | truetype-geometry | glyf | [`validateGlyfHeaders:3201`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3201)<br>[`validateGlyfHeaders:3215`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3215) | No registered fix¹ |
+| `GLYF_BBOX_OUTSIDE_HEAD` | active · baseline | finding | binary | truetype-geometry | glyf, head | [`validateGlyfHeaders:3231`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3231) | No registered fix¹ |
+| `GLYF_COMPONENT_FLAGS_CONFLICT` | active | finding | binary | truetype-instructions-and-geometry | fpgm, gasp, glyf, loca, maxp, prep | [`validateAdvancedTrueType:77`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L77) | No registered fix¹ |
+| `GLYF_COMPOSITE_CYCLE` | active · baseline | finding | binary | truetype-composites | glyf | [`validateGlyfComposites:3158`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3158) | No registered fix¹ |
+| `GLYF_COMPOSITE_DEPTH_EXCEEDED` | active · baseline | finding | binary | truetype-composites | glyf | [`validateGlyfComposites:3132`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3132) | No registered fix¹ |
+| `GLYF_COMPOSITE_GLYPH_OUT_OF_RANGE` | active · baseline | finding | binary | truetype-composites | glyf, maxp | [`validateGlyfComposites:3149`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3149) | No registered fix¹ |
+| `GLYF_MAXP_LIMIT_EXCEEDED` | active | finding | binary | truetype-instructions-and-geometry | fpgm, gasp, glyf, loca, maxp, prep | [`validateAdvancedTrueType:95`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L95) | No registered fix¹ |
+| `GLYF_NUM_CONTOURS_INVALID` | active · baseline | finding | binary | truetype-geometry | glyf | [`validateGlyfHeaders:3244`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3244) | No registered fix¹ |
+| `GLYPH_COUNT_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:178`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L178) | No registered fix¹ |
+| `GLYPH_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:186`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L186) | No registered fix¹ |
+| `GLYPH_NAME_DUPLICATE` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:193`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L193) | No registered fix¹ |
+| `GLYPH_NAME_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:200`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L200) | No registered fix¹ |
+| `GLYPH_REFERENCE_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:297`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L297) | No registered fix¹ |
+| `GPOS_ANCHOR_POINT_INVALID` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [`validateAdvancedLayout:112`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L112) | No registered fix¹ |
+| `GPOS_LOOKUP_TYPE_INVALID` | active · baseline | finding | binary | layout-lookups | GPOS | [`validateLayoutLookups:1661`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1661) | No registered fix¹ |
+| `GSUB_LIGATURE_COMPONENT_OUT_OF_RANGE` | active · baseline | finding | binary | layout-substitution | GSUB, maxp | [`validateLayoutSubtables:2456`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2456) | No registered fix¹ |
+| `GSUB_LIGATURE_GLYPH_OUT_OF_RANGE` | active · baseline | finding | binary | layout-substitution | GSUB, maxp | [`validateLayoutSubtables:2445`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2445) | No registered fix¹ |
+| `GSUB_LOOKUP_TYPE_INVALID` | active · baseline | finding | binary | layout-lookups | GSUB | [`validateLayoutLookups:1661`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1661) | No registered fix¹ |
+| `GSUB_SUBSTITUTE_GLYPH_OUT_OF_RANGE` | active · baseline | finding | binary | layout-substitution | GSUB, maxp | [`validateLayoutSubtables:2424`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2424) | No registered fix¹ |
+| `GVAR_DATA_OFFSETS_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [`validateAdvancedVariation:123`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L123) | No registered fix¹ |
+| `GVAR_WITHOUT_FVAR` | active · baseline | finding | binary | variation-dependencies | fvar, gvar | [`phaseCrossTableChecks:4044`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4044) | No registered fix¹ |
+| `HEADER_FIELDS_CORRECTED` | active · baseline | information | resolved | resolved-header | — | [`validateHeader:638`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L638) | No registered fix¹ |
+| `HEADER_NUMTABLES_CORRECTED` | active · baseline | information | resolved | resolved-header | — | [`validateHeader:615`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L615) | No registered fix¹ |
+| `HEADER_NUMTABLES_INVALID` | active · baseline | finding | resolved | resolved-header | — | [`validateHeader:603`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L603) | No registered fix¹ |
+| `HEADER_PROMOTED` | active · baseline | information | resolved | resolved-header | — | [`validateHeader:557`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L557) | No registered fix¹ |
+| `HEADER_SFVERSION_INFERRED` | active · baseline | information | resolved | resolved-header | — | [`validateHeader:589`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L589) | No registered fix¹ |
+| `HEADER_SYNTHESIZED` | active · baseline | information | resolved | resolved-header | — | [`validateHeader:574`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L574) | No registered fix¹ |
+| `HEADER_UNREADABLE` | active · baseline | finding | binary | sfnt-directory | — | [`phaseHeader:243`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L243) | No registered fix¹ |
+| `HEAD_BBOX_INVERTED` | active · baseline | finding | binary | font-header | head | [`phaseCrossTableChecks:3696`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3696)<br>[`phaseCrossTableChecks:3704`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3704) | No registered fix¹ |
+| `HEAD_GLYPH_DATA_FORMAT_INVALID` | active · baseline | finding | binary | font-header | head | [`phaseCrossTableChecks:3726`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3726) | [`head.glyph-data-format`](#repair-head-glyph-data-format) |
+| `HEAD_INDEX_TO_LOC_FORMAT_INVALID` | active · baseline | finding | binary | font-header | head | [`phaseCrossTableChecks:3715`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3715) | No registered fix¹ |
+| `HEAD_MACSTYLE_RESERVED_BITS_SET` | active · baseline | finding | binary | metrics-and-style | head | [`validateOS2Sanitization:1188`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1188) | No registered fix¹ |
+| `HEAD_MAJOR_VERSION_UNSUPPORTED` | active · baseline | finding | binary | font-header | head | [`phaseCrossTableChecks:3685`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3685) | No registered fix¹ |
+| `HHEA_DERIVED_EXTREMA_MISMATCH` | active | finding | binary | diagnostic-execution | *, glyf, hhea, hmtx | [`runFaceChecks:4367`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4367)<br>[`inspectTT:543`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-tt.js#L543) | [`hhea.extrema`](#repair-hhea-extrema) |
+| `HHEA_HMTX_MISMATCH` | active · baseline | finding | binary | horizontal-metrics | hhea, hmtx | [`phaseCrossTableChecks:3868`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3868) | No registered fix¹ |
+| `HHEA_MAJOR_VERSION_UNSUPPORTED` | active · baseline | finding | binary | horizontal-metrics | hhea | [`phaseCrossTableChecks:3786`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3786) | No registered fix¹ |
+| `HMTX_GLYPH_MISMATCH` | active · baseline | finding | binary | horizontal-metrics | hmtx, maxp | [`phaseCrossTableChecks:3854`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3854) | No registered fix¹ |
+| `HVAR_WITHOUT_FVAR` | active · baseline | finding | binary | variation-dependencies | HVAR, fvar | [`phaseCrossTableChecks:4053`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4053) | No registered fix¹ |
+| `INPUT_INVALID` | active · baseline | finding | resolved | resolved-shape | — | [`validateJSON:1019`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L1019) | No registered fix¹ |
+| `INSTANCE_COORDINATES_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:517`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L517)<br>[`validateSimplifiedJSON:532`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L532) | No registered fix¹ |
+| `INVALID_DIAGNOSTIC_OPTIONS` | active | finding | binary | diagnostic-execution | — | [`diagnoseFont:4429`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4429)<br>[`diagnoseFont:4435`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4435)<br>[`diagnoseFont:4442`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4442) | No registered fix¹ |
+| `IVS_AXIS_COUNT_MISMATCH` | active · baseline | finding | binary | variation-store | GDEF, HVAR, MVAR, VVAR, fvar | [`validateItemVariationStore:1987`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1987) | No registered fix¹ |
+| `IVS_REGION_COORD_OUT_OF_RANGE` | active · baseline | finding | binary | variation-store | GDEF, HVAR, MVAR, VVAR | [`validateItemVariationStore:2012`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2012) | No registered fix¹ |
+| `IVS_REGION_INDEX_OUT_OF_RANGE` | active · baseline | finding | binary | variation-store | GDEF, HVAR, MVAR, VVAR | [`validateItemVariationStore:2046`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2046) | No registered fix¹ |
+| `IVS_REGION_PEAK_OUT_OF_ORDER` | active · baseline | finding | binary | variation-store | GDEF, HVAR, MVAR, VVAR | [`validateItemVariationStore:2027`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2027) | No registered fix¹ |
+| `JSTF_LOOKUP_REFERENCE_INVALID` | active | finding | binary | specialist-structures | JSTF | [`validateAdvancedSpecialist:97`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L97) | No registered fix¹ |
+| `JSTF_MAX_LOOKUP_TYPE_INVALID` | active | finding | binary | specialist-structures | JSTF | [`validateAdvancedSpecialist:83`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L83) | No registered fix¹ |
+| `KERNING_CLASS_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:365`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L365) | No registered fix¹ |
+| `LAYOUT_CONTEXT_EMPTY` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [`validateAdvancedLayout:189`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L189) | No registered fix¹ |
+| `LAYOUT_EXTENSION_CYCLE` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [`validateAdvancedLayout:122`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L122) | No registered fix¹ |
+| `LAYOUT_EXTENSION_TYPE_INVALID` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [`validateAdvancedLayout:49`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L49)<br>[`validateAdvancedLayout:129`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L129) | No registered fix¹ |
+| `LAYOUT_GRAPH_REFERENCE_INVALID` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [`validateAdvancedLayout:67`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L67) | No registered fix¹ |
+| `LAYOUT_LANGSYS_RESERVED` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [`validateAdvancedLayout:77`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L77) | No registered fix¹ |
+| `LAYOUT_LOOKUP_FLAG_INVALID` | active · baseline | finding | binary | layout-lookups | GPOS, GSUB | [`validateLayoutLookups:1694`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1694) | No registered fix¹ |
+| `LAYOUT_LOOKUP_FLAG_RESERVED` | active · baseline | finding | binary | layout-lookups | GPOS, GSUB | [`validateLayoutLookups:1675`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1675) | No registered fix¹ |
+| `LAYOUT_MARK_ATTACHMENT_CLASS_UNAVAILABLE` | active | finding | binary | layout-mark-references | GDEF, GPOS, GSUB | [`validateLayoutReferences:1590`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1590) | No registered fix¹ |
+| `LAYOUT_MARK_FILTER_SET_INVALID` | active | finding | binary | layout-mark-references | GDEF, GPOS, GSUB | [`validateLayoutReferences:1585`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1585) | No registered fix¹ |
+| `LAYOUT_VARIATION_CONDITION_INVALID` | active | finding | binary | layout-graph | GDEF, GPOS, GSUB | [`validateAdvancedLayout:234`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-layout.js#L234) | No registered fix¹ |
+| `LEGACY_CFF_VERSION_UNSUPPORTED` | active | information | binary | legacy-original-structures | — | [`inspectLegacy:337`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L337) | No registered fix¹ |
+| `LEGACY_FORMAT_UNSUPPORTED` | active | information | binary | legacy-original-structures | — | [`inspectLegacy:384`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L384) | No registered fix¹ |
+| `LEGACY_RESOURCE_LIMIT` | active | finding | binary | legacy-original-structures | — | [`inspectLegacy:389`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L389) | No registered fix¹ |
+| `LEGACY_STRUCTURE_INVALID` | active | finding | binary | legacy-original-structures | — | [`inspectLegacy:389`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L389) | No registered fix¹ |
+| `LEGACY_TYPE1_FONT_TYPE_UNCONFIRMED` | active | finding | binary | legacy-original-structures | — | [`inspectLegacy:362`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L362) | No registered fix¹ |
+| `LEGACY_TYPE1_NOTDEF_MISSING` | active | finding | binary | legacy-original-structures | — | [`inspectLegacy:364`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L364) | No registered fix¹ |
+| `LEGACY_TYPE1_NO_ENDCHAR` | active | finding | binary | legacy-original-structures | — | [`inspectLegacy:373`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L373) | No registered fix¹ |
+| `LEGACY_TYPE1_OPERATOR_UNSUPPORTED` | active | information | binary | legacy-original-structures | — | [`inspectLegacy:370`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L370) | No registered fix¹ |
+| `LEGACY_TYPE1_PROGRAM_INVALID` | active | finding | binary | legacy-original-structures | — | [`inspectLegacy:378`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L378) | No registered fix¹ |
+| `LEGACY_TYPE1_WIDTH_MISSING` | active | finding | binary | legacy-original-structures | — | [`inspectLegacy:374`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-legacy.js#L374) | No registered fix¹ |
+| `LOCA_BEYOND_GLYF` | active · baseline | finding | binary | truetype-offsets | glyf, loca | [`phaseCrossTableChecks:3885`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3885) | No registered fix¹ |
+| `MATH_ASSEMBLY_PART_INVALID` | active | finding | binary | specialist-structures | MATH | [`validateAdvancedSpecialist:184`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L184) | No registered fix¹ |
+| `MATH_KERN_HEIGHTS_INVALID` | active | finding | binary | specialist-structures | MATH | [`validateAdvancedSpecialist:152`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L152) | No registered fix¹ |
+| `MATH_VARIANT_ORDER_INVALID` | active | finding | binary | specialist-structures | MATH | [`validateAdvancedSpecialist:173`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L173) | No registered fix¹ |
+| `MATH_VERSION_INVALID` | active · baseline | finding | binary | math-version | MATH | [`validateMATH:2479`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2479) | No registered fix¹ |
+| `MAXP_NUMGLYPHS_ZERO` | active · baseline | finding | binary | glyph-count | maxp | [`phaseCrossTableChecks:3747`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3747) | No registered fix¹ |
+| `MAXP_VERSION_INVALID` | active · baseline | finding | binary | glyph-count | maxp | [`phaseCrossTableChecks:3739`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3739) | No registered fix¹ |
+| `MAXP_VERSION_MISMATCH_FOR_OUTLINE` | active · baseline | finding | binary | outline-dependencies | CFF , CFF2, glyf, loca, maxp | [`phaseCrossTableChecks:3759`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3759)<br>[`phaseCrossTableChecks:3771`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3771) | [`cff.maxp`](#repair-cff-maxp) |
+| `MERG_ENTRY_FLAGS_INVALID` | active | finding | binary | specialist-structures | MERG | [`validateAdvancedSpecialist:57`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-specialist.js#L57) | No registered fix¹ |
+| `MISSING_REQUIRED_TABLE` | active · baseline | finding | binary | table-presence | * | [`phaseRequiredTables:503`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L503) | No registered fix¹ |
+| `MIXED_OUTLINES` | active · baseline | finding | binary | table-presence | * | [`phaseRequiredTables:523`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L523) | No registered fix¹ |
+| `MULTIPLE_OUTLINE_TYPES` | active · baseline | finding | resolved | resolved-outline-dependencies | * | [`validateOutlineAndRequiredTables:906`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L906) | No registered fix¹ |
+| `MVAR_DELTA_SET_INNER_OUT_OF_RANGE` | active · baseline | finding | binary | variation-metrics | MVAR | [`validateMVAR:2096`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2096) | No registered fix¹ |
+| `MVAR_DELTA_SET_OUTER_OUT_OF_RANGE` | active · baseline | finding | binary | variation-metrics | MVAR | [`validateMVAR:2081`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2081) | No registered fix¹ |
+| `MVAR_VALUE_RECORD_SIZE_INVALID` | active · baseline | finding | binary | variation-metrics | MVAR | [`validateMVAR:2064`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L2064) | No registered fix¹ |
+| `MVAR_WITHOUT_FVAR` | active · baseline | finding | binary | variation-dependencies | MVAR, fvar | [`phaseCrossTableChecks:4053`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4053) | No registered fix¹ |
+| `NAME_FORMAT_INVALID` | active · baseline | finding | binary | naming | name | [`validateNameDeep:1225`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1225) | No registered fix¹ |
+| `NAME_LANG_TAG_TOO_LONG` | active · baseline | finding | binary | naming | name | [`validateNameDeep:1294`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1294) | No registered fix¹ |
+| `NAME_POSTSCRIPT_NAME_INVALID_CHARS` | active · baseline | finding | binary | naming | name | [`validateNameDeep:1312`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1312) | No registered fix¹ |
+| `NAME_RECORDS_NOT_SORTED` | active · baseline | finding | binary | naming | name | [`phaseCrossTableChecks:3953`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3953) | [`name.order`](#repair-name-order) |
+| `NAME_RECORD_OUT_OF_BOUNDS` | active · baseline | finding | binary | naming | name | [`validateNameDeep:1267`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1267) | No registered fix¹ |
+| `NAME_STRING_OFFSET_INVALID` | active · baseline | finding | binary | naming | name | [`validateNameDeep:1247`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1247) | No registered fix¹ |
+| `NAME_STRING_TOO_LONG` | active · baseline | finding | binary | naming | name | [`validateNameDeep:1277`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1277) | No registered fix¹ |
+| `NOT_ARRAYBUFFER` | active · baseline | finding | binary | container | — | [`phaseSignature:113`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L113) | No registered fix¹ |
+| `NO_FAMILY_NAME` | active · baseline | finding | binary | naming | name | [`phaseCrossTableChecks:3925`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3925) | [`name.family`](#repair-name-family) |
+| `NO_OUTLINES` | active · baseline | finding | binary | table-presence | * | [`phaseRequiredTables:515`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L515) | No registered fix¹ |
+| `NO_READABLE_ENTRIES` | active · baseline | finding | binary | diagnostic-execution | * | [`runFaceChecks:4235`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4235) | No registered fix¹ |
+| `NO_STYLE_NAME` | active · baseline | finding | binary | naming | name | [`phaseCrossTableChecks:3933`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3933) | [`name.style`](#repair-name-style) |
+| `NO_TABLES` | active · baseline | finding | binary | sfnt-directory | — | [`phaseHeader:273`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L273) | No registered fix¹ |
+| `NUMBER_OUT_OF_RANGE` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:84`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L84) | No registered fix¹ |
+| `OS2_CAP_HEIGHT_NEGATIVE` | active · baseline | finding | binary | metrics-and-style | OS/2 | [`validateOS2Sanitization:1132`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1132) | No registered fix¹ |
+| `OS2_FIRST_LAST_CHAR_INVERTED` | active · baseline | finding | binary | metrics-and-style | OS/2 | [`validateOS2Sanitization:1104`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1104) | No registered fix¹ |
+| `OS2_FSSELECTION_HEAD_MACSTYLE_MISMATCH` | active · baseline | finding | binary | metrics-and-style | OS/2, head | [`validateOS2Sanitization:1178`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1178) | No registered fix¹ |
+| `OS2_FSTYPE_RESERVED_BITS_SET` | active · baseline | finding | binary | metrics-and-style | OS/2 | [`validateOS2Sanitization:1069`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1069) | No registered fix¹ |
+| `OS2_NEGATIVE_SIZE` | active · baseline | finding | binary | metrics-and-style | OS/2 | [`validateOS2Sanitization:1088`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1088) | No registered fix¹ |
+| `OS2_OPTICAL_POINTSIZE_OUT_OF_RANGE` | active · baseline | finding | binary | metrics-and-style | OS/2 | [`validateOS2Sanitization:1146`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1146)<br>[`validateOS2Sanitization:1157`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1157) | No registered fix¹ |
+| `OS2_TYPO_LINEGAP_NEGATIVE` | active · baseline | finding | binary | metrics-and-style | OS/2 | [`validateOS2Sanitization:1114`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1114) | [`os2.typo-linegap`](#repair-os2-typo-linegap) |
+| `OS2_VERSION_INVALID` | active · baseline | finding | binary | metrics-and-style | OS/2 | [`phaseCrossTableChecks:3831`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3831) | No registered fix¹ |
+| `OS2_WEIGHT_CLAMPED` | active · baseline | finding | binary | metrics-and-style | OS/2 | [`validateOS2Sanitization:1045`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1045) | [`os2.weight`](#repair-os2-weight) |
+| `OS2_WIDTH_CLAMPED` | active · baseline | finding | binary | metrics-and-style | OS/2 | [`validateOS2Sanitization:1057`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1057) | [`os2.width`](#repair-os2-width) |
+| `OS2_X_HEIGHT_NEGATIVE` | active · baseline | finding | binary | metrics-and-style | OS/2 | [`validateOS2Sanitization:1124`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1124) | No registered fix¹ |
+| `OUTLINE_DEGENERATE_CONTOUR` | active | finding | editable | source-outline-evidence | — | [`inspectGlyph:51`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L51) | No registered fix¹ |
+| `OUTLINE_EMPTY_CONTOUR` | active | finding | editable | source-outline-evidence | — | [`inspectGlyph:30`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L30) | No registered fix¹ |
+| `OUTLINE_MISSING` | active · baseline | finding | resolved | resolved-outline-dependencies | * | [`validateOutlineAndRequiredTables:875`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L875) | No registered fix¹ |
+| `OUTLINE_NONFINITE_COORDINATE` | active | finding | editable | source-outline-evidence | — | [`inspectGlyph:36`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L36) | No registered fix¹ |
+| `OUTLINE_OVERLAP_POSSIBLE` | active | information | editable | source-outline-evidence | — | [`inspectGlyph:70`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L70) | No registered fix¹ |
+| `OUTLINE_SOURCE_UNAVAILABLE` | active | information | editable | source-outline-evidence | — | [`inspectGlyph:74`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L74) | No registered fix¹ |
+| `OUTLINE_TINY_SIGNED_AREA` | active | finding | editable | source-outline-evidence | — | [`inspectGlyph:59`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L59) | No registered fix¹ |
+| `OUTLINE_ZERO_LENGTH_SEGMENT` | active | finding | editable | source-outline-evidence | — | [`inspectGlyph:54`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L54) | No registered fix¹ |
+| `PAINT_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:425`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L425)<br>[`validateSimplifiedJSON:449`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L449) | No registered fix¹ |
+| `PALETTE_REFERENCE_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:441`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L441)<br>[`validateSimplifiedJSON:478`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L478) | No registered fix¹ |
+| `POINT_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:244`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L244) | No registered fix¹ |
+| `POST_NUMGLYPHS_MISMATCH` | active · baseline | finding | binary | glyph-count | maxp, post | [`phaseCrossTableChecks:3818`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3818) | No registered fix¹ |
+| `POST_VERSION_INVALID_FOR_CFF` | active · baseline | finding | binary | outline-dependencies | CFF , CFF2, post | [`phaseCrossTableChecks:4018`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4018) | No registered fix¹ |
+| `POST_VERSION_UNSUPPORTED` | active · baseline | finding | binary | postscript-metadata | post | [`phaseCrossTableChecks:3803`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3803) | No registered fix¹ |
+| `PROFILE_FAMILY_NAME_MISMATCH` | active | finding | profile | profile-family-expectation | name | [`evaluateProfile:260`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/profiles.js#L260) | No registered fix¹ |
+| `PROFILE_FILENAME_MISMATCH` | active | finding | profile | profile-filename-expectation | — | [`evaluateProfile:293`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/profiles.js#L293) | No registered fix¹ |
+| `PROFILE_REQUIRED_TABLE_MISSING` | active | finding | profile | profile-required-tables | OS/2 | [`evaluateProfile:189`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/profiles.js#L189) | No registered fix¹ |
+| `PROFILE_WINDOWS_NAMES_MISSING` | active | finding | profile | profile-windows-names | name | [`evaluateProfile:226`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/profiles.js#L226) | No registered fix¹ |
+| `QUALITY_AVERAGE_WIDTH_MISMATCH` | active | finding | binary | diagnostic-execution | *, OS/2, hhea, hmtx | [`runFaceChecks:4311`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4311)<br>[`inspectMetadata:507`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L507) | [`os2.average-width`](#repair-os2-average-width) |
+| `QUALITY_CHARACTER_RANGE_MISMATCH` | active | finding | binary | diagnostic-execution | *, OS/2, cmap | [`runFaceChecks:4311`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4311)<br>[`inspectMetadata:511`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L511) | [`os2.character-range`](#repair-os2-character-range) |
+| `QUALITY_NAME_ENCODING_INVALID` | active | finding | binary | diagnostic-execution | *, name | [`runFaceChecks:4311`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4311)<br>[`inspectMetadata:496`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L496) | [`name.record`](#repair-name-record) |
+| `QUALITY_NAME_WHITESPACE` | active | finding | binary | diagnostic-execution | *, name | [`runFaceChecks:4311`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4311)<br>[`inspectMetadata:500`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L500) | [`name.record`](#repair-name-record) |
+| `QUALITY_POSTSCRIPT_NAME_INVALID` | active | finding | binary | diagnostic-execution | *, name | [`runFaceChecks:4311`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4311)<br>[`inspectMetadata:502`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/metadata-repairs.js#L502) | [`name.record`](#repair-name-record) |
+| `RECOMMENDED_TABLE_MISSING` | active · baseline | finding | resolved | resolved-outline-dependencies | * | [`validateOutlineAndRequiredTables:862`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L862) | No registered fix¹ |
+| `REQUIRED_TABLE_MISSING` | active · baseline | finding | resolved | resolved-outline-dependencies | * | [`validateOutlineAndRequiredTables:851`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L851) | No registered fix¹ |
+| `SF_VERSION` | active · baseline | information | binary | sfnt-directory | — | [`phaseHeader:255`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L255) | No registered fix¹ |
+| `SIMPLIFIED_SHAPE_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:92`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L92) | No registered fix¹ |
+| `SOURCE_COMPONENT_SAMPLE_UNSUPPORTED` | active | information | editable | source-outline-evidence | — | [`inspectSourceQuality:141`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L141) | No registered fix¹ |
+| `SOURCE_MASTERS_UNAVAILABLE` | active | information | editable | source-outline-evidence | — | [`inspectSourceQuality:127`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L127) | No registered fix¹ |
+| `SOURCE_MASTER_GLYPH_MISSING` | active | finding | editable | source-outline-evidence | — | [`inspectSourceQuality:113`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L113) | No registered fix¹ |
+| `SOURCE_MASTER_TOPOLOGY_MISMATCH` | active | finding | editable | source-outline-evidence | — | [`inspectSourceQuality:119`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L119) | No registered fix¹ |
+| `SOURCE_MASTER_UPEM_MISMATCH` | active | finding | editable | source-outline-evidence | — | [`inspectSourceQuality:125`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L125) | No registered fix¹ |
+| `SOURCE_PROVENANCE_UNAVAILABLE` | active | information | editable | source-outline-evidence | — | [`inspectSourceQuality:104`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/workflow-source.js#L104) | No registered fix¹ |
+| `STAT_AXIS_DUPLICATE_TAG` | active · baseline | finding | binary | variation-style | STAT | [`validateSTAT:1824`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1824) | No registered fix¹ |
+| `STAT_AXIS_VALUE_AXIS_INDEX_OUT_OF_RANGE` | active · baseline | finding | binary | variation-style | STAT | [`validateSTAT:1858`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1858)<br>[`validateSTAT:1889`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1889) | No registered fix¹ |
+| `STAT_AXIS_VALUE_RANGE_INVALID` | active · baseline | finding | binary | variation-style | STAT | [`validateSTAT:1875`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1875) | No registered fix¹ |
+| `STAT_DESIGN_AXIS_SIZE_INVALID` | active · baseline | finding | binary | variation-style | STAT | [`validateSTAT:1809`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1809) | No registered fix¹ |
+| `STAT_MISSING_FVAR_AXIS` | active · baseline | finding | binary | variation-style | STAT, fvar | [`validateSTAT:1839`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1839) | No registered fix¹ |
+| `STAT_VERSION_INVALID` | active · baseline | finding | binary | variation-style | STAT | [`validateSTAT:1801`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1801) | No registered fix¹ |
+| `SUBSTITUTION_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:376`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L376)<br>[`validateSimplifiedJSON:381`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L381)<br>[`validateSimplifiedJSON:405`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L405) | No registered fix¹ |
+| `SVG_DOCUMENT_OFFSET_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [`validateAdvancedColor:58`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L58) | No registered fix¹ |
+| `SVG_DOCUMENT_RANGE_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [`validateAdvancedColor:43`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L43) | No registered fix¹ |
+| `SVG_RESERVED_FIELD_INVALID` | active | finding | binary | color-structures | COLR, CPAL, SVG  | [`validateAdvancedColor:53`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-color.js#L53) | No registered fix¹ |
+| `TABLES_EMPTY` | active · baseline | finding | resolved | resolved-tables | * | [`validateTables:697`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L697) | No registered fix¹ |
+| `TABLES_MISSING` | active · baseline | finding | resolved | resolved-tables | * | [`validateTables:685`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L685) | No registered fix¹ |
+| `TABLES_OVERLAPPING` | active · baseline | finding | binary | sfnt-directory | * | [`phaseDirectory:483`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L483)<br>[`validateWoff1Wrapper:1452`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1452) | No registered fix¹ |
+| `TABLE_CHECKSUM_INVALID` | active · baseline | finding | resolved | resolved-tables | * | [`validateTables:732`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L732) | No registered fix¹ |
+| `TABLE_DATA_INVALID` | active · baseline | finding | resolved | resolved-tables | * | [`validateTables:721`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L721) | No registered fix¹ |
+| `TABLE_DEPENDENCY_MISSING` | active · baseline | finding | resolved | resolved-dependencies | cvar, fvar, glyf, gvar, head, hhea, hmtx, loca, maxp, vhea, vmtx | [`validateTableDependencies:805`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L805) | No registered fix¹ |
+| `TABLE_LENGTH_EXCEEDS_1GB` | active · baseline | finding | binary | sfnt-directory | * | [`phaseDirectory:461`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L461) | No registered fix¹ |
+| `TABLE_MISALIGNED` | active · baseline | finding | binary | sfnt-directory | * | [`phaseDirectory:429`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L429)<br>[`validateWoff1Wrapper:1389`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1389) | [`sfnt.alignment`](#repair-sfnt-alignment) |
+| `TABLE_OUT_OF_BOUNDS` | active · baseline | finding | binary | sfnt-directory | * | [`phaseDirectory:408`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L408)<br>[`validateWoff1Wrapper:1385`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1385) | No registered fix¹ |
+| `TABLE_OVERLAPS_DIRECTORY` | active | finding | binary | sfnt-directory | * | [`phaseDirectory:400`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L400)<br>[`validateWoff1Wrapper:1383`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1383) | No registered fix¹ |
+| `TABLE_PARSED` | active · baseline | information | binary | table-parsing | * | [`phaseParseTables:663`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L663) | No registered fix¹ |
+| `TABLE_PARSE_FAILED` | active · baseline | finding | binary | table-parsing | * | [`phaseParseTables:635`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L635)<br>[`phaseParseTables:670`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L670) | No registered fix¹ |
+| `TABLE_RAW_INVALID_BYTE` | active · baseline | finding | resolved | raw-table-bytes | * | [`validateTableRawBytes:667`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L667) | No registered fix¹ |
+| `TABLE_RAW_INVALID_TYPE` | active · baseline | finding | resolved | raw-table-bytes | * | [`validateTableRawBytes:654`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L654) | No registered fix¹ |
+| `TABLE_TAG_INVALID` | active · baseline | finding | resolved | resolved-tables | * | [`validateTables:708`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L708) | No registered fix¹ |
+| `TABLE_UNRECOGNIZED_RAW` | active · baseline | information | resolved | resolved-tables | * | [`validateTables:780`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L780) | No registered fix¹ |
+| `TABLE_WRITER_UNSUPPORTED` | active · baseline | finding | resolved | resolved-tables | * | [`validateTables:771`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L771) | No registered fix¹ |
+| `TOO_SHORT` | active · baseline | finding | binary | container | — | [`phaseSignature:120`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L120) | No registered fix¹ |
+| `TRUETYPE_OUTLINE_INCOMPLETE` | active · baseline | finding | resolved | resolved-outline-dependencies | * | [`validateOutlineAndRequiredTables:886`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L886)<br>[`validateOutlineAndRequiredTables:895`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L895) | No registered fix¹ |
+| `TTC_FACE_OFFSET_INVALID` | active | finding | binary | collection | — | [`diagnoseCollection:4194`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4194) | No registered fix¹ |
+| `TTC_FACE_OFFSET_UNREADABLE` | active | finding | binary | collection | — | [`diagnoseCollection:4187`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4187) | No registered fix¹ |
+| `TTC_OFFSETS_TRUNCATED` | active | finding | binary | collection | — | [`diagnoseCollection:4161`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4161) | No registered fix¹ |
+| `TTC_TOO_MANY_FONTS` | active · baseline | finding | binary | collection | — | [`diagnoseCollection:4155`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4155) | No registered fix¹ |
+| `TTC_VERSION_INVALID` | active · baseline | finding | binary | collection | — | [`diagnoseCollection:4147`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4147) | No registered fix¹ |
+| `TT_DERIVED_BOUNDS_MISMATCH` | active | finding | binary | diagnostic-execution | *, glyf, head, loca | [`runFaceChecks:4367`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4367)<br>[`inspectTT:536`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-tt.js#L536) | [`tt.bounds`](#repair-tt-bounds) |
+| `TT_DERIVED_MAXP_MISMATCH` | active | finding | binary | diagnostic-execution | *, glyf, loca, maxp | [`runFaceChecks:4367`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4367)<br>[`inspectTT:528`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-tt.js#L528) | [`tt.maxp-geometry`](#repair-tt-maxp-geometry) |
+| `TT_INSTR_DEFINITION_LOCATION_INVALID` | active | finding | binary | truetype-instructions-and-geometry | fpgm, gasp, glyf, loca, maxp, prep | [`validateAdvancedTrueType:37`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L37) | No registered fix¹ |
+| `TT_INSTR_DEFINITION_SCOPE_INVALID` | active | finding | binary | truetype-instructions-and-geometry | fpgm, gasp, glyf, loca, maxp, prep | [`validateAdvancedTrueType:32`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L32)<br>[`validateAdvancedTrueType:41`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L41) | No registered fix¹ |
+| `TT_INSTR_ELSE_INVALID` | active | finding | binary | truetype-instructions-and-geometry | fpgm, gasp, glyf, loca, maxp, prep | [`validateAdvancedTrueType:26`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-programs.js#L26) | No registered fix¹ |
+| `TT_INSTR_NESTED_FDEF` | active · baseline | finding | binary | truetype-instructions | fpgm, glyf, prep | [`validateTrueTypeInstructions:3567`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3567) | No registered fix¹ |
+| `TT_INSTR_STRAY_ENDF` | active · baseline | finding | binary | truetype-instructions | fpgm, glyf, prep | [`validateTrueTypeInstructions:3582`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3582) | No registered fix¹ |
+| `TT_INSTR_TRUNCATED_PUSH` | active · baseline | finding | binary | truetype-instructions | fpgm, glyf, prep | [`validateTrueTypeInstructions:3439`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3439)<br>[`validateTrueTypeInstructions:3459`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3459)<br>[`validateTrueTypeInstructions:3478`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3478)<br>[`validateTrueTypeInstructions:3492`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3492)<br>[`validateTrueTypeInstructions:3511`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3511)<br>[`validateTrueTypeInstructions:3525`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3525) | No registered fix¹ |
+| `TT_INSTR_UNBALANCED_EIF` | active · baseline | finding | binary | truetype-instructions | fpgm, glyf, prep | [`validateTrueTypeInstructions:3549`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3549) | No registered fix¹ |
+| `TT_INSTR_UNBALANCED_IF` | active · baseline | finding | binary | truetype-instructions | fpgm, glyf, prep | [`validateTrueTypeInstructions:3599`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3599) | No registered fix¹ |
+| `TT_INSTR_UNCLOSED_FDEF` | active · baseline | finding | binary | truetype-instructions | fpgm, glyf, prep | [`validateTrueTypeInstructions:3607`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L3607) | No registered fix¹ |
+| `UNICODE_INVALID` | active · baseline | finding | editable | authoring-data | — | [`validateSimplifiedJSON:221`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L221) | No registered fix¹ |
+| `UNKNOWN_TABLE` | active · baseline | information | binary | table-presence | * | [`phaseRequiredTables:534`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L534) | No registered fix¹ |
+| `VARIABLE_TABLE_DEPENDENCY` | active · baseline | finding | resolved | resolved-dependencies | cvar, fvar, glyf, gvar, head, hhea, hmtx, loca, maxp, vhea, vmtx | [`validateTableDependencies:822`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L822)<br>[`validateTableDependencies:832`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/validateJSON.js#L832) | No registered fix¹ |
+| `VARIATION_MAP_ENCODING_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [`validateAdvancedVariation:52`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L52) | No registered fix¹ |
+| `VARIATION_POINT_REFERENCE_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [`validateAdvancedVariation:101`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L101) | No registered fix¹ |
+| `VARIATION_REGION_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [`validateAdvancedStore:16`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L16) | No registered fix¹ |
+| `VARIATION_REGION_REFERENCE_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [`validateAdvancedStore:33`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L33) | No registered fix¹ |
+| `VARIATION_SHARED_TUPLE_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [`validateTupleBytes:149`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L149) | No registered fix¹ |
+| `VARIATION_TUPLE_COORDINATE_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [`validateAdvancedVariation:83`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L83) | No registered fix¹ |
+| `VARIATION_TUPLE_DATA_SIZE_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [`validateTupleBytes:193`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L193) | No registered fix¹ |
+| `VARIATION_TUPLE_FLAGS_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [`validateTupleBytes:141`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L141)<br>[`validateTupleBytes:146`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L146) | No registered fix¹ |
+| `VARIATION_TUPLE_REGION_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [`validateAdvancedVariation:94`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L94) | No registered fix¹ |
+| `VARIATION_WORD_DELTA_COUNT_INVALID` | active | finding | binary | variation-structures | BASE, CFF2, COLR, GDEF, HVAR, MVAR, VVAR, cvar, fvar, gvar | [`validateAdvancedStore:29`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/advanced-variation.js#L29) | No registered fix¹ |
+| `VHEA_DERIVED_EXTREMA_MISMATCH` | active | finding | binary | diagnostic-execution | *, glyf, vhea, vmtx | [`runFaceChecks:4367`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4367)<br>[`inspectTT:543`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/repair-tt.js#L543) | [`vhea.extrema`](#repair-vhea-extrema) |
+| `VHEA_VMTX_MISMATCH` | active · baseline | finding | binary | vertical-metrics | vhea, vmtx | [`phaseCrossTableChecks:4033`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4033) | No registered fix¹ |
+| `VVAR_WITHOUT_FVAR` | active · baseline | finding | binary | variation-dependencies | VVAR, fvar | [`phaseCrossTableChecks:4053`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L4053) | No registered fix¹ |
+| `WOFF1_COMPRESSED_LENGTH_INVALID` | active | finding | binary | container | — | [`validateWoff1Wrapper:1387`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1387) | No registered fix¹ |
+| `WOFF1_FILE_SIZE_MISMATCH` | active · baseline | finding | binary | container | — | [`validateWoff1Wrapper:1355`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1355) | [`container.length`](#repair-container-length) |
+| `WOFF1_METADATA_BLOCK_INVALID` | active · baseline | finding | binary | container | — | [`validateWoff1Wrapper:1414`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1414)<br>[`validateWoff1Wrapper:1422`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1422) | No registered fix¹ |
+| `WOFF1_PRIVATE_BLOCK_INVALID` | active · baseline | finding | binary | container | — | [`validateWoff1Wrapper:1433`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1433)<br>[`validateWoff1Wrapper:1442`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1442) | No registered fix¹ |
+| `WOFF1_RESERVED_FIELD_NONZERO` | active · baseline | finding | binary | container | — | [`validateWoff1Wrapper:1345`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1345) | [`container.reserved`](#repair-container-reserved) |
+| `WOFF1_SFNT_SIZE_MISMATCH` | active · baseline | finding | binary | container | — | [`validateWoff1Wrapper:1401`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1401) | [`container.sfnt-size`](#repair-container-sfnt-size) |
+| `WOFF1_TRAILING_JUNK` | active · baseline | finding | binary | container | — | [`validateWoff1Wrapper:1490`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1490) | No registered fix¹ |
+| `WOFF1_UNWRAPPED` | active · baseline | information | binary | container | — | [`phaseSignature:159`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L159) | No registered fix¹ |
+| `WOFF1_UNWRAP_FAILED` | active · baseline | finding | binary | container | — | [`phaseSignature:167`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L167) | No registered fix¹ |
+| `WOFF2_COLLECTION_UNSUPPORTED` | active | finding | binary | container | — | [`phaseSignature:184`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L184) | No registered fix¹ |
+| `WOFF2_DECOMPRESSED_SIZE_INVALID` | active · baseline | finding | binary | container | — | [`validateWoff2Wrapper:1546`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1546)<br>[`validateWoff2Wrapper:1555`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1555) | No registered fix¹ |
+| `WOFF2_FILE_SIZE_MISMATCH` | active · baseline | finding | binary | container | — | [`validateWoff2Wrapper:1537`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1537) | [`container.length`](#repair-container-length) |
+| `WOFF2_METADATA_BLOCK_INVALID` | active | finding | binary | container | — | [`validateWoff2Wrapper:1513`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1513) | No registered fix¹ |
+| `WOFF2_PRIVATE_BLOCK_INVALID` | active | finding | binary | container | — | [`validateWoff2Wrapper:1520`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1520) | No registered fix¹ |
+| `WOFF2_RESERVED_FIELD_NONZERO` | active · baseline | finding | binary | container | — | [`validateWoff2Wrapper:1529`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L1529) | [`container.reserved`](#repair-container-reserved) |
+| `WOFF2_UNWRAPPED` | active · baseline | information | binary | container | — | [`phaseSignature:193`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L193) | No registered fix¹ |
+| `WOFF2_UNWRAP_FAILED` | active · baseline | finding | binary | container | — | [`phaseSignature:201`](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/diagnoseFont.js#L201) | No registered fix¹ |

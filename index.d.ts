@@ -404,6 +404,8 @@ export interface RepairResult {
 	state: 'verified' | 'failed';
 	buffer: ArrayBuffer | null;
 	changed: boolean;
+	/** Error/warning multiset changes, keyed by semantic location, not physical offsets. */
+	findingChanges: { resolved: number; introduced: number; remaining: number };
 	format: InspectionReport['format'];
 	faceIndex: number | null;
 	profile: QualityProfileId;

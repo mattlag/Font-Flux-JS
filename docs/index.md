@@ -61,7 +61,10 @@ subsetting, rejected dependencies, downloaded fonts, updated previews, and
 collection-face switching in Chromium and Firefox. It checks desktop/mobile
 layout and nonblank canvas rendering, and writes screenshots to the system
 temporary directory. Install both Playwright browsers with the command above
-first. This is a separate local check, not currently a CI release gate.
+first. This also gates PR/push and release CI. The focused
+`npm run test:demo -- --quality` run covers font-quality inspection, empty decision
+forms, consent, exact report/download evidence, keyboard focus, transactional
+commit/undo/revert and injected failure recovery.
 
 The demo validates and exports a detached subset candidate, loads its preview,
 then commits the glyph changes. Failed validation, export, or preview loading

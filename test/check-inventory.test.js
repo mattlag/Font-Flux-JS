@@ -33,6 +33,24 @@ const identifiers = (origins) => [...new Set(origins.map((o) => o.code))].sort()
 const sourceFile = 'src/validate/diagnoseFont.js';
 
 describe('durable diagnostic identifier inventory', () => {
+	it('publishes the live scope, decisions, consequences and evidence for every repair', () => {
+		const docs = renderDocs(inventory);
+		expect(docs).not.toMatch(/[ \t]+\n/);
+		for (const repair of repairCatalog()) {
+			const start = docs.indexOf(`### \`${repair.id}\``);
+			expect(start).toBeGreaterThan(0);
+			const end = docs.indexOf('\n### ', start + 1);
+			const section = docs.slice(start, end === -1 ? undefined : end);
+			for (const text of [repair.description, repair.prerequisites, repair.riskReason, repair.ifApplied, repair.ifUnfixed])
+				expect(section).toContain(text);
+			for (const field of repair.inputs) expect(section).toContain(`\`${field.key}\``);
+			expect(section).toContain('**Regression evidence:**');
+			expect(section).toContain('.test.js');
+			expect(section).toContain('**Implementation:**');
+			if (repair.policyVersion) expect(section).toContain(repair.policyVersion);
+		}
+	});
+
 	it('accounts for every current static and finite dynamic emission, not just literal grep matches', () => {
 		const extracted = extractDiagnosticOrigins(sources);
 		expect(extracted.unresolved).toEqual([]);

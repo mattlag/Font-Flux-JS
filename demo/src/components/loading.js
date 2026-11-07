@@ -27,6 +27,11 @@ export function createLoadingScreen(container, onFontLoaded) {
 	const fileInput = container.querySelector('input[type="file"]');
 	const browseLink = container.querySelector('.browse-link');
 	const statusArea = container.querySelector('.status-area');
+	statusArea.setAttribute('role', 'status');
+	statusArea.setAttribute('aria-live', 'polite');
+	fileInput.setAttribute('aria-label', 'Font file');
+	let loadVersion = 0;
+	let pendingReader = null;
 
 	// Browse link triggers file input
 	browseLink.addEventListener('click', (e) => {
@@ -69,6 +74,8 @@ export function createLoadingScreen(container, onFontLoaded) {
 	});
 
 	function handleFile(file) {
+		const version = ++loadVersion;
+		pendingReader?.abort();
 		// Clear previous errors
 		statusArea.innerHTML = '';
 
@@ -97,11 +104,12 @@ export function createLoadingScreen(container, onFontLoaded) {
 		showLoading(file.name);
 
 		const reader = new FileReader();
+		pendingReader = reader;
 		reader.onload = () => {
-			onFontLoaded(reader.result, file.name);
+			if (version === loadVersion && screen.isConnected) onFontLoaded(reader.result, file.name);
 		};
 		reader.onerror = () => {
-			showError('Failed to read the file. Please try again.');
+			if (version === loadVersion) showError('Failed to read the file. Please try again.');
 		};
 		if (ext === 'json') {
 			reader.readAsText(file, 'utf-8');
@@ -111,16 +119,19 @@ export function createLoadingScreen(container, onFontLoaded) {
 	}
 
 	function showError(message) {
-		statusArea.innerHTML = `<div class="loading-error">${message}</div>`;
+		const error = document.createElement('div');
+		error.className = 'loading-error';
+		error.textContent = message;
+		statusArea.replaceChildren(error);
 	}
 
 	function showLoading(fileName) {
-		statusArea.innerHTML = `
-			<div class="loading-spinner">
-				<div class="spinner"></div>
-				<span>Parsing ${fileName}…</span>
-			</div>
-		`;
+		const loading = document.createElement('div'), spinner = document.createElement('div'), text = document.createElement('span');
+		loading.className = 'loading-spinner';
+		spinner.className = 'spinner';
+		text.textContent = `Parsing ${fileName}…`;
+		loading.append(spinner, text);
+		statusArea.replaceChildren(loading);
 	}
 
 	return {

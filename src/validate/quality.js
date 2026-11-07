@@ -1118,9 +1118,17 @@ export async function applyRepairs(input, plan, controls = {}) {
 		if (targetCodes.has(issue.code))
 			failures.push(`The targeted finding ${issue.code} remains after repair.`);
 	const beforeCounts = findings(state.report);
-	for (const [key, count] of findings(after))
+	const afterCounts = findings(after);
+	const findingChanges = { resolved: 0, introduced: 0, remaining: 0 };
+	for (const [key, count] of beforeCounts) {
+		findingChanges.resolved += Math.max(0, count - (afterCounts.get(key) ?? 0));
+		findingChanges.remaining += Math.min(count, afterCounts.get(key) ?? 0);
+	}
+	for (const [key, count] of afterCounts) {
+		findingChanges.introduced += Math.max(0, count - (beforeCounts.get(key) ?? 0));
 		if (count > (beforeCounts.get(key) ?? 0))
 			failures.push(`New unapproved finding: ${JSON.parse(key)[3]}`);
+	}
 	if (
 		plan.steps.some((step) => step.id === 'dsig.remove') &&
 		directory(emitted.sfnt, state.options).entries?.some(
@@ -1136,6 +1144,7 @@ export async function applyRepairs(input, plan, controls = {}) {
 		state: passed ? 'verified' : 'failed',
 		buffer: passed ? candidate.buffer : null,
 		changed: passed && !sameBytes(bytes, candidate),
+		findingChanges,
 		format: plan.format, faceIndex: plan.faceIndex, profile: plan.profile,
 		plan: structuredClone(plan),
 		before: structuredClone(state.report),

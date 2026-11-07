@@ -3,6 +3,7 @@
  * until verification, a browser preview check, and explicit commit succeed.
  */
 import { FontFlux } from 'font-flux-js';
+import { candidateExtension, downloadQualityFile, preflightAudit } from '../quality-report.js';
 
 export const diagnoseTab = { id: 'diagnose', label: 'Diagnose', render };
 
@@ -18,17 +19,6 @@ function button(text, action) {
 	node.type = 'button';
 	node.addEventListener('click', action);
 	return node;
-}
-
-function download(buffer, name, type = 'application/octet-stream') {
-	const url = URL.createObjectURL(new Blob([buffer], { type }));
-	const link = element('a');
-	link.href = url;
-	link.download = name;
-	document.body.appendChild(link);
-	link.click();
-	link.remove();
-	setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function issues(report) {
@@ -121,6 +111,7 @@ function render(container, fontData, context) {
 	for (const descriptor of FontFlux.qualityProfiles()) {
 		const option = element('option', '', `${descriptor.id} v${descriptor.version}`);
 		option.value = descriptor.id;
+		option.dataset.version = descriptor.version;
 		profile.appendChild(option);
 	}
 	profileLabel.appendChild(profile);
@@ -147,6 +138,7 @@ function render(container, fontData, context) {
 	function inspectionOptions(face = false) {
 		return {
 			profile: profile.value,
+			profileVersion: Number(profile.selectedOptions[0].dataset.version),
 			...(profile.value === 'publishing' ? { context: {
 				fileName: fontData._fileName,
 				...Object.fromEntries([...policyFields].filter(([, input]) => input.value).map(([key, input]) => [key, input.value])),
@@ -171,6 +163,11 @@ function render(container, fontData, context) {
 	function message(text, failed = false) {
 		status.textContent = text;
 		status.className = `dx-status${failed ? ' validation-results invalid' : ''}`;
+	}
+
+	function download(buffer, name, type) {
+		try { downloadQualityFile(buffer, name, type); }
+		catch (error) { message(`Download failed: ${error.message}. Project and preview unchanged.`, true); }
 	}
 
 	function disposePreview() {
@@ -330,6 +327,7 @@ function render(container, fontData, context) {
 				['Prerequisites', offer.prerequisites], ['Availability', offer.reason],
 				['Risk rationale', offer.riskReason], ['Preservation', offer.invariants],
 				['Findings', offer.codes],
+				['Policy version', offer.policyVersion], ['Affected tables', offer.affectedTables],
 			]) {
 				if (value?.length) card.appendChild(element('p', 'dx-card-msg',
 					`${title}: ${Array.isArray(value) ? value.join('; ') : value}`));
@@ -392,6 +390,11 @@ function render(container, fontData, context) {
 				...options, format: 'sfnt', originalSource: context.originalSource?.(), ...controls,
 			});
 			if (!active(token, operation)) return;
+			const audit = await preflightAudit(result, {
+				target: 'sfnt', profile: options.profile, profileVersion: options.profileVersion, fileName: fontData._fileName,
+				sourceFaceIndex: fontData._collectionIndex ?? 0,
+			});
+			if (!active(token, operation)) return;
 			currentArea.replaceChildren(element('h3', 'dx-section-heading', 'Current project preflight'));
 			currentArea.appendChild(element('p', 'dx-card-msg', result.error || `Preflight: ${result.state}`));
 			for (const effect of result.effects) currentArea.appendChild(element('p', 'dx-card-msg', effect));
@@ -406,12 +409,17 @@ function render(container, fontData, context) {
 			}
 			if (result.state !== 'verified' || !result.buffer) {
 				showOffers(result.output, null, token, options);
+				candidateArea.appendChild(button('Download audit report', () => {
+					if (!active(token, operation)) return message('Report is stale. Preflight the current project again.', true);
+					download(JSON.stringify(audit, null, 2), 'font-preflight-report.json', 'application/json');
+				}));
 				message(`Project preflight ${result.state}. No verified bytes available; original input and edits unchanged.`, true);
 				return;
 			}
 			showOffers(result.output, result.buffer, token, options);
 			await showCandidate({
 				state: 'verified', buffer: result.buffer, before: null, after: result.output,
+				preflight: audit, outputFingerprint: audit.outputFingerprint,
 				changes: result.effects.map((description) => ({ id: 'export', description })),
 				verification: { passed: true, evidence: ['Exact project export passed core preflight.'], failures: [] },
 			}, token, operation, 'Preflight candidate');
@@ -460,9 +468,12 @@ function render(container, fontData, context) {
 			const plan = review.plan;
 			if (!active(token, operation)) return;
 			candidateArea.replaceChildren(element('h3', 'dx-section-heading', 'Repair plan — review before applying'));
+			candidateArea.appendChild(element('p', 'dx-card-msg',
+				`Target: ${plan.format}; ${plan.faceIndex == null ? 'standalone face' : `face ${plan.faceIndex + 1}`}; ${plan.profile} profile v${plan.profileVersion}. Input fingerprint: ${plan.inputFingerprint}`));
 			for (const step of plan.steps) {
 				candidateArea.appendChild(element('p', 'dx-card-msg',
 					`${step.title} (${step.risk}${step.implicit ? ', required companion' : ''}): ${step.ifApplied} ${JSON.stringify(step.values)}`));
+				if (step.policyVersion) candidateArea.appendChild(element('p', 'dx-card-msg', `Policy version: ${step.policyVersion}`));
 			}
 			for (const effect of plan.effects) candidateArea.appendChild(element('p', 'dx-card-msg', effect));
 			candidateArea.appendChild(button('Download reviewed plan', () =>
@@ -497,7 +508,13 @@ function render(container, fontData, context) {
 			if (result.state !== 'verified' || !result.verification.passed || !result.buffer) {
 				candidateArea.appendChild(renderReport(result.after, 'Failed candidate inspection'));
 				for (const failure of result.verification.failures) candidateArea.appendChild(element('p', 'dx-card-msg', failure));
-				message('Repair verification failed. No candidate can be committed or downloaded. Project and preview unchanged.', true);
+				candidateArea.appendChild(button('Download audit report', () => {
+					if (!active(token, operation)) return message('Report is stale. Inspect the current project again.', true);
+					const { buffer: _buffer, ...audit } = result;
+					download(JSON.stringify({ ...audit, target: result.format, sourceFaceIndex: fontData._collectionIndex ?? 0,
+						browserPreview: { state: 'not-run' } }, null, 2), 'font-quality-report.json', 'application/json');
+				}));
+				message('Repair verification failed. No repaired binary can be committed or downloaded; audit remains available. Project and preview unchanged.', true);
 				return;
 			}
 			await showCandidate(result, token, operation, 'Verified repair candidate');
@@ -518,27 +535,28 @@ function render(container, fontData, context) {
 			'Core verification passed for this narrow operation only. Review unresolved findings and partial coverage below.'));
 		for (const change of result.changes) candidateArea.appendChild(element('p', 'dx-card-msg', `${change.id}: ${change.description}`));
 		for (const evidence of result.verification.evidence) candidateArea.appendChild(element('p', 'dx-card-msg', evidence));
-		if (result.before) {
-			const key = (issue) => JSON.stringify([issue.code, issue.table, issue.faceIndex, issue.message]);
-			const before = new Set(issues(result.before).map(key));
-			const after = new Set(issues(result.after).map(key));
+		if (result.findingChanges) {
+			const { resolved, introduced, remaining } = result.findingChanges;
 			candidateArea.appendChild(element('p', 'dx-card-msg',
-				`Finding differences: ${[...before].filter((item) => !after.has(item)).length} resolved; ${[...after].filter((item) => !before.has(item)).length} new. Unresolved findings remain listed.`));
+				`Finding differences: ${resolved} resolved; ${introduced} new; ${remaining} remaining errors/warnings. Counts come from core semantic identities; unresolved findings remain listed.`));
 		}
 		if (result.inputFingerprint) candidateArea.appendChild(element('code', 'dx-fingerprint',
 			`Input ${result.inputFingerprint} → output ${result.outputFingerprint}`));
+		else if (result.outputFingerprint) candidateArea.appendChild(element('code', 'dx-fingerprint', `Output ${result.outputFingerprint}`));
 		candidateArea.appendChild(renderReport(result.after, 'Candidate output — unresolved findings'));
 		const controls = element('div', 'dx-actions');
 		const current = () => candidate === result && active(token, operation);
+		let browserPreview = { state: 'pending', scope: result.after?.format === 'collection' ? 'extracted-selected-face' : 'candidate' };
 		controls.appendChild(button('Download exact candidate', () => {
 			if (!current()) return message('Candidate is stale. Inspect the current project again.', true);
-			const ext = { sfnt: '.otf', woff: '.woff', woff2: '.woff2', collection: '.ttc' }[result.after?.format] ?? '.font';
+			const ext = candidateExtension(result.buffer, result.after?.format);
 			download(result.buffer, `${(fontData._fileName || 'font').replace(/\.[^.]+$/, '')}-candidate${ext}`);
 		}));
 		controls.appendChild(button('Download audit report', () => {
 			if (!current()) return message('Candidate is stale. Inspect the current project again.', true);
 			const { buffer: _buffer, ...audit } = result;
-			download(JSON.stringify({ ...audit, target: result.after?.format, faceIndex: result.faceIndex ?? fontData._collectionIndex ?? 0, profile: result.after?.profile }, null, 2),
+			download(JSON.stringify({ ...audit, browserPreview, target: result.after?.format, faceIndex: result.faceIndex ?? 0,
+				sourceFaceIndex: fontData._collectionIndex ?? 0, profile: result.after?.profile }, null, 2),
 				'font-quality-report.json', 'application/json');
 		}));
 		const commit = button('Commit candidate', async () => {
@@ -583,11 +601,13 @@ function render(container, fontData, context) {
 			disposePreview();
 			candidatePreview = face;
 			document.fonts.add(face);
+			browserPreview = { ...browserPreview, state: 'loaded' };
 			preview.style.fontFamily = `"${face.family}"`;
 			commit.disabled = false;
 			message('Candidate verified for selected checks; browser preview loaded. Review before committing. Original input is unchanged.');
 		} catch (error) {
 			if (current()) {
+				browserPreview = { ...browserPreview, state: 'failed', error: error.message };
 				preview.textContent = `Candidate preview failed: ${error.message}. Commit is disabled; the current preview is unchanged.`;
 				message('Core verification passed, but browser preview failed. Candidate is downloadable for investigation, not committed.', true);
 			}

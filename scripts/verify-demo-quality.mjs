@@ -4,8 +4,9 @@ import { expect } from '@playwright/test';
 import { FontFlux } from '../src/font_flux.js';
 import { exportFont } from '../src/export.js';
 import { importFontTables } from '../src/import.js';
+import { createHash } from 'node:crypto';
 
-const coreURL = '/@fs/' + resolve('src\\main.js').replaceAll('\\', '/');
+const coreURL = '/@fs/' + resolve('src', 'main.js').replaceAll('\\', '/');
 
 function entry(buffer, tag, base = 0) {
 	const view = new DataView(buffer);
@@ -32,10 +33,11 @@ async function diagnose(page) {
 	await page.locator('.diagnose-page').waitFor();
 }
 
-async function downloaded(page, action) {
+async function downloaded(page, action, filename) {
 	const pending = page.waitForEvent('download');
 	await action();
 	const download = await pending;
+	if (filename) assert.match(download.suggestedFilename(), filename);
 	const chunks = [];
 	for await (const chunk of await download.createReadStream()) chunks.push(chunk);
 	return Buffer.concat(chunks);
@@ -100,7 +102,7 @@ export async function verifyDemoQuality(page, url, makeFont, engine) {
 		await reviewSafe(page);
 		await apply(page);
 		assert.deepEqual(await json(page), originalProject);
-		const candidate = await downloaded(page, () => page.getByRole('button', { name: 'Download exact candidate', exact: true }).click());
+		const candidate = await downloaded(page, () => page.getByRole('button', { name: 'Download exact candidate', exact: true }).click(), /-candidate\.ttf$/);
 		assert.deepEqual(candidate, Buffer.from(expected.buffer));
 		const audit = JSON.parse(await downloaded(page, () => page.getByRole('button', { name: 'Download audit report', exact: true }).click()));
 		assert.equal(audit.outputFingerprint, expected.outputFingerprint);
@@ -294,6 +296,10 @@ export async function verifyDemoQuality(page, url, makeFont, engine) {
 	await expect(page.locator('.dx-status')).toContainText('verification failed');
 	await expect(page.getByRole('button', { name: 'Commit candidate', exact: true })).toHaveCount(0);
 	await expect(page.getByRole('button', { name: 'Download exact candidate', exact: true })).toHaveCount(0);
+	const rejectedAudit = JSON.parse(await downloaded(page, () => page.getByRole('button', { name: 'Download audit report' }).click()));
+	assert.equal(rejectedAudit.state, 'failed');
+	assert.equal(rejectedAudit.browserPreview.state, 'not-run');
+	assert(!('buffer' in rejectedAudit));
 	assert.deepEqual(await json(page), beforeFailure);
 
 	await load(page, url, damaged);
@@ -483,6 +489,259 @@ export async function verifyDemoQuality(page, url, makeFont, engine) {
 	await expect(page.getByRole('button', { name: 'Apply plan to detached candidate', exact: true })).toHaveCount(0);
 	assert.deepEqual(await downloaded(page, () =>
 		page.getByRole('button', { name: 'Download original (unverified)', exact: true }).click()), Buffer.from(damaged));
+	await verifyM2Acceptance(page, url, makeFont, engine);
 	assert.deepEqual(pageErrors, []);
 	console.log(`${engine} quality decisions, profiles, typed forms, exact wrapper/collection repair, preflight, cancellation, consent and rollback: passed`);
+}
+
+async function verifyM2Acceptance(page, url, makeFont, engine) {
+	const base = makeFont().export({ format: 'sfnt' });
+	for (const width of [1440, 390]) {
+		await page.setViewportSize({ width, height: 1000 });
+		await load(page, url, base);
+		await diagnose(page);
+		const ranges = page.locator('[data-repair-id="os2.unicode-ranges"]');
+		await expect(ranges).toContainText('OpenType-1.5-Unicode-5.1-mapped-characters-v1');
+		await expect(ranges.getByLabel('I have authority to choose these metadata values')).toHaveValue('');
+		await ranges.locator('.dx-card-header input').focus();
+		await page.keyboard.press('Space');
+		await ranges.getByLabel('I have authority to choose these metadata values').selectOption('true');
+		await page.getByRole('button', { name: 'Review repair plan', exact: true }).focus();
+		await page.keyboard.press('Enter');
+		await expect(page.locator('.dx-candidate')).toContainText('Policy version: OpenType-1.5-Unicode-5.1-mapped-characters-v1');
+		await page.getByRole('button', { name: 'Decline plan', exact: true }).focus();
+		await page.keyboard.press('Enter');
+		await expect(page.getByRole('button', { name: 'Review repair plan', exact: true })).toBeFocused();
+		await expect(page.locator('.dx-status')).toHaveAttribute('role', 'status');
+		await expect(page.locator('.dx-status')).toHaveAttribute('aria-live', 'polite');
+		await page.getByRole('button', { name: 'Export Font', exact: true }).click();
+		const dialog = page.locator('.save-dialog'), filename = dialog.getByLabel('Filename', { exact: true });
+		await expect(filename).toBeFocused();
+		await page.keyboard.press('Shift+Tab');
+		await expect(dialog.getByRole('button', { name: 'Preflight', exact: true })).toBeFocused();
+		await page.keyboard.press('Tab');
+		await expect(filename).toBeFocused();
+		await dialog.getByRole('button', { name: 'Preflight', exact: true }).click();
+		await expect(dialog.locator('.btn-download')).toBeEnabled();
+		const audit = JSON.parse(await downloaded(page, () => dialog.getByRole('button', { name: 'Download preflight report' }).click()));
+		assert.equal(audit.kind, 'export-preflight');
+		assert.equal(audit.target, 'sfnt');
+		assert.equal(audit.sourceFaceIndex, 0);
+		assert.deepEqual(audit.stages.map((stage) => stage.id), ['original', 'project', 'resolved', 'output']);
+		assert(audit.output.checks.some((check) => check.coverage !== 'complete'));
+		assert(!('buffer' in audit));
+		await filename.focus();
+		await page.keyboard.press('Shift+Tab');
+		await expect(dialog.locator('.btn-download')).toBeFocused();
+		await page.keyboard.press('Tab');
+		await expect(filename).toBeFocused();
+		const binary = await downloaded(page, () => dialog.locator('.btn-download').click());
+		assert.equal(audit.outputFingerprint, createHash('sha256').update(binary).digest('hex'));
+		await expect(page.getByRole('button', { name: 'Export Font', exact: true })).toBeFocused();
+		assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+	}
+
+	await load(page, url, makeFont().toJSON(), 'authored.json');
+	await diagnose(page);
+	await page.getByRole('button', { name: 'Preflight current project', exact: true }).click();
+	await expect(page.getByRole('button', { name: 'Commit candidate', exact: true })).toBeEnabled();
+	const authoredAudit = JSON.parse(await downloaded(page, () => page.getByRole('button', { name: 'Download audit report' }).click()));
+	const authoredBytes = await downloaded(page, () => page.getByRole('button', { name: 'Download exact candidate' }).click());
+	assert.equal(authoredAudit.preflight.kind, 'export-preflight');
+	assert.equal(authoredAudit.preflight.outputFingerprint, createHash('sha256').update(authoredBytes).digest('hex'));
+	assert.equal(authoredAudit.preflight.stages[0].status, 'skipped');
+	assert.equal(authoredAudit.preflight.stages[0].reasonCode, 'no-original-bytes');
+	assert.equal(authoredAudit.browserPreview.state, 'loaded');
+
+	// Failed and unavailable outputs retain downloadable evidence, not binary downloads.
+	const signed = importFontTables(base);
+	signed.tables.DSIG = { _raw: [0, 0, 0, 1, 0, 0, 0, 0] };
+	await load(page, url, exportFont(signed));
+	await page.getByRole('button', { name: 'Export Font', exact: true }).click();
+	await page.locator('.btn-validate').filter({ hasText: /^Preflight$/ }).click();
+	const reportButton = page.getByRole('button', { name: 'Download preflight report' });
+	await expect(reportButton).toBeEnabled();
+	await expect(page.locator('.btn-download')).toBeDisabled();
+	const failed = JSON.parse(await downloaded(page, () => reportButton.click()));
+	assert.notEqual(failed.state, 'verified');
+	assert.equal(failed.outputFingerprint, null);
+	await page.getByLabel('Filename', { exact: true }).fill('changed.ttf');
+	await expect(reportButton).toBeDisabled();
+	await page.keyboard.press('Escape');
+
+	await diagnose(page);
+	await page.getByRole('button', { name: 'Preflight current project', exact: true }).click();
+	const rejectedPreflight = JSON.parse(await downloaded(page, () => page.getByRole('button', { name: 'Download audit report' }).click()));
+	assert.equal(rejectedPreflight.outputFingerprint, null);
+	assert.notEqual(rejectedPreflight.state, 'verified');
+	assert(rejectedPreflight.stages.length === 4);
+
+	// A serializer failure during commit preparation cannot partially replace the project.
+	await load(page, url, base);
+	const original = await json(page);
+	const oldWidth = await previewWidth(page);
+	await diagnose(page);
+	const name = page.locator('[data-repair-id="name.record"]');
+	await name.locator('.dx-card-header input').check();
+	await name.getByLabel('Name ID', { exact: true }).fill('1');
+	await name.getByLabel('Windows language ID', { exact: true }).fill('1033');
+	await name.getByLabel('Authoritative name or rights text').fill('M2 candidate');
+	await name.getByLabel('I have authority to choose these metadata values').selectOption('true');
+	await page.getByRole('button', { name: 'Review repair plan', exact: true }).click();
+	await apply(page);
+	await page.evaluate(async (moduleURL) => {
+		const { FontFlux } = await import(moduleURL), original = FontFlux.prototype.toJSON;
+		FontFlux.prototype.toJSON = function (...args) {
+			if (this.info.familyName === 'M2 candidate') throw new Error('Injected commit serialization failure');
+			return original.apply(this, args);
+		};
+	}, coreURL);
+	await page.getByRole('button', { name: 'Commit candidate', exact: true }).click();
+	await expect(page.locator('.dx-status')).toContainText('Commit failed');
+	assert.deepEqual(await json(page), original);
+	assert.equal(await previewWidth(page), oldWidth);
+
+	// A new download failure is visible and does not erase the existing project.
+	await page.evaluate(() => {
+		window.__originalCreateURL = URL.createObjectURL;
+		URL.createObjectURL = () => { throw new Error('Injected download failure'); };
+	});
+	await page.getByRole('button', { name: 'Download exact candidate', exact: true }).click();
+	await expect(page.locator('.dx-status')).toContainText('Download failed');
+	await page.evaluate(() => { URL.createObjectURL = window.__originalCreateURL; });
+	assert.deepEqual(await json(page), original);
+
+	const damaged = base.slice(0);
+	new DataView(damaged).setUint32(entry(damaged, 'head').offset + 8, 0);
+	await load(page, url, damaged);
+	const before = await json(page), width = await previewWidth(page);
+	await diagnose(page);
+	await reviewSafe(page);
+	await apply(page);
+	await page.evaluate(() => {
+		window.__originalAdd = document.fonts.add;
+		document.fonts.add = function () { throw new Error('Injected preview registration failure'); };
+	});
+	await page.getByRole('button', { name: 'Commit candidate', exact: true }).click();
+	await expect(page.locator('.dx-status')).toContainText('Commit failed');
+	await expect(page.getByRole('button', { name: 'Undo last commit' })).toHaveCount(0);
+	assert.deepEqual(await json(page), before);
+	assert.equal(await previewWidth(page), width);
+	await page.evaluate(() => { document.fonts.add = window.__originalAdd; });
+	await page.getByRole('button', { name: 'Commit candidate', exact: true }).click();
+	await page.getByRole('button', { name: 'Undo last commit' }).waitFor();
+	const committed = await json(page);
+	await page.evaluate(() => {
+		window.__originalCreateURL = URL.createObjectURL;
+		URL.createObjectURL = () => { throw new Error('Injected original preview resource failure'); };
+	});
+	await page.getByRole('button', { name: 'Undo last commit' }).click();
+	await expect(page.locator('.dx-status')).toContainText('failed');
+	await expect(page.getByRole('button', { name: 'Undo last commit' })).toBeVisible();
+	await page.evaluate(() => { URL.createObjectURL = window.__originalCreateURL; });
+	assert.deepEqual(await json(page), committed);
+	assert.equal(await previewWidth(page), width);
+	await page.getByRole('button', { name: 'Undo last commit' }).click();
+	assert.deepEqual(await json(page), before);
+	await expect(page.locator('#demo-font-face')).toHaveCount(1);
+
+	await page.getByRole('button', { name: 'Export Font', exact: true }).click();
+	await page.locator('.btn-validate').click();
+	await expect(page.locator('.btn-download')).toBeEnabled();
+	await page.evaluate(() => {
+		window.__originalCreateURL = URL.createObjectURL;
+		URL.createObjectURL = () => { throw new Error('Injected export download failure'); };
+	});
+	await page.getByRole('button', { name: 'Download preflight report' }).click();
+	await expect(page.locator('.validation-results')).toContainText('Report download failed');
+	await page.locator('.btn-download').click();
+	await expect(page.locator('.validation-results')).toContainText('Export failed');
+	await page.evaluate(() => { URL.createObjectURL = window.__originalCreateURL; });
+	await page.keyboard.press('Escape');
+	assert.deepEqual(await json(page), before);
+	assert.equal(await previewWidth(page), width);
+
+	await page.evaluate(() => {
+		const load = FontFace.prototype.load;
+		FontFace.prototype.load = function () {
+			return this.family.startsWith('CandidatePreview') ? Promise.reject(new Error('Injected candidate preview failure')) : load.call(this);
+		};
+	});
+	await reviewSafe(page);
+	await page.getByRole('button', { name: 'Apply plan to detached candidate', exact: true }).click();
+	await expect(page.locator('.dx-status')).toContainText('browser preview failed');
+	await expect(page.getByRole('button', { name: 'Commit candidate', exact: true })).toBeDisabled();
+	const previewFailure = JSON.parse(await downloaded(page, () => page.getByRole('button', { name: 'Download audit report' }).click()));
+	assert.equal(previewFailure.browserPreview.state, 'failed');
+	assert.match(previewFailure.browserPreview.error, /Injected candidate/);
+	assert.equal(previewFailure.state, 'verified');
+	assert.deepEqual(await json(page), before);
+
+	// Reverting a collection commit re-links untouched peers to the original source.
+	const collection = FontFlux.exportCollection([makeFont(), makeFont(false, 950)]);
+	const second = new DataView(collection).getUint32(16);
+	new DataView(collection).setUint32(entry(collection, 'head', second).offset + 12, 0);
+	await load(page, url, collection, 'revert.ttc');
+	await page.getByLabel('Active collection face').selectOption('1');
+	await diagnose(page);
+	await page.locator('[data-repair-id="head.magic"] .dx-card-header input').check();
+	await page.getByRole('button', { name: 'Review repair plan', exact: true }).click();
+	await apply(page);
+	await page.getByRole('button', { name: 'Commit candidate', exact: true }).click();
+	await page.getByRole('button', { name: 'Revert to original project', exact: true }).click();
+	await expect(page.locator('[data-repair-id="head.magic"] .dx-card-header input')).toBeEnabled();
+	await expect(page.locator('.diagnose-page h2')).toBeFocused();
+	assert.deepEqual(await downloaded(page, () => page.getByRole('button', { name: 'Download original (unverified)' }).click()), Buffer.from(collection));
+	await editFamily(page, 'Selected temporary edit');
+	await page.getByLabel('Active collection face').selectOption('0');
+	assert((await previewWidth(page)) < 35);
+	await editFamily(page, 'Independent peer edit');
+	const peerEdit = await json(page);
+	await page.getByLabel('Active collection face').selectOption('1');
+	await diagnose(page);
+	await page.getByRole('button', { name: 'Revert to original project', exact: true }).click();
+	await expect(page.getByRole('button', { name: 'Review repair plan', exact: true })).toBeDisabled();
+	await page.getByLabel('Active collection face').selectOption('0');
+	assert.deepEqual(await json(page), peerEdit);
+
+	// Switching to a corrupt face disposes detached preview fonts and pending work.
+	new DataView(collection).setUint32(second, 0x12345678);
+	await load(page, url, collection, 'corrupt-peer.ttc');
+	await diagnose(page);
+	const rights = page.locator('[data-repair-id="rights.embedding"]');
+	await rights.locator('.dx-card-header input').check();
+	await rights.getByLabel('Authorized fsType bit mask').fill('4');
+	await rights.getByLabel('I have authority to choose these metadata values').selectOption('true');
+	await page.getByRole('button', { name: 'Review repair plan', exact: true }).click();
+	await apply(page);
+	assert.equal(await page.evaluate(() => [...document.fonts].filter((face) => face.family.startsWith('CandidatePreview')).length), 1);
+	await page.getByLabel('Active collection face').selectOption('1');
+	await expect(page.locator('.dx-original')).toContainText('BAD_SF_VERSION');
+	assert.equal(await page.evaluate(() => [...document.fonts].filter((face) => face.family.startsWith('CandidatePreview')).length), 0);
+	await expect(page.getByRole('button', { name: 'Commit candidate', exact: true })).toHaveCount(0);
+
+	await load(page, url, Uint8Array.from([0, 1]), 'truncated.ttf');
+	await expect(page.locator('.dx-status')).toContainText('Inspection finished');
+	await expect(page.getByRole('button', { name: 'Review repair plan', exact: true })).toBeDisabled();
+
+	await page.goto(url);
+	await page.evaluate(() => { FileReader.prototype.readAsArrayBuffer = () => {}; });
+	await page.locator('input[type="file"]').setInputFiles({ name: 'literal<em>font.ttf', mimeType: 'application/octet-stream', buffer: Buffer.from(base) });
+	await expect(page.locator('.loading-spinner')).toContainText('literal<em>font.ttf');
+	await expect(page.locator('.loading-spinner em')).toHaveCount(0);
+
+	const bootFailure = async (route) => {
+		if (route.request().url().includes('/@fs/')) return route.continue();
+		const response = await route.fetch(), text = await response.text();
+		assert(text.includes('initWoff2().then(showLoadingScreen'));
+		await route.fulfill({ response, body: text.replace('initWoff2().then(showLoadingScreen',
+			"Promise.reject(new Error('Injected WOFF2 unavailable')).then(showLoadingScreen") });
+	};
+	await page.route('**/src/main.js', bootFailure);
+	await page.goto(url);
+	await expect(page.locator('.loading-error')).toContainText('WOFF2 initialization failed');
+	await page.locator('input[type="file"]').setInputFiles({ name: 'still-supported.ttf', mimeType: 'application/octet-stream', buffer: Buffer.from(base) });
+	await page.locator('.font-name').waitFor();
+	await page.unroute('**/src/main.js', bootFailure);
+	console.log(`${engine} M2 audits, provenance, keyboard/focus, download/commit rollback, collection revert/disposal and loader failures: passed`);
 }

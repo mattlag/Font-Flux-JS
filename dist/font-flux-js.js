@@ -49575,14 +49575,20 @@ async function Qw(e, t, n = {}) {
 	u.push(...rw(i, o, r.source, t.steps, r.options)), Vy(s.diagnostics) && u.push("Candidate inspection was interrupted or incomplete; selected repair verification cannot pass."), u.push(...Zw(r.report, s, l.removedTables));
 	let d = new Set(t.steps.filter((e) => !e.optional).flatMap((e) => e.codes));
 	for (let e of s.diagnostics?.issues ?? []) d.has(e.code) && u.push(`The targeted finding ${e.code} remains after repair.`);
-	let f = Xw(r.report);
-	for (let [e, t] of Xw(s)) t > (f.get(e) ?? 0) && u.push(`New unapproved finding: ${JSON.parse(e)[3]}`);
+	let f = Xw(r.report), p = Xw(s), m = {
+		resolved: 0,
+		introduced: 0,
+		remaining: 0
+	};
+	for (let [e, t] of f) m.resolved += Math.max(0, t - (p.get(e) ?? 0)), m.remaining += Math.min(t, p.get(e) ?? 0);
+	for (let [e, t] of p) m.introduced += Math.max(0, t - (f.get(e) ?? 0)), t > (f.get(e) ?? 0) && u.push(`New unapproved finding: ${JSON.parse(e)[3]}`);
 	t.steps.some((e) => e.id === "dsig.remove") && Aw(c.sfnt, r.options).entries?.some((e) => e.tag === "DSIG") && u.push("The selected digital signature removal did not occur.");
-	let p = u.length === 0, m = p ? await zw(o) : null;
+	let h = u.length === 0, g = h ? await zw(o) : null;
 	return YC(n.signal), Kw(e, r.bytes, r.options), {
-		state: p ? "verified" : "failed",
-		buffer: p ? o.buffer : null,
-		changed: p && !Gw(i, o),
+		state: h ? "verified" : "failed",
+		buffer: h ? o.buffer : null,
+		changed: h && !Gw(i, o),
+		findingChanges: m,
 		format: t.format,
 		faceIndex: t.faceIndex,
 		profile: t.profile,
@@ -49600,7 +49606,7 @@ async function Qw(e, t, n = {}) {
 			description: "Rebuilt table offsets, lengths, alignment, directory order, and search fields; retained payloads were independently compared."
 		}] : []),
 		verification: {
-			passed: p,
+			passed: h,
 			failures: u,
 			evidence: [
 				"Actual emitted bytes were diagnosed again; targeted findings must disappear and no new warnings/errors may appear.",
@@ -49610,7 +49616,7 @@ async function Qw(e, t, n = {}) {
 			]
 		},
 		inputFingerprint: t.inputFingerprint,
-		outputFingerprint: m
+		outputFingerprint: g
 	};
 }
 function $w(e, t) {
@@ -51416,7 +51422,7 @@ var ZT = class e {
 //#region src/main.js
 KT(() => new Worker(new URL(
 	/* @vite-ignore */
-	"" + new URL("assets/quality-worker-entry-BTAo6yPt.js", import.meta.url).href,
+	"" + new URL("assets/quality-worker-entry-9UM_icCl.js", import.meta.url).href,
 	"" + import.meta.url
 ), { type: "module" }));
 async function QT() {

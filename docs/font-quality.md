@@ -364,11 +364,41 @@ or automatic source recovery.
 
 ## Demo review and export
 
-Diagnose and Export use the same core profiles and explicit publishing
+In v2.10.3, Diagnose and Export use the same core profiles and explicit publishing
 expectations. Decisions and consent start empty. Planning, inspection,
 application and preflight use workers; navigation, profile/target changes and
 Cancel invalidate pending work. Reports distinguish all four preflight stages.
 Download saves exact verified bytes; audit JSON includes the reviewed plan.
+
+The generated [repair contracts](./check-inventory.md#registered-repair-contracts) document
+every shipped action's scope, input decisions, consequences, guards and regression
+evidence. The Demo displays those same descriptors, including affected tables and
+versioned policy provenance. The review identifies target format, selected face,
+profile/version and source fingerprint before any candidate is applied.
+
+### Review evidence and exact downloads
+
+The core's `RepairResult.findingChanges` counts resolved, introduced and remaining
+error/warning **occurrences** using semantic locations. Repeated occurrences count
+separately; physical table relocation alone does not produce a new finding.
+The Demo uses these counts rather than comparing messages or mutable table offsets.
+No-change or verified does not mean every possible defect has been checked.
+
+Export's **Download preflight report** is available for completed failed/unsupported
+results as well as successful results. It retains original/project/resolved/output
+stages, normalizations, conversion effects, unresolved issues and coverage, plus
+the chosen filename, target, profile and source face. Successful reports include
+the SHA-256 of the exact downloadable output; unavailable bytes have a null
+fingerprint. Diagnose's project-preflight audit retains this same evidence.
+Changing inputs or the project invalidates both the report and binary download.
+Font bytes are not embedded in report JSON.
+
+Repair downloads use `.ttf`/`.otf` and `.ttc`/`.otc` according to actual outline
+signatures, or `.woff`/`.woff2` for wrappers. Export filenames remain editable
+host-level choices, not a core naming policy. Original downloads are always
+explicitly **unverified**. A core-verified candidate that fails the browser preview
+can still be downloaded for investigation; the status and audit disclose the
+preview failure and **Commit candidate** stays disabled.
 
 Collection candidate previews use a separately preflighted selected-face
 extraction, explicitly labeled as such. Committing retains the complete repaired
@@ -376,3 +406,55 @@ collection while updating the selected editable face and shared source snapshots
 Separate unreconciled face edits block original-collection repair. Undo is bounded
 to the recent pre-commit project; a collection transaction invalidates older undo
 steps on its other faces. Original downloads remain explicitly unverified.
+
+Revert restores the selected original project, not all edited family members.
+When the other faces are still original, it also restores their shared source
+references, making original-collection repair available again. Independent edits
+on another face survive revert; they continue to block whole-collection repair
+until reconciled. Undo is one step, not an unlimited editing history.
+Keyboard navigation stays inside Export while it is open; Escape restores its
+opener, and commit/undo/revert focus the refreshed Diagnose heading.
+
+### Failure, partial results and recovery
+
+- **No applicable fix:** inspect the reason and keep the original. `source-required`
+  or `blocked` is not an invitation to select a different risk category to bypass
+  the guard. Correct missing/ambiguous information in an authoritative source and
+  import or preflight the corrected project.
+- **Partial inspection:** an import-failing binary remains in diagnose-only mode.
+  Findings and skipped/unsupported checks stay visible; an unreadable later
+  collection face does not erase usable earlier faces. JSON instead routes to
+  project preflight, with original-byte evidence explicitly skipped.
+- **Failed verification:** the core returns no downloadable repaired buffer.
+  Review the failure and outstanding findings; do not treat successful application
+  of an intermediate step, a preview, or a dirty flag as verification. Download
+  available audit evidence and retain the original project.
+- **Preview, export or download failure:** the Demo reports the error, retains the
+  existing project, and does not commit the candidate. A cancelled or stale worker
+  result cannot become a committed project. A WOFF2 startup failure is reported
+  separately and does not prevent loading supported non-WOFF2 inputs.
+- **Recovered source:** when the authoritative original source becomes available,
+  rebuild it and inspect/preflight its output. For supported legacy recovery,
+  explicitly authorize `FontFlux.recoverLegacy(original, replacement,
+  { authorizeReplacement: true })`. Its `equivalent: null` deliberately means
+  replacement was inspected, **not** that equivalence or authenticity was proved.
+  See [source and legacy workflows](./quality-workflows.md).
+
+### Migration from the old Demo fix behavior
+
+The old Demo-only fix factories and **Fix All** path are replaced by core repair
+descriptors and **Select available safe repairs** followed by explicit review.
+Safe selection is not automatic application; assisted inputs and lossy consent
+start empty and must be reviewed again after changes. Setting `_dirty` only means
+the project has edits, never “Fixed.”
+
+Host integrations should use `inspect` -> `planRepairs` -> `applyRepairs` (or their
+worker equivalents), then check `state === 'verified'`, preservation/coverage and
+any required host preview before committing. Save `result.buffer` itself rather
+than reopening and exporting it again. Use `preflight` for authored projects;
+ordinary `validate()`/`export()` retain their existing non-repair contracts.
+
+`npm run test:demo -- --quality` is the focused Chromium/Firefox acceptance gate;
+`npm run test:demo` additionally runs the existing metadata/subset/collection
+flows. These use installed repository dependencies and browsers, without isolated
+package installation.

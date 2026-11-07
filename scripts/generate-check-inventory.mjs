@@ -4,6 +4,7 @@ import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseAst } from 'vite';
+import { repairCatalog } from '../src/validate/quality.js';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const BASELINE_COMMIT = 'f2646a5b05c48d948b654ab27533c3c067d2e909';
@@ -331,6 +332,7 @@ export function extractRepairLinks(sources) {
 				if (ids.length !== 1) throw new Error(`Ambiguous repair ID in ${file}`);
 				repairs.push({
 					id: ids[0],
+					source: tree.evidence(node),
 					codes: property(node, 'codes') ? sorted(tree.values(property(node, 'codes'), new Set(), [], bound)) : [],
 				});
 			}
@@ -778,16 +780,50 @@ function sourceLink(source, revision) {
 	const path = revision
 		? `https://github.com/mattlag/Font-Flux-JS/blob/${revision}/${source.file}`
 		: `https://github.com/mattlag/Font-Flux-JS/blob/main/${source.file}`;
-	return `[${source.symbol}:${source.line}](${path}#L${source.line})`;
+	return `[\`${source.symbol}:${source.line}\`](${path}#L${source.line})`;
 }
 
 export function renderDocs(inventory) {
 	const { summary, catalog } = inventory;
+	const repairAnchor = (id) => `repair-${id.replace(/[^a-z0-9-]/g, '-')}`;
 	const rows = Object.values(catalog).map((d) => {
 		const sources = [...new Map(d.origins.map((o) =>
 			[`${o.source.file}:${o.source.line}`, o.source])).values()];
-		return `| \`${d.id}\` | ${d.status}${d.baseline ? ' · baseline' : ''} | ${d.kind} | ${d.pipelines.join(', ')} | ${d.family} | ${d.tables.join(', ') || '—'} | ${sources.map((s) => sourceLink(s, d.sourceRevision)).join('<br>')} | ${d.repairIds.map((id) => `\`${id}\``).join(', ') || 'No registered fix¹'} |`;
+		return `| \`${d.id}\` | ${d.status}${d.baseline ? ' · baseline' : ''} | ${d.kind} | ${d.pipelines.join(', ')} | ${d.family} | ${d.tables.join(', ') || '—'} | ${sources.map((s) => sourceLink(s, d.sourceRevision)).join('<br>')} | ${d.repairIds.map((id) => `[\`${id}\`](#${repairAnchor(id)})`).join(', ') || 'No registered fix¹'} |`;
 	});
+	const repairDetails = repairCatalog().map((fix) => {
+		const registration = inventory.repairs.find((entry) => entry.id === fix.id);
+		const tests = ['quality-m1', registration.source.file.endsWith('repair-extensions.js') ? 'repair-extensions' : 'quality'];
+		if (fix.id === 'os2.unicode-ranges') tests.push('unicode-ranges');
+		const decisions = fix.inputs.map((field) => {
+			const constraints = field.values?.join(', ') ?? (field.min != null ? `${field.min}..${field.max}` : field.maxLength ? `maximum ${field.maxLength} UTF-16 units` : 'explicit true/false');
+			return `- \`${field.key}\`: ${field.label}; ${field.type}; ${constraints}${field.mustBeTrue ? '; explicit authority confirmation required' : ''}.`;
+		});
+		if (fix.risk === 'potentially-lossy') decisions.push('- Explicit `consent: true` required for this plan; not an inferred permission.');
+		return `### \`${fix.id}\` {#${repairAnchor(fix.id)}}
+
+**${fix.title}** — ${fix.risk}; revision ${fix.revision}; formats: ${fix.formats.join(', ')}.
+
+${fix.description}
+
+${fix.affectedTables?.length ? `**Affected tables:** ${fix.affectedTables.join(', ')}.` : ''}
+
+**Prerequisites / limitations:** ${fix.prerequisites}
+
+**Risk rationale:** ${fix.riskReason}
+
+**If applied:** ${fix.ifApplied}
+
+**If unfixed:** ${fix.ifUnfixed}
+${fix.policyVersion ? `\n**Policy version:** \`${fix.policyVersion}\`\n` : ''}
+**Decisions:**${decisions.length ? `\n${decisions.join('\n')}` : ' No user values; applicability guards must still pass.'}
+
+**Verification invariants:** ${fix.invariants.join(' ')}
+
+**Implementation:** ${sourceLink(registration.source)}.
+**Regression evidence:** ${tests.map((name) => `[${name}.test.js](https://github.com/mattlag/Font-Flux-JS/blob/main/test/${name}.test.js)`).join(', ')}.
+`;
+	}).join('\n');
 	const dynamicRows = inventory.dynamicSites.map((site) =>
 		`| ${sourceLink(site.source)} | \`${site.expression}\` | ${site.codes.map((code) => `\`${code}\``).join(', ')} | ${site.expansionEvidence.map((proof) => sourceLink(proof)).join(', ')} |`);
 	return `# Diagnostic and validation identifier inventory
@@ -846,6 +882,15 @@ availability, risk, prerequisites, user intent/consent, and output verification 
 Registered repairs support guarded SFNT, WOFF1/WOFF2 and explicitly selected collection faces.
 Availability is per action and input: signatures, opaque dependencies, incomplete structures and unknown context can block an offer.
 Legacy source replacement is not an in-place repair. Optional policy/loss actions without finding codes remain listed in the public repair registry, not falsely attached to unrelated findings.
+
+## Registered repair contracts
+
+Generated from the same runtime descriptors used by the public API and Demo.
+Every action below retains its decisions, apply/decline consequences, limitations
+and regression links, including optional actions without diagnostic trigger codes.
+These are bounded contracts, not evidence that every input is repairable.
+
+${repairDetails}
 
 ### Operational worker errors (not font findings)
 

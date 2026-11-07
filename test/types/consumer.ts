@@ -44,7 +44,10 @@ if (preflight.buffer) {
 		const plan = await FontFlux.planRepairs(preflight.buffer, safe);
 		const repair = await FontFlux.applyRepairs(preflight.buffer, plan);
 		const candidate: ArrayBuffer | null = repair.buffer;
-		void candidate;
+		const resolved: number = repair.findingChanges.resolved;
+		const introduced: number = repair.findingChanges.introduced;
+		const remaining: number = repair.findingChanges.remaining;
+		void [candidate, resolved, introduced, remaining];
 	}
 }
 FontFlux.diagnose(bytes, { faceIndex: 0, maxFonts: 4, maxStructureDepth: 64, maxStructureNodes: 10000 });

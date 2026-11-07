@@ -437,6 +437,12 @@ actual-output export preflight. Version 2.10.2 adds 57 guarded repair actions,
 [cancellable workers and explicit family/source/legacy workflows](./docs/quality-workflows.md).
 The [check inventory](./docs/check-inventory.md) records identifiers, provenance,
 reachability, and repair availability; counts are not coverage percentages.
+Its generated per-action contracts link scope, decisions, consequences and tests.
+Version 2.10.3 completes the
+[Demo review/export workflow](./docs/font-quality.md#demo-review-and-export), which
+keeps originals, offers explicit safe/assisted/lossy review, and downloads exact
+verified bytes with fingerprinted audits. Failed/partial results remain visible;
+commit, one-step undo and original-project revert are guarded transactions.
 The [font-quality backlog](./FONT-QUALITY-BACKLOG.md) tracks planned detection and
 repair improvements, fix safety and user decisions, verification requirements,
 and core-first Demo integration. Its implementation status distinguishes shipped

@@ -4,6 +4,7 @@
  */
 
 import { FontFlux } from 'font-flux-js';
+import { downloadQualityFile, preflightAudit } from '../quality-report.js';
 
 /**
  * @param {HTMLElement} root - Append overlay to this element
@@ -12,6 +13,7 @@ import { FontFlux } from 'font-flux-js';
 export function createSaveDialog(root, fontData, context) {
 	let operation = 0;
 	let verified = null;
+	let audit = null;
 	let closed = false;
 	let controller = null;
 	const previousFocus = document.activeElement;
@@ -163,6 +165,7 @@ export function createSaveDialog(root, fontData, context) {
 	for (const descriptor of FontFlux.qualityProfiles()) {
 		const option = document.createElement('option');
 		option.value = descriptor.id;
+		option.dataset.version = descriptor.version;
 		option.textContent = `${descriptor.id} v${descriptor.version}`;
 		profile.appendChild(option);
 	}
@@ -221,7 +224,20 @@ export function createSaveDialog(root, fontData, context) {
 		doExport();
 	});
 
-	actions.append(cancelBtn, validateBtn, downloadBtn);
+	const reportBtn = document.createElement('button');
+	reportBtn.className = 'btn-report';
+	reportBtn.textContent = 'Download preflight report';
+	reportBtn.disabled = true;
+	reportBtn.addEventListener('click', () => {
+		if (!audit || !isCurrent(audit.token)) return invalidate();
+		try { downloadQualityFile(JSON.stringify(audit.report, null, 2), 'font-preflight-report.json', 'application/json'); }
+		catch (error) {
+			valResults.className = 'validation-results invalid';
+			valResults.textContent = `Report download failed: ${error.message}. Project unchanged.`;
+		}
+	});
+
+	actions.append(cancelBtn, validateBtn, reportBtn, downloadBtn);
 	dialog.appendChild(actions);
 
 	overlay.appendChild(dialog);
@@ -261,6 +277,7 @@ export function createSaveDialog(root, fontData, context) {
 		controller?.abort();
 		operation++;
 		verified = null;
+		audit = null;
 		document.removeEventListener('keydown', onKeyDown);
 		window.removeEventListener('fontflux:project-change', invalidate);
 		observer.disconnect();
@@ -273,6 +290,8 @@ export function createSaveDialog(root, fontData, context) {
 		controller = null;
 		operation++;
 		verified = null;
+		audit = null;
+		reportBtn.disabled = true;
 		downloadBtn.disabled = true;
 		validateBtn.disabled = false;
 		valResults.style.display = '';
@@ -287,6 +306,8 @@ export function createSaveDialog(root, fontData, context) {
 		const token = capture();
 		const fmt = formats[selectedIdx];
 		verified = null;
+		audit = null;
+		reportBtn.disabled = true;
 		downloadBtn.disabled = true;
 		validateBtn.disabled = true;
 		valResults.style.display = '';
@@ -296,6 +317,7 @@ export function createSaveDialog(root, fontData, context) {
 			const font = context?.projectFont() ?? new FontFlux(structuredClone(fontData));
 			const result = await font.preflightAsync({
 				format: fmt.format, profile: profile.value, signal: controller.signal,
+				profileVersion: Number(profile.selectedOptions[0].dataset.version),
 				originalSource: context?.originalSource?.(),
 				context: {
 					fileName: fileInput.value,
@@ -306,10 +328,18 @@ export function createSaveDialog(root, fontData, context) {
 				},
 			});
 			if (closed || id !== operation) return;
+			const report = await preflightAudit(result, {
+				target: fmt.format, fileName: fileInput.value, profile: profile.value,
+				profileVersion: Number(profile.selectedOptions[0].dataset.version),
+				sourceFaceIndex: fontData._collectionIndex ?? 0,
+			});
+			if (closed || id !== operation) return;
 			if (!isCurrent(token)) {
 				invalidate();
 				return;
 			}
+			audit = { report, token };
+			reportBtn.disabled = false;
 			const ok = result.state === 'verified' && result.buffer;
 			valResults.className = `validation-results ${ok ? 'valid' : 'invalid'}`;
 			valResults.replaceChildren();
@@ -323,7 +353,8 @@ export function createSaveDialog(root, fontData, context) {
 				item.textContent = text;
 				list.appendChild(item);
 			};
-			add(`Target: ${fmt.format}; face ${Number(fontData._collectionIndex ?? 0) + 1}; ${profile.value} profile v1.`);
+			add(`Target: ${fmt.format}; source face ${Number(fontData._collectionIndex ?? 0) + 1}; ${profile.value} profile v${report.profileVersion ?? 'unavailable'}.`);
+			if (report.outputFingerprint) add(`Output SHA-256: ${report.outputFingerprint}`);
 			for (const stage of result.stages) add(`${stage.id}: ${stage.status} — ${stage.reasonCode}`);
 			for (const normalization of result.normalizations) add(`${normalization.kind}: ${normalization.description}`);
 			for (const effect of result.effects) add(`Export effect: ${effect}`);
@@ -339,6 +370,7 @@ export function createSaveDialog(root, fontData, context) {
 			add('Partial coverage — review skipped and unsupported checks:');
 			for (const coverage of result.output?.coverage ?? []) add(`${coverage.domain}: ${coverage.status} — ${coverage.reason}`);
 			for (const limitation of result.output?.limitations ?? []) add(limitation);
+			for (const check of result.output?.checks ?? []) add(`${check.id}: ${check.outcome}, ${check.coverage} — ${check.reason}`);
 			valResults.appendChild(list);
 			if (ok) {
 				verified = { buffer: result.buffer, token, format: fmt.id, filename: fileInput.value, profile: profile.value };
@@ -361,17 +393,7 @@ export function createSaveDialog(root, fontData, context) {
 			return;
 		}
 		try {
-			const blob = new Blob([verified.buffer], {
-				type: 'application/octet-stream',
-			});
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = fileInput.value || baseName + fmt.ext;
-			document.body.appendChild(a);
-			a.click();
-			a.remove();
-			setTimeout(() => URL.revokeObjectURL(url), 1000);
+			downloadQualityFile(verified.buffer, fileInput.value || baseName + fmt.ext);
 			close();
 		} catch (err) {
 			valResults.style.display = '';

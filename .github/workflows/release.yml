@@ -77,6 +77,9 @@ jobs:
       - name: Verify built distribution and independent consumers
         run: npm run test:consumers
 
+      - name: Verify Demo repair and editing workflows
+        run: npm run test:demo
+
       - name: Verify CJK collection in bounded child processes
         run: npm run test:large
 

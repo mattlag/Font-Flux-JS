@@ -1,7 +1,9 @@
 # Font quality: detection and repair backlog
 
-Status: **M0 and M1 complete in v2.10.2**. The earlier M2–M3 scoped
-implementation remains recorded below; this acceptance closeout advances only M1.
+Status: **M0 and M1 complete in v2.10.2; M2 complete in v2.10.3**.
+M2 closes FQ-038 through FQ-044.
+Earlier M3 implementation remains recorded below; its separate criterion-level
+acceptance is not advanced by this Demo/documentation closeout.
 Criterion-level verification is recorded below. **Isolated package installation
 is optional, not a release requirement**. Required consumer verification uses the
 built distribution and existing dependencies; it does not claim installation coverage.
@@ -37,8 +39,8 @@ coverage percentages.
 | FQ-031 through FQ-034 | Implemented as explicit-context workflows | Declared family/repertoire/source-master evidence, atomic detached family candidates, bounded reachability/interpolation samples, original CFF1/Type 1 inspection and authorized source replacement |
 | FQ-035 | Implemented | Disposable Node/browser workers, phase progress, cancellation/deadlines, stale-source checks and bounded content-keyed report reuse; five CJK faces measured; VM/cache limits are not RSS caps |
 | FQ-036, FQ-037 | Complete (M1 acceptance verified) | Public types/examples, source and production-worker tests, built-distribution artifacts, independent repaired-output HarfBuzz and browser consumers; isolated installation is optional |
-| FQ-038 through FQ-043 | Implemented | Core profiles and typed decision forms, explicit consent, worker cancellation, reviewed-plan/audit downloads, exact bytes, staged preflight, transactional collection/preview/undo handling and browser regressions |
-| FQ-044 | Implemented; whole-roadmap acceptance closeout remains | Current API/limitations guides, generated 398-ID ledger, 57-action mapping, independent evidence and explicit unsupported/source-required boundaries |
+| FQ-038 through FQ-043 | Complete (M2 acceptance verified) | Core-driven findings and semantic occurrence deltas, policy/scope disclosures, empty decisions and consent, exact fingerprinted success/failure audits, guarded candidate/collection/preview/undo/revert and diagnose-only behavior; desktop/mobile Chromium/Firefox regressions |
+| FQ-044 | Complete for shipped scope (M2) | Generated contracts and regression links for all 57 actions, 398-ID ledger, migration/failure/recovery examples, PR/release Demo gates and explicit unsupported/source-required boundaries; later M3 releases must update this evidence |
 
 ### M1–M3 delivery evidence
 
@@ -81,6 +83,36 @@ Installation verification is now optional via
 `npm run test:consumers -- --installed`, not a blocker for release acceptance.
 The default `npm run test:consumers` retains declarations/schema, built-library,
 HarfBuzz and browser verification without installing the package.
+
+### M2 criterion-level acceptance evidence
+
+M2 is complete for FQ-038 through FQ-044. It reuses the shipped core contracts
+without copying external implementations or adding dependencies. M2 uses
+version 2.10.3, and isolated package installation remains optional.
+
+| Work item | Completed acceptance evidence |
+| --- | --- |
+| FQ-038 | Diagnose renders core original/project/candidate findings and offers without Demo-only fix factories. The core exposes semantic, duplicate-aware resolved/introduced/remaining counts; the UI no longer compares messages or physical offsets. Safe selection still requires review, declined repairs preserve outstanding findings, and dirty state does not imply a verified fix. [Core regressions](./test/quality-m1.test.js), [Demo harness](./scripts/verify-demo-quality.mjs) |
+| FQ-039 | Core-schema forms start empty, disclose authority, apply/decline consequences, available affected-table scope and policy versions. Plan review identifies target, face, profile/version and input fingerprint. Assisted name/spacing and boolean/enum inputs, DSIG consent/reset, unavailable fixes and versioned Unicode policy are exercised. [Decision UI](./demo/src/tabs/diagnose.js), [browser evidence](./scripts/verify-demo-quality.mjs) |
+| FQ-040 | Candidate application remains detached; preview and serialization/registration preparation precede live mutation. Failure, cancellation, stale completion and navigation preserve existing content/preview. One-step undo and original revert restore coherent collection source snapshots without discarding independent peer edits; unreadable-face navigation disposes candidate resources. Injected serializer, preview load/registration, CSS restoration and download failures are covered. [State transactions](./demo/src/main.js), [browser evidence](./scripts/verify-demo-quality.mjs) |
+| FQ-041 | Diagnose and Export download exact verified buffers and SHA-256-linked audits, with all four stages, normalizations/effects, coverage, target/profile and source face scope. Failed/unsupported preflight and failed repair audits remain downloadable without font bytes. Input changes invalidate reports/downloads. Browser-preview failure is disclosed separately and prevents commit, not investigation downloads. Authored JSON and actual TTF/OTF/TTC/OTC/wrapper naming are covered. [Export helpers/tests](./test/demo-quality.test.js), [browser evidence](./scripts/verify-demo-quality.mjs) |
+| FQ-042 | Import-failing and very short inputs remain diagnose-only, later corrupt faces stay discoverable, and authored JSON routes to project preflight. WOFF2 startup failure no longer prevents supported non-WOFF2 loading. Parser/inspection/codec failures remain explicit; accessible loader status treats filenames as literal text. [Loader](./demo/src/components/loading.js), [browser evidence](./scripts/verify-demo-quality.mjs) |
+| FQ-043 | Chromium and Firefox pass desktop/mobile safe-repair, assisted decisions, explicit loss consent, unsupported/failing operations, exact candidate/report inspection, original preservation, commit/undo/revert, collection isolation and cancellation. Keyboard activation, Export focus trapping/restoration, Diagnose heading focus, aria-live status and textual risk labels are exercised. Existing subset/Unicode/collection scenarios still pass. [Complete harness](./scripts/verify-demo.mjs) |
+| FQ-044 | Every shipped action has a generated description, guarded scope, decisions/consent, consequences, limitations, implementation and regression links. Guides cover no-fix, partial, failed verification, recovered source and old Demo migration. Both PR/push and release workflows gate on the complete Demo browser harness. Unsupported capabilities and unclosed M3 acceptance remain explicit. [Generated contracts](./docs/check-inventory.md#registered-repair-contracts), [migration and examples](./docs/font-quality.md#demo-review-and-export), [drift tests](./test/check-inventory.test.js) |
+
+M2 verification:
+
+- **126 focused tests passed**, followed by **1,611 tests across 105 files**,
+  including source-entry and actual-distribution worker regressions.
+- **Full `npm run test:demo` passed in Chromium and Firefox**, including
+  1440px/390px workflows, exact audit/hash assertions and injected failure cases.
+  Expected parser/codec fault logs are asserted scenarios, not unhandled page errors.
+- Strict declaration checking, lint, library/Demo/documentation builds, inventory
+  baseline/drift checks, package dry-run worker inclusion and whitespace checks
+  passed. The two existing oversized Unicode-data lint warnings remain.
+- No dependencies were installed. The M1 independent HarfBuzz/consumer/CJK matrix
+  remains its recorded evidence; this additive finding-count and Demo closeout
+  does not claim a new exhaustive font-consumer run or advance M3 algorithms.
 
 ### M1 criterion-level acceptance evidence
 
@@ -1182,8 +1214,9 @@ Useful pinned references:
 
 ## Release verification checklist
 
-Checked items below were revalidated for M1. Demo-specific acceptance is separate
-and is not advanced by this core-only closeout.
+Core/consumer/CJK evidence below was verified for M1. M2 additionally closes the
+Demo gate and revalidates the full unit suite, declarations, lint, builds,
+documentation and package contents; see the milestone evidence above.
 
 - [x] Focused core regressions first, including:
   `npm test -- test/diagnose.test.js test/common/validate_json.test.js test/ots-compliance.test.js`.
@@ -1191,9 +1224,9 @@ and is not advanced by this core-only closeout.
 - [x] Public built-distribution/type/consumer verification with `npm run test:consumers`;
   declared supported output formats and repaired invariants are exercised.
   Isolated package installation is optional and is not a release gate.
-- [ ] `npm run test:demo` covers exact downloaded candidates, consent, rollback,
+- [x] `npm run test:demo` covers exact downloaded candidates, consent, rollback,
   authored input, collections, and failure states in supported browsers.
-  Separate Demo milestone gate; historical results are above, not a new M1 claim.
+  M2 passes Chromium/Firefox desktop/mobile workflows and gates PR/release CI.
 - [x] `npm run test:large` covers affected large-font paths with measured budgets.
 - [x] Build/lint and documentation build use existing scripts as applicable;
   no new toolchain is introduced solely for the backlog.

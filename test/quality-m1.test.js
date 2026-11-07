@@ -154,6 +154,29 @@ describe('M1 acceptance guards', () => {
 			expect(result.state).toBe('failed');
 			expect(result.buffer).toBeNull();
 			expect(result.verification.failures.join(' ')).toMatch(/New unapproved finding/);
+			expect(result.findingChanges.introduced).toBe(1);
+		} finally { spy.mockRestore(); }
+	});
+
+	it('counts duplicate finding occurrences while ignoring relocated physical offsets', async () => {
+		const bytes = fixture(), diagnose = diagnostics.diagnoseFont;
+		let occurrences = 2, offset = 40;
+		const spy = vi.spyOn(diagnostics, 'diagnoseFont').mockImplementation((input, options) => {
+			const report = diagnose(input, options);
+			for (let index = 0; index < occurrences; index++)
+				report.issues.push({ severity: 'warning', code: 'M2_DUPLICATE_WARNING', message: 'Repeated finding.',
+					location: { table: 'name', languageID: 1033, byteOffset: offset } });
+			return report;
+		});
+		try {
+			const plan = await FontFlux.planRepairs(bytes, [{ id: 'name.record',
+				inputs: { nameID: 1, languageID: 1033, value: 'Reviewed', authority: true } }]);
+			occurrences = 1;
+			offset = 80;
+			const result = await FontFlux.applyRepairs(bytes, plan);
+			expect(result.state).toBe('verified');
+			expect(result.findingChanges).toMatchObject({ resolved: 1, introduced: 0 });
+			expect(result.findingChanges.remaining).toBeGreaterThanOrEqual(1);
 		} finally { spy.mockRestore(); }
 	});
 
