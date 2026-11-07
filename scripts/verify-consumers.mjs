@@ -11,8 +11,9 @@ import { createServer } from 'vite';
 import { parse as parseYAML } from 'yaml';
 
 const root = resolve(import.meta.dirname, '..');
+const local = !process.argv.includes('--installed');
+assert(local || !process.argv.includes('--local'), '--installed and --local cannot be combined.');
 const temporary = await mkdtemp(join(tmpdir(), 'font-flux-consumer-'));
-const local = process.argv.includes('--local');
 const packageRoot = local ? root : join(temporary, 'node_modules/font-flux-js');
 const packageLabel = local ? 'Local-build (package installation not tested)' : 'Installed-package';
 let server;

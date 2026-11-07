@@ -18,6 +18,12 @@ const BASELINE_FILES = [
 const OT = 'https://learn.microsoft.com/en-us/typography/opentype/spec/';
 const CONTAINERS = ['sfnt', 'woff1', 'woff2', 'collection'];
 const LEGACY_REASONS = {};
+const REPAIR_FILES = ['quality', 'metadata-repairs', 'repair-containers', 'repair-extensions']
+	.map((name) => `src/validate/${name}.js`);
+const WORKER_ERRORS = new Set([
+	'QUALITY_WORKER_DEADLINE', 'QUALITY_WORKER_STALE_INPUT', 'QUALITY_WORKER_STALE_PLAN',
+	'QUALITY_WORKER_STALE_PROJECT', 'QUALITY_WORKER_STALE_SOURCE',
+]);
 const sorted = (values) => [...new Set(values)].sort();
 const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const property = (node, name) =>
@@ -93,18 +99,33 @@ function sourceTree(file, text) {
 		return collection.type === 'MemberExpression' &&
 			['issues', 'errors', 'warnings', 'infos'].includes(collection.property.name);
 	};
+	const isOperationalProjection = (node) => {
+		const code = property(node, 'code'), parent = parents.get(node), envelope = parents.get(parent);
+		return file === 'src/validate/workflow-worker-runtime.js' &&
+			code?.type === 'MemberExpression' && code.object.name === 'error' && code.property.name === 'code' &&
+			property(node, 'name') && property(node, 'message') &&
+			(parent?.key?.name ?? parent?.key?.value) === 'error' &&
+			property(envelope, 'type')?.value === 'error' &&
+			functionName(enclosingFunctions(node).at(-1) ?? {}) === 'handleQualityWorkerMessage';
+	};
 
 	// Resolve only finite source-derived values. Unknown expressions are errors,
 	// not wildcard identifiers or guessed expansions.
-	function values(node, seen = new Set(), proofs = []) {
+	function values(node, seen = new Set(), proofs = [], bindings = new Map()) {
 		if (!node || seen.has(node)) throw new Error('unbounded or cyclic expression');
 		const next = new Set(seen).add(node);
-		const recurse = (child) => values(child, next, proofs);
+		const recurse = (child) => values(child, next, proofs, bindings);
 		if (['StringLiteral', 'NumericLiteral', 'BooleanLiteral'].includes(node.type))
 			return [node.value];
 		if (node.type === 'ArrayExpression') return node.elements.flatMap(recurse);
-		if (node.type === 'ConditionalExpression')
+		if (node.type === 'ConditionalExpression') {
+			const test = node.test;
+			if (test.type === 'BinaryExpression' && test.operator === '===' &&
+				test.left.type === 'Identifier' && bindings.has(test.left.name) &&
+				['StringLiteral', 'NumericLiteral', 'BooleanLiteral'].includes(test.right.type))
+				return recurse(bindings.get(test.left.name) === test.right.value ? node.consequent : node.alternate);
 			return sorted([...recurse(node.consequent), ...recurse(node.alternate)]);
+		}
 		if (node.type === 'TemplateLiteral') {
 			let result = [node.quasis[0].value.cooked];
 			node.expressions.forEach((expression, index) => {
@@ -120,7 +141,17 @@ function sourceTree(file, text) {
 			node.arguments.length === 0)
 			return recurse(node.callee.object).map((value) => value[node.callee.property.name]());
 		if (node.type === 'Identifier') {
+			if (bindings.has(node.name)) return [bindings.get(node.name)];
 			for (const ancestor of ancestors(node)) {
+				if (ancestor.type === 'ForOfStatement' && ancestor.right.type === 'ArrayExpression') {
+					const pattern = ancestor.left.declarations?.[0]?.id;
+					const index = pattern?.type === 'ArrayPattern'
+						? pattern.elements.findIndex((entry) => entry?.name === node.name) : -1;
+					if (index >= 0) {
+						proofs.push({ ...evidence(ancestor.right), expression: text.slice(ancestor.right.start, ancestor.right.end) });
+						return sorted(ancestor.right.elements.flatMap((entry) => recurse(entry.elements?.[index])));
+					}
+				}
 				if (ancestor.type === 'ForOfStatement' &&
 					ancestor.left.declarations?.some((d) => d.id.name === node.name)) {
 					proofs.push({ ...evidence(ancestor.right), expression: text.slice(ancestor.right.start, ancestor.right.end) });
@@ -130,6 +161,10 @@ function sourceTree(file, text) {
 					const index = ancestor.params.findIndex((p) =>
 						(p.type === 'AssignmentPattern' ? p.left : p).name === node.name);
 					if (index !== -1) {
+						const parent = parents.get(ancestor);
+						if (index === 0 && parent?.type === 'CallExpression' &&
+							parent.callee.type === 'MemberExpression' && parent.callee.property.name === 'map')
+							return recurse(parent.callee.object);
 						const name = functionName(ancestor);
 						const calls = nodes.filter((n) => n.type === 'CallExpression' && n.callee.name === name);
 						if (!name || !calls.length) throw new Error(`no finite callers for ${node.name}`);
@@ -147,7 +182,8 @@ function sourceTree(file, text) {
 		}
 		throw new Error(`unsupported ${node.type}: ${text.slice(node.start, node.end)}`);
 	}
-	return { file, text, nodes, parents, ancestors, enclosingFunctions, functionName, evidence, values, isReportProjection };
+	return { file, text, nodes, parents, ancestors, enclosingFunctions, functionName, evidence, values,
+		isReportProjection, isOperationalProjection };
 }
 
 /**
@@ -158,6 +194,7 @@ export function extractDiagnosticOrigins(sources) {
 	const origins = [];
 	const dynamicSites = [];
 	const unresolved = [];
+	const operationalErrors = [];
 	const signatures = new Map([['addIssue', { code: 2, severity: 1 }]]);
 	const trees = Object.entries(sources).sort(([a], [b]) => a.localeCompare(b))
 		.filter(([file]) => file !== CATALOG_PATH).map(([file, text]) => sourceTree(file, text));
@@ -167,7 +204,7 @@ export function extractDiagnosticOrigins(sources) {
 				tree.file.startsWith('src/validate/') || tree.file === 'src/font_flux.js' ||
 				(property(n, 'code').type === 'StringLiteral' &&
 					/^[A-Z][A-Z0-9_]+$/.test(property(n, 'code').value))) &&
-			!tree.isReportProjection(n));
+			!tree.isReportProjection(n) && !tree.isOperationalProjection(n));
 		tree.calls = tree.nodes.filter((n) => n.type === 'CallExpression' && n.callee.type === 'Identifier');
 	}
 	const parameterIndex = (fn, node) => node?.type === 'Identifier'
@@ -199,7 +236,9 @@ export function extractDiagnosticOrigins(sources) {
 				let level = signature && typeof signature.severity === 'string'
 					? signature.severity : parameterIndex(fn, severity);
 				if (level === -1) level = tree.values(severity)[0];
-				signatures.set(name, { code: index, severity: level });
+				const defaultSeverity = typeof level === 'number' && fn.params[level]?.type === 'AssignmentPattern'
+					? tree.values(fn.params[level].right) : undefined;
+				signatures.set(name, { code: index, severity: level, defaultSeverity });
 				changed = true;
 			}
 		}
@@ -209,8 +248,11 @@ export function extractDiagnosticOrigins(sources) {
 		for (const node of tree.nodes) {
 			if (node.type === 'AssignmentExpression' && node.left.type === 'MemberExpression' &&
 				(node.left.property.name ?? node.left.property.value) === 'code' &&
-				node.right.type === 'StringLiteral' && /^[A-Z][A-Z0-9_]+$/.test(node.right.value))
-				unresolved.push(`${file}:${node.loc.start.line}: diagnostic code assignment requires an explicit emission model`);
+				node.right.type === 'StringLiteral' && /^[A-Z][A-Z0-9_]+$/.test(node.right.value)) {
+				if (file === 'src/validate/workflow-worker.js' && WORKER_ERRORS.has(node.right.value))
+					operationalErrors.push({ code: node.right.value, source: tree.evidence(node.right) });
+				else unresolved.push(`${file}:${node.loc.start.line}: diagnostic code assignment requires an explicit emission model`);
+			}
 		}
 		for (const node of [...tree.calls, ...tree.objects]) {
 			const signature = signatures.get(node.callee?.name);
@@ -227,7 +269,8 @@ export function extractDiagnosticOrigins(sources) {
 				const codes = sorted(tree.values(expression, new Set(), proofs));
 				const severity = signature
 					? typeof signature.severity === 'number'
-						? tree.values(node.arguments[signature.severity]) : [signature.severity]
+						? node.arguments[signature.severity] ? tree.values(node.arguments[signature.severity])
+							: signature.defaultSeverity ?? tree.values(undefined) : [signature.severity]
 					: tree.values(property(node, 'severity'));
 				if (!severity.every((s) => ['error', 'warning', 'info'].includes(s)))
 					throw new Error(`unrecognized severity: ${severity.join(', ')}`);
@@ -248,23 +291,54 @@ export function extractDiagnosticOrigins(sources) {
 	if (unresolved.length) throw new Error(`Unresolved diagnostic expressions:\n${unresolved.join('\n')}`);
 	origins.sort((a, b) => a.code.localeCompare(b.code) ||
 		a.source.file.localeCompare(b.source.file) || a.source.line - b.source.line);
-	return { origins, dynamicSites, unresolved };
+	const operationalForwarding = trees.flatMap((tree) => tree.nodes
+		.filter((node) => node.type === 'ObjectExpression' && tree.isOperationalProjection(node)).map(tree.evidence));
+	return { origins, dynamicSites, unresolved, operationalErrors, operationalForwarding };
 }
 
-export function extractRepairLinks(text) {
-	const tree = sourceTree('src/validate/quality.js', text);
+export function extractRepairLinks(sources) {
 	const repairs = [];
-	for (const node of tree.nodes) {
-		if (node.type !== 'ObjectExpression' || !property(node, 'id') ||
-			!property(node, 'codes') || !property(node, 'risk')) continue;
-		repairs.push({
-			id: tree.values(property(node, 'id'))[0],
-			codes: sorted(tree.values(property(node, 'codes'))),
-		});
+	for (const file of REPAIR_FILES) {
+		if (!sources[file]) throw new Error(`Missing repair registry source: ${file}`);
+		const tree = sourceTree(file, sources[file]);
+		for (const node of tree.nodes) {
+			if (node.type !== 'ObjectExpression' || !property(node, 'id') ||
+				!property(node, 'description') || !property(node, 'ifApplied')) continue;
+			let bindings = [new Map()];
+			for (const fn of tree.enclosingFunctions(node).reverse()) {
+				const call = tree.parents.get(fn);
+				if (call?.type !== 'CallExpression' || call.callee.type !== 'MemberExpression' ||
+					call.callee.property.name !== 'map') continue;
+				if (fn.params[0]?.type === 'Identifier') {
+					bindings = bindings.flatMap((bound) => tree.values(call.callee.object, new Set(), [], bound)
+						.map((value) => new Map([...bound, [fn.params[0].name, value]])));
+				} else if (fn.params[0]?.type === 'ArrayPattern' && call.callee.object.type === 'ArrayExpression') {
+					bindings = bindings.flatMap((bound) => call.callee.object.elements.map((tuple) => {
+						if (tuple?.type !== 'ArrayExpression') throw new Error(`Nonliteral registry tuple in ${file}`);
+						const result = new Map(bound);
+						fn.params[0].elements.forEach((parameter, index) => {
+							if (parameter?.type !== 'Identifier') throw new Error(`Unsupported registry binding in ${file}`);
+							const values = tree.values(tuple.elements[index], new Set(), [], bound);
+							if (values.length !== 1) throw new Error(`Ambiguous registry tuple in ${file}`);
+							result.set(parameter.name, values[0]);
+						});
+						return result;
+					}));
+				} else throw new Error(`Unsupported registry iteration in ${file}`);
+			}
+			for (const bound of bindings) {
+				const ids = tree.values(property(node, 'id'), new Set(), [], bound);
+				if (ids.length !== 1) throw new Error(`Ambiguous repair ID in ${file}`);
+				repairs.push({
+					id: ids[0],
+					codes: property(node, 'codes') ? sorted(tree.values(property(node, 'codes'), new Set(), [], bound)) : [],
+				});
+			}
+		}
 	}
-	if (!repairs.length) throw new Error('No quality.js repair catalogue found');
+	if (!repairs.length) throw new Error('No repair catalogue found');
 	if (new Set(repairs.map((r) => r.id)).size !== repairs.length)
-		throw new Error('Duplicate quality.js repair IDs');
+		throw new Error('Duplicate repair IDs');
 	return repairs.sort((a, b) => a.id.localeCompare(b.id));
 }
 
@@ -411,14 +485,14 @@ const NO_FIX = {
 	'table-presence': 'Missing or unsupported table semantics cannot be reconstructed by the registered byte-preserving repairs.',
 	checksums: 'Checksum repair eligibility is decided by the repair planner, not by an identifier.',
 	'table-parsing': 'A failed parser does not identify a safe byte-level correction; recover a readable source first.',
-	collection: 'The current repair catalogue accepts standalone SFNT only, not TTC/OTC collections.',
+	collection: 'Collection-directory damage is not repaired by selecting a face; guarded face repair retains the original directory and every unselected face.',
 	'diagnostic-execution': 'This is an inspection precondition, limit, or execution failure; changing font bytes is not a registered remedy.',
 	'cff-context': 'Required CFF execution context is missing or unsupported; recover source data or implement the missing evaluator.',
 	'cff-variation-context': 'Reconstructing a CFF2 variation program is outside the registered repair scope.',
-	'cff-charstrings': 'No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.',
+	'cff-charstrings': 'No general charstring repair is registered; the source-confirmed empty-program action cannot reconstruct damaged nonempty programs or subroutines.',
 	'truetype-composites': 'Component references and recursion require a design decision or source recovery, not an inferred replacement.',
-	'truetype-geometry': 'No derived geometry repair is registered; full outlines and variation/hinting dependencies must be checked first.',
-	'truetype-instructions': 'Instruction scanning does not establish a safe replacement program; no bytecode repair is registered.',
+	'truetype-geometry': 'Derived-field repairs require complete geometry; no registered action reconstructs missing contours or ambiguous components for this finding.',
+	'truetype-instructions': 'Instruction scanning cannot establish a replacement program. Explicitly lossy dehinting is distinct from repairing its original behavior.',
 };
 const NO_FIX_CODES = {
 	DIAGNOSTIC_LIMIT_EXCEEDED: 'A configured work or memory bound stopped diagnosis. Adjust limits only for trusted input; this does not establish a font-byte repair.',
@@ -456,10 +530,33 @@ function referencesFor(family, tables) {
 	return sorted(references);
 }
 
+const ADVANCED_SCOPES = {
+	'advanced-common': ['advanced-shared-structures', ['*']],
+	'advanced-diagnostics': ['diagnostic-execution', ['*']],
+	'advanced-layout': ['layout-graph', ['GDEF', 'GSUB', 'GPOS']],
+	'advanced-cff-private': ['cff-private-dictionaries', ['CFF2']],
+	'advanced-variation': ['variation-structures', ['fvar', 'gvar', 'cvar', 'HVAR', 'VVAR', 'MVAR', 'GDEF', 'BASE', 'COLR', 'CFF2']],
+	'advanced-color': ['color-structures', ['COLR', 'CPAL', 'SVG ']],
+	'advanced-bitmap': ['bitmap-structures', ['CBLC', 'CBDT', 'EBLC', 'EBDT', 'bloc', 'bdat', 'sbix', 'EBSC']],
+};
+const DERIVED_SCOPES = {
+	QUALITY_NAME_WHITESPACE: ['naming', ['name']],
+	QUALITY_POSTSCRIPT_NAME_INVALID: ['naming', ['name']],
+	QUALITY_NAME_ENCODING_INVALID: ['naming', ['name']],
+	QUALITY_AVERAGE_WIDTH_MISMATCH: ['metrics-and-style', ['OS/2', 'hhea', 'hmtx']],
+	QUALITY_CHARACTER_RANGE_MISMATCH: ['character-mapping', ['OS/2', 'cmap']],
+	TT_DERIVED_BOUNDS_MISMATCH: ['truetype-geometry', ['glyf', 'loca', 'head']],
+	TT_DERIVED_MAXP_MISMATCH: ['truetype-geometry', ['glyf', 'loca', 'maxp']],
+	HHEA_DERIVED_EXTREMA_MISMATCH: ['metrics-and-style', ['hhea', 'hmtx', 'glyf']],
+	VHEA_DERIVED_EXTREMA_MISMATCH: ['metrics-and-style', ['vhea', 'vmtx', 'glyf']],
+	CFF_DERIVED_MAXP_MISMATCH: ['cff-context', ['CFF ', 'CFF2', 'maxp']],
+};
+
 function classify(origin) {
 	const { code, source } = origin;
 	let pipeline, definition, reachability, formats;
 	let policy;
+	const module = source.file.replace(/^src\/validate\//, '').replace(/\.js$/, '');
 	if (source.file === 'src/validate/diagnoseFont.js') {
 		pipeline = 'binary';
 		definition = source.symbol === 'phaseCrossTableChecks' ? CROSS_SCOPES[code] : BINARY_SCOPES[source.symbol];
@@ -493,6 +590,35 @@ function classify(origin) {
 		definition = policy && [policy.family, policy.tables];
 		formats = code === 'PROFILE_FILENAME_MISMATCH' ? ['profile-context'] : CONTAINERS;
 		reachability = `public-quality-profile (${policy?.profiles.join(', ')}); requires its declared face metadata or caller context`;
+	} else if (ADVANCED_SCOPES[module] || ['advanced-programs', 'advanced-specialist'].includes(module)) {
+		pipeline = 'binary';
+		formats = CONTAINERS;
+		definition = ADVANCED_SCOPES[module];
+		if (module === 'advanced-programs') definition = source.symbol === 'validateAdvancedTrueType'
+			? ['truetype-instructions-and-geometry', ['glyf', 'loca', 'maxp', 'fpgm', 'prep', 'gasp']]
+			: ['cff-programs-and-storage', ['CFF ', 'CFF2']];
+		if (module === 'advanced-specialist') {
+			const table = code.split('_')[0];
+			if (['MATH', 'BASE', 'JSTF', 'MERG'].includes(table)) definition = ['specialist-structures', [table]];
+		}
+		reachability = 'public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification';
+	} else if (['metadata-repairs', 'repair-tt', 'repair-cff'].includes(module)) {
+		pipeline = 'binary'; formats = CONTAINERS; definition = DERIVED_SCOPES[code];
+		reachability = 'public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage';
+	} else if (module === 'quality-workflows') {
+		pipeline = 'profile';
+		formats = ['declared-context', 'simplified-json', ...CONTAINERS];
+		definition = source.symbol === 'inspectFamily' ? ['family-policy', []]
+			: source.symbol === 'inspectExpectations' ? ['repertoire-and-glyph-policy', []] : undefined;
+		reachability = 'explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness';
+	} else if (module === 'workflow-source') {
+		pipeline = 'editable'; formats = ['source-projects', 'simplified-json'];
+		definition = ['source-outline-evidence', []];
+		reachability = 'public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery';
+	} else if (module === 'workflow-legacy' && source.symbol === 'inspectLegacy') {
+		pipeline = 'binary'; formats = ['cff', 'cff2', 'pfa', 'pfb', 'afm'];
+		definition = ['legacy-original-structures', []];
+		reachability = 'public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished';
 	}
 	if (!definition) throw new Error(`Review family/table/reachability metadata for ${source.file}:${source.symbol}:${code}`);
 	const [family, defaultTables] = definition;
@@ -508,6 +634,9 @@ function classify(origin) {
 		references.push('font-flux.schema.json', 'docs/validation.md');
 	if (pipeline === 'profile') references.push('docs/font-quality.md');
 	if (pipeline === 'public-validation') references.push('docs/validation.md', 'src/export.js');
+	if (module.startsWith('advanced-')) references.push('docs/advanced-diagnostics.md');
+	if (module.startsWith('workflow-') || module === 'quality-workflows') references.push('docs/quality-workflows.md');
+	if (['metadata-repairs', 'repair-tt', 'repair-cff'].includes(module)) references.push('docs/font-quality.md', 'docs/repair-extensions.md');
 	if (NO_FIX_CODES[code]) references.push('docs/diagnostics.md');
 	if (code === 'CMAP_FORMAT4_RANGE_OFFSET_INVALID')
 		references.push(`${OT}cmap#format-4-segment-mapping-to-delta-values`);
@@ -526,9 +655,9 @@ function classify(origin) {
 	};
 }
 
-export function buildInventory(sources, baseline, repairText) {
+export function buildInventory(sources, baseline, repairSources = sources) {
 	const extraction = extractDiagnosticOrigins(sources);
-	const repairs = extractRepairLinks(repairText);
+	const repairs = extractRepairLinks(repairSources);
 	const baselineIDs = sorted(baseline.origins.map((o) => o.code));
 	const currentIDs = sorted(extraction.origins.map((o) => o.code));
 	const catalog = {};
@@ -572,7 +701,7 @@ export function buildInventory(sources, baseline, repairText) {
 		for (const code of repair.codes)
 			if (!catalog[code]) throw new Error(`Repair ${repair.id} refers to an uninventoried code: ${code}`);
 	return {
-		catalog, baseline, repairs, dynamicSites: extraction.dynamicSites,
+		catalog, baseline, repairs, dynamicSites: extraction.dynamicSites, operationalErrors: extraction.operationalErrors,
 		summary: {
 			baselineIdentifiers: baselineIDs.length,
 			activeIdentifiers: currentIDs.length,
@@ -605,7 +734,8 @@ export function baselineFromGit(root = ROOT) {
 			cwd: root, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024,
 		}),
 	]));
-	return { commit: BASELINE_COMMIT, ...extractDiagnosticOrigins(sources) };
+	const { origins, dynamicSites, unresolved } = extractDiagnosticOrigins(sources);
+	return { commit: BASELINE_COMMIT, origins, dynamicSites, unresolved };
 }
 
 export function readBaseline(root = ROOT) {
@@ -713,7 +843,15 @@ those failures surface through their actual report code, for example \`TABLE_PAR
 ¹ “No registered fix” is not a safety judgment. Read the descriptor's explicit reason.
 Linked repairs are extracted from the actual [quality.js catalogue](https://github.com/mattlag/Font-Flux-JS/blob/main/src/validate/quality.js);
 availability, risk, prerequisites, user intent/consent, and output verification belong to the planner.
-The current registered repairs accept standalone SFNT; diagnosis of a wrapper or collection does not imply repair support.
+Registered repairs support guarded SFNT, WOFF1/WOFF2 and explicitly selected collection faces.
+Availability is per action and input: signatures, opaque dependencies, incomplete structures and unknown context can block an offer.
+Legacy source replacement is not an in-place repair. Optional policy/loss actions without finding codes remain listed in the public repair registry, not falsely attached to unrelated findings.
+
+### Operational worker errors (not font findings)
+
+These errors reject the asynchronous operation and never certify or commit a candidate:
+
+${inventory.operationalErrors.map((entry) => `- \`${entry.code}\` — \`${entry.source.file}:${entry.source.line}\``).join('\n')}
 
 ## Reproduce and maintain
 
@@ -784,7 +922,7 @@ export function generate({ root = ROOT, check = false, verifyBaseline = false } 
 	const baseline = readBaseline(root);
 	if (verifyBaseline && digest(baselineFromGit(root)) !== digest(baseline))
 		throw new Error('Baseline snapshot differs from the pinned Git sources');
-	const inventory = buildInventory(readSources(root), baseline, readFileSync(join(root, 'src/validate/quality.js'), 'utf8'));
+	const inventory = buildInventory(readSources(root), baseline);
 	for (const [file, expected] of [[CATALOG_PATH, renderCatalog(inventory)], [DOC_PATH, renderDocs(inventory)]]) {
 		const path = join(root, file);
 		if (check) {

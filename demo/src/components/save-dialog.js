@@ -13,6 +13,7 @@ export function createSaveDialog(root, fontData, context) {
 	let operation = 0;
 	let verified = null;
 	let closed = false;
+	let controller = null;
 	const previousFocus = document.activeElement;
 	const capture = () => context?.capture() ?? new FontFlux(fontData).toJSON(0);
 	const isCurrent = (token) => context ? context.isCurrent(token) : capture() === token;
@@ -153,6 +154,40 @@ export function createSaveDialog(root, fontData, context) {
 
 	fmtGroup.append(fmtLabel, fmtOptions);
 	dialog.appendChild(fmtGroup);
+	const profileLabel = document.createElement('label');
+	profileLabel.className = 'field-group';
+	profileLabel.textContent = 'Quality profile';
+	const profile = document.createElement('select');
+	profile.className = 'field-input';
+	profile.setAttribute('aria-label', 'Export quality profile');
+	for (const descriptor of FontFlux.qualityProfiles()) {
+		const option = document.createElement('option');
+		option.value = descriptor.id;
+		option.textContent = `${descriptor.id} v${descriptor.version}`;
+		profile.appendChild(option);
+	}
+	profileLabel.appendChild(profile);
+	dialog.appendChild(profileLabel);
+	const policy = document.createElement('div');
+	policy.hidden = true;
+	const expectations = new Map();
+	for (const [key, title] of [['expectedFileName', 'Expected filename'], ['expectedFamilyName', 'Expected family name']]) {
+		const label = document.createElement('label');
+		label.className = 'field-group';
+		label.textContent = title;
+		const input = document.createElement('input');
+		input.className = 'field-input';
+		input.setAttribute('aria-label', title);
+		input.addEventListener('input', invalidate);
+		label.appendChild(input);
+		policy.appendChild(label);
+		expectations.set(key, input);
+	}
+	dialog.appendChild(policy);
+	profile.addEventListener('change', () => {
+		policy.hidden = profile.value !== 'publishing';
+		invalidate();
+	});
 
 	// Validation results area (hidden initially)
 	const valResults = document.createElement('div');
@@ -200,7 +235,8 @@ export function createSaveDialog(root, fontData, context) {
 	function onKeyDown(e) {
 		if (e.key === 'Escape') close();
 		if (e.key === 'Tab') {
-			const focusable = [...dialog.querySelectorAll('button:not(:disabled), input:not(:disabled)')];
+			const focusable = [...dialog.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled)')]
+				.filter((control) => !control.closest('[hidden]'));
 			const first = focusable[0];
 			const last = focusable.at(-1);
 			if (e.shiftKey && document.activeElement === first) {
@@ -222,6 +258,7 @@ export function createSaveDialog(root, fontData, context) {
 	function close() {
 		if (closed) return;
 		closed = true;
+		controller?.abort();
 		operation++;
 		verified = null;
 		document.removeEventListener('keydown', onKeyDown);
@@ -232,16 +269,20 @@ export function createSaveDialog(root, fontData, context) {
 	}
 
 	function invalidate() {
+		controller?.abort();
+		controller = null;
 		operation++;
 		verified = null;
 		downloadBtn.disabled = true;
 		validateBtn.disabled = false;
 		valResults.style.display = '';
 		valResults.className = 'validation-results';
-		valResults.textContent = 'Target, filename, or project changed. Run preflight again before downloading.';
+		valResults.textContent = 'Target, profile, policy, filename, or project changed. Run preflight again before downloading.';
 	}
 
 	async function runPreflight() {
+		controller?.abort();
+		controller = new AbortController();
 		const id = ++operation;
 		const token = capture();
 		const fmt = formats[selectedIdx];
@@ -253,7 +294,17 @@ export function createSaveDialog(root, fontData, context) {
 		valResults.textContent = `Preflighting ${fmt.label} — export and verification pending…`;
 		try {
 			const font = context?.projectFont() ?? new FontFlux(structuredClone(fontData));
-			const result = await font.preflight({ format: fmt.format });
+			const result = await font.preflightAsync({
+				format: fmt.format, profile: profile.value, signal: controller.signal,
+				originalSource: context?.originalSource?.(),
+				context: {
+					fileName: fileInput.value,
+					...Object.fromEntries([...expectations].filter(([, input]) => input.value).map(([key, input]) => [key, input.value])),
+				},
+				onProgress: (progress) => {
+					if (!closed && id === operation) valResults.textContent = `${fmt.label}: ${progress.phase} — ${progress.status}`;
+				},
+			});
 			if (closed || id !== operation) return;
 			if (!isCurrent(token)) {
 				invalidate();
@@ -263,7 +314,7 @@ export function createSaveDialog(root, fontData, context) {
 			valResults.className = `validation-results ${ok ? 'valid' : 'invalid'}`;
 			valResults.replaceChildren();
 			const summary = document.createElement('strong');
-			summary.textContent = `${fmt.label}: ${result.state}. ${ok ? 'Exact output verified for covered structural checks only; not full font certification.' : (result.error || 'No verified output available.')}`;
+			summary.textContent = `${fmt.label}: ${result.state}. ${ok ? `Exact output verified for covered ${profile.value} checks only; not full font certification.` : (result.error || 'No verified output available.')}`;
 			valResults.appendChild(summary);
 			const list = document.createElement('ul');
 			const add = (text, className = '') => {
@@ -272,9 +323,12 @@ export function createSaveDialog(root, fontData, context) {
 				item.textContent = text;
 				list.appendChild(item);
 			};
-			add(`Target: ${fmt.format}; face ${Number(fontData._collectionIndex ?? 0) + 1}; structural profile.`);
+			add(`Target: ${fmt.format}; face ${Number(fontData._collectionIndex ?? 0) + 1}; ${profile.value} profile v1.`);
+			for (const stage of result.stages) add(`${stage.id}: ${stage.status} — ${stage.reasonCode}`);
+			for (const normalization of result.normalizations) add(`${normalization.kind}: ${normalization.description}`);
 			for (const effect of result.effects) add(`Export effect: ${effect}`);
-			const findings = [...(result.validation?.issues ?? []), ...(result.output?.diagnostics?.issues ?? [])];
+			const findings = [...(result.validation?.issues ?? []), ...(result.output?.diagnostics?.issues ?? []),
+				...(result.output?.profileReport?.issues ?? [])];
 			const seen = new Set();
 			for (const issue of findings) {
 				const text = `[${issue.severity}] ${issue.code}: ${issue.message}`;
@@ -287,7 +341,7 @@ export function createSaveDialog(root, fontData, context) {
 			for (const limitation of result.output?.limitations ?? []) add(limitation);
 			valResults.appendChild(list);
 			if (ok) {
-				verified = { buffer: result.buffer, token, format: fmt.id, filename: fileInput.value };
+				verified = { buffer: result.buffer, token, format: fmt.id, filename: fileInput.value, profile: profile.value };
 				downloadBtn.disabled = false;
 			}
 		} catch (err) {
@@ -301,7 +355,8 @@ export function createSaveDialog(root, fontData, context) {
 
 	function doExport() {
 		const fmt = formats[selectedIdx];
-		if (!verified || !isCurrent(verified.token) || verified.format !== fmt.id || verified.filename !== fileInput.value) {
+		if (!verified || !isCurrent(verified.token) || verified.format !== fmt.id ||
+			verified.filename !== fileInput.value || verified.profile !== profile.value) {
 			invalidate();
 			return;
 		}

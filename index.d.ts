@@ -287,6 +287,11 @@ export interface ProfileReport extends ValidationReport {
 	passed: boolean;
 	checks: CheckExecution[];
 }
+export interface LegacyProfileReport extends Omit<ProfileReport, 'valid'> {
+	valid: null;
+	passed: false;
+	complete: false;
+}
 export type CheckPipeline = 'binary' | 'editable' | 'resolved' | 'public-validation' | 'profile';
 export interface CheckSource {
 	readonly file: string;
@@ -324,10 +329,12 @@ export interface CheckDescriptor extends CheckOrigin {
 export interface RepairInput {
 	readonly key: string;
 	readonly label: string;
-	readonly type: 'string' | 'integer';
+	readonly type: 'string' | 'integer' | 'number' | 'boolean' | 'enum';
 	readonly min?: number;
 	readonly max?: number;
 	readonly maxLength?: number;
+	readonly values?: readonly string[];
+	readonly mustBeTrue?: boolean;
 }
 export interface RepairDescriptor {
 	readonly id: string;
@@ -338,6 +345,14 @@ export interface RepairDescriptor {
 	readonly codes: readonly string[];
 	readonly description: string;
 	readonly prerequisites: string;
+	readonly riskReason: string;
+	readonly invariants: readonly string[];
+	readonly affectedTables?: readonly string[];
+	readonly conflicts?: readonly string[];
+	readonly companions?: readonly string[];
+	readonly after?: readonly string[];
+	readonly optional?: boolean;
+	readonly policyVersion?: string;
 	readonly ifApplied: string;
 	readonly ifUnfixed: string;
 	readonly inputs: readonly RepairInput[];
@@ -352,17 +367,20 @@ export interface InspectionReport {
 	format: 'sfnt' | 'collection' | 'woff' | 'woff2' | 'cff' | 'type1' | 'unknown';
 	profile: QualityProfileId;
 	profileVersion: 1;
-	profileReport: ProfileReport;
+	profileReport: ProfileReport | LegacyProfileReport;
 	complete: false;
 	checks: CheckExecution[];
 	diagnostics: DiagnosticReport | null;
-	coverage: { domain: string; status: 'partial' | 'blocked' | 'unsupported'; reason: string }[];
+	coverage: WorkflowCoverage[];
 	repairs: RepairOffer[];
 	limitations: string[];
+	legacyFormat?: LegacyInspectionReport['format'];
+	issues?: ValidationIssue[];
+	cache?: InspectionCacheEvidence;
 }
 export interface RepairRequest {
 	id: string;
-	inputs?: Record<string, string | number>;
+	inputs?: Record<string, string | number | boolean>;
 	consent?: boolean;
 }
 export interface RepairPlan {
@@ -370,21 +388,40 @@ export interface RepairPlan {
 	readonly inputFingerprint: string;
 	readonly profile: QualityProfileId;
 	readonly profileVersion: 1;
-	readonly format: 'sfnt';
+	readonly format: InspectionReport['format'];
+	readonly registryRevision: 2;
+	readonly faceIndex: number | null;
+	readonly projectRevision: string | number | null;
+	readonly requests: readonly RepairRequest[];
+	readonly options: Readonly<Omit<RepairOptions, 'signal' | 'onProgress'>>;
+	readonly effects: readonly string[];
 	readonly steps: readonly (RepairOffer & {
 		readonly implicit: boolean;
-		readonly values: Readonly<Record<string, string | number>>;
+		readonly values: Readonly<Record<string, string | number | boolean>>;
 	})[];
 }
 export interface RepairResult {
 	state: 'verified' | 'failed';
 	buffer: ArrayBuffer | null;
+	changed: boolean;
+	format: InspectionReport['format'];
+	faceIndex: number | null;
+	profile: QualityProfileId;
+	plan: RepairPlan;
 	before: InspectionReport;
 	after: InspectionReport;
 	changes: { id: string; description: string }[];
 	verification: { passed: boolean; failures: string[]; evidence: string[] };
 	inputFingerprint: string;
 	outputFingerprint: string | null;
+}
+export interface QualityControls {
+	signal?: AbortSignal;
+	onProgress?: (progress: { phase: string; stage?: string; status?: string; sequence?: number; origin?: string }) => void;
+}
+export interface RepairOptions extends InspectionOptions, QualityControls {
+	format?: 'sfnt' | 'woff' | 'woff2' | 'collection';
+	projectRevision?: string | number;
 }
 export interface PreflightResult {
 	schemaVersion: 1;
@@ -404,7 +441,133 @@ export interface PreflightResult {
 		description: string;
 	}[];
 }
-export interface PreflightOptions extends ExportOptions, InspectionOptions {}
+export interface PreflightOptions extends ExportOptions, InspectionOptions {
+	/** Explicit caller-declared baseline for authored data; an imported font's retained original takes priority. */
+	originalSource?: { bytes: ArrayBuffer | Uint8Array; options?: ImportOptions };
+}
+export interface WorkerControls extends QualityControls {
+	maxDurationMs?: number;
+	maxPlanBytes?: number;
+	maxProjectBytes?: number;
+	workerResourceLimits?: {
+		maxOldGenerationSizeMb?: number;
+		maxYoungGenerationSizeMb?: number;
+		codeRangeSizeMb?: number;
+		stackSizeMb?: number;
+	};
+}
+export interface InspectionCache {
+	clear(): void;
+	readonly stats: Readonly<{
+		entries: number; payloadBytes: number; maxEntries: number; maxBytes: number; ttlMs: number;
+		hits: number; misses: number; writes: number; evictions: number;
+	}>;
+}
+export interface InspectionCacheEvidence {
+	status: string;
+	inputFingerprint: string;
+	optionsFingerprint: string;
+	entryURL: string;
+	workerStarted: boolean;
+	[key: string]: unknown;
+}
+export interface RepairReview {
+	readonly schemaVersion: 1;
+	readonly kind: 'repair-review';
+	readonly plan: RepairPlan;
+	readonly planFingerprint: string;
+	readonly inputFingerprint: string;
+	readonly entryURL: string;
+}
+export interface WorkflowCoverage {
+	domain: string;
+	status: string;
+	reason: string;
+}
+export interface WorkflowReport {
+	schemaVersion: 1;
+	scope: string;
+	source: string;
+	complete: false;
+	issues: ValidationIssue[];
+	checks: CheckExecution[];
+	coverage: WorkflowCoverage[];
+	limitations: string[];
+	summary: ValidationReport['summary'] & { errors: number; warnings: number };
+	[key: string]: unknown;
+}
+export type QualityInput = FontFlux | FontData | ArrayBuffer | Uint8Array;
+export interface QualityMember {
+	id: string;
+	input: QualityInput;
+	faceIndex?: number;
+}
+export interface FamilyQualityOptions extends InspectionOptions, QualityControls {
+	family: {
+		id: string;
+		profile: string;
+		expectedMembers?: string[];
+		policy?: {
+			requiredFields?: string[];
+			allowDifferences?: string[];
+			members?: Record<string, Record<string, string | number | boolean>>;
+		};
+	};
+	maxMembers?: number;
+	maxTotalInputBytes?: number;
+}
+export interface FamilyRepairResult {
+	schemaVersion: 1;
+	scope: 'family-repair';
+	state: 'verified' | 'failed' | 'cancelled';
+	committed: false;
+	candidates: { id: string; result: RepairResult }[];
+	failures?: { memberId?: string; message: string; name: string }[];
+	[key: string]: unknown;
+}
+export interface ExpectationOptions extends InspectionOptions {
+	repertoires?: { id: string; version: string; language?: string; source?: string; codePoints: number[] }[];
+	requiredGlyphs?: string[];
+	behavior?: { codePoint: number; advanceWidth?: number; empty?: boolean }[];
+	roots?: (string | number)[];
+	glyphNames?: { id: string; version: string; maxLength?: number; asciiOnly?: boolean };
+	maxWork?: number;
+}
+export interface SourceQualityOptions extends InspectionOptions {
+	tinyArea?: number;
+	samples?: { id?: string; weights: number[] }[];
+	engineEvidence?: { engine: string; version: string; outcome: 'pass' | 'fail' | 'unknown'; [key: string]: unknown }[];
+	maxMasters?: number;
+	maxWork?: number;
+}
+export interface LegacyInspectionOptions extends InspectionOptions {
+	maxWork?: number;
+	maxTotalCharStringOperations?: number;
+}
+export interface LegacyInspectionReport extends WorkflowReport {
+	scope: 'legacy';
+	format: 'cff' | 'pfa' | 'pfb' | 'afm' | 'unknown';
+	original: { format: string; byteLength: number; synthesizedTables: false; mutated: false };
+	capabilities: {
+		import: boolean; inspect: 'partial' | 'unsupported'; preserveOriginalBytes: true;
+		repairOriginalFormat: false; exportOriginalFormat: boolean;
+	};
+	repairs: [];
+	profile: QualityProfileId;
+	profileVersion: 1;
+	profileReport: LegacyProfileReport;
+	diagnostics: Omit<DiagnosticReport, 'valid'> & { valid: boolean | null };
+}
+export type LegacyRecoveryResult = {
+	schemaVersion: 1;
+	operation: 'source-replacement';
+	preservedOriginal: true;
+	original: LegacyInspectionReport;
+	replacement: InspectionReport;
+} & (
+	{ state: 'failed'; buffer: null } |
+	{ state: 'inspected'; buffer: ArrayBuffer; equivalent: null; limitations: string[] }
+);
 export type PreflightStage = {
 	status: 'checked' | 'skipped' | 'blocked' | 'failed' | 'unsupported';
 	reasonCode: string;
@@ -438,11 +601,26 @@ export class FontFlux {
 	): ArrayBuffer;
 	static diagnose(buffer: ArrayBuffer, options?: ImportOptions): DiagnosticReport;
 	static inspect(input: ArrayBuffer | Uint8Array, options?: InspectionOptions): InspectionReport;
+	static inspectAsync(input: ArrayBuffer | Uint8Array, options?: InspectionOptions & WorkerControls & { cache?: InspectionCache }): Promise<InspectionReport>;
+	static createInspectionCache(options?: { maxEntries?: number; maxBytes?: number; ttlMs?: number }): InspectionCache;
+	static fingerprintRepairPlan(plan: RepairPlan, options?: { maxPlanBytes?: number }): Promise<string>;
+	static planRepairsAsync(input: ArrayBuffer | Uint8Array, requests: RepairRequest[], options?: RepairOptions & WorkerControls): Promise<RepairReview>;
+	static repairAsync(input: ArrayBuffer | Uint8Array, requests: RepairRequest[], options?: RepairOptions & WorkerControls): Promise<RepairResult>;
+	static applyRepairsAsync(input: ArrayBuffer | Uint8Array, review: RepairReview | RepairPlan,
+		options?: RepairOptions & WorkerControls & { reviewedPlanFingerprint?: string }): Promise<RepairResult>;
+	static inspectFamily(inputs: QualityMember[], options: FamilyQualityOptions): WorkflowReport;
+	static repairFamily(inputs: QualityMember[], requests: Record<string, RepairRequest[]>, options: FamilyQualityOptions): Promise<FamilyRepairResult>;
+	static inspectExpectations(input: QualityInput, options?: ExpectationOptions): WorkflowReport;
+	static inspectSourceQuality(projects: (QualityMember & { source?: Record<string, unknown> })[], options?: SourceQualityOptions): WorkflowReport;
+	static inspectLegacy(input: ArrayBuffer | Uint8Array, options?: LegacyInspectionOptions): LegacyInspectionReport;
+	static recoverLegacy(input: ArrayBuffer | Uint8Array, replacement: ArrayBuffer | Uint8Array,
+		options: LegacyInspectionOptions & { authorizeReplacement: true }): LegacyRecoveryResult;
 	static checkCatalog(): Readonly<Record<string, CheckDescriptor>>;
 	static qualityProfiles(): readonly QualityProfile[];
 	static repairCatalog(): readonly RepairDescriptor[];
-	static planRepairs(input: ArrayBuffer | Uint8Array, requests: RepairRequest[], options?: InspectionOptions): Promise<RepairPlan>;
-	static applyRepairs(input: ArrayBuffer | Uint8Array, plan: RepairPlan): Promise<RepairResult>;
+	static planRepairs(input: ArrayBuffer | Uint8Array, requests: RepairRequest[], options?: RepairOptions): Promise<RepairPlan>;
+	static resumeRepairPlan(input: ArrayBuffer | Uint8Array, serialized: RepairPlan, options?: RepairOptions): Promise<RepairPlan>;
+	static applyRepairs(input: ArrayBuffer | Uint8Array, plan: RepairPlan, options?: RepairOptions): Promise<RepairResult>;
 	static svgToContours(path: string, format?: 'truetype' | 'cff'): Contours;
 	static contoursToSVG(contours: Contours): string;
 	static compileCharString(contours: Contours): number[];
@@ -517,6 +695,7 @@ export class FontFlux {
 	toJSON(indent?: number): string;
 	validate(): ValidationReport;
 	preflight(options?: PreflightOptions): Promise<PreflightResult>;
+	preflightAsync(options?: PreflightOptions & WorkerControls): Promise<PreflightResult>;
 	detach(): this;
 }
 export function initWoff2(): Promise<void>;

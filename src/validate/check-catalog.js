@@ -3055,17 +3055,655 @@ export const CHECK_INVENTORY_BASELINE = {
 
 export const CHECK_INVENTORY_SUMMARY = {
 	"baselineIdentifiers": 228,
-	"activeIdentifiers": 264,
+	"activeIdentifiers": 398,
 	"legacyIdentifiers": 0,
-	"informationIdentifiers": 16,
-	"findingIdentifiers": 248,
-	"registeredRepairs": 15,
-	"identifiersWithRepairLinks": 17,
-	"dynamicEmissionSites": 2,
+	"informationIdentifiers": 29,
+	"findingIdentifiers": 369,
+	"registeredRepairs": 56,
+	"identifiersWithRepairLinks": 36,
+	"dynamicEmissionSites": 7,
 	"unresolvedDynamicExpressions": 0
 };
 
 export const CHECK_CATALOG = {
+	"ADVANCED_CLASS_RANGE_INVALID": {
+		"id": "ADVANCED_CLASS_RANGE_INVALID",
+		"checkId": "binary.classValues",
+		"pipeline": "binary",
+		"family": "advanced-shared-structures",
+		"tables": [
+			"*"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-common.js",
+			"line": 171,
+			"symbol": "classValues"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.classValues"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for ADVANCED_CLASS_RANGE_INVALID; correcting advanced-shared-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.classValues",
+				"pipeline": "binary",
+				"family": "advanced-shared-structures",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-common.js",
+					"line": 171,
+					"symbol": "classValues"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"ADVANCED_COVERAGE_INVALID": {
+		"id": "ADVANCED_COVERAGE_INVALID",
+		"checkId": "binary.coverageGlyphs",
+		"pipeline": "binary",
+		"family": "advanced-shared-structures",
+		"tables": [
+			"*"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-common.js",
+			"line": 135,
+			"symbol": "coverageGlyphs"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.coverageGlyphs"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for ADVANCED_COVERAGE_INVALID; correcting advanced-shared-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.coverageGlyphs",
+				"pipeline": "binary",
+				"family": "advanced-shared-structures",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-common.js",
+					"line": 135,
+					"symbol": "coverageGlyphs"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.coverageGlyphs",
+				"pipeline": "binary",
+				"family": "advanced-shared-structures",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-common.js",
+					"line": 150,
+					"symbol": "coverageGlyphs"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"ADVANCED_DEVICE_INVALID": {
+		"id": "ADVANCED_DEVICE_INVALID",
+		"checkId": "binary.deviceReference",
+		"pipeline": "binary",
+		"family": "advanced-shared-structures",
+		"tables": [
+			"*"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-common.js",
+			"line": 199,
+			"symbol": "deviceReference"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.deviceReference"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for ADVANCED_DEVICE_INVALID; correcting advanced-shared-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.deviceReference",
+				"pipeline": "binary",
+				"family": "advanced-shared-structures",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-common.js",
+					"line": 199,
+					"symbol": "deviceReference"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"ADVANCED_GLYPH_REFERENCE_INVALID": {
+		"id": "ADVANCED_GLYPH_REFERENCE_INVALID",
+		"checkId": "binary.advancedContext",
+		"pipeline": "binary",
+		"family": "advanced-shared-structures",
+		"tables": [
+			"*"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-common.js",
+			"line": 29,
+			"symbol": "advancedContext"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.advancedContext",
+			"binary.outlinePointCount"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for ADVANCED_GLYPH_REFERENCE_INVALID; correcting advanced-shared-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.advancedContext",
+				"pipeline": "binary",
+				"family": "advanced-shared-structures",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-common.js",
+					"line": 29,
+					"symbol": "advancedContext"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.outlinePointCount",
+				"pipeline": "binary",
+				"family": "advanced-shared-structures",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-common.js",
+					"line": 58,
+					"symbol": "outlinePointCount"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"ADVANCED_PARALLEL_ARRAY_MISMATCH": {
+		"id": "ADVANCED_PARALLEL_ARRAY_MISMATCH",
+		"checkId": "binary.advancedContext",
+		"pipeline": "binary",
+		"family": "advanced-shared-structures",
+		"tables": [
+			"*"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-common.js",
+			"line": 35,
+			"symbol": "advancedContext"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.advancedContext"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for ADVANCED_PARALLEL_ARRAY_MISMATCH; correcting advanced-shared-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.advancedContext",
+				"pipeline": "binary",
+				"family": "advanced-shared-structures",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-common.js",
+					"line": 35,
+					"symbol": "advancedContext"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"ADVANCED_STRUCTURE_CYCLE": {
+		"id": "ADVANCED_STRUCTURE_CYCLE",
+		"checkId": "binary.outlinePointCount",
+		"pipeline": "binary",
+		"family": "advanced-shared-structures",
+		"tables": [
+			"*"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-common.js",
+			"line": 63,
+			"symbol": "outlinePointCount"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.outlinePointCount",
+			"binary.walkObjects"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for ADVANCED_STRUCTURE_CYCLE; correcting advanced-shared-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.outlinePointCount",
+				"pipeline": "binary",
+				"family": "advanced-shared-structures",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-common.js",
+					"line": 63,
+					"symbol": "outlinePointCount"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.walkObjects",
+				"pipeline": "binary",
+				"family": "advanced-shared-structures",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-common.js",
+					"line": 108,
+					"symbol": "walkObjects"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"ADVANCED_STRUCTURE_INVALID": {
+		"id": "ADVANCED_STRUCTURE_INVALID",
+		"checkId": "binary.runAdvancedDiagnostics",
+		"pipeline": "binary",
+		"family": "diagnostic-execution",
+		"tables": [
+			"*"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-diagnostics.js",
+			"line": 59,
+			"symbol": "runAdvancedDiagnostics"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"docs/diagnostics.md"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.runAdvancedDiagnostics"
+		],
+		"repairIds": [],
+		"noFixReason": "This is an inspection precondition, limit, or execution failure; changing font bytes is not a registered remedy.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.runAdvancedDiagnostics",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-diagnostics.js",
+					"line": 59,
+					"symbol": "runAdvancedDiagnostics"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"ADVANCED_VARIATION_REFERENCE_INVALID": {
+		"id": "ADVANCED_VARIATION_REFERENCE_INVALID",
+		"checkId": "binary.variationReference",
+		"pipeline": "binary",
+		"family": "advanced-shared-structures",
+		"tables": [
+			"*"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-common.js",
+			"line": 187,
+			"symbol": "variationReference"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.variationReference"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for ADVANCED_VARIATION_REFERENCE_INVALID; correcting advanced-shared-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.variationReference",
+				"pipeline": "binary",
+				"family": "advanced-shared-structures",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-common.js",
+					"line": 187,
+					"symbol": "variationReference"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
 	"ARRAY_SHAPE_INVALID": {
 		"id": "ARRAY_SHAPE_INVALID",
 		"checkId": "validation.validateSimplifiedJSON",
@@ -3146,7 +3784,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1912,
+			"line": 1938,
 			"symbol": "validateAvar"
 		},
 		"references": [
@@ -3184,7 +3822,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1912,
+					"line": 1938,
 					"symbol": "validateAvar"
 				},
 				"references": [
@@ -3215,7 +3853,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1921,
+			"line": 1947,
 			"symbol": "validateAvar"
 		},
 		"references": [
@@ -3253,7 +3891,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1921,
+					"line": 1947,
 					"symbol": "validateAvar"
 				},
 				"references": [
@@ -3284,7 +3922,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1938,
+			"line": 1964,
 			"symbol": "validateAvar"
 		},
 		"references": [
@@ -3322,7 +3960,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1938,
+					"line": 1964,
 					"symbol": "validateAvar"
 				},
 				"references": [
@@ -3353,7 +3991,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1885,
+			"line": 1911,
 			"symbol": "validateAvar"
 		},
 		"references": [
@@ -3392,7 +4030,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1885,
+					"line": 1911,
 					"symbol": "validateAvar"
 				},
 				"references": [
@@ -3424,7 +4062,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3986,
+			"line": 4053,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -3438,7 +4076,7 @@ export const CHECK_CATALOG = {
 		"expansionEvidence": [
 			{
 				"file": "src/validate/diagnoseFont.js",
-				"line": 3981,
+				"line": 4048,
 				"symbol": "phaseCrossTableChecks",
 				"expression": "['HVAR', 'VVAR', 'MVAR', 'avar']"
 			}
@@ -3472,7 +4110,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3986,
+					"line": 4053,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -3486,7 +4124,7 @@ export const CHECK_CATALOG = {
 				"expansionEvidence": [
 					{
 						"file": "src/validate/diagnoseFont.js",
-						"line": 3981,
+						"line": 4048,
 						"symbol": "phaseCrossTableChecks",
 						"expression": "['HVAR', 'VVAR', 'MVAR', 'avar']"
 					}
@@ -3635,7 +4273,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 554,
+			"line": 560,
 			"symbol": "phaseChecksums"
 		},
 		"references": [
@@ -3675,7 +4313,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 554,
+					"line": 560,
 					"symbol": "phaseChecksums"
 				},
 				"references": [
@@ -3706,7 +4344,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 568,
+			"line": 574,
 			"symbol": "phaseChecksums"
 		},
 		"references": [
@@ -3745,7 +4383,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 568,
+					"line": 574,
 					"symbol": "phaseChecksums"
 				},
 				"references": [
@@ -3774,7 +4412,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 316,
+			"line": 322,
 			"symbol": "phaseHeader"
 		},
 		"references": [
@@ -3810,7 +4448,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 316,
+					"line": 322,
 					"symbol": "phaseHeader"
 				},
 				"references": [
@@ -3841,7 +4479,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3594,
+			"line": 3661,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -3880,7 +4518,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3594,
+					"line": 3661,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -3908,7 +4546,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 324,
+			"line": 330,
 			"symbol": "phaseHeader"
 		},
 		"references": [
@@ -3944,7 +4582,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 324,
+					"line": 330,
 					"symbol": "phaseHeader"
 				},
 				"references": [
@@ -3972,7 +4610,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 308,
+			"line": 314,
 			"symbol": "phaseHeader"
 		},
 		"references": [
@@ -4008,7 +4646,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 308,
+					"line": 314,
 					"symbol": "phaseHeader"
 				},
 				"references": [
@@ -4036,7 +4674,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 257,
+			"line": 263,
 			"symbol": "phaseHeader"
 		},
 		"references": [
@@ -4071,7 +4709,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 257,
+					"line": 263,
 					"symbol": "phaseHeader"
 				},
 				"references": [
@@ -4101,7 +4739,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 369,
+			"line": 375,
 			"symbol": "phaseDirectory"
 		},
 		"references": [
@@ -4138,7 +4776,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 369,
+					"line": 375,
 					"symbol": "phaseDirectory"
 				},
 				"references": [
@@ -4169,7 +4807,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3605,
+			"line": 3672,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -4207,7 +4845,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3605,
+					"line": 3672,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -4219,11 +4857,1495 @@ export const CHECK_CATALOG = {
 			}
 		]
 	},
+	"BASE_DEFAULT_BASELINE_INVALID": {
+		"id": "BASE_DEFAULT_BASELINE_INVALID",
+		"checkId": "binary.validateAdvancedSpecialist",
+		"pipeline": "binary",
+		"family": "specialist-structures",
+		"table": "BASE",
+		"tables": [
+			"BASE"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-specialist.js",
+			"line": 27,
+			"symbol": "validateAdvancedSpecialist"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/base"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedSpecialist"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for BASE_DEFAULT_BASELINE_INVALID; correcting specialist-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedSpecialist",
+				"pipeline": "binary",
+				"family": "specialist-structures",
+				"table": "BASE",
+				"tables": [
+					"BASE"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-specialist.js",
+					"line": 27,
+					"symbol": "validateAdvancedSpecialist"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/base"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"BASE_POINT_REFERENCE_INVALID": {
+		"id": "BASE_POINT_REFERENCE_INVALID",
+		"checkId": "binary.validateAdvancedSpecialist",
+		"pipeline": "binary",
+		"family": "specialist-structures",
+		"table": "BASE",
+		"tables": [
+			"BASE"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-specialist.js",
+			"line": 38,
+			"symbol": "validateAdvancedSpecialist"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/base"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedSpecialist"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for BASE_POINT_REFERENCE_INVALID; correcting specialist-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedSpecialist",
+				"pipeline": "binary",
+				"family": "specialist-structures",
+				"table": "BASE",
+				"tables": [
+					"BASE"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-specialist.js",
+					"line": 38,
+					"symbol": "validateAdvancedSpecialist"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/base"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"BITMAP_DATA_OFFSETS_INVALID": {
+		"id": "BITMAP_DATA_OFFSETS_INVALID",
+		"checkId": "binary.validateAdvancedBitmap",
+		"pipeline": "binary",
+		"family": "bitmap-structures",
+		"tables": [
+			"CBDT",
+			"CBLC",
+			"EBDT",
+			"EBLC",
+			"EBSC",
+			"bdat",
+			"bloc",
+			"sbix"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-bitmap.js",
+			"line": 79,
+			"symbol": "validateAdvancedBitmap"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedBitmap"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for BITMAP_DATA_OFFSETS_INVALID; correcting bitmap-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedBitmap",
+				"pipeline": "binary",
+				"family": "bitmap-structures",
+				"tables": [
+					"CBLC",
+					"CBDT",
+					"EBLC",
+					"EBDT",
+					"bloc",
+					"bdat",
+					"sbix",
+					"EBSC"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-bitmap.js",
+					"line": 79,
+					"symbol": "validateAdvancedBitmap"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateAdvancedBitmap",
+				"pipeline": "binary",
+				"family": "bitmap-structures",
+				"tables": [
+					"CBLC",
+					"CBDT",
+					"EBLC",
+					"EBDT",
+					"bloc",
+					"bdat",
+					"sbix",
+					"EBSC"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-bitmap.js",
+					"line": 161,
+					"symbol": "validateAdvancedBitmap"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"BITMAP_DATA_TABLE_MISSING": {
+		"id": "BITMAP_DATA_TABLE_MISSING",
+		"checkId": "binary.validateAdvancedBitmap",
+		"pipeline": "binary",
+		"family": "bitmap-structures",
+		"tables": [
+			"CBDT",
+			"CBLC",
+			"EBDT",
+			"EBLC",
+			"EBSC",
+			"bdat",
+			"bloc",
+			"sbix"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-bitmap.js",
+			"line": 116,
+			"symbol": "validateAdvancedBitmap"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedBitmap"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for BITMAP_DATA_TABLE_MISSING; correcting bitmap-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedBitmap",
+				"pipeline": "binary",
+				"family": "bitmap-structures",
+				"tables": [
+					"CBLC",
+					"CBDT",
+					"EBLC",
+					"EBDT",
+					"bloc",
+					"bdat",
+					"sbix",
+					"EBSC"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-bitmap.js",
+					"line": 116,
+					"symbol": "validateAdvancedBitmap"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"BITMAP_DUPLICATE_INVALID": {
+		"id": "BITMAP_DUPLICATE_INVALID",
+		"checkId": "binary.validateAdvancedBitmap",
+		"pipeline": "binary",
+		"family": "bitmap-structures",
+		"tables": [
+			"CBDT",
+			"CBLC",
+			"EBDT",
+			"EBLC",
+			"EBSC",
+			"bdat",
+			"bloc",
+			"sbix"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-bitmap.js",
+			"line": 90,
+			"symbol": "validateAdvancedBitmap"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedBitmap"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for BITMAP_DUPLICATE_INVALID; correcting bitmap-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedBitmap",
+				"pipeline": "binary",
+				"family": "bitmap-structures",
+				"tables": [
+					"CBLC",
+					"CBDT",
+					"EBLC",
+					"EBDT",
+					"bloc",
+					"bdat",
+					"sbix",
+					"EBSC"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-bitmap.js",
+					"line": 90,
+					"symbol": "validateAdvancedBitmap"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"BITMAP_GLYPH_REFERENCE_INVALID": {
+		"id": "BITMAP_GLYPH_REFERENCE_INVALID",
+		"checkId": "binary.referenceGraph",
+		"pipeline": "binary",
+		"family": "bitmap-structures",
+		"tables": [
+			"CBDT",
+			"CBLC",
+			"EBDT",
+			"EBLC",
+			"EBSC",
+			"bdat",
+			"bloc",
+			"sbix"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-bitmap.js",
+			"line": 54,
+			"symbol": "referenceGraph"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.referenceGraph",
+			"binary.validateAdvancedBitmap"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for BITMAP_GLYPH_REFERENCE_INVALID; correcting bitmap-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.referenceGraph",
+				"pipeline": "binary",
+				"family": "bitmap-structures",
+				"tables": [
+					"CBLC",
+					"CBDT",
+					"EBLC",
+					"EBDT",
+					"bloc",
+					"bdat",
+					"sbix",
+					"EBSC"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-bitmap.js",
+					"line": 54,
+					"symbol": "referenceGraph"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateAdvancedBitmap",
+				"pipeline": "binary",
+				"family": "bitmap-structures",
+				"tables": [
+					"CBLC",
+					"CBDT",
+					"EBLC",
+					"EBDT",
+					"bloc",
+					"bdat",
+					"sbix",
+					"EBSC"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-bitmap.js",
+					"line": 157,
+					"symbol": "validateAdvancedBitmap"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"BITMAP_IMAGE_LENGTH_INVALID": {
+		"id": "BITMAP_IMAGE_LENGTH_INVALID",
+		"checkId": "binary.validateAdvancedBitmap",
+		"pipeline": "binary",
+		"family": "bitmap-structures",
+		"tables": [
+			"CBDT",
+			"CBLC",
+			"EBDT",
+			"EBLC",
+			"EBSC",
+			"bdat",
+			"bloc",
+			"sbix"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-bitmap.js",
+			"line": 175,
+			"symbol": "validateAdvancedBitmap"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedBitmap"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for BITMAP_IMAGE_LENGTH_INVALID; correcting bitmap-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedBitmap",
+				"pipeline": "binary",
+				"family": "bitmap-structures",
+				"tables": [
+					"CBLC",
+					"CBDT",
+					"EBLC",
+					"EBDT",
+					"bloc",
+					"bdat",
+					"sbix",
+					"EBSC"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-bitmap.js",
+					"line": 175,
+					"symbol": "validateAdvancedBitmap"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateAdvancedBitmap",
+				"pipeline": "binary",
+				"family": "bitmap-structures",
+				"tables": [
+					"CBLC",
+					"CBDT",
+					"EBLC",
+					"EBDT",
+					"bloc",
+					"bdat",
+					"sbix",
+					"EBSC"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-bitmap.js",
+					"line": 183,
+					"symbol": "validateAdvancedBitmap"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"BITMAP_IMAGE_METRICS_MISMATCH": {
+		"id": "BITMAP_IMAGE_METRICS_MISMATCH",
+		"checkId": "binary.inspectPng",
+		"pipeline": "binary",
+		"family": "bitmap-structures",
+		"tables": [
+			"CBDT",
+			"CBLC",
+			"EBDT",
+			"EBLC",
+			"EBSC",
+			"bdat",
+			"bloc",
+			"sbix"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-bitmap.js",
+			"line": 26,
+			"symbol": "inspectPng"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectPng"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for BITMAP_IMAGE_METRICS_MISMATCH; correcting bitmap-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.inspectPng",
+				"pipeline": "binary",
+				"family": "bitmap-structures",
+				"tables": [
+					"CBLC",
+					"CBDT",
+					"EBLC",
+					"EBDT",
+					"bloc",
+					"bdat",
+					"sbix",
+					"EBSC"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-bitmap.js",
+					"line": 26,
+					"symbol": "inspectPng"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"BITMAP_LOCATION_TABLE_MISSING": {
+		"id": "BITMAP_LOCATION_TABLE_MISSING",
+		"checkId": "binary.runAdvancedDiagnostics",
+		"pipeline": "binary",
+		"family": "diagnostic-execution",
+		"tables": [
+			"*"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-diagnostics.js",
+			"line": 109,
+			"symbol": "runAdvancedDiagnostics"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"docs/diagnostics.md"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.runAdvancedDiagnostics"
+		],
+		"repairIds": [],
+		"noFixReason": "This is an inspection precondition, limit, or execution failure; changing font bytes is not a registered remedy.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.runAdvancedDiagnostics",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-diagnostics.js",
+					"line": 109,
+					"symbol": "runAdvancedDiagnostics"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"BITMAP_PNG_INVALID": {
+		"id": "BITMAP_PNG_INVALID",
+		"checkId": "binary.inspectPng",
+		"pipeline": "binary",
+		"family": "bitmap-structures",
+		"tables": [
+			"CBDT",
+			"CBLC",
+			"EBDT",
+			"EBLC",
+			"EBSC",
+			"bdat",
+			"bloc",
+			"sbix"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-bitmap.js",
+			"line": 6,
+			"symbol": "inspectPng"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectPng"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for BITMAP_PNG_INVALID; correcting bitmap-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.inspectPng",
+				"pipeline": "binary",
+				"family": "bitmap-structures",
+				"tables": [
+					"CBLC",
+					"CBDT",
+					"EBLC",
+					"EBDT",
+					"bloc",
+					"bdat",
+					"sbix",
+					"EBSC"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-bitmap.js",
+					"line": 6,
+					"symbol": "inspectPng"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"BITMAP_REFERENCE_CYCLE": {
+		"id": "BITMAP_REFERENCE_CYCLE",
+		"checkId": "binary.referenceGraph",
+		"pipeline": "binary",
+		"family": "bitmap-structures",
+		"tables": [
+			"CBDT",
+			"CBLC",
+			"EBDT",
+			"EBLC",
+			"EBSC",
+			"bdat",
+			"bloc",
+			"sbix"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-bitmap.js",
+			"line": 46,
+			"symbol": "referenceGraph"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.referenceGraph"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for BITMAP_REFERENCE_CYCLE; correcting bitmap-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.referenceGraph",
+				"pipeline": "binary",
+				"family": "bitmap-structures",
+				"tables": [
+					"CBLC",
+					"CBDT",
+					"EBLC",
+					"EBDT",
+					"bloc",
+					"bdat",
+					"sbix",
+					"EBSC"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-bitmap.js",
+					"line": 46,
+					"symbol": "referenceGraph"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"BITMAP_SCALE_REFERENCE_INVALID": {
+		"id": "BITMAP_SCALE_REFERENCE_INVALID",
+		"checkId": "binary.validateAdvancedBitmap",
+		"pipeline": "binary",
+		"family": "bitmap-structures",
+		"tables": [
+			"CBDT",
+			"CBLC",
+			"EBDT",
+			"EBLC",
+			"EBSC",
+			"bdat",
+			"bloc",
+			"sbix"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-bitmap.js",
+			"line": 108,
+			"symbol": "validateAdvancedBitmap"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedBitmap"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for BITMAP_SCALE_REFERENCE_INVALID; correcting bitmap-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedBitmap",
+				"pipeline": "binary",
+				"family": "bitmap-structures",
+				"tables": [
+					"CBLC",
+					"CBDT",
+					"EBLC",
+					"EBDT",
+					"bloc",
+					"bdat",
+					"sbix",
+					"EBSC"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-bitmap.js",
+					"line": 108,
+					"symbol": "validateAdvancedBitmap"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"BITMAP_STRIKE_INVALID": {
+		"id": "BITMAP_STRIKE_INVALID",
+		"checkId": "binary.validateAdvancedBitmap",
+		"pipeline": "binary",
+		"family": "bitmap-structures",
+		"tables": [
+			"CBDT",
+			"CBLC",
+			"EBDT",
+			"EBLC",
+			"EBSC",
+			"bdat",
+			"bloc",
+			"sbix"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-bitmap.js",
+			"line": 127,
+			"symbol": "validateAdvancedBitmap"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedBitmap"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for BITMAP_STRIKE_INVALID; correcting bitmap-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedBitmap",
+				"pipeline": "binary",
+				"family": "bitmap-structures",
+				"tables": [
+					"CBLC",
+					"CBDT",
+					"EBLC",
+					"EBDT",
+					"bloc",
+					"bdat",
+					"sbix",
+					"EBSC"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-bitmap.js",
+					"line": 127,
+					"symbol": "validateAdvancedBitmap"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"BITMAP_SUBTABLE_RANGE_INVALID": {
+		"id": "BITMAP_SUBTABLE_RANGE_INVALID",
+		"checkId": "binary.validateAdvancedBitmap",
+		"pipeline": "binary",
+		"family": "bitmap-structures",
+		"tables": [
+			"CBDT",
+			"CBLC",
+			"EBDT",
+			"EBLC",
+			"EBSC",
+			"bdat",
+			"bloc",
+			"sbix"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-bitmap.js",
+			"line": 135,
+			"symbol": "validateAdvancedBitmap"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedBitmap"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for BITMAP_SUBTABLE_RANGE_INVALID; correcting bitmap-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedBitmap",
+				"pipeline": "binary",
+				"family": "bitmap-structures",
+				"tables": [
+					"CBLC",
+					"CBDT",
+					"EBLC",
+					"EBDT",
+					"bloc",
+					"bdat",
+					"sbix",
+					"EBSC"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-bitmap.js",
+					"line": 135,
+					"symbol": "validateAdvancedBitmap"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bdat",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/bloc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cbdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebdt",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/eblc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/ebsc",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/sbix"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CFF_ARITHMETIC_OPERAND_INVALID": {
+		"id": "CFF_ARITHMETIC_OPERAND_INVALID",
+		"checkId": "binary.executeCffArithmetic",
+		"pipeline": "binary",
+		"family": "cff-programs-and-storage",
+		"tables": [
+			"CFF ",
+			"CFF2"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-programs.js",
+			"line": 127,
+			"symbol": "executeCffArithmetic"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.executeCffArithmetic"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for CFF_ARITHMETIC_OPERAND_INVALID; correcting cff-programs-and-storage data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.executeCffArithmetic",
+				"pipeline": "binary",
+				"family": "cff-programs-and-storage",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 127,
+					"symbol": "executeCffArithmetic"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
 	"CFF_BLEND_INVALID_COUNT": {
 		"id": "CFF_BLEND_INVALID_COUNT",
-		"checkId": "binary.validateCharStringBytecode",
+		"checkId": "binary.validateCff2PrivateDictionary",
 		"pipeline": "binary",
-		"family": "cff-charstrings",
+		"family": "cff-private-dictionaries",
 		"table": "CFF2",
 		"tables": [
 			"CFF2"
@@ -4235,13 +6357,14 @@ export const CHECK_CATALOG = {
 			"woff2"
 		],
 		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 2851,
-			"symbol": "validateCharStringBytecode"
+			"file": "src/validate/advanced-cff-private.js",
+			"line": 83,
+			"symbol": "validateCff2PrivateDictionary"
 		},
 		"references": [
+			"docs/advanced-diagnostics.md",
 			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
 			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
 		],
@@ -4252,13 +6375,44 @@ export const CHECK_CATALOG = {
 			"binary"
 		],
 		"checkIds": [
+			"binary.validateCff2PrivateDictionary",
 			"binary.validateCharStringBytecode"
 		],
 		"repairIds": [],
-		"noFixReason": "No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.",
+		"noFixReason": "No registered repair for CFF_BLEND_INVALID_COUNT; correcting cff-private-dictionaries data requires a separately specified operation with complete dependency and intent checks.",
 		"status": "active",
 		"baseline": false,
 		"origins": [
+			{
+				"checkId": "binary.validateCff2PrivateDictionary",
+				"pipeline": "binary",
+				"family": "cff-private-dictionaries",
+				"table": "CFF2",
+				"tables": [
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-cff-private.js",
+					"line": 83,
+					"symbol": "validateCff2PrivateDictionary"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
 			{
 				"checkId": "binary.validateCharStringBytecode",
 				"pipeline": "binary",
@@ -4277,10 +6431,168 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2851,
+					"line": 2906,
 					"symbol": "validateCharStringBytecode"
 				},
 				"references": [
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CFF_CHARSET_DUPLICATE": {
+		"id": "CFF_CHARSET_DUPLICATE",
+		"checkId": "binary.validateCffStructures",
+		"pipeline": "binary",
+		"family": "cff-programs-and-storage",
+		"tables": [
+			"CFF ",
+			"CFF2"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-programs.js",
+			"line": 388,
+			"symbol": "validateCffStructures"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateCffStructures"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for CFF_CHARSET_DUPLICATE; correcting cff-programs-and-storage data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateCffStructures",
+				"pipeline": "binary",
+				"family": "cff-programs-and-storage",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 388,
+					"symbol": "validateCffStructures"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CFF_CHARSET_REFERENCE_INVALID": {
+		"id": "CFF_CHARSET_REFERENCE_INVALID",
+		"checkId": "binary.validateCffStructures",
+		"pipeline": "binary",
+		"family": "cff-programs-and-storage",
+		"tables": [
+			"CFF ",
+			"CFF2"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-programs.js",
+			"line": 345,
+			"symbol": "validateCffStructures"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateCffStructures"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for CFF_CHARSET_REFERENCE_INVALID; correcting cff-programs-and-storage data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateCffStructures",
+				"pipeline": "binary",
+				"family": "cff-programs-and-storage",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 345,
+					"symbol": "validateCffStructures"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
 				],
@@ -4309,7 +6621,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2669,
+			"line": 2716,
 			"symbol": "validateCffCharStrings"
 		},
 		"references": [
@@ -4327,7 +6639,7 @@ export const CHECK_CATALOG = {
 			"binary.validateCffCharStrings"
 		],
 		"repairIds": [],
-		"noFixReason": "No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.",
+		"noFixReason": "No general charstring repair is registered; the source-confirmed empty-program action cannot reconstruct damaged nonempty programs or subroutines.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -4349,7 +6661,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2669,
+					"line": 2716,
 					"symbol": "validateCffCharStrings"
 				},
 				"references": [
@@ -4365,9 +6677,10 @@ export const CHECK_CATALOG = {
 	},
 	"CFF_CONTEXT_UNSUPPORTED": {
 		"id": "CFF_CONTEXT_UNSUPPORTED",
-		"checkId": "binary.resolveDiagnosticCffContext",
+		"checkId": "binary.validateCff2PrivateDictionary",
 		"pipeline": "binary",
-		"family": "cff-context",
+		"family": "cff-private-dictionaries",
+		"table": "CFF2",
 		"tables": [
 			"CFF ",
 			"CFF2"
@@ -4379,13 +6692,14 @@ export const CHECK_CATALOG = {
 			"woff2"
 		],
 		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 2546,
-			"symbol": "resolveDiagnosticCffContext"
+			"file": "src/validate/advanced-cff-private.js",
+			"line": 19,
+			"symbol": "validateCff2PrivateDictionary"
 		},
 		"references": [
+			"docs/advanced-diagnostics.md",
 			"docs/diagnostics.md",
 			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
 			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
@@ -4400,7 +6714,9 @@ export const CHECK_CATALOG = {
 			"binary"
 		],
 		"checkIds": [
+			"binary.executeCffArithmetic",
 			"binary.resolveDiagnosticCffContext",
+			"binary.validateCff2PrivateDictionary",
 			"binary.validateCharStringBytecode"
 		],
 		"repairIds": [],
@@ -4409,9 +6725,40 @@ export const CHECK_CATALOG = {
 		"baseline": false,
 		"origins": [
 			{
-				"checkId": "binary.resolveDiagnosticCffContext",
+				"checkId": "binary.validateCff2PrivateDictionary",
 				"pipeline": "binary",
-				"family": "cff-context",
+				"family": "cff-private-dictionaries",
+				"table": "CFF2",
+				"tables": [
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-cff-private.js",
+					"line": 19,
+					"symbol": "validateCff2PrivateDictionary"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"docs/diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"warning"
+				]
+			},
+			{
+				"checkId": "binary.executeCffArithmetic",
+				"pipeline": "binary",
+				"family": "cff-programs-and-storage",
 				"tables": [
 					"CFF ",
 					"CFF2"
@@ -4423,13 +6770,14 @@ export const CHECK_CATALOG = {
 					"collection"
 				],
 				"kind": "finding",
-				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 				"source": {
-					"file": "src/validate/diagnoseFont.js",
-					"line": 2546,
-					"symbol": "resolveDiagnosticCffContext"
+					"file": "src/validate/advanced-programs.js",
+					"line": 173,
+					"symbol": "executeCffArithmetic"
 				},
 				"references": [
+					"docs/advanced-diagnostics.md",
 					"docs/diagnostics.md",
 					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
 					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
@@ -4459,7 +6807,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2556,
+					"line": 2573,
 					"symbol": "resolveDiagnosticCffContext"
 				},
 				"references": [
@@ -4492,7 +6840,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2775,
+					"line": 2825,
 					"symbol": "validateCharStringBytecode"
 				},
 				"references": [
@@ -4525,7 +6873,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2846,
+					"line": 2901,
 					"symbol": "validateCharStringBytecode"
 				},
 				"references": [
@@ -4558,7 +6906,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2866,
+					"line": 2921,
 					"symbol": "validateCharStringBytecode"
 				},
 				"references": [
@@ -4591,7 +6939,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2923,
+					"line": 2978,
 					"symbol": "validateCharStringBytecode"
 				},
 				"references": [
@@ -4624,7 +6972,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2969,
+					"line": 3024,
 					"symbol": "validateCharStringBytecode"
 				},
 				"references": [
@@ -4634,6 +6982,144 @@ export const CHECK_CATALOG = {
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"CFF_DERIVED_MAXP_MISMATCH": {
+		"id": "CFF_DERIVED_MAXP_MISMATCH",
+		"checkId": "binary.runFaceChecks",
+		"pipeline": "binary",
+		"family": "diagnostic-execution",
+		"tables": [
+			"*",
+			"CFF ",
+			"CFF2",
+			"maxp"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 4367,
+			"symbol": "runFaceChecks"
+		},
+		"references": [
+			"docs/diagnostics.md",
+			"docs/font-quality.md",
+			"docs/repair-extensions.md",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp"
+		],
+		"severities": [
+			"error",
+			"info",
+			"warning"
+		],
+		"expression": "code",
+		"expansionEvidence": [
+			{
+				"file": "src/validate/diagnoseFont.js",
+				"line": 4359,
+				"symbol": "runFaceChecks",
+				"expression": "['TT_DERIVED_BOUNDS_MISMATCH', 'TT_DERIVED_MAXP_MISMATCH',\n\t\t\t\t\t'HHEA_DERIVED_EXTREMA_MISMATCH', 'VHEA_DERIVED_EXTREMA_MISMATCH', 'CFF_DERIVED_MAXP_MISMATCH']"
+			}
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectCff",
+			"binary.runFaceChecks"
+		],
+		"repairIds": [
+			"cff.maxp"
+		],
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.runFaceChecks",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 4367,
+					"symbol": "runFaceChecks"
+				},
+				"references": [
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error",
+					"info",
+					"warning"
+				],
+				"expression": "code",
+				"expansionEvidence": [
+					{
+						"file": "src/validate/diagnoseFont.js",
+						"line": 4359,
+						"symbol": "runFaceChecks",
+						"expression": "['TT_DERIVED_BOUNDS_MISMATCH', 'TT_DERIVED_MAXP_MISMATCH',\n\t\t\t\t\t'HHEA_DERIVED_EXTREMA_MISMATCH', 'VHEA_DERIVED_EXTREMA_MISMATCH', 'CFF_DERIVED_MAXP_MISMATCH']"
+					}
+				]
+			},
+			{
+				"checkId": "binary.inspectCff",
+				"pipeline": "binary",
+				"family": "cff-context",
+				"tables": [
+					"CFF ",
+					"CFF2",
+					"maxp"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage",
+				"source": {
+					"file": "src/validate/repair-cff.js",
+					"line": 261,
+					"symbol": "inspectCff"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/repair-extensions.md",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp"
 				],
 				"severities": [
 					"warning"
@@ -4660,7 +7146,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2620,
+			"line": 2667,
 			"symbol": "validateCffCharStrings"
 		},
 		"references": [
@@ -4680,7 +7166,7 @@ export const CHECK_CATALOG = {
 			"binary.validateCffCharStrings"
 		],
 		"repairIds": [],
-		"noFixReason": "No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.",
+		"noFixReason": "No general charstring repair is registered; the source-confirmed empty-program action cannot reconstruct damaged nonempty programs or subroutines.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -4702,10 +7188,155 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2620,
+					"line": 2667,
 					"symbol": "validateCffCharStrings"
 				},
 				"references": [
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CFF_ENCODING_INVALID": {
+		"id": "CFF_ENCODING_INVALID",
+		"checkId": "binary.validateCffStructures",
+		"pipeline": "binary",
+		"family": "cff-programs-and-storage",
+		"tables": [
+			"CFF ",
+			"CFF2"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-programs.js",
+			"line": 362,
+			"symbol": "validateCffStructures"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateCffStructures"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for CFF_ENCODING_INVALID; correcting cff-programs-and-storage data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateCffStructures",
+				"pipeline": "binary",
+				"family": "cff-programs-and-storage",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 362,
+					"symbol": "validateCffStructures"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateCffStructures",
+				"pipeline": "binary",
+				"family": "cff-programs-and-storage",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 368,
+					"symbol": "validateCffStructures"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateCffStructures",
+				"pipeline": "binary",
+				"family": "cff-programs-and-storage",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 374,
+					"symbol": "validateCffStructures"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
 					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
 					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
@@ -4737,7 +7368,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2525,
+			"line": 2551,
 			"symbol": "resolveDiagnosticCffContext"
 		},
 		"references": [
@@ -4779,7 +7410,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2525,
+					"line": 2551,
 					"symbol": "resolveDiagnosticCffContext"
 				},
 				"references": [
@@ -4814,7 +7445,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2532,
+			"line": 2558,
 			"symbol": "resolveDiagnosticCffContext"
 		},
 		"references": [
@@ -4856,10 +7487,122 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2532,
+					"line": 2558,
 					"symbol": "resolveDiagnosticCffContext"
 				},
 				"references": [
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CFF_FDSELECT_STRUCTURE_INVALID": {
+		"id": "CFF_FDSELECT_STRUCTURE_INVALID",
+		"checkId": "binary.validateCffStructures",
+		"pipeline": "binary",
+		"family": "cff-programs-and-storage",
+		"tables": [
+			"CFF ",
+			"CFF2"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-programs.js",
+			"line": 298,
+			"symbol": "validateCffStructures"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateCffStructures"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for CFF_FDSELECT_STRUCTURE_INVALID; correcting cff-programs-and-storage data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateCffStructures",
+				"pipeline": "binary",
+				"family": "cff-programs-and-storage",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 298,
+					"symbol": "validateCffStructures"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateCffStructures",
+				"pipeline": "binary",
+				"family": "cff-programs-and-storage",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 315,
+					"symbol": "validateCffStructures"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
 					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
 					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
@@ -4891,7 +7634,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2538,
+			"line": 2564,
 			"symbol": "resolveDiagnosticCffContext"
 		},
 		"references": [
@@ -4933,7 +7676,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2538,
+					"line": 2564,
 					"symbol": "resolveDiagnosticCffContext"
 				},
 				"references": [
@@ -4969,7 +7712,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3837,
+			"line": 3904,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -5010,7 +7753,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3837,
+					"line": 3904,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -5024,11 +7767,11 @@ export const CHECK_CATALOG = {
 			}
 		]
 	},
-	"CFF_INVALID_NUMBER": {
-		"id": "CFF_INVALID_NUMBER",
-		"checkId": "binary.validateCharStringBytecode",
+	"CFF_HEADER_INVALID": {
+		"id": "CFF_HEADER_INVALID",
+		"checkId": "binary.validateCffStructures",
 		"pipeline": "binary",
-		"family": "cff-charstrings",
+		"family": "cff-programs-and-storage",
 		"tables": [
 			"CFF ",
 			"CFF2"
@@ -5040,13 +7783,14 @@ export const CHECK_CATALOG = {
 			"woff2"
 		],
 		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 2727,
-			"symbol": "validateCharStringBytecode"
+			"file": "src/validate/advanced-programs.js",
+			"line": 191,
+			"symbol": "validateCffStructures"
 		},
 		"references": [
+			"docs/advanced-diagnostics.md",
 			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
 			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
 			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
@@ -5060,13 +7804,124 @@ export const CHECK_CATALOG = {
 			"binary"
 		],
 		"checkIds": [
+			"binary.validateCffStructures"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for CFF_HEADER_INVALID; correcting cff-programs-and-storage data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateCffStructures",
+				"pipeline": "binary",
+				"family": "cff-programs-and-storage",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 191,
+					"symbol": "validateCffStructures"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CFF_INVALID_NUMBER": {
+		"id": "CFF_INVALID_NUMBER",
+		"checkId": "binary.validateCff2PrivateDictionary",
+		"pipeline": "binary",
+		"family": "cff-private-dictionaries",
+		"table": "CFF2",
+		"tables": [
+			"CFF ",
+			"CFF2"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-cff-private.js",
+			"line": 74,
+			"symbol": "validateCff2PrivateDictionary"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateCff2PrivateDictionary",
 			"binary.validateCharStringBytecode"
 		],
 		"repairIds": [],
-		"noFixReason": "No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.",
+		"noFixReason": "No registered repair for CFF_INVALID_NUMBER; correcting cff-private-dictionaries data requires a separately specified operation with complete dependency and intent checks.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
+			{
+				"checkId": "binary.validateCff2PrivateDictionary",
+				"pipeline": "binary",
+				"family": "cff-private-dictionaries",
+				"table": "CFF2",
+				"tables": [
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-cff-private.js",
+					"line": 74,
+					"symbol": "validateCff2PrivateDictionary"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
 			{
 				"checkId": "binary.validateCharStringBytecode",
 				"pipeline": "binary",
@@ -5085,7 +7940,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2727,
+					"line": 2774,
 					"symbol": "validateCharStringBytecode"
 				},
 				"references": [
@@ -5103,9 +7958,10 @@ export const CHECK_CATALOG = {
 	},
 	"CFF_INVALID_OPERAND_COUNT": {
 		"id": "CFF_INVALID_OPERAND_COUNT",
-		"checkId": "binary.validateCharStringBytecode",
+		"checkId": "binary.validateCff2PrivateDictionary",
 		"pipeline": "binary",
-		"family": "cff-charstrings",
+		"family": "cff-private-dictionaries",
+		"table": "CFF2",
 		"tables": [
 			"CFF ",
 			"CFF2"
@@ -5117,13 +7973,14 @@ export const CHECK_CATALOG = {
 			"woff2"
 		],
 		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 2814,
-			"symbol": "validateCharStringBytecode"
+			"file": "src/validate/advanced-cff-private.js",
+			"line": 103,
+			"symbol": "validateCff2PrivateDictionary"
 		},
 		"references": [
+			"docs/advanced-diagnostics.md",
 			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
 			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
 			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
@@ -5137,19 +7994,20 @@ export const CHECK_CATALOG = {
 			"binary"
 		],
 		"checkIds": [
+			"binary.validateCff2PrivateDictionary",
 			"binary.validateCharStringBytecode"
 		],
 		"repairIds": [],
-		"noFixReason": "No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.",
+		"noFixReason": "No registered repair for CFF_INVALID_OPERAND_COUNT; correcting cff-private-dictionaries data requires a separately specified operation with complete dependency and intent checks.",
 		"status": "active",
 		"baseline": false,
 		"origins": [
 			{
-				"checkId": "binary.validateCharStringBytecode",
+				"checkId": "binary.validateCff2PrivateDictionary",
 				"pipeline": "binary",
-				"family": "cff-charstrings",
+				"family": "cff-private-dictionaries",
+				"table": "CFF2",
 				"tables": [
-					"CFF ",
 					"CFF2"
 				],
 				"formats": [
@@ -5159,16 +8017,14 @@ export const CHECK_CATALOG = {
 					"collection"
 				],
 				"kind": "finding",
-				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 				"source": {
-					"file": "src/validate/diagnoseFont.js",
-					"line": 2814,
-					"symbol": "validateCharStringBytecode"
+					"file": "src/validate/advanced-cff-private.js",
+					"line": 103,
+					"symbol": "validateCff2PrivateDictionary"
 				},
 				"references": [
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"docs/advanced-diagnostics.md",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
 				],
@@ -5177,11 +8033,11 @@ export const CHECK_CATALOG = {
 				]
 			},
 			{
-				"checkId": "binary.validateCharStringBytecode",
+				"checkId": "binary.validateCff2PrivateDictionary",
 				"pipeline": "binary",
-				"family": "cff-charstrings",
+				"family": "cff-private-dictionaries",
+				"table": "CFF2",
 				"tables": [
-					"CFF ",
 					"CFF2"
 				],
 				"formats": [
@@ -5191,16 +8047,14 @@ export const CHECK_CATALOG = {
 					"collection"
 				],
 				"kind": "finding",
-				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 				"source": {
-					"file": "src/validate/diagnoseFont.js",
-					"line": 2889,
-					"symbol": "validateCharStringBytecode"
+					"file": "src/validate/advanced-cff-private.js",
+					"line": 122,
+					"symbol": "validateCff2PrivateDictionary"
 				},
 				"references": [
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"docs/advanced-diagnostics.md",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
 				],
@@ -5209,11 +8063,11 @@ export const CHECK_CATALOG = {
 				]
 			},
 			{
-				"checkId": "binary.validateCharStringBytecode",
+				"checkId": "binary.validateCff2PrivateDictionary",
 				"pipeline": "binary",
-				"family": "cff-charstrings",
+				"family": "cff-private-dictionaries",
+				"table": "CFF2",
 				"tables": [
-					"CFF ",
 					"CFF2"
 				],
 				"formats": [
@@ -5223,463 +8077,14 @@ export const CHECK_CATALOG = {
 					"collection"
 				],
 				"kind": "finding",
-				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 				"source": {
-					"file": "src/validate/diagnoseFont.js",
-					"line": 2972,
-					"symbol": "validateCharStringBytecode"
+					"file": "src/validate/advanced-cff-private.js",
+					"line": 132,
+					"symbol": "validateCff2PrivateDictionary"
 				},
 				"references": [
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
-				],
-				"severities": [
-					"error"
-				]
-			}
-		]
-	},
-	"CFF_INVALID_OPERATOR": {
-		"id": "CFF_INVALID_OPERATOR",
-		"checkId": "binary.validateCharStringBytecode",
-		"pipeline": "binary",
-		"family": "cff-charstrings",
-		"tables": [
-			"CFF ",
-			"CFF2"
-		],
-		"formats": [
-			"collection",
-			"sfnt",
-			"woff1",
-			"woff2"
-		],
-		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 2768,
-			"symbol": "validateCharStringBytecode"
-		},
-		"references": [
-			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
-			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
-		],
-		"severities": [
-			"error"
-		],
-		"pipelines": [
-			"binary"
-		],
-		"checkIds": [
-			"binary.validateCharStringBytecode"
-		],
-		"repairIds": [],
-		"noFixReason": "No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.",
-		"status": "active",
-		"baseline": true,
-		"origins": [
-			{
-				"checkId": "binary.validateCharStringBytecode",
-				"pipeline": "binary",
-				"family": "cff-charstrings",
-				"tables": [
-					"CFF ",
-					"CFF2"
-				],
-				"formats": [
-					"sfnt",
-					"woff1",
-					"woff2",
-					"collection"
-				],
-				"kind": "finding",
-				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-				"source": {
-					"file": "src/validate/diagnoseFont.js",
-					"line": 2768,
-					"symbol": "validateCharStringBytecode"
-				},
-				"references": [
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
-				],
-				"severities": [
-					"error"
-				]
-			},
-			{
-				"checkId": "binary.validateCharStringBytecode",
-				"pipeline": "binary",
-				"family": "cff-charstrings",
-				"tables": [
-					"CFF ",
-					"CFF2"
-				],
-				"formats": [
-					"sfnt",
-					"woff1",
-					"woff2",
-					"collection"
-				],
-				"kind": "finding",
-				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-				"source": {
-					"file": "src/validate/diagnoseFont.js",
-					"line": 2796,
-					"symbol": "validateCharStringBytecode"
-				},
-				"references": [
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
-				],
-				"severities": [
-					"error"
-				]
-			}
-		]
-	},
-	"CFF_OPERATION_LIMIT_EXCEEDED": {
-		"id": "CFF_OPERATION_LIMIT_EXCEEDED",
-		"checkId": "binary.validateCharStringBytecode",
-		"pipeline": "binary",
-		"family": "cff-charstrings",
-		"tables": [
-			"CFF ",
-			"CFF2"
-		],
-		"formats": [
-			"collection",
-			"sfnt",
-			"woff1",
-			"woff2"
-		],
-		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 2716,
-			"symbol": "validateCharStringBytecode"
-		},
-		"references": [
-			"docs/diagnostics.md",
-			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
-			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
-		],
-		"severities": [
-			"error"
-		],
-		"pipelines": [
-			"binary"
-		],
-		"checkIds": [
-			"binary.validateCharStringBytecode"
-		],
-		"repairIds": [],
-		"noFixReason": "The bounded charstring walker exhausted its operation budget; no rewrite is authorized by incomplete execution.",
-		"status": "active",
-		"baseline": false,
-		"origins": [
-			{
-				"checkId": "binary.validateCharStringBytecode",
-				"pipeline": "binary",
-				"family": "cff-charstrings",
-				"tables": [
-					"CFF ",
-					"CFF2"
-				],
-				"formats": [
-					"sfnt",
-					"woff1",
-					"woff2",
-					"collection"
-				],
-				"kind": "finding",
-				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-				"source": {
-					"file": "src/validate/diagnoseFont.js",
-					"line": 2716,
-					"symbol": "validateCharStringBytecode"
-				},
-				"references": [
-					"docs/diagnostics.md",
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
-				],
-				"severities": [
-					"error"
-				]
-			}
-		]
-	},
-	"CFF_RETURN_OUTSIDE_SUBR": {
-		"id": "CFF_RETURN_OUTSIDE_SUBR",
-		"checkId": "binary.validateCharStringBytecode",
-		"pipeline": "binary",
-		"family": "cff-charstrings",
-		"table": "CFF ",
-		"tables": [
-			"CFF "
-		],
-		"formats": [
-			"collection",
-			"sfnt",
-			"woff1",
-			"woff2"
-		],
-		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 2960,
-			"symbol": "validateCharStringBytecode"
-		},
-		"references": [
-			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
-			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff"
-		],
-		"severities": [
-			"error"
-		],
-		"pipelines": [
-			"binary"
-		],
-		"checkIds": [
-			"binary.validateCharStringBytecode"
-		],
-		"repairIds": [],
-		"noFixReason": "No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.",
-		"status": "active",
-		"baseline": false,
-		"origins": [
-			{
-				"checkId": "binary.validateCharStringBytecode",
-				"pipeline": "binary",
-				"family": "cff-charstrings",
-				"table": "CFF ",
-				"tables": [
-					"CFF "
-				],
-				"formats": [
-					"sfnt",
-					"woff1",
-					"woff2",
-					"collection"
-				],
-				"kind": "finding",
-				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-				"source": {
-					"file": "src/validate/diagnoseFont.js",
-					"line": 2960,
-					"symbol": "validateCharStringBytecode"
-				},
-				"references": [
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff"
-				],
-				"severities": [
-					"error"
-				]
-			}
-		]
-	},
-	"CFF_STACK_OVERFLOW": {
-		"id": "CFF_STACK_OVERFLOW",
-		"checkId": "binary.validateCffCharStrings",
-		"pipeline": "binary",
-		"family": "cff-charstrings",
-		"tables": [
-			"CFF ",
-			"CFF2"
-		],
-		"formats": [
-			"collection",
-			"sfnt",
-			"woff1",
-			"woff2"
-		],
-		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 2675,
-			"symbol": "validateCffCharStrings"
-		},
-		"references": [
-			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
-			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
-		],
-		"severities": [
-			"error"
-		],
-		"pipelines": [
-			"binary"
-		],
-		"checkIds": [
-			"binary.validateCffCharStrings"
-		],
-		"repairIds": [],
-		"noFixReason": "No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.",
-		"status": "active",
-		"baseline": true,
-		"origins": [
-			{
-				"checkId": "binary.validateCffCharStrings",
-				"pipeline": "binary",
-				"family": "cff-charstrings",
-				"tables": [
-					"CFF ",
-					"CFF2"
-				],
-				"formats": [
-					"sfnt",
-					"woff1",
-					"woff2",
-					"collection"
-				],
-				"kind": "finding",
-				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-				"source": {
-					"file": "src/validate/diagnoseFont.js",
-					"line": 2675,
-					"symbol": "validateCffCharStrings"
-				},
-				"references": [
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
-				],
-				"severities": [
-					"error"
-				]
-			}
-		]
-	},
-	"CFF_STACK_UNDERFLOW": {
-		"id": "CFF_STACK_UNDERFLOW",
-		"checkId": "binary.validateCharStringBytecode",
-		"pipeline": "binary",
-		"family": "cff-charstrings",
-		"tables": [
-			"CFF ",
-			"CFF2"
-		],
-		"formats": [
-			"collection",
-			"sfnt",
-			"woff1",
-			"woff2"
-		],
-		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 2781,
-			"symbol": "validateCharStringBytecode"
-		},
-		"references": [
-			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
-			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
-		],
-		"severities": [
-			"error"
-		],
-		"pipelines": [
-			"binary"
-		],
-		"checkIds": [
-			"binary.validateCharStringBytecode"
-		],
-		"repairIds": [],
-		"noFixReason": "No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.",
-		"status": "active",
-		"baseline": true,
-		"origins": [
-			{
-				"checkId": "binary.validateCharStringBytecode",
-				"pipeline": "binary",
-				"family": "cff-charstrings",
-				"tables": [
-					"CFF ",
-					"CFF2"
-				],
-				"formats": [
-					"sfnt",
-					"woff1",
-					"woff2",
-					"collection"
-				],
-				"kind": "finding",
-				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-				"source": {
-					"file": "src/validate/diagnoseFont.js",
-					"line": 2781,
-					"symbol": "validateCharStringBytecode"
-				},
-				"references": [
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
-				],
-				"severities": [
-					"error"
-				]
-			},
-			{
-				"checkId": "binary.validateCharStringBytecode",
-				"pipeline": "binary",
-				"family": "cff-charstrings",
-				"tables": [
-					"CFF ",
-					"CFF2"
-				],
-				"formats": [
-					"sfnt",
-					"woff1",
-					"woff2",
-					"collection"
-				],
-				"kind": "finding",
-				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-				"source": {
-					"file": "src/validate/diagnoseFont.js",
-					"line": 2807,
-					"symbol": "validateCharStringBytecode"
-				},
-				"references": [
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
-					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"docs/advanced-diagnostics.md",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
 				],
@@ -5737,7 +8142,828 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2860,
+					"line": 2869,
+					"symbol": "validateCharStringBytecode"
+				},
+				"references": [
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateCharStringBytecode",
+				"pipeline": "binary",
+				"family": "cff-charstrings",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 2944,
+					"symbol": "validateCharStringBytecode"
+				},
+				"references": [
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateCharStringBytecode",
+				"pipeline": "binary",
+				"family": "cff-charstrings",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 3027,
+					"symbol": "validateCharStringBytecode"
+				},
+				"references": [
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateCharStringBytecode",
+				"pipeline": "binary",
+				"family": "cff-charstrings",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 3042,
+					"symbol": "validateCharStringBytecode"
+				},
+				"references": [
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CFF_INVALID_OPERATOR": {
+		"id": "CFF_INVALID_OPERATOR",
+		"checkId": "binary.validateCharStringBytecode",
+		"pipeline": "binary",
+		"family": "cff-charstrings",
+		"tables": [
+			"CFF ",
+			"CFF2"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 2815,
+			"symbol": "validateCharStringBytecode"
+		},
+		"references": [
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateCharStringBytecode"
+		],
+		"repairIds": [],
+		"noFixReason": "No general charstring repair is registered; the source-confirmed empty-program action cannot reconstruct damaged nonempty programs or subroutines.",
+		"status": "active",
+		"baseline": true,
+		"origins": [
+			{
+				"checkId": "binary.validateCharStringBytecode",
+				"pipeline": "binary",
+				"family": "cff-charstrings",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 2815,
+					"symbol": "validateCharStringBytecode"
+				},
+				"references": [
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateCharStringBytecode",
+				"pipeline": "binary",
+				"family": "cff-charstrings",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 2851,
+					"symbol": "validateCharStringBytecode"
+				},
+				"references": [
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CFF_OPERATION_LIMIT_EXCEEDED": {
+		"id": "CFF_OPERATION_LIMIT_EXCEEDED",
+		"checkId": "binary.validateCharStringBytecode",
+		"pipeline": "binary",
+		"family": "cff-charstrings",
+		"tables": [
+			"CFF ",
+			"CFF2"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 2763,
+			"symbol": "validateCharStringBytecode"
+		},
+		"references": [
+			"docs/diagnostics.md",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateCharStringBytecode"
+		],
+		"repairIds": [],
+		"noFixReason": "The bounded charstring walker exhausted its operation budget; no rewrite is authorized by incomplete execution.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateCharStringBytecode",
+				"pipeline": "binary",
+				"family": "cff-charstrings",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 2763,
+					"symbol": "validateCharStringBytecode"
+				},
+				"references": [
+					"docs/diagnostics.md",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CFF_PRIVATE_DICT_BLEND_FORBIDDEN": {
+		"id": "CFF_PRIVATE_DICT_BLEND_FORBIDDEN",
+		"checkId": "binary.validateCff2PrivateDictionary",
+		"pipeline": "binary",
+		"family": "cff-private-dictionaries",
+		"table": "CFF2",
+		"tables": [
+			"CFF2"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-cff-private.js",
+			"line": 127,
+			"symbol": "validateCff2PrivateDictionary"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateCff2PrivateDictionary"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for CFF_PRIVATE_DICT_BLEND_FORBIDDEN; correcting cff-private-dictionaries data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateCff2PrivateDictionary",
+				"pipeline": "binary",
+				"family": "cff-private-dictionaries",
+				"table": "CFF2",
+				"tables": [
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-cff-private.js",
+					"line": 127,
+					"symbol": "validateCff2PrivateDictionary"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CFF_PRIVATE_DICT_TRAILING_VALUES": {
+		"id": "CFF_PRIVATE_DICT_TRAILING_VALUES",
+		"checkId": "binary.validateCff2PrivateDictionary",
+		"pipeline": "binary",
+		"family": "cff-private-dictionaries",
+		"table": "CFF2",
+		"tables": [
+			"CFF2"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-cff-private.js",
+			"line": 139,
+			"symbol": "validateCff2PrivateDictionary"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateCff2PrivateDictionary"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for CFF_PRIVATE_DICT_TRAILING_VALUES; correcting cff-private-dictionaries data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateCff2PrivateDictionary",
+				"pipeline": "binary",
+				"family": "cff-private-dictionaries",
+				"table": "CFF2",
+				"tables": [
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-cff-private.js",
+					"line": 139,
+					"symbol": "validateCff2PrivateDictionary"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CFF_RETURN_OUTSIDE_SUBR": {
+		"id": "CFF_RETURN_OUTSIDE_SUBR",
+		"checkId": "binary.validateCharStringBytecode",
+		"pipeline": "binary",
+		"family": "cff-charstrings",
+		"table": "CFF ",
+		"tables": [
+			"CFF "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 3015,
+			"symbol": "validateCharStringBytecode"
+		},
+		"references": [
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateCharStringBytecode"
+		],
+		"repairIds": [],
+		"noFixReason": "No general charstring repair is registered; the source-confirmed empty-program action cannot reconstruct damaged nonempty programs or subroutines.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateCharStringBytecode",
+				"pipeline": "binary",
+				"family": "cff-charstrings",
+				"table": "CFF ",
+				"tables": [
+					"CFF "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 3015,
+					"symbol": "validateCharStringBytecode"
+				},
+				"references": [
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CFF_STACK_OVERFLOW": {
+		"id": "CFF_STACK_OVERFLOW",
+		"checkId": "binary.validateCff2PrivateDictionary",
+		"pipeline": "binary",
+		"family": "cff-private-dictionaries",
+		"table": "CFF2",
+		"tables": [
+			"CFF ",
+			"CFF2"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-cff-private.js",
+			"line": 69,
+			"symbol": "validateCff2PrivateDictionary"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateCff2PrivateDictionary",
+			"binary.validateCffCharStrings"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for CFF_STACK_OVERFLOW; correcting cff-private-dictionaries data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": true,
+		"origins": [
+			{
+				"checkId": "binary.validateCff2PrivateDictionary",
+				"pipeline": "binary",
+				"family": "cff-private-dictionaries",
+				"table": "CFF2",
+				"tables": [
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-cff-private.js",
+					"line": 69,
+					"symbol": "validateCff2PrivateDictionary"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateCffCharStrings",
+				"pipeline": "binary",
+				"family": "cff-charstrings",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 2722,
+					"symbol": "validateCffCharStrings"
+				},
+				"references": [
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CFF_STACK_UNDERFLOW": {
+		"id": "CFF_STACK_UNDERFLOW",
+		"checkId": "binary.validateCff2PrivateDictionary",
+		"pipeline": "binary",
+		"family": "cff-private-dictionaries",
+		"table": "CFF2",
+		"tables": [
+			"CFF ",
+			"CFF2"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-cff-private.js",
+			"line": 91,
+			"symbol": "validateCff2PrivateDictionary"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.executeCffArithmetic",
+			"binary.validateCff2PrivateDictionary",
+			"binary.validateCharStringBytecode"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for CFF_STACK_UNDERFLOW; correcting cff-private-dictionaries data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": true,
+		"origins": [
+			{
+				"checkId": "binary.validateCff2PrivateDictionary",
+				"pipeline": "binary",
+				"family": "cff-private-dictionaries",
+				"table": "CFF2",
+				"tables": [
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-cff-private.js",
+					"line": 91,
+					"symbol": "validateCff2PrivateDictionary"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.executeCffArithmetic",
+				"pipeline": "binary",
+				"family": "cff-programs-and-storage",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 123,
+					"symbol": "executeCffArithmetic"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateCharStringBytecode",
+				"pipeline": "binary",
+				"family": "cff-charstrings",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 2831,
+					"symbol": "validateCharStringBytecode"
+				},
+				"references": [
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateCharStringBytecode",
+				"pipeline": "binary",
+				"family": "cff-charstrings",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 2862,
+					"symbol": "validateCharStringBytecode"
+				},
+				"references": [
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateCharStringBytecode",
+				"pipeline": "binary",
+				"family": "cff-charstrings",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 2893,
 					"symbol": "validateCharStringBytecode"
 				},
 				"references": [
@@ -5782,6 +9008,38 @@ export const CHECK_CATALOG = {
 				"severities": [
 					"error"
 				]
+			},
+			{
+				"checkId": "binary.validateCharStringBytecode",
+				"pipeline": "binary",
+				"family": "cff-charstrings",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 2970,
+					"symbol": "validateCharStringBytecode"
+				},
+				"references": [
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
 			}
 		]
 	},
@@ -5804,7 +9062,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2705,
+			"line": 2752,
 			"symbol": "validateCharStringBytecode"
 		},
 		"references": [
@@ -5824,7 +9082,7 @@ export const CHECK_CATALOG = {
 			"binary.validateCharStringBytecode"
 		],
 		"repairIds": [],
-		"noFixReason": "No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.",
+		"noFixReason": "No general charstring repair is registered; the source-confirmed empty-program action cannot reconstruct damaged nonempty programs or subroutines.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -5846,7 +9104,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2705,
+					"line": 2752,
 					"symbol": "validateCharStringBytecode"
 				},
 				"references": [
@@ -5881,7 +9139,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2932,
+			"line": 2987,
 			"symbol": "validateCharStringBytecode"
 		},
 		"references": [
@@ -5901,7 +9159,7 @@ export const CHECK_CATALOG = {
 			"binary.validateCharStringBytecode"
 		],
 		"repairIds": [],
-		"noFixReason": "No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.",
+		"noFixReason": "No general charstring repair is registered; the source-confirmed empty-program action cannot reconstruct damaged nonempty programs or subroutines.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -5923,7 +9181,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2932,
+					"line": 2987,
 					"symbol": "validateCharStringBytecode"
 				},
 				"references": [
@@ -5958,7 +9216,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2984,
+			"line": 3051,
 			"symbol": "validateCharStringBytecode"
 		},
 		"references": [
@@ -5976,7 +9234,7 @@ export const CHECK_CATALOG = {
 			"binary.validateCharStringBytecode"
 		],
 		"repairIds": [],
-		"noFixReason": "No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.",
+		"noFixReason": "No general charstring repair is registered; the source-confirmed empty-program action cannot reconstruct damaged nonempty programs or subroutines.",
 		"status": "active",
 		"baseline": false,
 		"origins": [
@@ -5998,7 +9256,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2984,
+					"line": 3051,
 					"symbol": "validateCharStringBytecode"
 				},
 				"references": [
@@ -6031,7 +9289,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2735,
+			"line": 2782,
 			"symbol": "validateCharStringBytecode"
 		},
 		"references": [
@@ -6051,7 +9309,7 @@ export const CHECK_CATALOG = {
 			"binary.validateCharStringBytecode"
 		],
 		"repairIds": [],
-		"noFixReason": "No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.",
+		"noFixReason": "No general charstring repair is registered; the source-confirmed empty-program action cannot reconstruct damaged nonempty programs or subroutines.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -6073,7 +9331,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2735,
+					"line": 2782,
 					"symbol": "validateCharStringBytecode"
 				},
 				"references": [
@@ -6108,7 +9366,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2758,
+			"line": 2805,
 			"symbol": "validateCharStringBytecode"
 		},
 		"references": [
@@ -6128,7 +9386,7 @@ export const CHECK_CATALOG = {
 			"binary.validateCharStringBytecode"
 		],
 		"repairIds": [],
-		"noFixReason": "No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.",
+		"noFixReason": "No general charstring repair is registered; the source-confirmed empty-program action cannot reconstruct damaged nonempty programs or subroutines.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -6150,7 +9408,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2758,
+					"line": 2805,
 					"symbol": "validateCharStringBytecode"
 				},
 				"references": [
@@ -6182,7 +9440,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2901,
+					"line": 2956,
 					"symbol": "validateCharStringBytecode"
 				},
 				"references": [
@@ -6200,9 +9458,9 @@ export const CHECK_CATALOG = {
 	},
 	"CFF_VARIATION_CONTEXT_INVALID": {
 		"id": "CFF_VARIATION_CONTEXT_INVALID",
-		"checkId": "binary.cffBlendRegionCount",
+		"checkId": "binary.validateCff2PrivateDictionary",
 		"pipeline": "binary",
-		"family": "cff-variation-context",
+		"family": "cff-private-dictionaries",
 		"table": "CFF2",
 		"tables": [
 			"CFF2"
@@ -6214,13 +9472,14 @@ export const CHECK_CATALOG = {
 			"woff2"
 		],
 		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 2583,
-			"symbol": "cffBlendRegionCount"
+			"file": "src/validate/advanced-cff-private.js",
+			"line": 57,
+			"symbol": "validateCff2PrivateDictionary"
 		},
 		"references": [
+			"docs/advanced-diagnostics.md",
 			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
 			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
 		],
@@ -6231,13 +9490,74 @@ export const CHECK_CATALOG = {
 			"binary"
 		],
 		"checkIds": [
-			"binary.cffBlendRegionCount"
+			"binary.cffBlendRegionCount",
+			"binary.validateAdvancedStore",
+			"binary.validateCff2PrivateDictionary"
 		],
 		"repairIds": [],
-		"noFixReason": "Reconstructing a CFF2 variation program is outside the registered repair scope.",
+		"noFixReason": "No registered repair for CFF_VARIATION_CONTEXT_INVALID; correcting cff-private-dictionaries data requires a separately specified operation with complete dependency and intent checks.",
 		"status": "active",
 		"baseline": false,
 		"origins": [
+			{
+				"checkId": "binary.validateCff2PrivateDictionary",
+				"pipeline": "binary",
+				"family": "cff-private-dictionaries",
+				"table": "CFF2",
+				"tables": [
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-cff-private.js",
+					"line": 57,
+					"symbol": "validateCff2PrivateDictionary"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateAdvancedStore",
+				"pipeline": "binary",
+				"family": "variation-structures",
+				"table": "CFF2",
+				"tables": [
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-variation.js",
+					"line": 25,
+					"symbol": "validateAdvancedStore"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2"
+				],
+				"severities": [
+					"error"
+				]
+			},
 			{
 				"checkId": "binary.cffBlendRegionCount",
 				"pipeline": "binary",
@@ -6256,7 +9576,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2583,
+					"line": 2605,
 					"symbol": "cffBlendRegionCount"
 				},
 				"references": [
@@ -6271,9 +9591,9 @@ export const CHECK_CATALOG = {
 	},
 	"CFF_VARIATION_CONTEXT_MISSING": {
 		"id": "CFF_VARIATION_CONTEXT_MISSING",
-		"checkId": "binary.cffBlendRegionCount",
+		"checkId": "binary.validateCff2PrivateDictionary",
 		"pipeline": "binary",
-		"family": "cff-variation-context",
+		"family": "cff-private-dictionaries",
 		"table": "CFF2",
 		"tables": [
 			"CFF2"
@@ -6285,13 +9605,14 @@ export const CHECK_CATALOG = {
 			"woff2"
 		],
 		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 2569,
-			"symbol": "cffBlendRegionCount"
+			"file": "src/validate/advanced-cff-private.js",
+			"line": 41,
+			"symbol": "validateCff2PrivateDictionary"
 		},
 		"references": [
+			"docs/advanced-diagnostics.md",
 			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
 			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
 		],
@@ -6302,13 +9623,44 @@ export const CHECK_CATALOG = {
 			"binary"
 		],
 		"checkIds": [
-			"binary.cffBlendRegionCount"
+			"binary.cffBlendRegionCount",
+			"binary.validateCff2PrivateDictionary"
 		],
 		"repairIds": [],
-		"noFixReason": "Reconstructing a CFF2 variation program is outside the registered repair scope.",
+		"noFixReason": "No registered repair for CFF_VARIATION_CONTEXT_MISSING; correcting cff-private-dictionaries data requires a separately specified operation with complete dependency and intent checks.",
 		"status": "active",
 		"baseline": false,
 		"origins": [
+			{
+				"checkId": "binary.validateCff2PrivateDictionary",
+				"pipeline": "binary",
+				"family": "cff-private-dictionaries",
+				"table": "CFF2",
+				"tables": [
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-cff-private.js",
+					"line": 41,
+					"symbol": "validateCff2PrivateDictionary"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
 			{
 				"checkId": "binary.cffBlendRegionCount",
 				"pipeline": "binary",
@@ -6327,7 +9679,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2569,
+					"line": 2591,
 					"symbol": "cffBlendRegionCount"
 				},
 				"references": [
@@ -6359,7 +9711,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2819,
+			"line": 2874,
 			"symbol": "validateCharStringBytecode"
 		},
 		"references": [
@@ -6376,7 +9728,7 @@ export const CHECK_CATALOG = {
 			"binary.validateCharStringBytecode"
 		],
 		"repairIds": [],
-		"noFixReason": "No charstring rewrite is registered; fixing operators or operands requires complete glyph and subroutine semantics.",
+		"noFixReason": "No general charstring repair is registered; the source-confirmed empty-program action cannot reconstruct damaged nonempty programs or subroutines.",
 		"status": "active",
 		"baseline": false,
 		"origins": [
@@ -6398,7 +9750,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2819,
+					"line": 2874,
 					"symbol": "validateCharStringBytecode"
 				},
 				"references": [
@@ -6413,9 +9765,9 @@ export const CHECK_CATALOG = {
 	},
 	"CFF_VSINDEX_OUT_OF_RANGE": {
 		"id": "CFF_VSINDEX_OUT_OF_RANGE",
-		"checkId": "binary.cffBlendRegionCount",
+		"checkId": "binary.validateCff2PrivateDictionary",
 		"pipeline": "binary",
-		"family": "cff-variation-context",
+		"family": "cff-private-dictionaries",
 		"table": "CFF2",
 		"tables": [
 			"CFF2"
@@ -6427,13 +9779,14 @@ export const CHECK_CATALOG = {
 			"woff2"
 		],
 		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 2575,
-			"symbol": "cffBlendRegionCount"
+			"file": "src/validate/advanced-cff-private.js",
+			"line": 47,
+			"symbol": "validateCff2PrivateDictionary"
 		},
 		"references": [
+			"docs/advanced-diagnostics.md",
 			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
 			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
 		],
@@ -6444,13 +9797,44 @@ export const CHECK_CATALOG = {
 			"binary"
 		],
 		"checkIds": [
-			"binary.cffBlendRegionCount"
+			"binary.cffBlendRegionCount",
+			"binary.validateCff2PrivateDictionary"
 		],
 		"repairIds": [],
-		"noFixReason": "Reconstructing a CFF2 variation program is outside the registered repair scope.",
+		"noFixReason": "No registered repair for CFF_VSINDEX_OUT_OF_RANGE; correcting cff-private-dictionaries data requires a separately specified operation with complete dependency and intent checks.",
 		"status": "active",
 		"baseline": false,
 		"origins": [
+			{
+				"checkId": "binary.validateCff2PrivateDictionary",
+				"pipeline": "binary",
+				"family": "cff-private-dictionaries",
+				"table": "CFF2",
+				"tables": [
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-cff-private.js",
+					"line": 47,
+					"symbol": "validateCff2PrivateDictionary"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
 			{
 				"checkId": "binary.cffBlendRegionCount",
 				"pipeline": "binary",
@@ -6469,7 +9853,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2575,
+					"line": 2597,
 					"symbol": "cffBlendRegionCount"
 				},
 				"references": [
@@ -6501,7 +9885,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2288,
+			"line": 2314,
 			"symbol": "validateClassDef"
 		},
 		"references": [
@@ -6540,7 +9924,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2288,
+					"line": 2314,
 					"symbol": "validateClassDef"
 				},
 				"references": [
@@ -6569,7 +9953,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2331,
+					"line": 2357,
 					"symbol": "validateClassDef"
 				},
 				"references": [
@@ -6602,7 +9986,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2264,
+			"line": 2290,
 			"symbol": "validateClassDef"
 		},
 		"references": [
@@ -6644,7 +10028,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2264,
+					"line": 2290,
 					"symbol": "validateClassDef"
 				},
 				"references": [
@@ -6680,7 +10064,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2277,
+			"line": 2303,
 			"symbol": "validateClassDef"
 		},
 		"references": [
@@ -6724,7 +10108,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2277,
+					"line": 2303,
 					"symbol": "validateClassDef"
 				},
 				"references": [
@@ -6758,7 +10142,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2313,
+					"line": 2339,
 					"symbol": "validateClassDef"
 				},
 				"references": [
@@ -6794,7 +10178,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2322,
+			"line": 2348,
 			"symbol": "validateClassDef"
 		},
 		"references": [
@@ -6836,7 +10220,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2322,
+					"line": 2348,
 					"symbol": "validateClassDef"
 				},
 				"references": [
@@ -6871,7 +10255,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2304,
+			"line": 2330,
 			"symbol": "validateClassDef"
 		},
 		"references": [
@@ -6913,7 +10297,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2304,
+					"line": 2330,
 					"symbol": "validateClassDef"
 				},
 				"references": [
@@ -6947,7 +10331,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 901,
+			"line": 927,
 			"symbol": "validateCmapDeep"
 		},
 		"references": [
@@ -6987,7 +10371,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 901,
+					"line": 927,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -7016,7 +10400,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3309,
+					"line": 3376,
 					"symbol": "validateCmapFormat12And13"
 				},
 				"references": [
@@ -7048,7 +10432,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3322,
+			"line": 3389,
 			"symbol": "validateCmapFormat12And13"
 		},
 		"references": [
@@ -7087,7 +10471,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3322,
+					"line": 3389,
 					"symbol": "validateCmapFormat12And13"
 				},
 				"references": [
@@ -7119,7 +10503,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 911,
+			"line": 937,
 			"symbol": "validateCmapDeep"
 		},
 		"references": [
@@ -7158,7 +10542,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 911,
+					"line": 937,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -7190,7 +10574,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3331,
+			"line": 3398,
 			"symbol": "validateCmapFormat12And13"
 		},
 		"references": [
@@ -7229,7 +10613,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3331,
+					"line": 3398,
 					"symbol": "validateCmapFormat12And13"
 				},
 				"references": [
@@ -7261,7 +10645,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3272,
+			"line": 3339,
 			"symbol": "validateCmapFormat14"
 		},
 		"references": [
@@ -7300,7 +10684,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3272,
+					"line": 3339,
 					"symbol": "validateCmapFormat14"
 				},
 				"references": [
@@ -7332,7 +10716,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3242,
+			"line": 3309,
 			"symbol": "validateCmapFormat14"
 		},
 		"references": [
@@ -7371,7 +10755,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3242,
+					"line": 3309,
 					"symbol": "validateCmapFormat14"
 				},
 				"references": [
@@ -7400,7 +10784,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3263,
+					"line": 3330,
 					"symbol": "validateCmapFormat14"
 				},
 				"references": [
@@ -7432,7 +10816,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 965,
+			"line": 991,
 			"symbol": "validateCmapDeep"
 		},
 		"references": [
@@ -7472,7 +10856,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 965,
+					"line": 991,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -7501,7 +10885,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3217,
+					"line": 3284,
 					"symbol": "validateCmapFormat14"
 				},
 				"references": [
@@ -7533,7 +10917,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 955,
+			"line": 981,
 			"symbol": "validateCmapDeep"
 		},
 		"references": [
@@ -7573,7 +10957,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 955,
+					"line": 981,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -7602,7 +10986,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3208,
+					"line": 3275,
 					"symbol": "validateCmapFormat14"
 				},
 				"references": [
@@ -7634,7 +11018,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 816,
+			"line": 842,
 			"symbol": "validateCmapDeep"
 		},
 		"references": [
@@ -7673,7 +11057,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 816,
+					"line": 842,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -7772,7 +11156,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 829,
+			"line": 855,
 			"symbol": "validateCmapDeep"
 		},
 		"references": [
@@ -7811,7 +11195,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 829,
+					"line": 855,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -7840,7 +11224,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 838,
+					"line": 864,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -7872,7 +11256,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 869,
+			"line": 895,
 			"symbol": "validateCmapDeep"
 		},
 		"references": [
@@ -7913,7 +11297,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 869,
+					"line": 895,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -7947,7 +11331,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 805,
+			"line": 831,
 			"symbol": "validateCmapDeep"
 		},
 		"references": [
@@ -7986,7 +11370,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 805,
+					"line": 831,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -8018,7 +11402,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 855,
+			"line": 881,
 			"symbol": "validateCmapDeep"
 		},
 		"references": [
@@ -8058,7 +11442,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 855,
+					"line": 881,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -8088,7 +11472,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 883,
+					"line": 909,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -8118,7 +11502,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 926,
+					"line": 952,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -8148,7 +11532,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 936,
+					"line": 962,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -8178,7 +11562,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 979,
+					"line": 1005,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -8211,7 +11595,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 759,
+			"line": 785,
 			"symbol": "validateCmapDeep"
 		},
 		"references": [
@@ -8250,7 +11634,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 759,
+					"line": 785,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -8282,7 +11666,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 709,
+			"line": 735,
 			"symbol": "validateCmapDeep"
 		},
 		"references": [
@@ -8321,7 +11705,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 709,
+					"line": 735,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -8353,7 +11737,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 745,
+			"line": 771,
 			"symbol": "validateCmapDeep"
 		},
 		"references": [
@@ -8392,7 +11776,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 745,
+					"line": 771,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -8424,7 +11808,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3911,
+			"line": 3978,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -8464,7 +11848,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3911,
+					"line": 3978,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -8496,7 +11880,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 785,
+			"line": 811,
 			"symbol": "validateCmapDeep"
 		},
 		"references": [
@@ -8536,7 +11920,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 785,
+					"line": 811,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -8565,7 +11949,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3236,
+					"line": 3303,
 					"symbol": "validateCmapFormat14"
 				},
 				"references": [
@@ -8594,7 +11978,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3258,
+					"line": 3325,
 					"symbol": "validateCmapFormat14"
 				},
 				"references": [
@@ -8626,7 +12010,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 697,
+			"line": 723,
 			"symbol": "validateCmapDeep"
 		},
 		"references": [
@@ -8666,7 +12050,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 697,
+					"line": 723,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
@@ -8753,7 +12137,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 4099,
+			"line": 4166,
 			"symbol": "diagnoseCollection"
 		},
 		"references": [
@@ -8769,7 +12153,7 @@ export const CHECK_CATALOG = {
 			"binary.diagnoseCollection"
 		],
 		"repairIds": [],
-		"noFixReason": "The current repair catalogue accepts standalone SFNT only, not TTC/OTC collections.",
+		"noFixReason": "Collection-directory damage is not repaired by selecting a face; guarded face repair retains the original directory and every unselected face.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -8785,7 +12169,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4099,
+					"line": 4166,
 					"symbol": "diagnoseCollection"
 				},
 				"references": [
@@ -8810,7 +12194,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 4107,
+			"line": 4174,
 			"symbol": "diagnoseCollection"
 		},
 		"references": [
@@ -8842,7 +12226,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4107,
+					"line": 4174,
 					"symbol": "diagnoseCollection"
 				},
 				"references": [
@@ -8972,6 +12356,763 @@ export const CHECK_CATALOG = {
 				],
 				"severities": [
 					"info"
+				]
+			}
+		]
+	},
+	"COLOR_PALETTE_REFERENCE_INVALID": {
+		"id": "COLOR_PALETTE_REFERENCE_INVALID",
+		"checkId": "binary.validateAdvancedColor",
+		"pipeline": "binary",
+		"family": "color-structures",
+		"tables": [
+			"COLR",
+			"CPAL",
+			"SVG "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-color.js",
+			"line": 9,
+			"symbol": "validateAdvancedColor"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedColor"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for COLOR_PALETTE_REFERENCE_INVALID; correcting color-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 9,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"COLR_ALPHA_INVALID": {
+		"id": "COLR_ALPHA_INVALID",
+		"checkId": "binary.validateAdvancedColor",
+		"pipeline": "binary",
+		"family": "color-structures",
+		"tables": [
+			"COLR",
+			"CPAL",
+			"SVG "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-color.js",
+			"line": 122,
+			"symbol": "validateAdvancedColor"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedColor"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for COLR_ALPHA_INVALID; correcting color-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 122,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"COLR_BASE_GLYPH_ORDER_INVALID": {
+		"id": "COLR_BASE_GLYPH_ORDER_INVALID",
+		"checkId": "binary.validateAdvancedColor",
+		"pipeline": "binary",
+		"family": "color-structures",
+		"tables": [
+			"COLR",
+			"CPAL",
+			"SVG "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-color.js",
+			"line": 86,
+			"symbol": "validateAdvancedColor"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedColor"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for COLR_BASE_GLYPH_ORDER_INVALID; correcting color-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 86,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"COLR_CLIP_INVALID": {
+		"id": "COLR_CLIP_INVALID",
+		"checkId": "binary.validateAdvancedColor",
+		"pipeline": "binary",
+		"family": "color-structures",
+		"tables": [
+			"COLR",
+			"CPAL",
+			"SVG "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-color.js",
+			"line": 169,
+			"symbol": "validateAdvancedColor"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedColor"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for COLR_CLIP_INVALID; correcting color-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 169,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"COLR_COLOR_LINE_INVALID": {
+		"id": "COLR_COLOR_LINE_INVALID",
+		"checkId": "binary.validateAdvancedColor",
+		"pipeline": "binary",
+		"family": "color-structures",
+		"tables": [
+			"COLR",
+			"CPAL",
+			"SVG "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-color.js",
+			"line": 130,
+			"symbol": "validateAdvancedColor"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedColor"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for COLR_COLOR_LINE_INVALID; correcting color-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 130,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 135,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"COLR_COMPOSITE_MODE_INVALID": {
+		"id": "COLR_COMPOSITE_MODE_INVALID",
+		"checkId": "binary.validateAdvancedColor",
+		"pipeline": "binary",
+		"family": "color-structures",
+		"tables": [
+			"COLR",
+			"CPAL",
+			"SVG "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-color.js",
+			"line": 149,
+			"symbol": "validateAdvancedColor"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedColor"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for COLR_COMPOSITE_MODE_INVALID; correcting color-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 149,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"COLR_LAYER_RANGE_INVALID": {
+		"id": "COLR_LAYER_RANGE_INVALID",
+		"checkId": "binary.validateAdvancedColor",
+		"pipeline": "binary",
+		"family": "color-structures",
+		"tables": [
+			"COLR",
+			"CPAL",
+			"SVG "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-color.js",
+			"line": 72,
+			"symbol": "validateAdvancedColor"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedColor"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for COLR_LAYER_RANGE_INVALID; correcting color-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 72,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 142,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"COLR_PAINT_CYCLE": {
+		"id": "COLR_PAINT_CYCLE",
+		"checkId": "binary.validateAdvancedColor",
+		"pipeline": "binary",
+		"family": "color-structures",
+		"tables": [
+			"COLR",
+			"CPAL",
+			"SVG "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-color.js",
+			"line": 111,
+			"symbol": "validateAdvancedColor"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedColor"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for COLR_PAINT_CYCLE; correcting color-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 111,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"COLR_PAINT_REFERENCE_INVALID": {
+		"id": "COLR_PAINT_REFERENCE_INVALID",
+		"checkId": "binary.validateAdvancedColor",
+		"pipeline": "binary",
+		"family": "color-structures",
+		"tables": [
+			"COLR",
+			"CPAL",
+			"SVG "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-color.js",
+			"line": 107,
+			"symbol": "validateAdvancedColor"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedColor"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for COLR_PAINT_REFERENCE_INVALID; correcting color-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 107,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+				],
+				"severities": [
+					"error"
 				]
 			}
 		]
@@ -9410,7 +13551,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2183,
+			"line": 2209,
 			"symbol": "validateCoverage"
 		},
 		"references": [
@@ -9452,7 +13593,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2183,
+					"line": 2209,
 					"symbol": "validateCoverage"
 				},
 				"references": [
@@ -9487,7 +13628,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2206,
+			"line": 2232,
 			"symbol": "validateCoverage"
 		},
 		"references": [
@@ -9529,7 +13670,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2206,
+					"line": 2232,
 					"symbol": "validateCoverage"
 				},
 				"references": [
@@ -9565,7 +13706,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2197,
+			"line": 2223,
 			"symbol": "validateCoverage"
 		},
 		"references": [
@@ -9609,7 +13750,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2197,
+					"line": 2223,
 					"symbol": "validateCoverage"
 				},
 				"references": [
@@ -9643,7 +13784,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2235,
+					"line": 2261,
 					"symbol": "validateCoverage"
 				},
 				"references": [
@@ -9679,7 +13820,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2244,
+			"line": 2270,
 			"symbol": "validateCoverage"
 		},
 		"references": [
@@ -9721,7 +13862,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2244,
+					"line": 2270,
 					"symbol": "validateCoverage"
 				},
 				"references": [
@@ -9756,7 +13897,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2226,
+			"line": 2252,
 			"symbol": "validateCoverage"
 		},
 		"references": [
@@ -9798,7 +13939,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2226,
+					"line": 2252,
 					"symbol": "validateCoverage"
 				},
 				"references": [
@@ -9806,6 +13947,237 @@ export const CHECK_CATALOG = {
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CPAL_COLOR_RECORD_INVALID": {
+		"id": "CPAL_COLOR_RECORD_INVALID",
+		"checkId": "binary.validateAdvancedColor",
+		"pipeline": "binary",
+		"family": "color-structures",
+		"tables": [
+			"COLR",
+			"CPAL",
+			"SVG "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-color.js",
+			"line": 20,
+			"symbol": "validateAdvancedColor"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedColor"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for CPAL_COLOR_RECORD_INVALID; correcting color-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 20,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CPAL_METADATA_INVALID": {
+		"id": "CPAL_METADATA_INVALID",
+		"checkId": "binary.validateAdvancedColor",
+		"pipeline": "binary",
+		"family": "color-structures",
+		"tables": [
+			"COLR",
+			"CPAL",
+			"SVG "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-color.js",
+			"line": 30,
+			"symbol": "validateAdvancedColor"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedColor"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for CPAL_METADATA_INVALID; correcting color-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 30,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"CPAL_PALETTE_COUNT_INVALID": {
+		"id": "CPAL_PALETTE_COUNT_INVALID",
+		"checkId": "binary.validateAdvancedColor",
+		"pipeline": "binary",
+		"family": "color-structures",
+		"tables": [
+			"COLR",
+			"CPAL",
+			"SVG "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-color.js",
+			"line": 14,
+			"symbol": "validateAdvancedColor"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedColor"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for CPAL_PALETTE_COUNT_INVALID; correcting color-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 14,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
 				],
 				"severities": [
 					"error"
@@ -9876,10 +14248,14 @@ export const CHECK_CATALOG = {
 	},
 	"DIAGNOSTIC_CHECK_FAILED": {
 		"id": "DIAGNOSTIC_CHECK_FAILED",
-		"checkId": "binary.diagnoseFace",
+		"checkId": "binary.runAdvancedDiagnostics",
 		"pipeline": "binary",
 		"family": "diagnostic-execution",
-		"tables": [],
+		"tables": [
+			"*",
+			"CFF ",
+			"CFF2"
+		],
 		"formats": [
 			"collection",
 			"sfnt",
@@ -9887,14 +14263,20 @@ export const CHECK_CATALOG = {
 			"woff2"
 		],
 		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 4142,
-			"symbol": "diagnoseFace"
+			"file": "src/validate/advanced-diagnostics.js",
+			"line": 62,
+			"symbol": "runAdvancedDiagnostics"
 		},
 		"references": [
-			"docs/diagnostics.md"
+			"docs/advanced-diagnostics.md",
+			"docs/diagnostics.md",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
 		],
 		"severities": [
 			"error"
@@ -9903,13 +14285,76 @@ export const CHECK_CATALOG = {
 			"binary"
 		],
 		"checkIds": [
-			"binary.diagnoseFace"
+			"binary.diagnoseFace",
+			"binary.runAdvancedDiagnostics",
+			"binary.validateCffCharStrings"
 		],
 		"repairIds": [],
 		"noFixReason": "A checker failed unexpectedly. Preserve the source and investigate the execution failure before inferring a font correction.",
 		"status": "active",
 		"baseline": false,
 		"origins": [
+			{
+				"checkId": "binary.runAdvancedDiagnostics",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-diagnostics.js",
+					"line": 62,
+					"symbol": "runAdvancedDiagnostics"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateCffCharStrings",
+				"pipeline": "binary",
+				"family": "cff-charstrings",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 2646,
+					"symbol": "validateCffCharStrings"
+				},
+				"references": [
+					"docs/diagnostics.md",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
+				],
+				"severities": [
+					"error"
+				]
+			},
 			{
 				"checkId": "binary.diagnoseFace",
 				"pipeline": "binary",
@@ -9925,7 +14370,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4142,
+					"line": 4209,
 					"symbol": "diagnoseFace"
 				},
 				"references": [
@@ -9939,11 +14384,13 @@ export const CHECK_CATALOG = {
 	},
 	"DIAGNOSTIC_LIMIT_EXCEEDED": {
 		"id": "DIAGNOSTIC_LIMIT_EXCEEDED",
-		"checkId": "binary.phaseSignature",
+		"checkId": "binary.runAdvancedDiagnostics",
 		"pipeline": "binary",
-		"family": "container",
+		"family": "diagnostic-execution",
 		"tables": [
 			"*",
+			"CFF ",
+			"CFF2",
 			"cmap",
 			"glyf"
 		],
@@ -9954,14 +14401,20 @@ export const CHECK_CATALOG = {
 			"woff2"
 		],
 		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 126,
-			"symbol": "phaseSignature"
+			"file": "src/validate/advanced-diagnostics.js",
+			"line": 57,
+			"symbol": "runAdvancedDiagnostics"
 		},
 		"references": [
+			"docs/advanced-diagnostics.md",
 			"docs/diagnostics.md",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+			"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr",
 			"https://learn.microsoft.com/en-us/typography/opentype/spec/cmap",
 			"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
 			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff",
@@ -9981,7 +14434,9 @@ export const CHECK_CATALOG = {
 			"binary.phaseHeader",
 			"binary.phaseParseTables",
 			"binary.phaseSignature",
+			"binary.runAdvancedDiagnostics",
 			"binary.runFaceChecks",
+			"binary.validateCffCharStrings",
 			"binary.validateCmapDeep",
 			"binary.validateCmapFormat14",
 			"binary.validateGlyfComposites"
@@ -9991,6 +14446,62 @@ export const CHECK_CATALOG = {
 		"status": "active",
 		"baseline": false,
 		"origins": [
+			{
+				"checkId": "binary.runAdvancedDiagnostics",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-diagnostics.js",
+					"line": 57,
+					"symbol": "runAdvancedDiagnostics"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.runAdvancedDiagnostics",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-diagnostics.js",
+					"line": 121,
+					"symbol": "runAdvancedDiagnostics"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error"
+				]
+			},
 			{
 				"checkId": "binary.phaseSignature",
 				"pipeline": "binary",
@@ -10006,7 +14517,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 126,
+					"line": 132,
 					"symbol": "phaseSignature"
 				},
 				"references": [
@@ -10034,7 +14545,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 136,
+					"line": 142,
 					"symbol": "phaseSignature"
 				},
 				"references": [
@@ -10062,7 +14573,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 280,
+					"line": 286,
 					"symbol": "phaseHeader"
 				},
 				"references": [
@@ -10090,7 +14601,35 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 629,
+					"line": 634,
+					"symbol": "phaseParseTables"
+				},
+				"references": [
+					"docs/diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.phaseParseTables",
+				"pipeline": "binary",
+				"family": "table-parsing",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 655,
 					"symbol": "phaseParseTables"
 				},
 				"references": [
@@ -10119,13 +14658,46 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 876,
+					"line": 902,
 					"symbol": "validateCmapDeep"
 				},
 				"references": [
 					"docs/diagnostics.md",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/cmap",
 					"https://www.unicode.org/Public/17.0.0/ucd/PropList.txt"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateCffCharStrings",
+				"pipeline": "binary",
+				"family": "cff-charstrings",
+				"tables": [
+					"CFF ",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 2644,
+					"symbol": "validateCffCharStrings"
+				},
+				"references": [
+					"docs/diagnostics.md",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5176.CFF.pdf",
+					"https://adobe-type-tools.github.io/font-tech-notes/pdfs/5177.Type2.pdf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr"
 				],
 				"severities": [
 					"error"
@@ -10149,7 +14721,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3043,
+					"line": 3110,
 					"symbol": "validateGlyfComposites"
 				},
 				"references": [
@@ -10178,7 +14750,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3228,
+					"line": 3295,
 					"symbol": "validateCmapFormat14"
 				},
 				"references": [
@@ -10208,7 +14780,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3251,
+					"line": 3318,
 					"symbol": "validateCmapFormat14"
 				},
 				"references": [
@@ -10232,7 +14804,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4103,
+					"line": 4170,
 					"symbol": "diagnoseCollection"
 				},
 				"references": [
@@ -10260,7 +14832,34 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4176,
+					"line": 4243,
+					"symbol": "runFaceChecks"
+				},
+				"references": [
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.runFaceChecks",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 4291,
 					"symbol": "runFaceChecks"
 				},
 				"references": [
@@ -10285,7 +14884,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4272,
+					"line": 4453,
 					"symbol": "diagnoseFont"
 				},
 				"references": [
@@ -10315,7 +14914,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 355,
+			"line": 361,
 			"symbol": "phaseDirectory"
 		},
 		"references": [
@@ -10352,7 +14951,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 355,
+					"line": 361,
 					"symbol": "phaseDirectory"
 				},
 				"references": [
@@ -10382,7 +14981,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 441,
+			"line": 447,
 			"symbol": "phaseDirectory"
 		},
 		"references": [
@@ -10422,7 +15021,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 441,
+					"line": 447,
 					"symbol": "phaseDirectory"
 				},
 				"references": [
@@ -10444,7 +15043,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1355,
+					"line": 1381,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -10473,7 +15072,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 291,
+			"line": 297,
 			"symbol": "phaseHeader"
 		},
 		"references": [
@@ -10510,7 +15109,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 291,
+					"line": 297,
 					"symbol": "phaseHeader"
 				},
 				"references": [
@@ -10532,7 +15131,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1379,
+					"line": 1405,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -10563,7 +15162,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 379,
+			"line": 385,
 			"symbol": "phaseDirectory"
 		},
 		"references": [
@@ -10602,7 +15201,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 379,
+					"line": 385,
 					"symbol": "phaseDirectory"
 				},
 				"references": [
@@ -10624,7 +15223,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1353,
+					"line": 1379,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -10650,7 +15249,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 4084,
+			"line": 4151,
 			"symbol": "diagnoseCollection"
 		},
 		"references": [
@@ -10666,7 +15265,7 @@ export const CHECK_CATALOG = {
 			"binary.diagnoseCollection"
 		],
 		"repairIds": [],
-		"noFixReason": "The current repair catalogue accepts standalone SFNT only, not TTC/OTC collections.",
+		"noFixReason": "Collection-directory damage is not repaired by selecting a face; guarded face repair retains the original directory and every unselected face.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -10682,7 +15281,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4084,
+					"line": 4151,
 					"symbol": "diagnoseCollection"
 				},
 				"references": [
@@ -10712,7 +15311,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 413,
+			"line": 419,
 			"symbol": "phaseDirectory"
 		},
 		"references": [
@@ -10749,7 +15348,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 413,
+					"line": 419,
 					"symbol": "phaseDirectory"
 				},
 				"references": [
@@ -10777,7 +15376,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 274,
+			"line": 280,
 			"symbol": "phaseHeader"
 		},
 		"references": [
@@ -10812,10 +15411,862 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 274,
+					"line": 280,
 					"symbol": "phaseHeader"
 				},
 				"references": [
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"EXPECTATION_ADVANCE_WIDTH": {
+		"id": "EXPECTATION_ADVANCE_WIDTH",
+		"checkId": "profile.inspectExpectations",
+		"pipeline": "profile",
+		"family": "repertoire-and-glyph-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 321,
+			"symbol": "inspectExpectations"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectExpectations"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectExpectations",
+				"pipeline": "profile",
+				"family": "repertoire-and-glyph-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 321,
+					"symbol": "inspectExpectations"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"EXPECTATION_BEHAVIOR_GLYPH_MISSING": {
+		"id": "EXPECTATION_BEHAVIOR_GLYPH_MISSING",
+		"checkId": "profile.inspectExpectations",
+		"pipeline": "profile",
+		"family": "repertoire-and-glyph-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 319,
+			"symbol": "inspectExpectations"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectExpectations"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectExpectations",
+				"pipeline": "profile",
+				"family": "repertoire-and-glyph-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 319,
+					"symbol": "inspectExpectations"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"EXPECTATION_DUPLICATE_GLYPH_NAME": {
+		"id": "EXPECTATION_DUPLICATE_GLYPH_NAME",
+		"checkId": "profile.inspectExpectations",
+		"pipeline": "profile",
+		"family": "repertoire-and-glyph-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 236,
+			"symbol": "inspectExpectations"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectExpectations"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectExpectations",
+				"pipeline": "profile",
+				"family": "repertoire-and-glyph-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 236,
+					"symbol": "inspectExpectations"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"EXPECTATION_GLYPH_MISSING": {
+		"id": "EXPECTATION_GLYPH_MISSING",
+		"checkId": "profile.inspectExpectations",
+		"pipeline": "profile",
+		"family": "repertoire-and-glyph-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 311,
+			"symbol": "inspectExpectations"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectExpectations"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectExpectations",
+				"pipeline": "profile",
+				"family": "repertoire-and-glyph-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 311,
+					"symbol": "inspectExpectations"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"EXPECTATION_GLYPH_NAME_POLICY": {
+		"id": "EXPECTATION_GLYPH_NAME_POLICY",
+		"checkId": "profile.inspectExpectations",
+		"pipeline": "profile",
+		"family": "repertoire-and-glyph-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 241,
+			"symbol": "inspectExpectations"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectExpectations"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectExpectations",
+				"pipeline": "profile",
+				"family": "repertoire-and-glyph-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 241,
+					"symbol": "inspectExpectations"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"EXPECTATION_INVALID_SCALAR": {
+		"id": "EXPECTATION_INVALID_SCALAR",
+		"checkId": "profile.inspectExpectations",
+		"pipeline": "profile",
+		"family": "repertoire-and-glyph-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 245,
+			"symbol": "inspectExpectations"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectExpectations"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectExpectations",
+				"pipeline": "profile",
+				"family": "repertoire-and-glyph-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 245,
+					"symbol": "inspectExpectations"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"EXPECTATION_REACHABILITY_INCOMPLETE": {
+		"id": "EXPECTATION_REACHABILITY_INCOMPLETE",
+		"checkId": "profile.inspectExpectations",
+		"pipeline": "profile",
+		"family": "repertoire-and-glyph-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "information",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 338,
+			"symbol": "inspectExpectations"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"info"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectExpectations"
+		],
+		"repairIds": [],
+		"noFixReason": "Informational observation or detached normalization notice, not a registered repair operation.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectExpectations",
+				"pipeline": "profile",
+				"family": "repertoire-and-glyph-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "information",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 338,
+					"symbol": "inspectExpectations"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"info"
+				]
+			}
+		]
+	},
+	"EXPECTATION_REFERENCE_MISSING": {
+		"id": "EXPECTATION_REFERENCE_MISSING",
+		"checkId": "profile.inspectExpectations",
+		"pipeline": "profile",
+		"family": "repertoire-and-glyph-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 254,
+			"symbol": "inspectExpectations"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectExpectations"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectExpectations",
+				"pipeline": "profile",
+				"family": "repertoire-and-glyph-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 254,
+					"symbol": "inspectExpectations"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"EXPECTATION_REPERTOIRE_MISSING": {
+		"id": "EXPECTATION_REPERTOIRE_MISSING",
+		"checkId": "profile.inspectExpectations",
+		"pipeline": "profile",
+		"family": "repertoire-and-glyph-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 307,
+			"symbol": "inspectExpectations"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectExpectations"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectExpectations",
+				"pipeline": "profile",
+				"family": "repertoire-and-glyph-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 307,
+					"symbol": "inspectExpectations"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"EXPECTATION_SHAPING_RULE_UNSUPPORTED": {
+		"id": "EXPECTATION_SHAPING_RULE_UNSUPPORTED",
+		"checkId": "profile.inspectExpectations",
+		"pipeline": "profile",
+		"family": "repertoire-and-glyph-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "information",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 265,
+			"symbol": "inspectExpectations"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"info"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectExpectations"
+		],
+		"repairIds": [],
+		"noFixReason": "Informational observation or detached normalization notice, not a registered repair operation.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectExpectations",
+				"pipeline": "profile",
+				"family": "repertoire-and-glyph-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "information",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 265,
+					"symbol": "inspectExpectations"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"info"
+				]
+			}
+		]
+	},
+	"EXPECTATION_UVS_GLYPH_MISSING": {
+		"id": "EXPECTATION_UVS_GLYPH_MISSING",
+		"checkId": "profile.inspectExpectations",
+		"pipeline": "profile",
+		"family": "repertoire-and-glyph-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 287,
+			"symbol": "inspectExpectations"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectExpectations"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectExpectations",
+				"pipeline": "profile",
+				"family": "repertoire-and-glyph-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 287,
+					"symbol": "inspectExpectations"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"EXPECTATION_VISIBLE_WHITESPACE": {
+		"id": "EXPECTATION_VISIBLE_WHITESPACE",
+		"checkId": "profile.inspectExpectations",
+		"pipeline": "profile",
+		"family": "repertoire-and-glyph-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 324,
+			"symbol": "inspectExpectations"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectExpectations"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectExpectations",
+				"pipeline": "profile",
+				"family": "repertoire-and-glyph-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 324,
+					"symbol": "inspectExpectations"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
 				],
 				"severities": [
@@ -10837,7 +16288,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-validation-wrapper; detached clone or export resolution threw",
 		"source": {
 			"file": "src/font_flux.js",
-			"line": 1201,
+			"line": 1272,
 			"symbol": "validate"
 		},
 		"references": [
@@ -10871,7 +16322,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-validation-wrapper; detached clone or export resolution threw",
 				"source": {
 					"file": "src/font_flux.js",
-					"line": 1201,
+					"line": 1272,
 					"symbol": "validate"
 				},
 				"references": [
@@ -10901,7 +16352,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 4110,
+			"line": 4177,
 			"symbol": "diagnoseCollection"
 		},
 		"references": [
@@ -10935,7 +16386,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4110,
+					"line": 4177,
 					"symbol": "diagnoseCollection"
 				},
 				"references": [
@@ -10961,7 +16412,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4290,
+					"line": 4471,
 					"symbol": "diagnoseFont"
 				},
 				"references": [
@@ -10969,6 +16420,925 @@ export const CHECK_CATALOG = {
 				],
 				"severities": [
 					"error"
+				]
+			}
+		]
+	},
+	"FAMILY_AXIS_CONVENTION_DIFFERENCE": {
+		"id": "FAMILY_AXIS_CONVENTION_DIFFERENCE",
+		"checkId": "profile.inspectFamily",
+		"pipeline": "profile",
+		"family": "family-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 139,
+			"symbol": "inspectFamily"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"info",
+			"warning"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectFamily"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectFamily",
+				"pipeline": "profile",
+				"family": "family-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 139,
+					"symbol": "inspectFamily"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"info",
+					"warning"
+				]
+			}
+		]
+	},
+	"FAMILY_COMPLETENESS_UNKNOWN": {
+		"id": "FAMILY_COMPLETENESS_UNKNOWN",
+		"checkId": "profile.inspectFamily",
+		"pipeline": "profile",
+		"family": "family-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "information",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 65,
+			"symbol": "inspectFamily"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"info"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectFamily"
+		],
+		"repairIds": [],
+		"noFixReason": "Informational observation or detached normalization notice, not a registered repair operation.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectFamily",
+				"pipeline": "profile",
+				"family": "family-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "information",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 65,
+					"symbol": "inspectFamily"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"info"
+				]
+			}
+		]
+	},
+	"FAMILY_DUPLICATE_IDENTITY": {
+		"id": "FAMILY_DUPLICATE_IDENTITY",
+		"checkId": "profile.inspectFamily",
+		"pipeline": "profile",
+		"family": "family-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 83,
+			"symbol": "inspectFamily"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"expression": "code",
+		"expansionEvidence": [
+			{
+				"file": "src/validate/quality-workflows.js",
+				"line": 71,
+				"symbol": "inspectFamily",
+				"expression": "[\r\n\t\t\t['postScriptName', identities, 'FAMILY_DUPLICATE_IDENTITY'],\r\n\t\t\t['styleName', styles, 'FAMILY_DUPLICATE_STYLE'],\r\n\t\t]"
+			}
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectFamily"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectFamily",
+				"pipeline": "profile",
+				"family": "family-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 83,
+					"symbol": "inspectFamily"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				],
+				"expression": "code",
+				"expansionEvidence": [
+					{
+						"file": "src/validate/quality-workflows.js",
+						"line": 71,
+						"symbol": "inspectFamily",
+						"expression": "[\r\n\t\t\t['postScriptName', identities, 'FAMILY_DUPLICATE_IDENTITY'],\r\n\t\t\t['styleName', styles, 'FAMILY_DUPLICATE_STYLE'],\r\n\t\t]"
+					}
+				]
+			}
+		]
+	},
+	"FAMILY_DUPLICATE_STYLE": {
+		"id": "FAMILY_DUPLICATE_STYLE",
+		"checkId": "profile.inspectFamily",
+		"pipeline": "profile",
+		"family": "family-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 83,
+			"symbol": "inspectFamily"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"expression": "code",
+		"expansionEvidence": [
+			{
+				"file": "src/validate/quality-workflows.js",
+				"line": 71,
+				"symbol": "inspectFamily",
+				"expression": "[\r\n\t\t\t['postScriptName', identities, 'FAMILY_DUPLICATE_IDENTITY'],\r\n\t\t\t['styleName', styles, 'FAMILY_DUPLICATE_STYLE'],\r\n\t\t]"
+			}
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectFamily"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectFamily",
+				"pipeline": "profile",
+				"family": "family-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 83,
+					"symbol": "inspectFamily"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				],
+				"expression": "code",
+				"expansionEvidence": [
+					{
+						"file": "src/validate/quality-workflows.js",
+						"line": 71,
+						"symbol": "inspectFamily",
+						"expression": "[\r\n\t\t\t['postScriptName', identities, 'FAMILY_DUPLICATE_IDENTITY'],\r\n\t\t\t['styleName', styles, 'FAMILY_DUPLICATE_STYLE'],\r\n\t\t]"
+					}
+				]
+			}
+		]
+	},
+	"FAMILY_EXPECTATION_MISMATCH": {
+		"id": "FAMILY_EXPECTATION_MISMATCH",
+		"checkId": "profile.inspectFamily",
+		"pipeline": "profile",
+		"family": "family-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 92,
+			"symbol": "inspectFamily"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectFamily"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectFamily",
+				"pipeline": "profile",
+				"family": "family-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 92,
+					"symbol": "inspectFamily"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"FAMILY_INSTANCE_COORDINATE": {
+		"id": "FAMILY_INSTANCE_COORDINATE",
+		"checkId": "profile.inspectFamily",
+		"pipeline": "profile",
+		"family": "family-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 105,
+			"symbol": "inspectFamily"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectFamily"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectFamily",
+				"pipeline": "profile",
+				"family": "family-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 105,
+					"symbol": "inspectFamily"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"FAMILY_INSTANCE_COORDINATE_MISSING": {
+		"id": "FAMILY_INSTANCE_COORDINATE_MISSING",
+		"checkId": "profile.inspectFamily",
+		"pipeline": "profile",
+		"family": "family-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 109,
+			"symbol": "inspectFamily"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectFamily"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectFamily",
+				"pipeline": "profile",
+				"family": "family-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 109,
+					"symbol": "inspectFamily"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"FAMILY_MEMBER_MISSING": {
+		"id": "FAMILY_MEMBER_MISSING",
+		"checkId": "profile.inspectFamily",
+		"pipeline": "profile",
+		"family": "family-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 67,
+			"symbol": "inspectFamily"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectFamily"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectFamily",
+				"pipeline": "profile",
+				"family": "family-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 67,
+					"symbol": "inspectFamily"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"FAMILY_METADATA_DIFFERENCE": {
+		"id": "FAMILY_METADATA_DIFFERENCE",
+		"checkId": "profile.inspectFamily",
+		"pipeline": "profile",
+		"family": "family-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "information",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 126,
+			"symbol": "inspectFamily"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"info"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectFamily"
+		],
+		"repairIds": [],
+		"noFixReason": "Informational observation or detached normalization notice, not a registered repair operation.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectFamily",
+				"pipeline": "profile",
+				"family": "family-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "information",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 126,
+					"symbol": "inspectFamily"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"info"
+				]
+			}
+		]
+	},
+	"FAMILY_METADATA_MISSING": {
+		"id": "FAMILY_METADATA_MISSING",
+		"checkId": "profile.inspectFamily",
+		"pipeline": "profile",
+		"family": "family-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 77,
+			"symbol": "inspectFamily"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"info"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectFamily"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectFamily",
+				"pipeline": "profile",
+				"family": "family-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "information",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 77,
+					"symbol": "inspectFamily"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"info"
+				]
+			},
+			{
+				"checkId": "profile.inspectFamily",
+				"pipeline": "profile",
+				"family": "family-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 89,
+					"symbol": "inspectFamily"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"FAMILY_METRIC_DIFFERENCE": {
+		"id": "FAMILY_METRIC_DIFFERENCE",
+		"checkId": "profile.inspectFamily",
+		"pipeline": "profile",
+		"family": "family-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "information",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 133,
+			"symbol": "inspectFamily"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"info"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectFamily"
+		],
+		"repairIds": [],
+		"noFixReason": "Informational observation or detached normalization notice, not a registered repair operation.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectFamily",
+				"pipeline": "profile",
+				"family": "family-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "information",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 133,
+					"symbol": "inspectFamily"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"info"
+				]
+			}
+		]
+	},
+	"FAMILY_STYLE_LINK_FLAGS": {
+		"id": "FAMILY_STYLE_LINK_FLAGS",
+		"checkId": "profile.inspectFamily",
+		"pipeline": "profile",
+		"family": "family-policy",
+		"tables": [],
+		"formats": [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		"source": {
+			"file": "src/validate/quality-workflows.js",
+			"line": 98,
+			"symbol": "inspectFamily"
+		},
+		"references": [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"profile"
+		],
+		"checkIds": [
+			"profile.inspectFamily"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "profile.inspectFamily",
+				"pipeline": "profile",
+				"family": "family-policy",
+				"tables": [],
+				"formats": [
+					"declared-context",
+					"simplified-json",
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+				"source": {
+					"file": "src/validate/quality-workflows.js",
+					"line": 98,
+					"symbol": "inspectFamily"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
 				]
 			}
 		]
@@ -10989,7 +17359,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 4267,
+			"line": 4448,
 			"symbol": "diagnoseFont"
 		},
 		"references": [
@@ -11024,7 +17394,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4267,
+					"line": 4448,
 					"symbol": "diagnoseFont"
 				},
 				"references": [
@@ -11110,7 +17480,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 207,
+			"line": 213,
 			"symbol": "phaseSignature"
 		},
 		"references": [
@@ -11144,7 +17514,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 207,
+					"line": 213,
 					"symbol": "phaseSignature"
 				},
 				"references": [
@@ -11166,7 +17536,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4284,
+					"line": 4465,
 					"symbol": "diagnoseFont"
 				},
 				"references": [
@@ -11191,7 +17561,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 145,
+			"line": 151,
 			"symbol": "phaseSignature"
 		},
 		"references": [
@@ -11224,7 +17594,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 145,
+					"line": 151,
 					"symbol": "phaseSignature"
 				},
 				"references": [
@@ -11250,7 +17620,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 170,
+			"line": 176,
 			"symbol": "phaseSignature"
 		},
 		"references": [
@@ -11283,7 +17653,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 170,
+					"line": 176,
 					"symbol": "phaseSignature"
 				},
 				"references": [
@@ -11315,7 +17685,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1589,
+			"line": 1615,
 			"symbol": "validateFvarDeep"
 		},
 		"references": [
@@ -11353,7 +17723,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1589,
+					"line": 1615,
 					"symbol": "validateFvarDeep"
 				},
 				"references": [
@@ -11384,7 +17754,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1702,
+			"line": 1728,
 			"symbol": "validateFvarNamesAndFlags"
 		},
 		"references": [
@@ -11422,7 +17792,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1702,
+					"line": 1728,
 					"symbol": "validateFvarNamesAndFlags"
 				},
 				"references": [
@@ -11453,7 +17823,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1721,
+			"line": 1747,
 			"symbol": "validateFvarNamesAndFlags"
 		},
 		"references": [
@@ -11469,8 +17839,9 @@ export const CHECK_CATALOG = {
 		"checkIds": [
 			"binary.validateFvarNamesAndFlags"
 		],
-		"repairIds": [],
-		"noFixReason": "No registered repair for FVAR_AXIS_NAMEID_MISSING; correcting variation-axes data requires a separately specified operation with complete dependency and intent checks.",
+		"repairIds": [
+			"fvar.axis-name"
+		],
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -11492,7 +17863,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1721,
+					"line": 1747,
 					"symbol": "validateFvarNamesAndFlags"
 				},
 				"references": [
@@ -11524,7 +17895,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1710,
+			"line": 1736,
 			"symbol": "validateFvarNamesAndFlags"
 		},
 		"references": [
@@ -11539,8 +17910,9 @@ export const CHECK_CATALOG = {
 		"checkIds": [
 			"binary.validateFvarNamesAndFlags"
 		],
-		"repairIds": [],
-		"noFixReason": "No registered repair for FVAR_AXIS_NAMEID_RESERVED; correcting variation-axes data requires a separately specified operation with complete dependency and intent checks.",
+		"repairIds": [
+			"fvar.axis-name"
+		],
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -11562,7 +17934,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1710,
+					"line": 1736,
 					"symbol": "validateFvarNamesAndFlags"
 				},
 				"references": [
@@ -11593,7 +17965,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1581,
+			"line": 1607,
 			"symbol": "validateFvarDeep"
 		},
 		"references": [
@@ -11631,7 +18003,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1581,
+					"line": 1607,
 					"symbol": "validateFvarDeep"
 				},
 				"references": [
@@ -11662,7 +18034,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1736,
+			"line": 1762,
 			"symbol": "validateFvarNamesAndFlags"
 		},
 		"references": [
@@ -11700,7 +18072,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1736,
+					"line": 1762,
 					"symbol": "validateFvarNamesAndFlags"
 				},
 				"references": [
@@ -11731,7 +18103,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1758,
+			"line": 1784,
 			"symbol": "validateFvarNamesAndFlags"
 		},
 		"references": [
@@ -11747,8 +18119,9 @@ export const CHECK_CATALOG = {
 		"checkIds": [
 			"binary.validateFvarNamesAndFlags"
 		],
-		"repairIds": [],
-		"noFixReason": "No registered repair for FVAR_INSTANCE_NAMEID_MISSING; correcting variation-axes data requires a separately specified operation with complete dependency and intent checks.",
+		"repairIds": [
+			"fvar.instance-name"
+		],
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -11770,7 +18143,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1758,
+					"line": 1784,
 					"symbol": "validateFvarNamesAndFlags"
 				},
 				"references": [
@@ -11802,7 +18175,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1609,
+			"line": 1635,
 			"symbol": "validateFvarDeep"
 		},
 		"references": [
@@ -11840,11 +18213,179 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1609,
+					"line": 1635,
 					"symbol": "validateFvarDeep"
 				},
 				"references": [
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"GASP_RANGE_INVALID": {
+		"id": "GASP_RANGE_INVALID",
+		"checkId": "binary.validateAdvancedTrueType",
+		"pipeline": "binary",
+		"family": "truetype-instructions-and-geometry",
+		"tables": [
+			"fpgm",
+			"gasp",
+			"glyf",
+			"loca",
+			"maxp",
+			"prep"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-programs.js",
+			"line": 111,
+			"symbol": "validateAdvancedTrueType"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fpgm",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gasp",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/prep"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedTrueType"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for GASP_RANGE_INVALID; correcting truetype-instructions-and-geometry data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedTrueType",
+				"pipeline": "binary",
+				"family": "truetype-instructions-and-geometry",
+				"tables": [
+					"glyf",
+					"loca",
+					"maxp",
+					"fpgm",
+					"prep",
+					"gasp"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 111,
+					"symbol": "validateAdvancedTrueType"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fpgm",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gasp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/prep"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"GDEF_POINT_REFERENCE_INVALID": {
+		"id": "GDEF_POINT_REFERENCE_INVALID",
+		"checkId": "binary.validateAdvancedGdef",
+		"pipeline": "binary",
+		"family": "layout-graph",
+		"tables": [
+			"GDEF",
+			"GPOS",
+			"GSUB"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-layout.js",
+			"line": 22,
+			"symbol": "validateAdvancedGdef"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedGdef"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for GDEF_POINT_REFERENCE_INVALID; correcting layout-graph data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedGdef",
+				"pipeline": "binary",
+				"family": "layout-graph",
+				"tables": [
+					"GDEF",
+					"GSUB",
+					"GPOS"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-layout.js",
+					"line": 22,
+					"symbol": "validateAdvancedGdef"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
 				],
 				"severities": [
 					"error"
@@ -11871,7 +18412,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2102,
+			"line": 2128,
 			"symbol": "validateGDEFTable"
 		},
 		"references": [
@@ -11910,12 +18451,101 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2102,
+					"line": 2128,
 					"symbol": "validateGDEFTable"
 				},
 				"references": [
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"GLYF_ATTACHMENT_POINT_INVALID": {
+		"id": "GLYF_ATTACHMENT_POINT_INVALID",
+		"checkId": "binary.validateAdvancedTrueType",
+		"pipeline": "binary",
+		"family": "truetype-instructions-and-geometry",
+		"tables": [
+			"fpgm",
+			"gasp",
+			"glyf",
+			"loca",
+			"maxp",
+			"prep"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-programs.js",
+			"line": 73,
+			"symbol": "validateAdvancedTrueType"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fpgm",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gasp",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/prep"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedTrueType"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for GLYF_ATTACHMENT_POINT_INVALID; correcting truetype-instructions-and-geometry data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedTrueType",
+				"pipeline": "binary",
+				"family": "truetype-instructions-and-geometry",
+				"tables": [
+					"glyf",
+					"loca",
+					"maxp",
+					"fpgm",
+					"prep",
+					"gasp"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 73,
+					"symbol": "validateAdvancedTrueType"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fpgm",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gasp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/prep"
 				],
 				"severities": [
 					"error"
@@ -11942,7 +18572,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3134,
+			"line": 3201,
 			"symbol": "validateGlyfHeaders"
 		},
 		"references": [
@@ -11958,7 +18588,7 @@ export const CHECK_CATALOG = {
 			"binary.validateGlyfHeaders"
 		],
 		"repairIds": [],
-		"noFixReason": "No derived geometry repair is registered; full outlines and variation/hinting dependencies must be checked first.",
+		"noFixReason": "Derived-field repairs require complete geometry; no registered action reconstructs missing contours or ambiguous components for this finding.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -11980,7 +18610,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3134,
+					"line": 3201,
 					"symbol": "validateGlyfHeaders"
 				},
 				"references": [
@@ -12008,7 +18638,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3148,
+					"line": 3215,
 					"symbol": "validateGlyfHeaders"
 				},
 				"references": [
@@ -12039,7 +18669,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3164,
+			"line": 3231,
 			"symbol": "validateGlyfHeaders"
 		},
 		"references": [
@@ -12056,7 +18686,7 @@ export const CHECK_CATALOG = {
 			"binary.validateGlyfHeaders"
 		],
 		"repairIds": [],
-		"noFixReason": "No derived geometry repair is registered; full outlines and variation/hinting dependencies must be checked first.",
+		"noFixReason": "Derived-field repairs require complete geometry; no registered action reconstructs missing contours or ambiguous components for this finding.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -12078,7 +18708,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3164,
+					"line": 3231,
 					"symbol": "validateGlyfHeaders"
 				},
 				"references": [
@@ -12087,6 +18717,95 @@ export const CHECK_CATALOG = {
 				],
 				"severities": [
 					"warning"
+				]
+			}
+		]
+	},
+	"GLYF_COMPONENT_FLAGS_CONFLICT": {
+		"id": "GLYF_COMPONENT_FLAGS_CONFLICT",
+		"checkId": "binary.validateAdvancedTrueType",
+		"pipeline": "binary",
+		"family": "truetype-instructions-and-geometry",
+		"tables": [
+			"fpgm",
+			"gasp",
+			"glyf",
+			"loca",
+			"maxp",
+			"prep"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-programs.js",
+			"line": 77,
+			"symbol": "validateAdvancedTrueType"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fpgm",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gasp",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/prep"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedTrueType"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for GLYF_COMPONENT_FLAGS_CONFLICT; correcting truetype-instructions-and-geometry data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedTrueType",
+				"pipeline": "binary",
+				"family": "truetype-instructions-and-geometry",
+				"tables": [
+					"glyf",
+					"loca",
+					"maxp",
+					"fpgm",
+					"prep",
+					"gasp"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 77,
+					"symbol": "validateAdvancedTrueType"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fpgm",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gasp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/prep"
+				],
+				"severities": [
+					"error"
 				]
 			}
 		]
@@ -12110,7 +18829,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3091,
+			"line": 3158,
 			"symbol": "validateGlyfComposites"
 		},
 		"references": [
@@ -12148,7 +18867,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3091,
+					"line": 3158,
 					"symbol": "validateGlyfComposites"
 				},
 				"references": [
@@ -12179,7 +18898,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3065,
+			"line": 3132,
 			"symbol": "validateGlyfComposites"
 		},
 		"references": [
@@ -12217,7 +18936,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3065,
+					"line": 3132,
 					"symbol": "validateGlyfComposites"
 				},
 				"references": [
@@ -12248,7 +18967,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3082,
+			"line": 3149,
 			"symbol": "validateGlyfComposites"
 		},
 		"references": [
@@ -12287,12 +19006,101 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3082,
+					"line": 3149,
 					"symbol": "validateGlyfComposites"
 				},
 				"references": [
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"GLYF_MAXP_LIMIT_EXCEEDED": {
+		"id": "GLYF_MAXP_LIMIT_EXCEEDED",
+		"checkId": "binary.validateAdvancedTrueType",
+		"pipeline": "binary",
+		"family": "truetype-instructions-and-geometry",
+		"tables": [
+			"fpgm",
+			"gasp",
+			"glyf",
+			"loca",
+			"maxp",
+			"prep"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-programs.js",
+			"line": 95,
+			"symbol": "validateAdvancedTrueType"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fpgm",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gasp",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/prep"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedTrueType"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for GLYF_MAXP_LIMIT_EXCEEDED; correcting truetype-instructions-and-geometry data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedTrueType",
+				"pipeline": "binary",
+				"family": "truetype-instructions-and-geometry",
+				"tables": [
+					"glyf",
+					"loca",
+					"maxp",
+					"fpgm",
+					"prep",
+					"gasp"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 95,
+					"symbol": "validateAdvancedTrueType"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fpgm",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gasp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/prep"
 				],
 				"severities": [
 					"error"
@@ -12319,7 +19127,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3177,
+			"line": 3244,
 			"symbol": "validateGlyfHeaders"
 		},
 		"references": [
@@ -12335,7 +19143,7 @@ export const CHECK_CATALOG = {
 			"binary.validateGlyfHeaders"
 		],
 		"repairIds": [],
-		"noFixReason": "No derived geometry repair is registered; full outlines and variation/hinting dependencies must be checked first.",
+		"noFixReason": "Derived-field repairs require complete geometry; no registered action reconstructs missing contours or ambiguous components for this finding.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -12357,7 +19165,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3177,
+					"line": 3244,
 					"symbol": "validateGlyfHeaders"
 				},
 				"references": [
@@ -12676,6 +19484,85 @@ export const CHECK_CATALOG = {
 			}
 		]
 	},
+	"GPOS_ANCHOR_POINT_INVALID": {
+		"id": "GPOS_ANCHOR_POINT_INVALID",
+		"checkId": "binary.validateAdvancedLayout",
+		"pipeline": "binary",
+		"family": "layout-graph",
+		"tables": [
+			"GDEF",
+			"GPOS",
+			"GSUB"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-layout.js",
+			"line": 112,
+			"symbol": "validateAdvancedLayout"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedLayout"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for GPOS_ANCHOR_POINT_INVALID; correcting layout-graph data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedLayout",
+				"pipeline": "binary",
+				"family": "layout-graph",
+				"tables": [
+					"GDEF",
+					"GSUB",
+					"GPOS"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-layout.js",
+					"line": 112,
+					"symbol": "validateAdvancedLayout"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
 	"GPOS_LOOKUP_TYPE_INVALID": {
 		"id": "GPOS_LOOKUP_TYPE_INVALID",
 		"checkId": "binary.validateLayoutLookups",
@@ -12695,7 +19582,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1635,
+			"line": 1661,
 			"symbol": "validateLayoutLookups"
 		},
 		"references": [
@@ -12709,13 +19596,13 @@ export const CHECK_CATALOG = {
 		"expansionEvidence": [
 			{
 				"file": "src/validate/diagnoseFont.js",
-				"line": 4019,
+				"line": 4086,
 				"symbol": "phaseCrossTableChecks",
 				"expression": "validateLayoutLookups(parsedTables.GSUB, 'GSUB', issues)"
 			},
 			{
 				"file": "src/validate/diagnoseFont.js",
-				"line": 4030,
+				"line": 4097,
 				"symbol": "phaseCrossTableChecks",
 				"expression": "validateLayoutLookups(parsedTables.GPOS, 'GPOS', issues)"
 			}
@@ -12749,7 +19636,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1635,
+					"line": 1661,
 					"symbol": "validateLayoutLookups"
 				},
 				"references": [
@@ -12763,13 +19650,13 @@ export const CHECK_CATALOG = {
 				"expansionEvidence": [
 					{
 						"file": "src/validate/diagnoseFont.js",
-						"line": 4019,
+						"line": 4086,
 						"symbol": "phaseCrossTableChecks",
 						"expression": "validateLayoutLookups(parsedTables.GSUB, 'GSUB', issues)"
 					},
 					{
 						"file": "src/validate/diagnoseFont.js",
-						"line": 4030,
+						"line": 4097,
 						"symbol": "phaseCrossTableChecks",
 						"expression": "validateLayoutLookups(parsedTables.GPOS, 'GPOS', issues)"
 					}
@@ -12796,7 +19683,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2430,
+			"line": 2456,
 			"symbol": "validateLayoutSubtables"
 		},
 		"references": [
@@ -12836,7 +19723,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2430,
+					"line": 2456,
 					"symbol": "validateLayoutSubtables"
 				},
 				"references": [
@@ -12869,7 +19756,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2419,
+			"line": 2445,
 			"symbol": "validateLayoutSubtables"
 		},
 		"references": [
@@ -12909,7 +19796,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2419,
+					"line": 2445,
 					"symbol": "validateLayoutSubtables"
 				},
 				"references": [
@@ -12942,7 +19829,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1635,
+			"line": 1661,
 			"symbol": "validateLayoutLookups"
 		},
 		"references": [
@@ -12956,13 +19843,13 @@ export const CHECK_CATALOG = {
 		"expansionEvidence": [
 			{
 				"file": "src/validate/diagnoseFont.js",
-				"line": 4019,
+				"line": 4086,
 				"symbol": "phaseCrossTableChecks",
 				"expression": "validateLayoutLookups(parsedTables.GSUB, 'GSUB', issues)"
 			},
 			{
 				"file": "src/validate/diagnoseFont.js",
-				"line": 4030,
+				"line": 4097,
 				"symbol": "phaseCrossTableChecks",
 				"expression": "validateLayoutLookups(parsedTables.GPOS, 'GPOS', issues)"
 			}
@@ -12996,7 +19883,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1635,
+					"line": 1661,
 					"symbol": "validateLayoutLookups"
 				},
 				"references": [
@@ -13010,13 +19897,13 @@ export const CHECK_CATALOG = {
 				"expansionEvidence": [
 					{
 						"file": "src/validate/diagnoseFont.js",
-						"line": 4019,
+						"line": 4086,
 						"symbol": "phaseCrossTableChecks",
 						"expression": "validateLayoutLookups(parsedTables.GSUB, 'GSUB', issues)"
 					},
 					{
 						"file": "src/validate/diagnoseFont.js",
-						"line": 4030,
+						"line": 4097,
 						"symbol": "phaseCrossTableChecks",
 						"expression": "validateLayoutLookups(parsedTables.GPOS, 'GPOS', issues)"
 					}
@@ -13043,7 +19930,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2398,
+			"line": 2424,
 			"symbol": "validateLayoutSubtables"
 		},
 		"references": [
@@ -13083,13 +19970,118 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2398,
+					"line": 2424,
 					"symbol": "validateLayoutSubtables"
 				},
 				"references": [
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"GVAR_DATA_OFFSETS_INVALID": {
+		"id": "GVAR_DATA_OFFSETS_INVALID",
+		"checkId": "binary.validateAdvancedVariation",
+		"pipeline": "binary",
+		"family": "variation-structures",
+		"tables": [
+			"BASE",
+			"CFF2",
+			"COLR",
+			"GDEF",
+			"HVAR",
+			"MVAR",
+			"VVAR",
+			"cvar",
+			"fvar",
+			"gvar"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-variation.js",
+			"line": 123,
+			"symbol": "validateAdvancedVariation"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedVariation"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for GVAR_DATA_OFFSETS_INVALID; correcting variation-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedVariation",
+				"pipeline": "binary",
+				"family": "variation-structures",
+				"tables": [
+					"fvar",
+					"gvar",
+					"cvar",
+					"HVAR",
+					"VVAR",
+					"MVAR",
+					"GDEF",
+					"BASE",
+					"COLR",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-variation.js",
+					"line": 123,
+					"symbol": "validateAdvancedVariation"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
 				],
 				"severities": [
 					"error"
@@ -13116,7 +20108,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3977,
+			"line": 4044,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -13155,7 +20147,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3977,
+					"line": 4044,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -13550,7 +20542,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 237,
+			"line": 243,
 			"symbol": "phaseHeader"
 		},
 		"references": [
@@ -13585,7 +20577,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 237,
+					"line": 243,
 					"symbol": "phaseHeader"
 				},
 				"references": [
@@ -13616,7 +20608,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3629,
+			"line": 3696,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -13654,7 +20646,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3629,
+					"line": 3696,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -13682,7 +20674,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3637,
+					"line": 3704,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -13713,7 +20705,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3659,
+			"line": 3726,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -13752,7 +20744,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3659,
+					"line": 3726,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -13783,7 +20775,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3648,
+			"line": 3715,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -13821,7 +20813,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3648,
+					"line": 3715,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -13852,7 +20844,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1162,
+			"line": 1188,
 			"symbol": "validateOS2Sanitization"
 		},
 		"references": [
@@ -13890,7 +20882,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1162,
+					"line": 1188,
 					"symbol": "validateOS2Sanitization"
 				},
 				"references": [
@@ -13921,7 +20913,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3618,
+			"line": 3685,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -13959,7 +20951,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3618,
+					"line": 3685,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -13968,6 +20960,140 @@ export const CHECK_CATALOG = {
 				"severities": [
 					"error"
 				]
+			}
+		]
+	},
+	"HHEA_DERIVED_EXTREMA_MISMATCH": {
+		"id": "HHEA_DERIVED_EXTREMA_MISMATCH",
+		"checkId": "binary.runFaceChecks",
+		"pipeline": "binary",
+		"family": "diagnostic-execution",
+		"tables": [
+			"*",
+			"glyf",
+			"hhea",
+			"hmtx"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 4367,
+			"symbol": "runFaceChecks"
+		},
+		"references": [
+			"docs/diagnostics.md",
+			"docs/font-quality.md",
+			"docs/repair-extensions.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/hhea",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/hmtx"
+		],
+		"severities": [
+			"error",
+			"info",
+			"warning"
+		],
+		"expression": "code",
+		"expansionEvidence": [
+			{
+				"file": "src/validate/diagnoseFont.js",
+				"line": 4359,
+				"symbol": "runFaceChecks",
+				"expression": "['TT_DERIVED_BOUNDS_MISMATCH', 'TT_DERIVED_MAXP_MISMATCH',\n\t\t\t\t\t'HHEA_DERIVED_EXTREMA_MISMATCH', 'VHEA_DERIVED_EXTREMA_MISMATCH', 'CFF_DERIVED_MAXP_MISMATCH']"
+			}
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectTT",
+			"binary.runFaceChecks"
+		],
+		"repairIds": [
+			"hhea.extrema"
+		],
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.runFaceChecks",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 4367,
+					"symbol": "runFaceChecks"
+				},
+				"references": [
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error",
+					"info",
+					"warning"
+				],
+				"expression": "code",
+				"expansionEvidence": [
+					{
+						"file": "src/validate/diagnoseFont.js",
+						"line": 4359,
+						"symbol": "runFaceChecks",
+						"expression": "['TT_DERIVED_BOUNDS_MISMATCH', 'TT_DERIVED_MAXP_MISMATCH',\n\t\t\t\t\t'HHEA_DERIVED_EXTREMA_MISMATCH', 'VHEA_DERIVED_EXTREMA_MISMATCH', 'CFF_DERIVED_MAXP_MISMATCH']"
+					}
+				]
+			},
+			{
+				"checkId": "binary.inspectTT",
+				"pipeline": "binary",
+				"family": "metrics-and-style",
+				"tables": [
+					"hhea",
+					"hmtx",
+					"glyf"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage",
+				"source": {
+					"file": "src/validate/repair-tt.js",
+					"line": 543,
+					"symbol": "inspectTT"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/repair-extensions.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hhea",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hmtx"
+				],
+				"severities": [
+					"warning"
+				],
+				"expression": "vertical ? 'VHEA_DERIVED_EXTREMA_MISMATCH' : 'HHEA_DERIVED_EXTREMA_MISMATCH'",
+				"expansionEvidence": []
 			}
 		]
 	},
@@ -13990,7 +21116,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3801,
+			"line": 3868,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -14029,7 +21155,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3801,
+					"line": 3868,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -14061,7 +21187,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3719,
+			"line": 3786,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -14099,7 +21225,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3719,
+					"line": 3786,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -14130,7 +21256,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3787,
+			"line": 3854,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -14169,7 +21295,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3787,
+					"line": 3854,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -14201,7 +21327,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3986,
+			"line": 4053,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -14215,7 +21341,7 @@ export const CHECK_CATALOG = {
 		"expansionEvidence": [
 			{
 				"file": "src/validate/diagnoseFont.js",
-				"line": 3981,
+				"line": 4048,
 				"symbol": "phaseCrossTableChecks",
 				"expression": "['HVAR', 'VVAR', 'MVAR', 'avar']"
 			}
@@ -14249,7 +21375,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3986,
+					"line": 4053,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -14263,7 +21389,7 @@ export const CHECK_CATALOG = {
 				"expansionEvidence": [
 					{
 						"file": "src/validate/diagnoseFont.js",
-						"line": 3981,
+						"line": 4048,
 						"symbol": "phaseCrossTableChecks",
 						"expression": "['HVAR', 'VVAR', 'MVAR', 'avar']"
 					}
@@ -14433,7 +21559,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 4248,
+			"line": 4429,
 			"symbol": "diagnoseFont"
 		},
 		"references": [
@@ -14468,7 +21594,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4248,
+					"line": 4429,
 					"symbol": "diagnoseFont"
 				},
 				"references": [
@@ -14493,7 +21619,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4254,
+					"line": 4435,
 					"symbol": "diagnoseFont"
 				},
 				"references": [
@@ -14518,7 +21644,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4261,
+					"line": 4442,
 					"symbol": "diagnoseFont"
 				},
 				"references": [
@@ -14552,7 +21678,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1961,
+			"line": 1987,
 			"symbol": "validateItemVariationStore"
 		},
 		"references": [
@@ -14598,7 +21724,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1961,
+					"line": 1987,
 					"symbol": "validateItemVariationStore"
 				},
 				"references": [
@@ -14636,7 +21762,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1986,
+			"line": 2012,
 			"symbol": "validateItemVariationStore"
 		},
 		"references": [
@@ -14680,7 +21806,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1986,
+					"line": 2012,
 					"symbol": "validateItemVariationStore"
 				},
 				"references": [
@@ -14717,7 +21843,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2020,
+			"line": 2046,
 			"symbol": "validateItemVariationStore"
 		},
 		"references": [
@@ -14761,7 +21887,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2020,
+					"line": 2046,
 					"symbol": "validateItemVariationStore"
 				},
 				"references": [
@@ -14798,7 +21924,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2001,
+			"line": 2027,
 			"symbol": "validateItemVariationStore"
 		},
 		"references": [
@@ -14842,7 +21968,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2001,
+					"line": 2027,
 					"symbol": "validateItemVariationStore"
 				},
 				"references": [
@@ -14851,6 +21977,148 @@ export const CHECK_CATALOG = {
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/otvarcommonformats#item-variation-store",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"JSTF_LOOKUP_REFERENCE_INVALID": {
+		"id": "JSTF_LOOKUP_REFERENCE_INVALID",
+		"checkId": "binary.validateAdvancedSpecialist",
+		"pipeline": "binary",
+		"family": "specialist-structures",
+		"table": "JSTF",
+		"tables": [
+			"JSTF"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-specialist.js",
+			"line": 97,
+			"symbol": "validateAdvancedSpecialist"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/jstf"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedSpecialist"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for JSTF_LOOKUP_REFERENCE_INVALID; correcting specialist-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedSpecialist",
+				"pipeline": "binary",
+				"family": "specialist-structures",
+				"table": "JSTF",
+				"tables": [
+					"JSTF"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-specialist.js",
+					"line": 97,
+					"symbol": "validateAdvancedSpecialist"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/jstf"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"JSTF_MAX_LOOKUP_TYPE_INVALID": {
+		"id": "JSTF_MAX_LOOKUP_TYPE_INVALID",
+		"checkId": "binary.validateAdvancedSpecialist",
+		"pipeline": "binary",
+		"family": "specialist-structures",
+		"table": "JSTF",
+		"tables": [
+			"JSTF"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-specialist.js",
+			"line": 83,
+			"symbol": "validateAdvancedSpecialist"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/jstf"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedSpecialist"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for JSTF_MAX_LOOKUP_TYPE_INVALID; correcting specialist-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedSpecialist",
+				"pipeline": "binary",
+				"family": "specialist-structures",
+				"table": "JSTF",
+				"tables": [
+					"JSTF"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-specialist.js",
+					"line": 83,
+					"symbol": "validateAdvancedSpecialist"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/jstf"
 				],
 				"severities": [
 					"error"
@@ -14919,6 +22187,434 @@ export const CHECK_CATALOG = {
 			}
 		]
 	},
+	"LAYOUT_CONTEXT_EMPTY": {
+		"id": "LAYOUT_CONTEXT_EMPTY",
+		"checkId": "binary.validateAdvancedLayout",
+		"pipeline": "binary",
+		"family": "layout-graph",
+		"tables": [
+			"GDEF",
+			"GPOS",
+			"GSUB"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-layout.js",
+			"line": 189,
+			"symbol": "validateAdvancedLayout"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedLayout"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for LAYOUT_CONTEXT_EMPTY; correcting layout-graph data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedLayout",
+				"pipeline": "binary",
+				"family": "layout-graph",
+				"tables": [
+					"GDEF",
+					"GSUB",
+					"GPOS"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-layout.js",
+					"line": 189,
+					"symbol": "validateAdvancedLayout"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"LAYOUT_EXTENSION_CYCLE": {
+		"id": "LAYOUT_EXTENSION_CYCLE",
+		"checkId": "binary.validateAdvancedLayout",
+		"pipeline": "binary",
+		"family": "layout-graph",
+		"tables": [
+			"GDEF",
+			"GPOS",
+			"GSUB"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-layout.js",
+			"line": 122,
+			"symbol": "validateAdvancedLayout"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedLayout"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for LAYOUT_EXTENSION_CYCLE; correcting layout-graph data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedLayout",
+				"pipeline": "binary",
+				"family": "layout-graph",
+				"tables": [
+					"GDEF",
+					"GSUB",
+					"GPOS"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-layout.js",
+					"line": 122,
+					"symbol": "validateAdvancedLayout"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"LAYOUT_EXTENSION_TYPE_INVALID": {
+		"id": "LAYOUT_EXTENSION_TYPE_INVALID",
+		"checkId": "binary.validateAdvancedLayout",
+		"pipeline": "binary",
+		"family": "layout-graph",
+		"tables": [
+			"GDEF",
+			"GPOS",
+			"GSUB"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-layout.js",
+			"line": 49,
+			"symbol": "validateAdvancedLayout"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedLayout"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for LAYOUT_EXTENSION_TYPE_INVALID; correcting layout-graph data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedLayout",
+				"pipeline": "binary",
+				"family": "layout-graph",
+				"tables": [
+					"GDEF",
+					"GSUB",
+					"GPOS"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-layout.js",
+					"line": 49,
+					"symbol": "validateAdvancedLayout"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateAdvancedLayout",
+				"pipeline": "binary",
+				"family": "layout-graph",
+				"tables": [
+					"GDEF",
+					"GSUB",
+					"GPOS"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-layout.js",
+					"line": 129,
+					"symbol": "validateAdvancedLayout"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"LAYOUT_GRAPH_REFERENCE_INVALID": {
+		"id": "LAYOUT_GRAPH_REFERENCE_INVALID",
+		"checkId": "binary.validateAdvancedLayout",
+		"pipeline": "binary",
+		"family": "layout-graph",
+		"tables": [
+			"GDEF",
+			"GPOS",
+			"GSUB"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-layout.js",
+			"line": 67,
+			"symbol": "validateAdvancedLayout"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedLayout"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for LAYOUT_GRAPH_REFERENCE_INVALID; correcting layout-graph data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedLayout",
+				"pipeline": "binary",
+				"family": "layout-graph",
+				"tables": [
+					"GDEF",
+					"GSUB",
+					"GPOS"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-layout.js",
+					"line": 67,
+					"symbol": "validateAdvancedLayout"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"LAYOUT_LANGSYS_RESERVED": {
+		"id": "LAYOUT_LANGSYS_RESERVED",
+		"checkId": "binary.validateAdvancedLayout",
+		"pipeline": "binary",
+		"family": "layout-graph",
+		"tables": [
+			"GDEF",
+			"GPOS",
+			"GSUB"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-layout.js",
+			"line": 77,
+			"symbol": "validateAdvancedLayout"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedLayout"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for LAYOUT_LANGSYS_RESERVED; correcting layout-graph data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedLayout",
+				"pipeline": "binary",
+				"family": "layout-graph",
+				"tables": [
+					"GDEF",
+					"GSUB",
+					"GPOS"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-layout.js",
+					"line": 77,
+					"symbol": "validateAdvancedLayout"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
 	"LAYOUT_LOOKUP_FLAG_INVALID": {
 		"id": "LAYOUT_LOOKUP_FLAG_INVALID",
 		"checkId": "binary.validateLayoutLookups",
@@ -14938,7 +22634,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1668,
+			"line": 1694,
 			"symbol": "validateLayoutLookups"
 		},
 		"references": [
@@ -14978,7 +22674,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1668,
+					"line": 1694,
 					"symbol": "validateLayoutLookups"
 				},
 				"references": [
@@ -15011,7 +22707,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1649,
+			"line": 1675,
 			"symbol": "validateLayoutLookups"
 		},
 		"references": [
@@ -15051,7 +22747,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1649,
+					"line": 1675,
 					"symbol": "validateLayoutLookups"
 				},
 				"references": [
@@ -15085,7 +22781,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1564,
+			"line": 1590,
 			"symbol": "validateLayoutReferences"
 		},
 		"references": [
@@ -15129,7 +22825,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1564,
+					"line": 1590,
 					"symbol": "validateLayoutReferences"
 				},
 				"references": [
@@ -15166,7 +22862,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1559,
+			"line": 1585,
 			"symbol": "validateLayoutReferences"
 		},
 		"references": [
@@ -15210,7 +22906,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1559,
+					"line": 1585,
 					"symbol": "validateLayoutReferences"
 				},
 				"references": [
@@ -15220,6 +22916,767 @@ export const CHECK_CATALOG = {
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"LAYOUT_VARIATION_CONDITION_INVALID": {
+		"id": "LAYOUT_VARIATION_CONDITION_INVALID",
+		"checkId": "binary.validateAdvancedLayout",
+		"pipeline": "binary",
+		"family": "layout-graph",
+		"tables": [
+			"GDEF",
+			"GPOS",
+			"GSUB"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-layout.js",
+			"line": 234,
+			"symbol": "validateAdvancedLayout"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedLayout"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for LAYOUT_VARIATION_CONDITION_INVALID; correcting layout-graph data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedLayout",
+				"pipeline": "binary",
+				"family": "layout-graph",
+				"tables": [
+					"GDEF",
+					"GSUB",
+					"GPOS"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-layout.js",
+					"line": 234,
+					"symbol": "validateAdvancedLayout"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/chapter2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gpos",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gsub"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"LEGACY_CFF_VERSION_UNSUPPORTED": {
+		"id": "LEGACY_CFF_VERSION_UNSUPPORTED",
+		"checkId": "binary.inspectLegacy",
+		"pipeline": "binary",
+		"family": "legacy-original-structures",
+		"tables": [],
+		"formats": [
+			"afm",
+			"cff",
+			"cff2",
+			"pfa",
+			"pfb"
+		],
+		"kind": "information",
+		"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+		"source": {
+			"file": "src/validate/workflow-legacy.js",
+			"line": 337,
+			"symbol": "inspectLegacy"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"info"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectLegacy"
+		],
+		"repairIds": [],
+		"noFixReason": "Informational observation or detached normalization notice, not a registered repair operation.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.inspectLegacy",
+				"pipeline": "binary",
+				"family": "legacy-original-structures",
+				"tables": [],
+				"formats": [
+					"cff",
+					"cff2",
+					"pfa",
+					"pfb",
+					"afm"
+				],
+				"kind": "information",
+				"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+				"source": {
+					"file": "src/validate/workflow-legacy.js",
+					"line": 337,
+					"symbol": "inspectLegacy"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"info"
+				]
+			}
+		]
+	},
+	"LEGACY_FORMAT_UNSUPPORTED": {
+		"id": "LEGACY_FORMAT_UNSUPPORTED",
+		"checkId": "binary.inspectLegacy",
+		"pipeline": "binary",
+		"family": "legacy-original-structures",
+		"tables": [],
+		"formats": [
+			"afm",
+			"cff",
+			"cff2",
+			"pfa",
+			"pfb"
+		],
+		"kind": "information",
+		"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+		"source": {
+			"file": "src/validate/workflow-legacy.js",
+			"line": 384,
+			"symbol": "inspectLegacy"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"info"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectLegacy"
+		],
+		"repairIds": [],
+		"noFixReason": "Informational observation or detached normalization notice, not a registered repair operation.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.inspectLegacy",
+				"pipeline": "binary",
+				"family": "legacy-original-structures",
+				"tables": [],
+				"formats": [
+					"cff",
+					"cff2",
+					"pfa",
+					"pfb",
+					"afm"
+				],
+				"kind": "information",
+				"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+				"source": {
+					"file": "src/validate/workflow-legacy.js",
+					"line": 384,
+					"symbol": "inspectLegacy"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"info"
+				]
+			}
+		]
+	},
+	"LEGACY_RESOURCE_LIMIT": {
+		"id": "LEGACY_RESOURCE_LIMIT",
+		"checkId": "binary.inspectLegacy",
+		"pipeline": "binary",
+		"family": "legacy-original-structures",
+		"tables": [],
+		"formats": [
+			"afm",
+			"cff",
+			"cff2",
+			"pfa",
+			"pfb"
+		],
+		"kind": "finding",
+		"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+		"source": {
+			"file": "src/validate/workflow-legacy.js",
+			"line": 389,
+			"symbol": "inspectLegacy"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error",
+			"info"
+		],
+		"expression": "/max[A-Z]/.test(error.message) ? 'LEGACY_RESOURCE_LIMIT' : 'LEGACY_STRUCTURE_INVALID'",
+		"expansionEvidence": [],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectLegacy"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for LEGACY_RESOURCE_LIMIT; correcting legacy-original-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.inspectLegacy",
+				"pipeline": "binary",
+				"family": "legacy-original-structures",
+				"tables": [],
+				"formats": [
+					"cff",
+					"cff2",
+					"pfa",
+					"pfb",
+					"afm"
+				],
+				"kind": "finding",
+				"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+				"source": {
+					"file": "src/validate/workflow-legacy.js",
+					"line": 389,
+					"symbol": "inspectLegacy"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error",
+					"info"
+				],
+				"expression": "/max[A-Z]/.test(error.message) ? 'LEGACY_RESOURCE_LIMIT' : 'LEGACY_STRUCTURE_INVALID'",
+				"expansionEvidence": []
+			}
+		]
+	},
+	"LEGACY_STRUCTURE_INVALID": {
+		"id": "LEGACY_STRUCTURE_INVALID",
+		"checkId": "binary.inspectLegacy",
+		"pipeline": "binary",
+		"family": "legacy-original-structures",
+		"tables": [],
+		"formats": [
+			"afm",
+			"cff",
+			"cff2",
+			"pfa",
+			"pfb"
+		],
+		"kind": "finding",
+		"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+		"source": {
+			"file": "src/validate/workflow-legacy.js",
+			"line": 389,
+			"symbol": "inspectLegacy"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error",
+			"info"
+		],
+		"expression": "/max[A-Z]/.test(error.message) ? 'LEGACY_RESOURCE_LIMIT' : 'LEGACY_STRUCTURE_INVALID'",
+		"expansionEvidence": [],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectLegacy"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for LEGACY_STRUCTURE_INVALID; correcting legacy-original-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.inspectLegacy",
+				"pipeline": "binary",
+				"family": "legacy-original-structures",
+				"tables": [],
+				"formats": [
+					"cff",
+					"cff2",
+					"pfa",
+					"pfb",
+					"afm"
+				],
+				"kind": "finding",
+				"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+				"source": {
+					"file": "src/validate/workflow-legacy.js",
+					"line": 389,
+					"symbol": "inspectLegacy"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error",
+					"info"
+				],
+				"expression": "/max[A-Z]/.test(error.message) ? 'LEGACY_RESOURCE_LIMIT' : 'LEGACY_STRUCTURE_INVALID'",
+				"expansionEvidence": []
+			}
+		]
+	},
+	"LEGACY_TYPE1_FONT_TYPE_UNCONFIRMED": {
+		"id": "LEGACY_TYPE1_FONT_TYPE_UNCONFIRMED",
+		"checkId": "binary.inspectLegacy",
+		"pipeline": "binary",
+		"family": "legacy-original-structures",
+		"tables": [],
+		"formats": [
+			"afm",
+			"cff",
+			"cff2",
+			"pfa",
+			"pfb"
+		],
+		"kind": "finding",
+		"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+		"source": {
+			"file": "src/validate/workflow-legacy.js",
+			"line": 362,
+			"symbol": "inspectLegacy"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectLegacy"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for LEGACY_TYPE1_FONT_TYPE_UNCONFIRMED; correcting legacy-original-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.inspectLegacy",
+				"pipeline": "binary",
+				"family": "legacy-original-structures",
+				"tables": [],
+				"formats": [
+					"cff",
+					"cff2",
+					"pfa",
+					"pfb",
+					"afm"
+				],
+				"kind": "finding",
+				"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+				"source": {
+					"file": "src/validate/workflow-legacy.js",
+					"line": 362,
+					"symbol": "inspectLegacy"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"LEGACY_TYPE1_NOTDEF_MISSING": {
+		"id": "LEGACY_TYPE1_NOTDEF_MISSING",
+		"checkId": "binary.inspectLegacy",
+		"pipeline": "binary",
+		"family": "legacy-original-structures",
+		"tables": [],
+		"formats": [
+			"afm",
+			"cff",
+			"cff2",
+			"pfa",
+			"pfb"
+		],
+		"kind": "finding",
+		"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+		"source": {
+			"file": "src/validate/workflow-legacy.js",
+			"line": 364,
+			"symbol": "inspectLegacy"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectLegacy"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for LEGACY_TYPE1_NOTDEF_MISSING; correcting legacy-original-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.inspectLegacy",
+				"pipeline": "binary",
+				"family": "legacy-original-structures",
+				"tables": [],
+				"formats": [
+					"cff",
+					"cff2",
+					"pfa",
+					"pfb",
+					"afm"
+				],
+				"kind": "finding",
+				"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+				"source": {
+					"file": "src/validate/workflow-legacy.js",
+					"line": 364,
+					"symbol": "inspectLegacy"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"LEGACY_TYPE1_NO_ENDCHAR": {
+		"id": "LEGACY_TYPE1_NO_ENDCHAR",
+		"checkId": "binary.inspectLegacy",
+		"pipeline": "binary",
+		"family": "legacy-original-structures",
+		"tables": [],
+		"formats": [
+			"afm",
+			"cff",
+			"cff2",
+			"pfa",
+			"pfb"
+		],
+		"kind": "finding",
+		"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+		"source": {
+			"file": "src/validate/workflow-legacy.js",
+			"line": 373,
+			"symbol": "inspectLegacy"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectLegacy"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for LEGACY_TYPE1_NO_ENDCHAR; correcting legacy-original-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.inspectLegacy",
+				"pipeline": "binary",
+				"family": "legacy-original-structures",
+				"tables": [],
+				"formats": [
+					"cff",
+					"cff2",
+					"pfa",
+					"pfb",
+					"afm"
+				],
+				"kind": "finding",
+				"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+				"source": {
+					"file": "src/validate/workflow-legacy.js",
+					"line": 373,
+					"symbol": "inspectLegacy"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"LEGACY_TYPE1_OPERATOR_UNSUPPORTED": {
+		"id": "LEGACY_TYPE1_OPERATOR_UNSUPPORTED",
+		"checkId": "binary.inspectLegacy",
+		"pipeline": "binary",
+		"family": "legacy-original-structures",
+		"tables": [],
+		"formats": [
+			"afm",
+			"cff",
+			"cff2",
+			"pfa",
+			"pfb"
+		],
+		"kind": "information",
+		"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+		"source": {
+			"file": "src/validate/workflow-legacy.js",
+			"line": 370,
+			"symbol": "inspectLegacy"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"info"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectLegacy"
+		],
+		"repairIds": [],
+		"noFixReason": "Informational observation or detached normalization notice, not a registered repair operation.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.inspectLegacy",
+				"pipeline": "binary",
+				"family": "legacy-original-structures",
+				"tables": [],
+				"formats": [
+					"cff",
+					"cff2",
+					"pfa",
+					"pfb",
+					"afm"
+				],
+				"kind": "information",
+				"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+				"source": {
+					"file": "src/validate/workflow-legacy.js",
+					"line": 370,
+					"symbol": "inspectLegacy"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"info"
+				]
+			}
+		]
+	},
+	"LEGACY_TYPE1_PROGRAM_INVALID": {
+		"id": "LEGACY_TYPE1_PROGRAM_INVALID",
+		"checkId": "binary.inspectLegacy",
+		"pipeline": "binary",
+		"family": "legacy-original-structures",
+		"tables": [],
+		"formats": [
+			"afm",
+			"cff",
+			"cff2",
+			"pfa",
+			"pfb"
+		],
+		"kind": "finding",
+		"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+		"source": {
+			"file": "src/validate/workflow-legacy.js",
+			"line": 378,
+			"symbol": "inspectLegacy"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectLegacy"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for LEGACY_TYPE1_PROGRAM_INVALID; correcting legacy-original-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.inspectLegacy",
+				"pipeline": "binary",
+				"family": "legacy-original-structures",
+				"tables": [],
+				"formats": [
+					"cff",
+					"cff2",
+					"pfa",
+					"pfb",
+					"afm"
+				],
+				"kind": "finding",
+				"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+				"source": {
+					"file": "src/validate/workflow-legacy.js",
+					"line": 378,
+					"symbol": "inspectLegacy"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"LEGACY_TYPE1_WIDTH_MISSING": {
+		"id": "LEGACY_TYPE1_WIDTH_MISSING",
+		"checkId": "binary.inspectLegacy",
+		"pipeline": "binary",
+		"family": "legacy-original-structures",
+		"tables": [],
+		"formats": [
+			"afm",
+			"cff",
+			"cff2",
+			"pfa",
+			"pfb"
+		],
+		"kind": "finding",
+		"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+		"source": {
+			"file": "src/validate/workflow-legacy.js",
+			"line": 374,
+			"symbol": "inspectLegacy"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectLegacy"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for LEGACY_TYPE1_WIDTH_MISSING; correcting legacy-original-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.inspectLegacy",
+				"pipeline": "binary",
+				"family": "legacy-original-structures",
+				"tables": [],
+				"formats": [
+					"cff",
+					"cff2",
+					"pfa",
+					"pfb",
+					"afm"
+				],
+				"kind": "finding",
+				"publicReachability": "public legacy inspection and FontFlux.inspect routing; original evidence only, unsupported execution and source replacement explicitly distinguished",
+				"source": {
+					"file": "src/validate/workflow-legacy.js",
+					"line": 374,
+					"symbol": "inspectLegacy"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
 				],
 				"severities": [
 					"error"
@@ -15246,7 +23703,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3818,
+			"line": 3885,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -15285,12 +23742,225 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3818,
+					"line": 3885,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/loca"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"MATH_ASSEMBLY_PART_INVALID": {
+		"id": "MATH_ASSEMBLY_PART_INVALID",
+		"checkId": "binary.validateAdvancedSpecialist",
+		"pipeline": "binary",
+		"family": "specialist-structures",
+		"table": "MATH",
+		"tables": [
+			"MATH"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-specialist.js",
+			"line": 184,
+			"symbol": "validateAdvancedSpecialist"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/math"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedSpecialist"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for MATH_ASSEMBLY_PART_INVALID; correcting specialist-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedSpecialist",
+				"pipeline": "binary",
+				"family": "specialist-structures",
+				"table": "MATH",
+				"tables": [
+					"MATH"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-specialist.js",
+					"line": 184,
+					"symbol": "validateAdvancedSpecialist"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/math"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"MATH_KERN_HEIGHTS_INVALID": {
+		"id": "MATH_KERN_HEIGHTS_INVALID",
+		"checkId": "binary.validateAdvancedSpecialist",
+		"pipeline": "binary",
+		"family": "specialist-structures",
+		"table": "MATH",
+		"tables": [
+			"MATH"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-specialist.js",
+			"line": 152,
+			"symbol": "validateAdvancedSpecialist"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/math"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedSpecialist"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for MATH_KERN_HEIGHTS_INVALID; correcting specialist-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedSpecialist",
+				"pipeline": "binary",
+				"family": "specialist-structures",
+				"table": "MATH",
+				"tables": [
+					"MATH"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-specialist.js",
+					"line": 152,
+					"symbol": "validateAdvancedSpecialist"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/math"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"MATH_VARIANT_ORDER_INVALID": {
+		"id": "MATH_VARIANT_ORDER_INVALID",
+		"checkId": "binary.validateAdvancedSpecialist",
+		"pipeline": "binary",
+		"family": "specialist-structures",
+		"table": "MATH",
+		"tables": [
+			"MATH"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-specialist.js",
+			"line": 173,
+			"symbol": "validateAdvancedSpecialist"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/math"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedSpecialist"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for MATH_VARIANT_ORDER_INVALID; correcting specialist-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedSpecialist",
+				"pipeline": "binary",
+				"family": "specialist-structures",
+				"table": "MATH",
+				"tables": [
+					"MATH"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-specialist.js",
+					"line": 173,
+					"symbol": "validateAdvancedSpecialist"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/math"
 				],
 				"severities": [
 					"error"
@@ -15317,7 +23987,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2453,
+			"line": 2479,
 			"symbol": "validateMATH"
 		},
 		"references": [
@@ -15355,7 +24025,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2453,
+					"line": 2479,
 					"symbol": "validateMATH"
 				},
 				"references": [
@@ -15386,7 +24056,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3680,
+			"line": 3747,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -15424,7 +24094,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3680,
+					"line": 3747,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -15455,7 +24125,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3672,
+			"line": 3739,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -15493,7 +24163,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3672,
+					"line": 3739,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -15527,7 +24197,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3692,
+			"line": 3759,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -15546,8 +24216,9 @@ export const CHECK_CATALOG = {
 		"checkIds": [
 			"binary.phaseCrossTableChecks"
 		],
-		"repairIds": [],
-		"noFixReason": "No registered repair for MAXP_VERSION_MISMATCH_FOR_OUTLINE; correcting outline-dependencies data requires a separately specified operation with complete dependency and intent checks.",
+		"repairIds": [
+			"cff.maxp"
+		],
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -15572,7 +24243,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3692,
+					"line": 3759,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -15607,7 +24278,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3704,
+					"line": 3771,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -15616,6 +24287,77 @@ export const CHECK_CATALOG = {
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"MERG_ENTRY_FLAGS_INVALID": {
+		"id": "MERG_ENTRY_FLAGS_INVALID",
+		"checkId": "binary.validateAdvancedSpecialist",
+		"pipeline": "binary",
+		"family": "specialist-structures",
+		"table": "MERG",
+		"tables": [
+			"MERG"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-specialist.js",
+			"line": 57,
+			"symbol": "validateAdvancedSpecialist"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/merg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedSpecialist"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for MERG_ENTRY_FLAGS_INVALID; correcting specialist-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedSpecialist",
+				"pipeline": "binary",
+				"family": "specialist-structures",
+				"table": "MERG",
+				"tables": [
+					"MERG"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-specialist.js",
+					"line": 57,
+					"symbol": "validateAdvancedSpecialist"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/merg"
 				],
 				"severities": [
 					"error"
@@ -15641,7 +24383,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 497,
+			"line": 503,
 			"symbol": "phaseRequiredTables"
 		},
 		"references": [
@@ -15678,7 +24420,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 497,
+					"line": 503,
 					"symbol": "phaseRequiredTables"
 				},
 				"references": [
@@ -15708,7 +24450,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 517,
+			"line": 523,
 			"symbol": "phaseRequiredTables"
 		},
 		"references": [
@@ -15745,7 +24487,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 517,
+					"line": 523,
 					"symbol": "phaseRequiredTables"
 				},
 				"references": [
@@ -15841,7 +24583,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2070,
+			"line": 2096,
 			"symbol": "validateMVAR"
 		},
 		"references": [
@@ -15879,7 +24621,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2070,
+					"line": 2096,
 					"symbol": "validateMVAR"
 				},
 				"references": [
@@ -15910,7 +24652,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2055,
+			"line": 2081,
 			"symbol": "validateMVAR"
 		},
 		"references": [
@@ -15948,7 +24690,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2055,
+					"line": 2081,
 					"symbol": "validateMVAR"
 				},
 				"references": [
@@ -15979,7 +24721,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 2038,
+			"line": 2064,
 			"symbol": "validateMVAR"
 		},
 		"references": [
@@ -16017,7 +24759,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 2038,
+					"line": 2064,
 					"symbol": "validateMVAR"
 				},
 				"references": [
@@ -16048,7 +24790,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3986,
+			"line": 4053,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -16062,7 +24804,7 @@ export const CHECK_CATALOG = {
 		"expansionEvidence": [
 			{
 				"file": "src/validate/diagnoseFont.js",
-				"line": 3981,
+				"line": 4048,
 				"symbol": "phaseCrossTableChecks",
 				"expression": "['HVAR', 'VVAR', 'MVAR', 'avar']"
 			}
@@ -16096,7 +24838,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3986,
+					"line": 4053,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -16110,7 +24852,7 @@ export const CHECK_CATALOG = {
 				"expansionEvidence": [
 					{
 						"file": "src/validate/diagnoseFont.js",
-						"line": 3981,
+						"line": 4048,
 						"symbol": "phaseCrossTableChecks",
 						"expression": "['HVAR', 'VVAR', 'MVAR', 'avar']"
 					}
@@ -16137,7 +24879,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1199,
+			"line": 1225,
 			"symbol": "validateNameDeep"
 		},
 		"references": [
@@ -16175,7 +24917,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1199,
+					"line": 1225,
 					"symbol": "validateNameDeep"
 				},
 				"references": [
@@ -16206,7 +24948,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1268,
+			"line": 1294,
 			"symbol": "validateNameDeep"
 		},
 		"references": [
@@ -16244,7 +24986,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1268,
+					"line": 1294,
 					"symbol": "validateNameDeep"
 				},
 				"references": [
@@ -16275,7 +25017,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1286,
+			"line": 1312,
 			"symbol": "validateNameDeep"
 		},
 		"references": [
@@ -16313,7 +25055,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1286,
+					"line": 1312,
 					"symbol": "validateNameDeep"
 				},
 				"references": [
@@ -16344,7 +25086,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3886,
+			"line": 3953,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -16383,7 +25125,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3886,
+					"line": 3953,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -16414,7 +25156,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1241,
+			"line": 1267,
 			"symbol": "validateNameDeep"
 		},
 		"references": [
@@ -16452,7 +25194,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1241,
+					"line": 1267,
 					"symbol": "validateNameDeep"
 				},
 				"references": [
@@ -16483,7 +25225,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1221,
+			"line": 1247,
 			"symbol": "validateNameDeep"
 		},
 		"references": [
@@ -16521,7 +25263,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1221,
+					"line": 1247,
 					"symbol": "validateNameDeep"
 				},
 				"references": [
@@ -16552,7 +25294,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1251,
+			"line": 1277,
 			"symbol": "validateNameDeep"
 		},
 		"references": [
@@ -16590,7 +25332,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1251,
+					"line": 1277,
 					"symbol": "validateNameDeep"
 				},
 				"references": [
@@ -16618,7 +25360,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 107,
+			"line": 113,
 			"symbol": "phaseSignature"
 		},
 		"references": [
@@ -16655,7 +25397,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 107,
+					"line": 113,
 					"symbol": "phaseSignature"
 				},
 				"references": [
@@ -16688,7 +25430,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3858,
+			"line": 3925,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -16727,7 +25469,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3858,
+					"line": 3925,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -16757,7 +25499,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 509,
+			"line": 515,
 			"symbol": "phaseRequiredTables"
 		},
 		"references": [
@@ -16794,7 +25536,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 509,
+					"line": 515,
 					"symbol": "phaseRequiredTables"
 				},
 				"references": [
@@ -16824,7 +25566,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 4168,
+			"line": 4235,
 			"symbol": "runFaceChecks"
 		},
 		"references": [
@@ -16861,7 +25603,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4168,
+					"line": 4235,
 					"symbol": "runFaceChecks"
 				},
 				"references": [
@@ -16892,7 +25634,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3866,
+			"line": 3933,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -16931,7 +25673,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3866,
+					"line": 3933,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -16959,7 +25701,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 267,
+			"line": 273,
 			"symbol": "phaseHeader"
 		},
 		"references": [
@@ -16994,7 +25736,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 267,
+					"line": 273,
 					"symbol": "phaseHeader"
 				},
 				"references": [
@@ -17086,7 +25828,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1106,
+			"line": 1132,
 			"symbol": "validateOS2Sanitization"
 		},
 		"references": [
@@ -17124,7 +25866,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1106,
+					"line": 1132,
 					"symbol": "validateOS2Sanitization"
 				},
 				"references": [
@@ -17155,7 +25897,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1078,
+			"line": 1104,
 			"symbol": "validateOS2Sanitization"
 		},
 		"references": [
@@ -17193,7 +25935,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1078,
+					"line": 1104,
 					"symbol": "validateOS2Sanitization"
 				},
 				"references": [
@@ -17224,7 +25966,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1152,
+			"line": 1178,
 			"symbol": "validateOS2Sanitization"
 		},
 		"references": [
@@ -17263,7 +26005,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1152,
+					"line": 1178,
 					"symbol": "validateOS2Sanitization"
 				},
 				"references": [
@@ -17295,7 +26037,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1043,
+			"line": 1069,
 			"symbol": "validateOS2Sanitization"
 		},
 		"references": [
@@ -17333,7 +26075,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1043,
+					"line": 1069,
 					"symbol": "validateOS2Sanitization"
 				},
 				"references": [
@@ -17364,7 +26106,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1062,
+			"line": 1088,
 			"symbol": "validateOS2Sanitization"
 		},
 		"references": [
@@ -17402,7 +26144,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1062,
+					"line": 1088,
 					"symbol": "validateOS2Sanitization"
 				},
 				"references": [
@@ -17433,7 +26175,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1120,
+			"line": 1146,
 			"symbol": "validateOS2Sanitization"
 		},
 		"references": [
@@ -17471,7 +26213,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1120,
+					"line": 1146,
 					"symbol": "validateOS2Sanitization"
 				},
 				"references": [
@@ -17499,7 +26241,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1131,
+					"line": 1157,
 					"symbol": "validateOS2Sanitization"
 				},
 				"references": [
@@ -17530,7 +26272,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1088,
+			"line": 1114,
 			"symbol": "validateOS2Sanitization"
 		},
 		"references": [
@@ -17569,7 +26311,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1088,
+					"line": 1114,
 					"symbol": "validateOS2Sanitization"
 				},
 				"references": [
@@ -17600,7 +26342,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3764,
+			"line": 3831,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -17638,7 +26380,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3764,
+					"line": 3831,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -17669,7 +26411,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1019,
+			"line": 1045,
 			"symbol": "validateOS2Sanitization"
 		},
 		"references": [
@@ -17708,7 +26450,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1019,
+					"line": 1045,
 					"symbol": "validateOS2Sanitization"
 				},
 				"references": [
@@ -17739,7 +26481,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1031,
+			"line": 1057,
 			"symbol": "validateOS2Sanitization"
 		},
 		"references": [
@@ -17778,7 +26520,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1031,
+					"line": 1057,
 					"symbol": "validateOS2Sanitization"
 				},
 				"references": [
@@ -17809,7 +26551,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1098,
+			"line": 1124,
 			"symbol": "validateOS2Sanitization"
 		},
 		"references": [
@@ -17847,11 +26589,141 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1098,
+					"line": 1124,
 					"symbol": "validateOS2Sanitization"
 				},
 				"references": [
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/os2"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"OUTLINE_DEGENERATE_CONTOUR": {
+		"id": "OUTLINE_DEGENERATE_CONTOUR",
+		"checkId": "validation.inspectGlyph",
+		"pipeline": "editable",
+		"family": "source-outline-evidence",
+		"tables": [],
+		"formats": [
+			"simplified-json",
+			"source-projects"
+		],
+		"kind": "finding",
+		"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+		"source": {
+			"file": "src/validate/workflow-source.js",
+			"line": 51,
+			"symbol": "inspectGlyph"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"docs/validation.md",
+			"font-flux.schema.json",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"editable"
+		],
+		"checkIds": [
+			"validation.inspectGlyph"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "validation.inspectGlyph",
+				"pipeline": "editable",
+				"family": "source-outline-evidence",
+				"tables": [],
+				"formats": [
+					"source-projects",
+					"simplified-json"
+				],
+				"kind": "finding",
+				"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+				"source": {
+					"file": "src/validate/workflow-source.js",
+					"line": 51,
+					"symbol": "inspectGlyph"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"docs/validation.md",
+					"font-flux.schema.json",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"OUTLINE_EMPTY_CONTOUR": {
+		"id": "OUTLINE_EMPTY_CONTOUR",
+		"checkId": "validation.inspectGlyph",
+		"pipeline": "editable",
+		"family": "source-outline-evidence",
+		"tables": [],
+		"formats": [
+			"simplified-json",
+			"source-projects"
+		],
+		"kind": "finding",
+		"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+		"source": {
+			"file": "src/validate/workflow-source.js",
+			"line": 30,
+			"symbol": "inspectGlyph"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"docs/validation.md",
+			"font-flux.schema.json",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"editable"
+		],
+		"checkIds": [
+			"validation.inspectGlyph"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "validation.inspectGlyph",
+				"pipeline": "editable",
+				"family": "source-outline-evidence",
+				"tables": [],
+				"formats": [
+					"source-projects",
+					"simplified-json"
+				],
+				"kind": "finding",
+				"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+				"source": {
+					"file": "src/validate/workflow-source.js",
+					"line": 30,
+					"symbol": "inspectGlyph"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"docs/validation.md",
+					"font-flux.schema.json",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
 				],
 				"severities": [
 					"warning"
@@ -17920,6 +26792,331 @@ export const CHECK_CATALOG = {
 				],
 				"severities": [
 					"error"
+				]
+			}
+		]
+	},
+	"OUTLINE_NONFINITE_COORDINATE": {
+		"id": "OUTLINE_NONFINITE_COORDINATE",
+		"checkId": "validation.inspectGlyph",
+		"pipeline": "editable",
+		"family": "source-outline-evidence",
+		"tables": [],
+		"formats": [
+			"simplified-json",
+			"source-projects"
+		],
+		"kind": "finding",
+		"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+		"source": {
+			"file": "src/validate/workflow-source.js",
+			"line": 36,
+			"symbol": "inspectGlyph"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"docs/validation.md",
+			"font-flux.schema.json",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"editable"
+		],
+		"checkIds": [
+			"validation.inspectGlyph"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "validation.inspectGlyph",
+				"pipeline": "editable",
+				"family": "source-outline-evidence",
+				"tables": [],
+				"formats": [
+					"source-projects",
+					"simplified-json"
+				],
+				"kind": "finding",
+				"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+				"source": {
+					"file": "src/validate/workflow-source.js",
+					"line": 36,
+					"symbol": "inspectGlyph"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"docs/validation.md",
+					"font-flux.schema.json",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"OUTLINE_OVERLAP_POSSIBLE": {
+		"id": "OUTLINE_OVERLAP_POSSIBLE",
+		"checkId": "validation.inspectGlyph",
+		"pipeline": "editable",
+		"family": "source-outline-evidence",
+		"tables": [],
+		"formats": [
+			"simplified-json",
+			"source-projects"
+		],
+		"kind": "information",
+		"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+		"source": {
+			"file": "src/validate/workflow-source.js",
+			"line": 70,
+			"symbol": "inspectGlyph"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"docs/validation.md",
+			"font-flux.schema.json",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"info"
+		],
+		"pipelines": [
+			"editable"
+		],
+		"checkIds": [
+			"validation.inspectGlyph"
+		],
+		"repairIds": [],
+		"noFixReason": "Informational observation or detached normalization notice, not a registered repair operation.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "validation.inspectGlyph",
+				"pipeline": "editable",
+				"family": "source-outline-evidence",
+				"tables": [],
+				"formats": [
+					"source-projects",
+					"simplified-json"
+				],
+				"kind": "information",
+				"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+				"source": {
+					"file": "src/validate/workflow-source.js",
+					"line": 70,
+					"symbol": "inspectGlyph"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"docs/validation.md",
+					"font-flux.schema.json",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"info"
+				]
+			}
+		]
+	},
+	"OUTLINE_SOURCE_UNAVAILABLE": {
+		"id": "OUTLINE_SOURCE_UNAVAILABLE",
+		"checkId": "validation.inspectGlyph",
+		"pipeline": "editable",
+		"family": "source-outline-evidence",
+		"tables": [],
+		"formats": [
+			"simplified-json",
+			"source-projects"
+		],
+		"kind": "information",
+		"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+		"source": {
+			"file": "src/validate/workflow-source.js",
+			"line": 74,
+			"symbol": "inspectGlyph"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"docs/validation.md",
+			"font-flux.schema.json",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"info"
+		],
+		"pipelines": [
+			"editable"
+		],
+		"checkIds": [
+			"validation.inspectGlyph"
+		],
+		"repairIds": [],
+		"noFixReason": "Informational observation or detached normalization notice, not a registered repair operation.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "validation.inspectGlyph",
+				"pipeline": "editable",
+				"family": "source-outline-evidence",
+				"tables": [],
+				"formats": [
+					"source-projects",
+					"simplified-json"
+				],
+				"kind": "information",
+				"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+				"source": {
+					"file": "src/validate/workflow-source.js",
+					"line": 74,
+					"symbol": "inspectGlyph"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"docs/validation.md",
+					"font-flux.schema.json",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"info"
+				]
+			}
+		]
+	},
+	"OUTLINE_TINY_SIGNED_AREA": {
+		"id": "OUTLINE_TINY_SIGNED_AREA",
+		"checkId": "validation.inspectGlyph",
+		"pipeline": "editable",
+		"family": "source-outline-evidence",
+		"tables": [],
+		"formats": [
+			"simplified-json",
+			"source-projects"
+		],
+		"kind": "finding",
+		"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+		"source": {
+			"file": "src/validate/workflow-source.js",
+			"line": 59,
+			"symbol": "inspectGlyph"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"docs/validation.md",
+			"font-flux.schema.json",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"editable"
+		],
+		"checkIds": [
+			"validation.inspectGlyph"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "validation.inspectGlyph",
+				"pipeline": "editable",
+				"family": "source-outline-evidence",
+				"tables": [],
+				"formats": [
+					"source-projects",
+					"simplified-json"
+				],
+				"kind": "finding",
+				"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+				"source": {
+					"file": "src/validate/workflow-source.js",
+					"line": 59,
+					"symbol": "inspectGlyph"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"docs/validation.md",
+					"font-flux.schema.json",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"OUTLINE_ZERO_LENGTH_SEGMENT": {
+		"id": "OUTLINE_ZERO_LENGTH_SEGMENT",
+		"checkId": "validation.inspectGlyph",
+		"pipeline": "editable",
+		"family": "source-outline-evidence",
+		"tables": [],
+		"formats": [
+			"simplified-json",
+			"source-projects"
+		],
+		"kind": "finding",
+		"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+		"source": {
+			"file": "src/validate/workflow-source.js",
+			"line": 54,
+			"symbol": "inspectGlyph"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"docs/validation.md",
+			"font-flux.schema.json",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"editable"
+		],
+		"checkIds": [
+			"validation.inspectGlyph"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "validation.inspectGlyph",
+				"pipeline": "editable",
+				"family": "source-outline-evidence",
+				"tables": [],
+				"formats": [
+					"source-projects",
+					"simplified-json"
+				],
+				"kind": "finding",
+				"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+				"source": {
+					"file": "src/validate/workflow-source.js",
+					"line": 54,
+					"symbol": "inspectGlyph"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"docs/validation.md",
+					"font-flux.schema.json",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
 				]
 			}
 		]
@@ -18174,7 +27371,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3751,
+			"line": 3818,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -18213,7 +27410,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3751,
+					"line": 3818,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -18246,7 +27443,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3951,
+			"line": 4018,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -18287,7 +27484,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3951,
+					"line": 4018,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -18320,7 +27517,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3736,
+			"line": 3803,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -18358,7 +27555,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3736,
+					"line": 3803,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -18676,6 +27873,643 @@ export const CHECK_CATALOG = {
 			}
 		]
 	},
+	"QUALITY_AVERAGE_WIDTH_MISMATCH": {
+		"id": "QUALITY_AVERAGE_WIDTH_MISMATCH",
+		"checkId": "binary.runFaceChecks",
+		"pipeline": "binary",
+		"family": "diagnostic-execution",
+		"tables": [
+			"*",
+			"OS/2",
+			"hhea",
+			"hmtx"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 4311,
+			"symbol": "runFaceChecks"
+		},
+		"references": [
+			"docs/diagnostics.md",
+			"docs/font-quality.md",
+			"docs/repair-extensions.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/hhea",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/hmtx",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/os2"
+		],
+		"severities": [
+			"error",
+			"info",
+			"warning"
+		],
+		"expression": "code",
+		"expansionEvidence": [
+			{
+				"file": "src/validate/diagnoseFont.js",
+				"line": 4304,
+				"symbol": "runFaceChecks",
+				"expression": "['QUALITY_NAME_WHITESPACE', 'QUALITY_POSTSCRIPT_NAME_INVALID', 'QUALITY_NAME_ENCODING_INVALID',\n\t\t\t\t'QUALITY_AVERAGE_WIDTH_MISMATCH', 'QUALITY_CHARACTER_RANGE_MISMATCH']"
+			}
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectMetadata",
+			"binary.runFaceChecks"
+		],
+		"repairIds": [
+			"os2.average-width"
+		],
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.runFaceChecks",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 4311,
+					"symbol": "runFaceChecks"
+				},
+				"references": [
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error",
+					"info",
+					"warning"
+				],
+				"expression": "code",
+				"expansionEvidence": [
+					{
+						"file": "src/validate/diagnoseFont.js",
+						"line": 4304,
+						"symbol": "runFaceChecks",
+						"expression": "['QUALITY_NAME_WHITESPACE', 'QUALITY_POSTSCRIPT_NAME_INVALID', 'QUALITY_NAME_ENCODING_INVALID',\n\t\t\t\t'QUALITY_AVERAGE_WIDTH_MISMATCH', 'QUALITY_CHARACTER_RANGE_MISMATCH']"
+					}
+				]
+			},
+			{
+				"checkId": "binary.inspectMetadata",
+				"pipeline": "binary",
+				"family": "metrics-and-style",
+				"tables": [
+					"OS/2",
+					"hhea",
+					"hmtx"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage",
+				"source": {
+					"file": "src/validate/metadata-repairs.js",
+					"line": 479,
+					"symbol": "inspectMetadata"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/repair-extensions.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hhea",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hmtx",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/os2"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"QUALITY_CHARACTER_RANGE_MISMATCH": {
+		"id": "QUALITY_CHARACTER_RANGE_MISMATCH",
+		"checkId": "binary.runFaceChecks",
+		"pipeline": "binary",
+		"family": "diagnostic-execution",
+		"tables": [
+			"*",
+			"OS/2",
+			"cmap"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 4311,
+			"symbol": "runFaceChecks"
+		},
+		"references": [
+			"docs/diagnostics.md",
+			"docs/font-quality.md",
+			"docs/repair-extensions.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cmap",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/os2",
+			"https://www.unicode.org/Public/17.0.0/ucd/PropList.txt"
+		],
+		"severities": [
+			"error",
+			"info",
+			"warning"
+		],
+		"expression": "code",
+		"expansionEvidence": [
+			{
+				"file": "src/validate/diagnoseFont.js",
+				"line": 4304,
+				"symbol": "runFaceChecks",
+				"expression": "['QUALITY_NAME_WHITESPACE', 'QUALITY_POSTSCRIPT_NAME_INVALID', 'QUALITY_NAME_ENCODING_INVALID',\n\t\t\t\t'QUALITY_AVERAGE_WIDTH_MISMATCH', 'QUALITY_CHARACTER_RANGE_MISMATCH']"
+			}
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectMetadata",
+			"binary.runFaceChecks"
+		],
+		"repairIds": [
+			"os2.character-range"
+		],
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.runFaceChecks",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 4311,
+					"symbol": "runFaceChecks"
+				},
+				"references": [
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error",
+					"info",
+					"warning"
+				],
+				"expression": "code",
+				"expansionEvidence": [
+					{
+						"file": "src/validate/diagnoseFont.js",
+						"line": 4304,
+						"symbol": "runFaceChecks",
+						"expression": "['QUALITY_NAME_WHITESPACE', 'QUALITY_POSTSCRIPT_NAME_INVALID', 'QUALITY_NAME_ENCODING_INVALID',\n\t\t\t\t'QUALITY_AVERAGE_WIDTH_MISMATCH', 'QUALITY_CHARACTER_RANGE_MISMATCH']"
+					}
+				]
+			},
+			{
+				"checkId": "binary.inspectMetadata",
+				"pipeline": "binary",
+				"family": "character-mapping",
+				"tables": [
+					"OS/2",
+					"cmap"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage",
+				"source": {
+					"file": "src/validate/metadata-repairs.js",
+					"line": 483,
+					"symbol": "inspectMetadata"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/repair-extensions.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cmap",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/os2",
+					"https://www.unicode.org/Public/17.0.0/ucd/PropList.txt"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"QUALITY_NAME_ENCODING_INVALID": {
+		"id": "QUALITY_NAME_ENCODING_INVALID",
+		"checkId": "binary.runFaceChecks",
+		"pipeline": "binary",
+		"family": "diagnostic-execution",
+		"tables": [
+			"*",
+			"name"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 4311,
+			"symbol": "runFaceChecks"
+		},
+		"references": [
+			"docs/diagnostics.md",
+			"docs/font-quality.md",
+			"docs/repair-extensions.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/name"
+		],
+		"severities": [
+			"error",
+			"info",
+			"warning"
+		],
+		"expression": "code",
+		"expansionEvidence": [
+			{
+				"file": "src/validate/diagnoseFont.js",
+				"line": 4304,
+				"symbol": "runFaceChecks",
+				"expression": "['QUALITY_NAME_WHITESPACE', 'QUALITY_POSTSCRIPT_NAME_INVALID', 'QUALITY_NAME_ENCODING_INVALID',\n\t\t\t\t'QUALITY_AVERAGE_WIDTH_MISMATCH', 'QUALITY_CHARACTER_RANGE_MISMATCH']"
+			}
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectMetadata",
+			"binary.runFaceChecks"
+		],
+		"repairIds": [
+			"name.record"
+		],
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.runFaceChecks",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 4311,
+					"symbol": "runFaceChecks"
+				},
+				"references": [
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error",
+					"info",
+					"warning"
+				],
+				"expression": "code",
+				"expansionEvidence": [
+					{
+						"file": "src/validate/diagnoseFont.js",
+						"line": 4304,
+						"symbol": "runFaceChecks",
+						"expression": "['QUALITY_NAME_WHITESPACE', 'QUALITY_POSTSCRIPT_NAME_INVALID', 'QUALITY_NAME_ENCODING_INVALID',\n\t\t\t\t'QUALITY_AVERAGE_WIDTH_MISMATCH', 'QUALITY_CHARACTER_RANGE_MISMATCH']"
+					}
+				]
+			},
+			{
+				"checkId": "binary.inspectMetadata",
+				"pipeline": "binary",
+				"family": "naming",
+				"table": "name",
+				"tables": [
+					"name"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage",
+				"source": {
+					"file": "src/validate/metadata-repairs.js",
+					"line": 468,
+					"symbol": "inspectMetadata"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/repair-extensions.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/name"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"QUALITY_NAME_WHITESPACE": {
+		"id": "QUALITY_NAME_WHITESPACE",
+		"checkId": "binary.runFaceChecks",
+		"pipeline": "binary",
+		"family": "diagnostic-execution",
+		"tables": [
+			"*",
+			"name"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 4311,
+			"symbol": "runFaceChecks"
+		},
+		"references": [
+			"docs/diagnostics.md",
+			"docs/font-quality.md",
+			"docs/repair-extensions.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/name"
+		],
+		"severities": [
+			"error",
+			"info",
+			"warning"
+		],
+		"expression": "code",
+		"expansionEvidence": [
+			{
+				"file": "src/validate/diagnoseFont.js",
+				"line": 4304,
+				"symbol": "runFaceChecks",
+				"expression": "['QUALITY_NAME_WHITESPACE', 'QUALITY_POSTSCRIPT_NAME_INVALID', 'QUALITY_NAME_ENCODING_INVALID',\n\t\t\t\t'QUALITY_AVERAGE_WIDTH_MISMATCH', 'QUALITY_CHARACTER_RANGE_MISMATCH']"
+			}
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectMetadata",
+			"binary.runFaceChecks"
+		],
+		"repairIds": [
+			"name.record"
+		],
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.runFaceChecks",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 4311,
+					"symbol": "runFaceChecks"
+				},
+				"references": [
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error",
+					"info",
+					"warning"
+				],
+				"expression": "code",
+				"expansionEvidence": [
+					{
+						"file": "src/validate/diagnoseFont.js",
+						"line": 4304,
+						"symbol": "runFaceChecks",
+						"expression": "['QUALITY_NAME_WHITESPACE', 'QUALITY_POSTSCRIPT_NAME_INVALID', 'QUALITY_NAME_ENCODING_INVALID',\n\t\t\t\t'QUALITY_AVERAGE_WIDTH_MISMATCH', 'QUALITY_CHARACTER_RANGE_MISMATCH']"
+					}
+				]
+			},
+			{
+				"checkId": "binary.inspectMetadata",
+				"pipeline": "binary",
+				"family": "naming",
+				"table": "name",
+				"tables": [
+					"name"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage",
+				"source": {
+					"file": "src/validate/metadata-repairs.js",
+					"line": 472,
+					"symbol": "inspectMetadata"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/repair-extensions.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/name"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"QUALITY_POSTSCRIPT_NAME_INVALID": {
+		"id": "QUALITY_POSTSCRIPT_NAME_INVALID",
+		"checkId": "binary.runFaceChecks",
+		"pipeline": "binary",
+		"family": "diagnostic-execution",
+		"tables": [
+			"*",
+			"name"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 4311,
+			"symbol": "runFaceChecks"
+		},
+		"references": [
+			"docs/diagnostics.md",
+			"docs/font-quality.md",
+			"docs/repair-extensions.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/name"
+		],
+		"severities": [
+			"error",
+			"info",
+			"warning"
+		],
+		"expression": "code",
+		"expansionEvidence": [
+			{
+				"file": "src/validate/diagnoseFont.js",
+				"line": 4304,
+				"symbol": "runFaceChecks",
+				"expression": "['QUALITY_NAME_WHITESPACE', 'QUALITY_POSTSCRIPT_NAME_INVALID', 'QUALITY_NAME_ENCODING_INVALID',\n\t\t\t\t'QUALITY_AVERAGE_WIDTH_MISMATCH', 'QUALITY_CHARACTER_RANGE_MISMATCH']"
+			}
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectMetadata",
+			"binary.runFaceChecks"
+		],
+		"repairIds": [
+			"name.record"
+		],
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.runFaceChecks",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 4311,
+					"symbol": "runFaceChecks"
+				},
+				"references": [
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error",
+					"info",
+					"warning"
+				],
+				"expression": "code",
+				"expansionEvidence": [
+					{
+						"file": "src/validate/diagnoseFont.js",
+						"line": 4304,
+						"symbol": "runFaceChecks",
+						"expression": "['QUALITY_NAME_WHITESPACE', 'QUALITY_POSTSCRIPT_NAME_INVALID', 'QUALITY_NAME_ENCODING_INVALID',\n\t\t\t\t'QUALITY_AVERAGE_WIDTH_MISMATCH', 'QUALITY_CHARACTER_RANGE_MISMATCH']"
+					}
+				]
+			},
+			{
+				"checkId": "binary.inspectMetadata",
+				"pipeline": "binary",
+				"family": "naming",
+				"table": "name",
+				"tables": [
+					"name"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage",
+				"source": {
+					"file": "src/validate/metadata-repairs.js",
+					"line": 474,
+					"symbol": "inspectMetadata"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/repair-extensions.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/name"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
 	"RECOMMENDED_TABLE_MISSING": {
 		"id": "RECOMMENDED_TABLE_MISSING",
 		"checkId": "validation.validateOutlineAndRequiredTables",
@@ -18822,7 +28656,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 249,
+			"line": 255,
 			"symbol": "phaseHeader"
 		},
 		"references": [
@@ -18857,7 +28691,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 249,
+					"line": 255,
 					"symbol": "phaseHeader"
 				},
 				"references": [
@@ -18930,6 +28764,396 @@ export const CHECK_CATALOG = {
 			}
 		]
 	},
+	"SOURCE_COMPONENT_SAMPLE_UNSUPPORTED": {
+		"id": "SOURCE_COMPONENT_SAMPLE_UNSUPPORTED",
+		"checkId": "validation.inspectSourceQuality",
+		"pipeline": "editable",
+		"family": "source-outline-evidence",
+		"tables": [],
+		"formats": [
+			"simplified-json",
+			"source-projects"
+		],
+		"kind": "information",
+		"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+		"source": {
+			"file": "src/validate/workflow-source.js",
+			"line": 141,
+			"symbol": "inspectSourceQuality"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"docs/validation.md",
+			"font-flux.schema.json",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"info"
+		],
+		"pipelines": [
+			"editable"
+		],
+		"checkIds": [
+			"validation.inspectSourceQuality"
+		],
+		"repairIds": [],
+		"noFixReason": "Informational observation or detached normalization notice, not a registered repair operation.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "validation.inspectSourceQuality",
+				"pipeline": "editable",
+				"family": "source-outline-evidence",
+				"tables": [],
+				"formats": [
+					"source-projects",
+					"simplified-json"
+				],
+				"kind": "information",
+				"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+				"source": {
+					"file": "src/validate/workflow-source.js",
+					"line": 141,
+					"symbol": "inspectSourceQuality"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"docs/validation.md",
+					"font-flux.schema.json",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"info"
+				]
+			}
+		]
+	},
+	"SOURCE_MASTERS_UNAVAILABLE": {
+		"id": "SOURCE_MASTERS_UNAVAILABLE",
+		"checkId": "validation.inspectSourceQuality",
+		"pipeline": "editable",
+		"family": "source-outline-evidence",
+		"tables": [],
+		"formats": [
+			"simplified-json",
+			"source-projects"
+		],
+		"kind": "information",
+		"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+		"source": {
+			"file": "src/validate/workflow-source.js",
+			"line": 127,
+			"symbol": "inspectSourceQuality"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"docs/validation.md",
+			"font-flux.schema.json",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"info"
+		],
+		"pipelines": [
+			"editable"
+		],
+		"checkIds": [
+			"validation.inspectSourceQuality"
+		],
+		"repairIds": [],
+		"noFixReason": "Informational observation or detached normalization notice, not a registered repair operation.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "validation.inspectSourceQuality",
+				"pipeline": "editable",
+				"family": "source-outline-evidence",
+				"tables": [],
+				"formats": [
+					"source-projects",
+					"simplified-json"
+				],
+				"kind": "information",
+				"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+				"source": {
+					"file": "src/validate/workflow-source.js",
+					"line": 127,
+					"symbol": "inspectSourceQuality"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"docs/validation.md",
+					"font-flux.schema.json",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"info"
+				]
+			}
+		]
+	},
+	"SOURCE_MASTER_GLYPH_MISSING": {
+		"id": "SOURCE_MASTER_GLYPH_MISSING",
+		"checkId": "validation.inspectSourceQuality",
+		"pipeline": "editable",
+		"family": "source-outline-evidence",
+		"tables": [],
+		"formats": [
+			"simplified-json",
+			"source-projects"
+		],
+		"kind": "finding",
+		"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+		"source": {
+			"file": "src/validate/workflow-source.js",
+			"line": 113,
+			"symbol": "inspectSourceQuality"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"docs/validation.md",
+			"font-flux.schema.json",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"editable"
+		],
+		"checkIds": [
+			"validation.inspectSourceQuality"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "validation.inspectSourceQuality",
+				"pipeline": "editable",
+				"family": "source-outline-evidence",
+				"tables": [],
+				"formats": [
+					"source-projects",
+					"simplified-json"
+				],
+				"kind": "finding",
+				"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+				"source": {
+					"file": "src/validate/workflow-source.js",
+					"line": 113,
+					"symbol": "inspectSourceQuality"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"docs/validation.md",
+					"font-flux.schema.json",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"SOURCE_MASTER_TOPOLOGY_MISMATCH": {
+		"id": "SOURCE_MASTER_TOPOLOGY_MISMATCH",
+		"checkId": "validation.inspectSourceQuality",
+		"pipeline": "editable",
+		"family": "source-outline-evidence",
+		"tables": [],
+		"formats": [
+			"simplified-json",
+			"source-projects"
+		],
+		"kind": "finding",
+		"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+		"source": {
+			"file": "src/validate/workflow-source.js",
+			"line": 119,
+			"symbol": "inspectSourceQuality"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"docs/validation.md",
+			"font-flux.schema.json",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"editable"
+		],
+		"checkIds": [
+			"validation.inspectSourceQuality"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "validation.inspectSourceQuality",
+				"pipeline": "editable",
+				"family": "source-outline-evidence",
+				"tables": [],
+				"formats": [
+					"source-projects",
+					"simplified-json"
+				],
+				"kind": "finding",
+				"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+				"source": {
+					"file": "src/validate/workflow-source.js",
+					"line": 119,
+					"symbol": "inspectSourceQuality"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"docs/validation.md",
+					"font-flux.schema.json",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"SOURCE_MASTER_UPEM_MISMATCH": {
+		"id": "SOURCE_MASTER_UPEM_MISMATCH",
+		"checkId": "validation.inspectSourceQuality",
+		"pipeline": "editable",
+		"family": "source-outline-evidence",
+		"tables": [],
+		"formats": [
+			"simplified-json",
+			"source-projects"
+		],
+		"kind": "finding",
+		"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+		"source": {
+			"file": "src/validate/workflow-source.js",
+			"line": 125,
+			"symbol": "inspectSourceQuality"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"docs/validation.md",
+			"font-flux.schema.json",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"warning"
+		],
+		"pipelines": [
+			"editable"
+		],
+		"checkIds": [
+			"validation.inspectSourceQuality"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "validation.inspectSourceQuality",
+				"pipeline": "editable",
+				"family": "source-outline-evidence",
+				"tables": [],
+				"formats": [
+					"source-projects",
+					"simplified-json"
+				],
+				"kind": "finding",
+				"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+				"source": {
+					"file": "src/validate/workflow-source.js",
+					"line": 125,
+					"symbol": "inspectSourceQuality"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"docs/validation.md",
+					"font-flux.schema.json",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"SOURCE_PROVENANCE_UNAVAILABLE": {
+		"id": "SOURCE_PROVENANCE_UNAVAILABLE",
+		"checkId": "validation.inspectSourceQuality",
+		"pipeline": "editable",
+		"family": "source-outline-evidence",
+		"tables": [],
+		"formats": [
+			"simplified-json",
+			"source-projects"
+		],
+		"kind": "information",
+		"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+		"source": {
+			"file": "src/validate/workflow-source.js",
+			"line": 104,
+			"symbol": "inspectSourceQuality"
+		},
+		"references": [
+			"docs/quality-workflows.md",
+			"docs/validation.md",
+			"font-flux.schema.json",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		"severities": [
+			"info"
+		],
+		"pipelines": [
+			"editable"
+		],
+		"checkIds": [
+			"validation.inspectSourceQuality"
+		],
+		"repairIds": [],
+		"noFixReason": "Informational observation or detached normalization notice, not a registered repair operation.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "validation.inspectSourceQuality",
+				"pipeline": "editable",
+				"family": "source-outline-evidence",
+				"tables": [],
+				"formats": [
+					"source-projects",
+					"simplified-json"
+				],
+				"kind": "information",
+				"publicReachability": "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
+				"source": {
+					"file": "src/validate/workflow-source.js",
+					"line": 104,
+					"symbol": "inspectSourceQuality"
+				},
+				"references": [
+					"docs/quality-workflows.md",
+					"docs/validation.md",
+					"font-flux.schema.json",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"info"
+				]
+			}
+		]
+	},
 	"STAT_AXIS_DUPLICATE_TAG": {
 		"id": "STAT_AXIS_DUPLICATE_TAG",
 		"checkId": "binary.validateSTAT",
@@ -18949,7 +29173,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1798,
+			"line": 1824,
 			"symbol": "validateSTAT"
 		},
 		"references": [
@@ -18987,7 +29211,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1798,
+					"line": 1824,
 					"symbol": "validateSTAT"
 				},
 				"references": [
@@ -19018,7 +29242,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1832,
+			"line": 1858,
 			"symbol": "validateSTAT"
 		},
 		"references": [
@@ -19056,7 +29280,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1832,
+					"line": 1858,
 					"symbol": "validateSTAT"
 				},
 				"references": [
@@ -19084,7 +29308,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1863,
+					"line": 1889,
 					"symbol": "validateSTAT"
 				},
 				"references": [
@@ -19115,7 +29339,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1849,
+			"line": 1875,
 			"symbol": "validateSTAT"
 		},
 		"references": [
@@ -19153,7 +29377,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1849,
+					"line": 1875,
 					"symbol": "validateSTAT"
 				},
 				"references": [
@@ -19184,7 +29408,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1783,
+			"line": 1809,
 			"symbol": "validateSTAT"
 		},
 		"references": [
@@ -19222,7 +29446,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1783,
+					"line": 1809,
 					"symbol": "validateSTAT"
 				},
 				"references": [
@@ -19253,7 +29477,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1813,
+			"line": 1839,
 			"symbol": "validateSTAT"
 		},
 		"references": [
@@ -19292,7 +29516,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1813,
+					"line": 1839,
 					"symbol": "validateSTAT"
 				},
 				"references": [
@@ -19324,7 +29548,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1775,
+			"line": 1801,
 			"symbol": "validateSTAT"
 		},
 		"references": [
@@ -19362,7 +29586,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1775,
+					"line": 1801,
 					"symbol": "validateSTAT"
 				},
 				"references": [
@@ -19476,6 +29700,237 @@ export const CHECK_CATALOG = {
 					"docs/validation.md",
 					"font-flux.schema.json",
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"SVG_DOCUMENT_OFFSET_INVALID": {
+		"id": "SVG_DOCUMENT_OFFSET_INVALID",
+		"checkId": "binary.validateAdvancedColor",
+		"pipeline": "binary",
+		"family": "color-structures",
+		"tables": [
+			"COLR",
+			"CPAL",
+			"SVG "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-color.js",
+			"line": 58,
+			"symbol": "validateAdvancedColor"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedColor"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for SVG_DOCUMENT_OFFSET_INVALID; correcting color-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 58,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"SVG_DOCUMENT_RANGE_INVALID": {
+		"id": "SVG_DOCUMENT_RANGE_INVALID",
+		"checkId": "binary.validateAdvancedColor",
+		"pipeline": "binary",
+		"family": "color-structures",
+		"tables": [
+			"COLR",
+			"CPAL",
+			"SVG "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-color.js",
+			"line": 43,
+			"symbol": "validateAdvancedColor"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedColor"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for SVG_DOCUMENT_RANGE_INVALID; correcting color-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 43,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"SVG_RESERVED_FIELD_INVALID": {
+		"id": "SVG_RESERVED_FIELD_INVALID",
+		"checkId": "binary.validateAdvancedColor",
+		"pipeline": "binary",
+		"family": "color-structures",
+		"tables": [
+			"COLR",
+			"CPAL",
+			"SVG "
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-color.js",
+			"line": 53,
+			"symbol": "validateAdvancedColor"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedColor"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for SVG_RESERVED_FIELD_INVALID; correcting color-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedColor",
+				"pipeline": "binary",
+				"family": "color-structures",
+				"tables": [
+					"COLR",
+					"CPAL",
+					"SVG "
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-color.js",
+					"line": 53,
+					"symbol": "validateAdvancedColor"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cpal",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/svg"
 				],
 				"severities": [
 					"error"
@@ -19631,7 +30086,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 477,
+			"line": 483,
 			"symbol": "phaseDirectory"
 		},
 		"references": [
@@ -19670,7 +30125,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 477,
+					"line": 483,
 					"symbol": "phaseDirectory"
 				},
 				"references": [
@@ -19692,7 +30147,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1426,
+					"line": 1452,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -19958,7 +30413,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 455,
+			"line": 461,
 			"symbol": "phaseDirectory"
 		},
 		"references": [
@@ -19995,7 +30450,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 455,
+					"line": 461,
 					"symbol": "phaseDirectory"
 				},
 				"references": [
@@ -20025,7 +30480,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 423,
+			"line": 429,
 			"symbol": "phaseDirectory"
 		},
 		"references": [
@@ -20065,7 +30520,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 423,
+					"line": 429,
 					"symbol": "phaseDirectory"
 				},
 				"references": [
@@ -20087,7 +30542,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1363,
+					"line": 1389,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -20118,7 +30573,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 402,
+			"line": 408,
 			"symbol": "phaseDirectory"
 		},
 		"references": [
@@ -20157,7 +30612,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 402,
+					"line": 408,
 					"symbol": "phaseDirectory"
 				},
 				"references": [
@@ -20179,7 +30634,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1359,
+					"line": 1385,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -20210,7 +30665,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 394,
+			"line": 400,
 			"symbol": "phaseDirectory"
 		},
 		"references": [
@@ -20249,7 +30704,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 394,
+					"line": 400,
 					"symbol": "phaseDirectory"
 				},
 				"references": [
@@ -20271,7 +30726,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1357,
+					"line": 1383,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -20302,7 +30757,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 637,
+			"line": 663,
 			"symbol": "phaseParseTables"
 		},
 		"references": [
@@ -20339,7 +30794,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 637,
+					"line": 663,
 					"symbol": "phaseParseTables"
 				},
 				"references": [
@@ -20369,7 +30824,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 644,
+			"line": 635,
 			"symbol": "phaseParseTables"
 		},
 		"references": [
@@ -20406,7 +30861,34 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 644,
+					"line": 635,
+					"symbol": "phaseParseTables"
+				},
+				"references": [
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.phaseParseTables",
+				"pipeline": "binary",
+				"family": "table-parsing",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 670,
 					"symbol": "phaseParseTables"
 				},
 				"references": [
@@ -20759,7 +31241,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 114,
+			"line": 120,
 			"symbol": "phaseSignature"
 		},
 		"references": [
@@ -20796,7 +31278,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 114,
+					"line": 120,
 					"symbol": "phaseSignature"
 				},
 				"references": [
@@ -20914,7 +31396,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 4127,
+			"line": 4194,
 			"symbol": "diagnoseCollection"
 		},
 		"references": [
@@ -20930,7 +31412,7 @@ export const CHECK_CATALOG = {
 			"binary.diagnoseCollection"
 		],
 		"repairIds": [],
-		"noFixReason": "The current repair catalogue accepts standalone SFNT only, not TTC/OTC collections.",
+		"noFixReason": "Collection-directory damage is not repaired by selecting a face; guarded face repair retains the original directory and every unselected face.",
 		"status": "active",
 		"baseline": false,
 		"origins": [
@@ -20946,7 +31428,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4127,
+					"line": 4194,
 					"symbol": "diagnoseCollection"
 				},
 				"references": [
@@ -20971,7 +31453,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 4120,
+			"line": 4187,
 			"symbol": "diagnoseCollection"
 		},
 		"references": [
@@ -20987,7 +31469,7 @@ export const CHECK_CATALOG = {
 			"binary.diagnoseCollection"
 		],
 		"repairIds": [],
-		"noFixReason": "The current repair catalogue accepts standalone SFNT only, not TTC/OTC collections.",
+		"noFixReason": "Collection-directory damage is not repaired by selecting a face; guarded face repair retains the original directory and every unselected face.",
 		"status": "active",
 		"baseline": false,
 		"origins": [
@@ -21003,7 +31485,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4120,
+					"line": 4187,
 					"symbol": "diagnoseCollection"
 				},
 				"references": [
@@ -21028,7 +31510,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 4094,
+			"line": 4161,
 			"symbol": "diagnoseCollection"
 		},
 		"references": [
@@ -21044,7 +31526,7 @@ export const CHECK_CATALOG = {
 			"binary.diagnoseCollection"
 		],
 		"repairIds": [],
-		"noFixReason": "The current repair catalogue accepts standalone SFNT only, not TTC/OTC collections.",
+		"noFixReason": "Collection-directory damage is not repaired by selecting a face; guarded face repair retains the original directory and every unselected face.",
 		"status": "active",
 		"baseline": false,
 		"origins": [
@@ -21060,7 +31542,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4094,
+					"line": 4161,
 					"symbol": "diagnoseCollection"
 				},
 				"references": [
@@ -21085,7 +31567,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 4088,
+			"line": 4155,
 			"symbol": "diagnoseCollection"
 		},
 		"references": [
@@ -21101,7 +31583,7 @@ export const CHECK_CATALOG = {
 			"binary.diagnoseCollection"
 		],
 		"repairIds": [],
-		"noFixReason": "The current repair catalogue accepts standalone SFNT only, not TTC/OTC collections.",
+		"noFixReason": "Collection-directory damage is not repaired by selecting a face; guarded face repair retains the original directory and every unselected face.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -21117,7 +31599,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4088,
+					"line": 4155,
 					"symbol": "diagnoseCollection"
 				},
 				"references": [
@@ -21142,7 +31624,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 4080,
+			"line": 4147,
 			"symbol": "diagnoseCollection"
 		},
 		"references": [
@@ -21158,7 +31640,7 @@ export const CHECK_CATALOG = {
 			"binary.diagnoseCollection"
 		],
 		"repairIds": [],
-		"noFixReason": "The current repair catalogue accepts standalone SFNT only, not TTC/OTC collections.",
+		"noFixReason": "Collection-directory damage is not repaired by selecting a face; guarded face repair retains the original directory and every unselected face.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -21174,11 +31656,580 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 4080,
+					"line": 4147,
 					"symbol": "diagnoseCollection"
 				},
 				"references": [
 					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"TT_DERIVED_BOUNDS_MISMATCH": {
+		"id": "TT_DERIVED_BOUNDS_MISMATCH",
+		"checkId": "binary.runFaceChecks",
+		"pipeline": "binary",
+		"family": "diagnostic-execution",
+		"tables": [
+			"*",
+			"glyf",
+			"head",
+			"loca"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 4367,
+			"symbol": "runFaceChecks"
+		},
+		"references": [
+			"docs/diagnostics.md",
+			"docs/font-quality.md",
+			"docs/repair-extensions.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/head",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/loca"
+		],
+		"severities": [
+			"error",
+			"info",
+			"warning"
+		],
+		"expression": "code",
+		"expansionEvidence": [
+			{
+				"file": "src/validate/diagnoseFont.js",
+				"line": 4359,
+				"symbol": "runFaceChecks",
+				"expression": "['TT_DERIVED_BOUNDS_MISMATCH', 'TT_DERIVED_MAXP_MISMATCH',\n\t\t\t\t\t'HHEA_DERIVED_EXTREMA_MISMATCH', 'VHEA_DERIVED_EXTREMA_MISMATCH', 'CFF_DERIVED_MAXP_MISMATCH']"
+			}
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectTT",
+			"binary.runFaceChecks"
+		],
+		"repairIds": [
+			"tt.bounds"
+		],
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.runFaceChecks",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 4367,
+					"symbol": "runFaceChecks"
+				},
+				"references": [
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error",
+					"info",
+					"warning"
+				],
+				"expression": "code",
+				"expansionEvidence": [
+					{
+						"file": "src/validate/diagnoseFont.js",
+						"line": 4359,
+						"symbol": "runFaceChecks",
+						"expression": "['TT_DERIVED_BOUNDS_MISMATCH', 'TT_DERIVED_MAXP_MISMATCH',\n\t\t\t\t\t'HHEA_DERIVED_EXTREMA_MISMATCH', 'VHEA_DERIVED_EXTREMA_MISMATCH', 'CFF_DERIVED_MAXP_MISMATCH']"
+					}
+				]
+			},
+			{
+				"checkId": "binary.inspectTT",
+				"pipeline": "binary",
+				"family": "truetype-geometry",
+				"tables": [
+					"glyf",
+					"loca",
+					"head"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage",
+				"source": {
+					"file": "src/validate/repair-tt.js",
+					"line": 536,
+					"symbol": "inspectTT"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/repair-extensions.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/head",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/loca"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"TT_DERIVED_MAXP_MISMATCH": {
+		"id": "TT_DERIVED_MAXP_MISMATCH",
+		"checkId": "binary.runFaceChecks",
+		"pipeline": "binary",
+		"family": "diagnostic-execution",
+		"tables": [
+			"*",
+			"glyf",
+			"loca",
+			"maxp"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 4367,
+			"symbol": "runFaceChecks"
+		},
+		"references": [
+			"docs/diagnostics.md",
+			"docs/font-quality.md",
+			"docs/repair-extensions.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp"
+		],
+		"severities": [
+			"error",
+			"info",
+			"warning"
+		],
+		"expression": "code",
+		"expansionEvidence": [
+			{
+				"file": "src/validate/diagnoseFont.js",
+				"line": 4359,
+				"symbol": "runFaceChecks",
+				"expression": "['TT_DERIVED_BOUNDS_MISMATCH', 'TT_DERIVED_MAXP_MISMATCH',\n\t\t\t\t\t'HHEA_DERIVED_EXTREMA_MISMATCH', 'VHEA_DERIVED_EXTREMA_MISMATCH', 'CFF_DERIVED_MAXP_MISMATCH']"
+			}
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectTT",
+			"binary.runFaceChecks"
+		],
+		"repairIds": [
+			"tt.maxp-geometry"
+		],
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.runFaceChecks",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 4367,
+					"symbol": "runFaceChecks"
+				},
+				"references": [
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error",
+					"info",
+					"warning"
+				],
+				"expression": "code",
+				"expansionEvidence": [
+					{
+						"file": "src/validate/diagnoseFont.js",
+						"line": 4359,
+						"symbol": "runFaceChecks",
+						"expression": "['TT_DERIVED_BOUNDS_MISMATCH', 'TT_DERIVED_MAXP_MISMATCH',\n\t\t\t\t\t'HHEA_DERIVED_EXTREMA_MISMATCH', 'VHEA_DERIVED_EXTREMA_MISMATCH', 'CFF_DERIVED_MAXP_MISMATCH']"
+					}
+				]
+			},
+			{
+				"checkId": "binary.inspectTT",
+				"pipeline": "binary",
+				"family": "truetype-geometry",
+				"tables": [
+					"glyf",
+					"loca",
+					"maxp"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage",
+				"source": {
+					"file": "src/validate/repair-tt.js",
+					"line": 528,
+					"symbol": "inspectTT"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/repair-extensions.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp"
+				],
+				"severities": [
+					"warning"
+				]
+			}
+		]
+	},
+	"TT_INSTR_DEFINITION_LOCATION_INVALID": {
+		"id": "TT_INSTR_DEFINITION_LOCATION_INVALID",
+		"checkId": "binary.validateAdvancedTrueType",
+		"pipeline": "binary",
+		"family": "truetype-instructions-and-geometry",
+		"tables": [
+			"fpgm",
+			"gasp",
+			"glyf",
+			"loca",
+			"maxp",
+			"prep"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-programs.js",
+			"line": 37,
+			"symbol": "validateAdvancedTrueType"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fpgm",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gasp",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/prep"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedTrueType"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for TT_INSTR_DEFINITION_LOCATION_INVALID; correcting truetype-instructions-and-geometry data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedTrueType",
+				"pipeline": "binary",
+				"family": "truetype-instructions-and-geometry",
+				"tables": [
+					"glyf",
+					"loca",
+					"maxp",
+					"fpgm",
+					"prep",
+					"gasp"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 37,
+					"symbol": "validateAdvancedTrueType"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fpgm",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gasp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/prep"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"TT_INSTR_DEFINITION_SCOPE_INVALID": {
+		"id": "TT_INSTR_DEFINITION_SCOPE_INVALID",
+		"checkId": "binary.validateAdvancedTrueType",
+		"pipeline": "binary",
+		"family": "truetype-instructions-and-geometry",
+		"tables": [
+			"fpgm",
+			"gasp",
+			"glyf",
+			"loca",
+			"maxp",
+			"prep"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-programs.js",
+			"line": 32,
+			"symbol": "validateAdvancedTrueType"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fpgm",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gasp",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/prep"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedTrueType"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for TT_INSTR_DEFINITION_SCOPE_INVALID; correcting truetype-instructions-and-geometry data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedTrueType",
+				"pipeline": "binary",
+				"family": "truetype-instructions-and-geometry",
+				"tables": [
+					"glyf",
+					"loca",
+					"maxp",
+					"fpgm",
+					"prep",
+					"gasp"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 32,
+					"symbol": "validateAdvancedTrueType"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fpgm",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gasp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/prep"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateAdvancedTrueType",
+				"pipeline": "binary",
+				"family": "truetype-instructions-and-geometry",
+				"tables": [
+					"glyf",
+					"loca",
+					"maxp",
+					"fpgm",
+					"prep",
+					"gasp"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 41,
+					"symbol": "validateAdvancedTrueType"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fpgm",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gasp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/prep"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"TT_INSTR_ELSE_INVALID": {
+		"id": "TT_INSTR_ELSE_INVALID",
+		"checkId": "binary.validateAdvancedTrueType",
+		"pipeline": "binary",
+		"family": "truetype-instructions-and-geometry",
+		"tables": [
+			"fpgm",
+			"gasp",
+			"glyf",
+			"loca",
+			"maxp",
+			"prep"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-programs.js",
+			"line": 26,
+			"symbol": "validateAdvancedTrueType"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fpgm",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gasp",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/prep"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedTrueType"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for TT_INSTR_ELSE_INVALID; correcting truetype-instructions-and-geometry data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedTrueType",
+				"pipeline": "binary",
+				"family": "truetype-instructions-and-geometry",
+				"tables": [
+					"glyf",
+					"loca",
+					"maxp",
+					"fpgm",
+					"prep",
+					"gasp"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-programs.js",
+					"line": 26,
+					"symbol": "validateAdvancedTrueType"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fpgm",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gasp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/loca",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/maxp",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/prep"
 				],
 				"severities": [
 					"error"
@@ -21206,7 +32257,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3500,
+			"line": 3567,
 			"symbol": "validateTrueTypeInstructions"
 		},
 		"references": [
@@ -21225,7 +32276,7 @@ export const CHECK_CATALOG = {
 			"binary.validateTrueTypeInstructions"
 		],
 		"repairIds": [],
-		"noFixReason": "Instruction scanning does not establish a safe replacement program; no bytecode repair is registered.",
+		"noFixReason": "Instruction scanning cannot establish a replacement program. Explicitly lossy dehinting is distinct from repairing its original behavior.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -21248,7 +32299,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3500,
+					"line": 3567,
 					"symbol": "validateTrueTypeInstructions"
 				},
 				"references": [
@@ -21283,7 +32334,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3515,
+			"line": 3582,
 			"symbol": "validateTrueTypeInstructions"
 		},
 		"references": [
@@ -21302,7 +32353,7 @@ export const CHECK_CATALOG = {
 			"binary.validateTrueTypeInstructions"
 		],
 		"repairIds": [],
-		"noFixReason": "Instruction scanning does not establish a safe replacement program; no bytecode repair is registered.",
+		"noFixReason": "Instruction scanning cannot establish a replacement program. Explicitly lossy dehinting is distinct from repairing its original behavior.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -21325,7 +32376,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3515,
+					"line": 3582,
 					"symbol": "validateTrueTypeInstructions"
 				},
 				"references": [
@@ -21360,7 +32411,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3372,
+			"line": 3439,
 			"symbol": "validateTrueTypeInstructions"
 		},
 		"references": [
@@ -21379,7 +32430,7 @@ export const CHECK_CATALOG = {
 			"binary.validateTrueTypeInstructions"
 		],
 		"repairIds": [],
-		"noFixReason": "Instruction scanning does not establish a safe replacement program; no bytecode repair is registered.",
+		"noFixReason": "Instruction scanning cannot establish a replacement program. Explicitly lossy dehinting is distinct from repairing its original behavior.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -21402,7 +32453,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3372,
+					"line": 3439,
 					"symbol": "validateTrueTypeInstructions"
 				},
 				"references": [
@@ -21434,7 +32485,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3392,
+					"line": 3459,
 					"symbol": "validateTrueTypeInstructions"
 				},
 				"references": [
@@ -21466,7 +32517,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3411,
+					"line": 3478,
 					"symbol": "validateTrueTypeInstructions"
 				},
 				"references": [
@@ -21498,7 +32549,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3425,
+					"line": 3492,
 					"symbol": "validateTrueTypeInstructions"
 				},
 				"references": [
@@ -21530,7 +32581,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3444,
+					"line": 3511,
 					"symbol": "validateTrueTypeInstructions"
 				},
 				"references": [
@@ -21562,7 +32613,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3458,
+					"line": 3525,
 					"symbol": "validateTrueTypeInstructions"
 				},
 				"references": [
@@ -21597,7 +32648,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3482,
+			"line": 3549,
 			"symbol": "validateTrueTypeInstructions"
 		},
 		"references": [
@@ -21616,7 +32667,7 @@ export const CHECK_CATALOG = {
 			"binary.validateTrueTypeInstructions"
 		],
 		"repairIds": [],
-		"noFixReason": "Instruction scanning does not establish a safe replacement program; no bytecode repair is registered.",
+		"noFixReason": "Instruction scanning cannot establish a replacement program. Explicitly lossy dehinting is distinct from repairing its original behavior.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -21639,7 +32690,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3482,
+					"line": 3549,
 					"symbol": "validateTrueTypeInstructions"
 				},
 				"references": [
@@ -21674,7 +32725,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3532,
+			"line": 3599,
 			"symbol": "validateTrueTypeInstructions"
 		},
 		"references": [
@@ -21693,7 +32744,7 @@ export const CHECK_CATALOG = {
 			"binary.validateTrueTypeInstructions"
 		],
 		"repairIds": [],
-		"noFixReason": "Instruction scanning does not establish a safe replacement program; no bytecode repair is registered.",
+		"noFixReason": "Instruction scanning cannot establish a replacement program. Explicitly lossy dehinting is distinct from repairing its original behavior.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -21716,7 +32767,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3532,
+					"line": 3599,
 					"symbol": "validateTrueTypeInstructions"
 				},
 				"references": [
@@ -21751,7 +32802,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3540,
+			"line": 3607,
 			"symbol": "validateTrueTypeInstructions"
 		},
 		"references": [
@@ -21770,7 +32821,7 @@ export const CHECK_CATALOG = {
 			"binary.validateTrueTypeInstructions"
 		],
 		"repairIds": [],
-		"noFixReason": "Instruction scanning does not establish a safe replacement program; no bytecode repair is registered.",
+		"noFixReason": "Instruction scanning cannot establish a replacement program. Explicitly lossy dehinting is distinct from repairing its original behavior.",
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -21793,7 +32844,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3540,
+					"line": 3607,
 					"symbol": "validateTrueTypeInstructions"
 				},
 				"references": [
@@ -21887,7 +32938,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 528,
+			"line": 534,
 			"symbol": "phaseRequiredTables"
 		},
 		"references": [
@@ -21924,7 +32975,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 528,
+					"line": 534,
 					"symbol": "phaseRequiredTables"
 				},
 				"references": [
@@ -22087,6 +33138,1236 @@ export const CHECK_CATALOG = {
 			}
 		]
 	},
+	"VARIATION_MAP_ENCODING_INVALID": {
+		"id": "VARIATION_MAP_ENCODING_INVALID",
+		"checkId": "binary.validateAdvancedVariation",
+		"pipeline": "binary",
+		"family": "variation-structures",
+		"tables": [
+			"BASE",
+			"CFF2",
+			"COLR",
+			"GDEF",
+			"HVAR",
+			"MVAR",
+			"VVAR",
+			"cvar",
+			"fvar",
+			"gvar"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-variation.js",
+			"line": 52,
+			"symbol": "validateAdvancedVariation"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedVariation"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for VARIATION_MAP_ENCODING_INVALID; correcting variation-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedVariation",
+				"pipeline": "binary",
+				"family": "variation-structures",
+				"tables": [
+					"fvar",
+					"gvar",
+					"cvar",
+					"HVAR",
+					"VVAR",
+					"MVAR",
+					"GDEF",
+					"BASE",
+					"COLR",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-variation.js",
+					"line": 52,
+					"symbol": "validateAdvancedVariation"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"VARIATION_POINT_REFERENCE_INVALID": {
+		"id": "VARIATION_POINT_REFERENCE_INVALID",
+		"checkId": "binary.validateAdvancedVariation",
+		"pipeline": "binary",
+		"family": "variation-structures",
+		"tables": [
+			"BASE",
+			"CFF2",
+			"COLR",
+			"GDEF",
+			"HVAR",
+			"MVAR",
+			"VVAR",
+			"cvar",
+			"fvar",
+			"gvar"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-variation.js",
+			"line": 101,
+			"symbol": "validateAdvancedVariation"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedVariation"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for VARIATION_POINT_REFERENCE_INVALID; correcting variation-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedVariation",
+				"pipeline": "binary",
+				"family": "variation-structures",
+				"tables": [
+					"fvar",
+					"gvar",
+					"cvar",
+					"HVAR",
+					"VVAR",
+					"MVAR",
+					"GDEF",
+					"BASE",
+					"COLR",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-variation.js",
+					"line": 101,
+					"symbol": "validateAdvancedVariation"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"VARIATION_REGION_INVALID": {
+		"id": "VARIATION_REGION_INVALID",
+		"checkId": "binary.validateAdvancedStore",
+		"pipeline": "binary",
+		"family": "variation-structures",
+		"tables": [
+			"BASE",
+			"CFF2",
+			"COLR",
+			"GDEF",
+			"HVAR",
+			"MVAR",
+			"VVAR",
+			"cvar",
+			"fvar",
+			"gvar"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-variation.js",
+			"line": 16,
+			"symbol": "validateAdvancedStore"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedStore"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for VARIATION_REGION_INVALID; correcting variation-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedStore",
+				"pipeline": "binary",
+				"family": "variation-structures",
+				"tables": [
+					"fvar",
+					"gvar",
+					"cvar",
+					"HVAR",
+					"VVAR",
+					"MVAR",
+					"GDEF",
+					"BASE",
+					"COLR",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-variation.js",
+					"line": 16,
+					"symbol": "validateAdvancedStore"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"VARIATION_REGION_REFERENCE_INVALID": {
+		"id": "VARIATION_REGION_REFERENCE_INVALID",
+		"checkId": "binary.validateAdvancedStore",
+		"pipeline": "binary",
+		"family": "variation-structures",
+		"tables": [
+			"BASE",
+			"CFF2",
+			"COLR",
+			"GDEF",
+			"HVAR",
+			"MVAR",
+			"VVAR",
+			"cvar",
+			"fvar",
+			"gvar"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-variation.js",
+			"line": 33,
+			"symbol": "validateAdvancedStore"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedStore"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for VARIATION_REGION_REFERENCE_INVALID; correcting variation-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedStore",
+				"pipeline": "binary",
+				"family": "variation-structures",
+				"tables": [
+					"fvar",
+					"gvar",
+					"cvar",
+					"HVAR",
+					"VVAR",
+					"MVAR",
+					"GDEF",
+					"BASE",
+					"COLR",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-variation.js",
+					"line": 33,
+					"symbol": "validateAdvancedStore"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"VARIATION_SHARED_TUPLE_INVALID": {
+		"id": "VARIATION_SHARED_TUPLE_INVALID",
+		"checkId": "binary.validateTupleBytes",
+		"pipeline": "binary",
+		"family": "variation-structures",
+		"tables": [
+			"BASE",
+			"CFF2",
+			"COLR",
+			"GDEF",
+			"HVAR",
+			"MVAR",
+			"VVAR",
+			"cvar",
+			"fvar",
+			"gvar"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-variation.js",
+			"line": 149,
+			"symbol": "validateTupleBytes"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateTupleBytes"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for VARIATION_SHARED_TUPLE_INVALID; correcting variation-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateTupleBytes",
+				"pipeline": "binary",
+				"family": "variation-structures",
+				"tables": [
+					"fvar",
+					"gvar",
+					"cvar",
+					"HVAR",
+					"VVAR",
+					"MVAR",
+					"GDEF",
+					"BASE",
+					"COLR",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-variation.js",
+					"line": 149,
+					"symbol": "validateTupleBytes"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"VARIATION_TUPLE_COORDINATE_INVALID": {
+		"id": "VARIATION_TUPLE_COORDINATE_INVALID",
+		"checkId": "binary.validateAdvancedVariation",
+		"pipeline": "binary",
+		"family": "variation-structures",
+		"tables": [
+			"BASE",
+			"CFF2",
+			"COLR",
+			"GDEF",
+			"HVAR",
+			"MVAR",
+			"VVAR",
+			"cvar",
+			"fvar",
+			"gvar"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-variation.js",
+			"line": 83,
+			"symbol": "validateAdvancedVariation"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedVariation"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for VARIATION_TUPLE_COORDINATE_INVALID; correcting variation-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedVariation",
+				"pipeline": "binary",
+				"family": "variation-structures",
+				"tables": [
+					"fvar",
+					"gvar",
+					"cvar",
+					"HVAR",
+					"VVAR",
+					"MVAR",
+					"GDEF",
+					"BASE",
+					"COLR",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-variation.js",
+					"line": 83,
+					"symbol": "validateAdvancedVariation"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"VARIATION_TUPLE_DATA_SIZE_INVALID": {
+		"id": "VARIATION_TUPLE_DATA_SIZE_INVALID",
+		"checkId": "binary.validateTupleBytes",
+		"pipeline": "binary",
+		"family": "variation-structures",
+		"tables": [
+			"BASE",
+			"CFF2",
+			"COLR",
+			"GDEF",
+			"HVAR",
+			"MVAR",
+			"VVAR",
+			"cvar",
+			"fvar",
+			"gvar"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-variation.js",
+			"line": 193,
+			"symbol": "validateTupleBytes"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateTupleBytes"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for VARIATION_TUPLE_DATA_SIZE_INVALID; correcting variation-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateTupleBytes",
+				"pipeline": "binary",
+				"family": "variation-structures",
+				"tables": [
+					"fvar",
+					"gvar",
+					"cvar",
+					"HVAR",
+					"VVAR",
+					"MVAR",
+					"GDEF",
+					"BASE",
+					"COLR",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-variation.js",
+					"line": 193,
+					"symbol": "validateTupleBytes"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"VARIATION_TUPLE_FLAGS_INVALID": {
+		"id": "VARIATION_TUPLE_FLAGS_INVALID",
+		"checkId": "binary.validateTupleBytes",
+		"pipeline": "binary",
+		"family": "variation-structures",
+		"tables": [
+			"BASE",
+			"CFF2",
+			"COLR",
+			"GDEF",
+			"HVAR",
+			"MVAR",
+			"VVAR",
+			"cvar",
+			"fvar",
+			"gvar"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-variation.js",
+			"line": 141,
+			"symbol": "validateTupleBytes"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateTupleBytes"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for VARIATION_TUPLE_FLAGS_INVALID; correcting variation-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateTupleBytes",
+				"pipeline": "binary",
+				"family": "variation-structures",
+				"tables": [
+					"fvar",
+					"gvar",
+					"cvar",
+					"HVAR",
+					"VVAR",
+					"MVAR",
+					"GDEF",
+					"BASE",
+					"COLR",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-variation.js",
+					"line": 141,
+					"symbol": "validateTupleBytes"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateTupleBytes",
+				"pipeline": "binary",
+				"family": "variation-structures",
+				"tables": [
+					"fvar",
+					"gvar",
+					"cvar",
+					"HVAR",
+					"VVAR",
+					"MVAR",
+					"GDEF",
+					"BASE",
+					"COLR",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-variation.js",
+					"line": 146,
+					"symbol": "validateTupleBytes"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"VARIATION_TUPLE_REGION_INVALID": {
+		"id": "VARIATION_TUPLE_REGION_INVALID",
+		"checkId": "binary.validateAdvancedVariation",
+		"pipeline": "binary",
+		"family": "variation-structures",
+		"tables": [
+			"BASE",
+			"CFF2",
+			"COLR",
+			"GDEF",
+			"HVAR",
+			"MVAR",
+			"VVAR",
+			"cvar",
+			"fvar",
+			"gvar"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-variation.js",
+			"line": 94,
+			"symbol": "validateAdvancedVariation"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedVariation"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for VARIATION_TUPLE_REGION_INVALID; correcting variation-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedVariation",
+				"pipeline": "binary",
+				"family": "variation-structures",
+				"tables": [
+					"fvar",
+					"gvar",
+					"cvar",
+					"HVAR",
+					"VVAR",
+					"MVAR",
+					"GDEF",
+					"BASE",
+					"COLR",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-variation.js",
+					"line": 94,
+					"symbol": "validateAdvancedVariation"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"VARIATION_WORD_DELTA_COUNT_INVALID": {
+		"id": "VARIATION_WORD_DELTA_COUNT_INVALID",
+		"checkId": "binary.validateAdvancedStore",
+		"pipeline": "binary",
+		"family": "variation-structures",
+		"tables": [
+			"BASE",
+			"CFF2",
+			"COLR",
+			"GDEF",
+			"HVAR",
+			"MVAR",
+			"VVAR",
+			"cvar",
+			"fvar",
+			"gvar"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+		"source": {
+			"file": "src/validate/advanced-variation.js",
+			"line": 29,
+			"symbol": "validateAdvancedStore"
+		},
+		"references": [
+			"docs/advanced-diagnostics.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateAdvancedStore"
+		],
+		"repairIds": [],
+		"noFixReason": "No registered repair for VARIATION_WORD_DELTA_COUNT_INVALID; correcting variation-structures data requires a separately specified operation with complete dependency and intent checks.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateAdvancedStore",
+				"pipeline": "binary",
+				"family": "variation-structures",
+				"tables": [
+					"fvar",
+					"gvar",
+					"cvar",
+					"HVAR",
+					"VVAR",
+					"MVAR",
+					"GDEF",
+					"BASE",
+					"COLR",
+					"CFF2"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
+				"source": {
+					"file": "src/validate/advanced-variation.js",
+					"line": 29,
+					"symbol": "validateAdvancedStore"
+				},
+				"references": [
+					"docs/advanced-diagnostics.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/base",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cff2",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/colr",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/cvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/fvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gdef",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/gvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/hvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/mvar",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/vvar"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"VHEA_DERIVED_EXTREMA_MISMATCH": {
+		"id": "VHEA_DERIVED_EXTREMA_MISMATCH",
+		"checkId": "binary.runFaceChecks",
+		"pipeline": "binary",
+		"family": "diagnostic-execution",
+		"tables": [
+			"*",
+			"glyf",
+			"vhea",
+			"vmtx"
+		],
+		"formats": [
+			"collection",
+			"sfnt",
+			"woff1",
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 4367,
+			"symbol": "runFaceChecks"
+		},
+		"references": [
+			"docs/diagnostics.md",
+			"docs/font-quality.md",
+			"docs/repair-extensions.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/vhea",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/vmtx"
+		],
+		"severities": [
+			"error",
+			"info",
+			"warning"
+		],
+		"expression": "code",
+		"expansionEvidence": [
+			{
+				"file": "src/validate/diagnoseFont.js",
+				"line": 4359,
+				"symbol": "runFaceChecks",
+				"expression": "['TT_DERIVED_BOUNDS_MISMATCH', 'TT_DERIVED_MAXP_MISMATCH',\n\t\t\t\t\t'HHEA_DERIVED_EXTREMA_MISMATCH', 'VHEA_DERIVED_EXTREMA_MISMATCH', 'CFF_DERIVED_MAXP_MISMATCH']"
+			}
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.inspectTT",
+			"binary.runFaceChecks"
+		],
+		"repairIds": [
+			"vhea.extrema"
+		],
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.runFaceChecks",
+				"pipeline": "binary",
+				"family": "diagnostic-execution",
+				"tables": [
+					"*"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 4367,
+					"symbol": "runFaceChecks"
+				},
+				"references": [
+					"docs/diagnostics.md"
+				],
+				"severities": [
+					"error",
+					"info",
+					"warning"
+				],
+				"expression": "code",
+				"expansionEvidence": [
+					{
+						"file": "src/validate/diagnoseFont.js",
+						"line": 4359,
+						"symbol": "runFaceChecks",
+						"expression": "['TT_DERIVED_BOUNDS_MISMATCH', 'TT_DERIVED_MAXP_MISMATCH',\n\t\t\t\t\t'HHEA_DERIVED_EXTREMA_MISMATCH', 'VHEA_DERIVED_EXTREMA_MISMATCH', 'CFF_DERIVED_MAXP_MISMATCH']"
+					}
+				]
+			},
+			{
+				"checkId": "binary.inspectTT",
+				"pipeline": "binary",
+				"family": "metrics-and-style",
+				"tables": [
+					"vhea",
+					"vmtx",
+					"glyf"
+				],
+				"formats": [
+					"sfnt",
+					"woff1",
+					"woff2",
+					"collection"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage",
+				"source": {
+					"file": "src/validate/repair-tt.js",
+					"line": 543,
+					"symbol": "inspectTT"
+				},
+				"references": [
+					"docs/font-quality.md",
+					"docs/repair-extensions.md",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/glyf",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/vhea",
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/vmtx"
+				],
+				"severities": [
+					"warning"
+				],
+				"expression": "vertical ? 'VHEA_DERIVED_EXTREMA_MISMATCH' : 'HHEA_DERIVED_EXTREMA_MISMATCH'",
+				"expansionEvidence": []
+			}
+		]
+	},
 	"VHEA_VMTX_MISMATCH": {
 		"id": "VHEA_VMTX_MISMATCH",
 		"checkId": "binary.phaseCrossTableChecks",
@@ -22106,7 +34387,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3966,
+			"line": 4033,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -22145,7 +34426,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3966,
+					"line": 4033,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -22177,7 +34458,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 3986,
+			"line": 4053,
 			"symbol": "phaseCrossTableChecks"
 		},
 		"references": [
@@ -22191,7 +34472,7 @@ export const CHECK_CATALOG = {
 		"expansionEvidence": [
 			{
 				"file": "src/validate/diagnoseFont.js",
-				"line": 3981,
+				"line": 4048,
 				"symbol": "phaseCrossTableChecks",
 				"expression": "['HVAR', 'VVAR', 'MVAR', 'avar']"
 			}
@@ -22225,7 +34506,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 3986,
+					"line": 4053,
 					"symbol": "phaseCrossTableChecks"
 				},
 				"references": [
@@ -22239,7 +34520,7 @@ export const CHECK_CATALOG = {
 				"expansionEvidence": [
 					{
 						"file": "src/validate/diagnoseFont.js",
-						"line": 3981,
+						"line": 4048,
 						"symbol": "phaseCrossTableChecks",
 						"expression": "['HVAR', 'VVAR', 'MVAR', 'avar']"
 					}
@@ -22260,7 +34541,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1361,
+			"line": 1387,
 			"symbol": "validateWoff1Wrapper"
 		},
 		"references": [
@@ -22293,7 +34574,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1361,
+					"line": 1387,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -22319,7 +34600,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1329,
+			"line": 1355,
 			"symbol": "validateWoff1Wrapper"
 		},
 		"references": [
@@ -22335,8 +34616,9 @@ export const CHECK_CATALOG = {
 		"checkIds": [
 			"binary.validateWoff1Wrapper"
 		],
-		"repairIds": [],
-		"noFixReason": "Container bytes, decompression, or declarations require source recovery or a separately implemented wrapper repair.",
+		"repairIds": [
+			"container.length"
+		],
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -22352,7 +34634,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1329,
+					"line": 1355,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -22378,7 +34660,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1388,
+			"line": 1414,
 			"symbol": "validateWoff1Wrapper"
 		},
 		"references": [
@@ -22411,7 +34693,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1388,
+					"line": 1414,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -22434,7 +34716,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1396,
+					"line": 1422,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -22460,7 +34742,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1407,
+			"line": 1433,
 			"symbol": "validateWoff1Wrapper"
 		},
 		"references": [
@@ -22493,7 +34775,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1407,
+					"line": 1433,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -22516,7 +34798,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1416,
+					"line": 1442,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -22542,7 +34824,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1319,
+			"line": 1345,
 			"symbol": "validateWoff1Wrapper"
 		},
 		"references": [
@@ -22558,8 +34840,9 @@ export const CHECK_CATALOG = {
 		"checkIds": [
 			"binary.validateWoff1Wrapper"
 		],
-		"repairIds": [],
-		"noFixReason": "Container bytes, decompression, or declarations require source recovery or a separately implemented wrapper repair.",
+		"repairIds": [
+			"container.reserved"
+		],
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -22575,7 +34858,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1319,
+					"line": 1345,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -22601,7 +34884,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1375,
+			"line": 1401,
 			"symbol": "validateWoff1Wrapper"
 		},
 		"references": [
@@ -22617,8 +34900,9 @@ export const CHECK_CATALOG = {
 		"checkIds": [
 			"binary.validateWoff1Wrapper"
 		],
-		"repairIds": [],
-		"noFixReason": "Container bytes, decompression, or declarations require source recovery or a separately implemented wrapper repair.",
+		"repairIds": [
+			"container.sfnt-size"
+		],
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -22634,7 +34918,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1375,
+					"line": 1401,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -22660,7 +34944,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1464,
+			"line": 1490,
 			"symbol": "validateWoff1Wrapper"
 		},
 		"references": [
@@ -22693,7 +34977,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1464,
+					"line": 1490,
 					"symbol": "validateWoff1Wrapper"
 				},
 				"references": [
@@ -22719,7 +35003,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 153,
+			"line": 159,
 			"symbol": "phaseSignature"
 		},
 		"references": [
@@ -22752,7 +35036,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 153,
+					"line": 159,
 					"symbol": "phaseSignature"
 				},
 				"references": [
@@ -22778,7 +35062,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 161,
+			"line": 167,
 			"symbol": "phaseSignature"
 		},
 		"references": [
@@ -22811,7 +35095,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 161,
+					"line": 167,
 					"symbol": "phaseSignature"
 				},
 				"references": [
@@ -22837,7 +35121,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 178,
+			"line": 184,
 			"symbol": "phaseSignature"
 		},
 		"references": [
@@ -22871,7 +35155,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 178,
+					"line": 184,
 					"symbol": "phaseSignature"
 				},
 				"references": [
@@ -22887,6 +35171,207 @@ export const CHECK_CATALOG = {
 	},
 	"WOFF2_DECOMPRESSED_SIZE_INVALID": {
 		"id": "WOFF2_DECOMPRESSED_SIZE_INVALID",
+		"checkId": "binary.validateWoff2Wrapper",
+		"pipeline": "binary",
+		"family": "container",
+		"tables": [],
+		"formats": [
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 1546,
+			"symbol": "validateWoff2Wrapper"
+		},
+		"references": [
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff",
+			"https://www.w3.org/TR/WOFF2/"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateWoff2Wrapper"
+		],
+		"repairIds": [],
+		"noFixReason": "Container bytes, decompression, or declarations require source recovery or a separately implemented wrapper repair.",
+		"status": "active",
+		"baseline": true,
+		"origins": [
+			{
+				"checkId": "binary.validateWoff2Wrapper",
+				"pipeline": "binary",
+				"family": "container",
+				"tables": [],
+				"formats": [
+					"woff2"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 1546,
+					"symbol": "validateWoff2Wrapper"
+				},
+				"references": [
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff",
+					"https://www.w3.org/TR/WOFF2/"
+				],
+				"severities": [
+					"error"
+				]
+			},
+			{
+				"checkId": "binary.validateWoff2Wrapper",
+				"pipeline": "binary",
+				"family": "container",
+				"tables": [],
+				"formats": [
+					"woff2"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 1555,
+					"symbol": "validateWoff2Wrapper"
+				},
+				"references": [
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff",
+					"https://www.w3.org/TR/WOFF2/"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"WOFF2_FILE_SIZE_MISMATCH": {
+		"id": "WOFF2_FILE_SIZE_MISMATCH",
+		"checkId": "binary.validateWoff2Wrapper",
+		"pipeline": "binary",
+		"family": "container",
+		"tables": [],
+		"formats": [
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 1537,
+			"symbol": "validateWoff2Wrapper"
+		},
+		"references": [
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff",
+			"https://www.w3.org/TR/WOFF2/"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateWoff2Wrapper"
+		],
+		"repairIds": [
+			"container.length"
+		],
+		"status": "active",
+		"baseline": true,
+		"origins": [
+			{
+				"checkId": "binary.validateWoff2Wrapper",
+				"pipeline": "binary",
+				"family": "container",
+				"tables": [],
+				"formats": [
+					"woff2"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 1537,
+					"symbol": "validateWoff2Wrapper"
+				},
+				"references": [
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff",
+					"https://www.w3.org/TR/WOFF2/"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"WOFF2_METADATA_BLOCK_INVALID": {
+		"id": "WOFF2_METADATA_BLOCK_INVALID",
+		"checkId": "binary.validateWoff2Wrapper",
+		"pipeline": "binary",
+		"family": "container",
+		"tables": [],
+		"formats": [
+			"woff2"
+		],
+		"kind": "finding",
+		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+		"source": {
+			"file": "src/validate/diagnoseFont.js",
+			"line": 1513,
+			"symbol": "validateWoff2Wrapper"
+		},
+		"references": [
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff",
+			"https://www.w3.org/TR/WOFF2/"
+		],
+		"severities": [
+			"error"
+		],
+		"pipelines": [
+			"binary"
+		],
+		"checkIds": [
+			"binary.validateWoff2Wrapper"
+		],
+		"repairIds": [],
+		"noFixReason": "Container bytes, decompression, or declarations require source recovery or a separately implemented wrapper repair.",
+		"status": "active",
+		"baseline": false,
+		"origins": [
+			{
+				"checkId": "binary.validateWoff2Wrapper",
+				"pipeline": "binary",
+				"family": "container",
+				"tables": [],
+				"formats": [
+					"woff2"
+				],
+				"kind": "finding",
+				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
+				"source": {
+					"file": "src/validate/diagnoseFont.js",
+					"line": 1513,
+					"symbol": "validateWoff2Wrapper"
+				},
+				"references": [
+					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff",
+					"https://www.w3.org/TR/WOFF2/"
+				],
+				"severities": [
+					"error"
+				]
+			}
+		]
+	},
+	"WOFF2_PRIVATE_BLOCK_INVALID": {
+		"id": "WOFF2_PRIVATE_BLOCK_INVALID",
 		"checkId": "binary.validateWoff2Wrapper",
 		"pipeline": "binary",
 		"family": "container",
@@ -22917,7 +35402,7 @@ export const CHECK_CATALOG = {
 		"repairIds": [],
 		"noFixReason": "Container bytes, decompression, or declarations require source recovery or a separately implemented wrapper repair.",
 		"status": "active",
-		"baseline": true,
+		"baseline": false,
 		"origins": [
 			{
 				"checkId": "binary.validateWoff2Wrapper",
@@ -22932,206 +35417,6 @@ export const CHECK_CATALOG = {
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
 					"line": 1520,
-					"symbol": "validateWoff2Wrapper"
-				},
-				"references": [
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff",
-					"https://www.w3.org/TR/WOFF2/"
-				],
-				"severities": [
-					"error"
-				]
-			},
-			{
-				"checkId": "binary.validateWoff2Wrapper",
-				"pipeline": "binary",
-				"family": "container",
-				"tables": [],
-				"formats": [
-					"woff2"
-				],
-				"kind": "finding",
-				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-				"source": {
-					"file": "src/validate/diagnoseFont.js",
-					"line": 1529,
-					"symbol": "validateWoff2Wrapper"
-				},
-				"references": [
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff",
-					"https://www.w3.org/TR/WOFF2/"
-				],
-				"severities": [
-					"error"
-				]
-			}
-		]
-	},
-	"WOFF2_FILE_SIZE_MISMATCH": {
-		"id": "WOFF2_FILE_SIZE_MISMATCH",
-		"checkId": "binary.validateWoff2Wrapper",
-		"pipeline": "binary",
-		"family": "container",
-		"tables": [],
-		"formats": [
-			"woff2"
-		],
-		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 1511,
-			"symbol": "validateWoff2Wrapper"
-		},
-		"references": [
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff",
-			"https://www.w3.org/TR/WOFF2/"
-		],
-		"severities": [
-			"error"
-		],
-		"pipelines": [
-			"binary"
-		],
-		"checkIds": [
-			"binary.validateWoff2Wrapper"
-		],
-		"repairIds": [],
-		"noFixReason": "Container bytes, decompression, or declarations require source recovery or a separately implemented wrapper repair.",
-		"status": "active",
-		"baseline": true,
-		"origins": [
-			{
-				"checkId": "binary.validateWoff2Wrapper",
-				"pipeline": "binary",
-				"family": "container",
-				"tables": [],
-				"formats": [
-					"woff2"
-				],
-				"kind": "finding",
-				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-				"source": {
-					"file": "src/validate/diagnoseFont.js",
-					"line": 1511,
-					"symbol": "validateWoff2Wrapper"
-				},
-				"references": [
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff",
-					"https://www.w3.org/TR/WOFF2/"
-				],
-				"severities": [
-					"error"
-				]
-			}
-		]
-	},
-	"WOFF2_METADATA_BLOCK_INVALID": {
-		"id": "WOFF2_METADATA_BLOCK_INVALID",
-		"checkId": "binary.validateWoff2Wrapper",
-		"pipeline": "binary",
-		"family": "container",
-		"tables": [],
-		"formats": [
-			"woff2"
-		],
-		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 1487,
-			"symbol": "validateWoff2Wrapper"
-		},
-		"references": [
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff",
-			"https://www.w3.org/TR/WOFF2/"
-		],
-		"severities": [
-			"error"
-		],
-		"pipelines": [
-			"binary"
-		],
-		"checkIds": [
-			"binary.validateWoff2Wrapper"
-		],
-		"repairIds": [],
-		"noFixReason": "Container bytes, decompression, or declarations require source recovery or a separately implemented wrapper repair.",
-		"status": "active",
-		"baseline": false,
-		"origins": [
-			{
-				"checkId": "binary.validateWoff2Wrapper",
-				"pipeline": "binary",
-				"family": "container",
-				"tables": [],
-				"formats": [
-					"woff2"
-				],
-				"kind": "finding",
-				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-				"source": {
-					"file": "src/validate/diagnoseFont.js",
-					"line": 1487,
-					"symbol": "validateWoff2Wrapper"
-				},
-				"references": [
-					"https://learn.microsoft.com/en-us/typography/opentype/spec/otff",
-					"https://www.w3.org/TR/WOFF2/"
-				],
-				"severities": [
-					"error"
-				]
-			}
-		]
-	},
-	"WOFF2_PRIVATE_BLOCK_INVALID": {
-		"id": "WOFF2_PRIVATE_BLOCK_INVALID",
-		"checkId": "binary.validateWoff2Wrapper",
-		"pipeline": "binary",
-		"family": "container",
-		"tables": [],
-		"formats": [
-			"woff2"
-		],
-		"kind": "finding",
-		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-		"source": {
-			"file": "src/validate/diagnoseFont.js",
-			"line": 1494,
-			"symbol": "validateWoff2Wrapper"
-		},
-		"references": [
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff",
-			"https://www.w3.org/TR/WOFF2/"
-		],
-		"severities": [
-			"error"
-		],
-		"pipelines": [
-			"binary"
-		],
-		"checkIds": [
-			"binary.validateWoff2Wrapper"
-		],
-		"repairIds": [],
-		"noFixReason": "Container bytes, decompression, or declarations require source recovery or a separately implemented wrapper repair.",
-		"status": "active",
-		"baseline": false,
-		"origins": [
-			{
-				"checkId": "binary.validateWoff2Wrapper",
-				"pipeline": "binary",
-				"family": "container",
-				"tables": [],
-				"formats": [
-					"woff2"
-				],
-				"kind": "finding",
-				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
-				"source": {
-					"file": "src/validate/diagnoseFont.js",
-					"line": 1494,
 					"symbol": "validateWoff2Wrapper"
 				},
 				"references": [
@@ -23157,7 +35442,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 1503,
+			"line": 1529,
 			"symbol": "validateWoff2Wrapper"
 		},
 		"references": [
@@ -23173,8 +35458,9 @@ export const CHECK_CATALOG = {
 		"checkIds": [
 			"binary.validateWoff2Wrapper"
 		],
-		"repairIds": [],
-		"noFixReason": "Container bytes, decompression, or declarations require source recovery or a separately implemented wrapper repair.",
+		"repairIds": [
+			"container.reserved"
+		],
 		"status": "active",
 		"baseline": true,
 		"origins": [
@@ -23190,7 +35476,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 1503,
+					"line": 1529,
 					"symbol": "validateWoff2Wrapper"
 				},
 				"references": [
@@ -23216,7 +35502,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 187,
+			"line": 193,
 			"symbol": "phaseSignature"
 		},
 		"references": [
@@ -23249,7 +35535,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 187,
+					"line": 193,
 					"symbol": "phaseSignature"
 				},
 				"references": [
@@ -23275,7 +35561,7 @@ export const CHECK_CATALOG = {
 		"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 		"source": {
 			"file": "src/validate/diagnoseFont.js",
-			"line": 195,
+			"line": 201,
 			"symbol": "phaseSignature"
 		},
 		"references": [
@@ -23308,7 +35594,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; format, table, parser and resource gates may skip execution",
 				"source": {
 					"file": "src/validate/diagnoseFont.js",
-					"line": 195,
+					"line": 201,
 					"symbol": "phaseSignature"
 				},
 				"references": [

@@ -1291,7 +1291,9 @@ function reassembleSFNT(flavor, tables) {
 		}
 
 		// Checksum
-		const checksum = computeChecksum(t.data);
+		const checksumData = t.tag === 'head' ? Uint8Array.from(t.data) : t.data;
+		if (t.tag === 'head' && checksumData.length >= 12) checksumData.fill(0, 8, 12);
+		const checksum = computeChecksum(checksumData);
 		sfntView.setUint32(recPos + 4, checksum);
 
 		// Offset and length

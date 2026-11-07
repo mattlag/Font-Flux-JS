@@ -32,7 +32,7 @@ function download(buffer, name, type = 'application/octet-stream') {
 }
 
 function issues(report) {
-	return report?.diagnostics?.issues ?? [];
+	return report?.diagnostics?.issues ?? report?.issues ?? [];
 }
 
 function renderReport(report, title) {
@@ -43,12 +43,14 @@ function renderReport(report, title) {
 		return section;
 	}
 	section.appendChild(element('p', 'dx-card-msg',
-		`Structural profile · ${report.format} · ${report.scope}. This is not full font certification.`));
-	const findings = issues(report);
+		`${report.profile} profile v${report.profileVersion} · ${report.legacyFormat || report.format} · ${report.scope}. This is not full font certification.`));
+	const findings = [...issues(report), ...report.profileReport?.issues ?? []];
 	const errors = findings.filter((issue) => issue.severity === 'error').length;
 	const warnings = findings.filter((issue) => issue.severity === 'warning').length;
 	section.appendChild(element('div', `dx-banner ${errors ? 'dx-banner-bad' : ''}`,
-		report.diagnostics ? `${errors} errors · ${warnings} warnings` : 'Diagnostics unsupported for this format.'));
+		report.diagnostics ? `${errors} errors · ${warnings} warnings` : 'No completed original-format diagnosis; review scoped evidence.'));
+	if (report.profileReport) section.appendChild(element('p', 'dx-card-msg',
+		`Profile execution: ${report.profileReport.complete ? report.profileReport.passed ? 'passed' : 'failed' : 'incomplete/unsupported'}.`));
 	const coverage = element('details', 'dx-coverage');
 	coverage.appendChild(element('summary', 'dx-info-summary', 'Coverage and limitations (partial checks only)'));
 	for (const item of report.coverage ?? []) {
@@ -57,6 +59,9 @@ function renderReport(report, title) {
 	for (const limitation of report.limitations ?? []) {
 		coverage.appendChild(element('p', 'dx-card-msg', limitation));
 	}
+	for (const check of report.checks ?? [])
+		coverage.appendChild(element('p', 'dx-card-msg',
+			`${check.id}: ${check.outcome}, ${check.coverage} — ${check.reason}`));
 	section.appendChild(coverage);
 	const info = element('details');
 	info.appendChild(element('summary', 'dx-info-summary', 'Informational findings'));
@@ -87,6 +92,9 @@ function render(container, fontData, context) {
 	let candidatePreview = null;
 	let sourceToken = null;
 	let busy = false;
+	let controller = null;
+	let sourceOptions = {};
+	const inspectionCache = FontFlux.createInspectionCache({ maxEntries: 2, maxBytes: 8 * 1024 * 1024 });
 	const selections = new Map();
 	const consentBoxes = [];
 	const actions = element('div', 'dx-actions');
@@ -107,6 +115,58 @@ function render(container, fontData, context) {
 			`Import failed: ${fontData._loadError.message}. Inspection may still identify recoverable problems.`));
 	}
 	wrap.append(actions, status, originalArea, currentArea, repairArea, candidateArea);
+	const profileLabel = element('label', 'dx-decision', 'Quality profile ');
+	const profile = element('select', 'field-input');
+	profile.setAttribute('aria-label', 'Quality profile');
+	for (const descriptor of FontFlux.qualityProfiles()) {
+		const option = element('option', '', `${descriptor.id} v${descriptor.version}`);
+		option.value = descriptor.id;
+		profile.appendChild(option);
+	}
+	profileLabel.appendChild(profile);
+	const policy = element('div', 'dx-policy');
+	policy.hidden = true;
+	const policyFields = new Map();
+	for (const [key, title] of [['expectedFileName', 'Expected filename'], ['expectedFamilyName', 'Expected family name']]) {
+		const label = element('label', 'dx-decision', title);
+		const input = element('input', 'field-input');
+		input.type = 'text';
+		input.setAttribute('aria-label', title);
+		input.addEventListener('input', () => { invalidate(); refreshInspections(); });
+		label.appendChild(input);
+		policy.appendChild(label);
+		policyFields.set(key, input);
+	}
+	status.before(profileLabel, policy);
+	profile.addEventListener('change', () => {
+		policy.hidden = profile.value !== 'publishing';
+		invalidate();
+		refreshInspections();
+	});
+
+	function inspectionOptions(face = false) {
+		return {
+			profile: profile.value,
+			...(profile.value === 'publishing' ? { context: {
+				fileName: fontData._fileName,
+				...Object.fromEntries([...policyFields].filter(([, input]) => input.value).map(([key, input]) => [key, input.value])),
+			} } : {}),
+			...(face && fontData._collection ? { faceIndex: fontData._collectionIndex ?? 0 } : {}),
+		};
+	}
+
+	function beginWork() {
+		controller?.abort();
+		controller = new AbortController();
+		const activeController = controller;
+		return {
+			signal: controller.signal,
+			onProgress: (progress) => {
+				if (!activeController.signal.aborted)
+					message(`${progress.phase}: ${progress.status ?? 'working'} — no project changes committed.`);
+			},
+		};
+	}
 
 	function message(text, failed = false) {
 		status.textContent = text;
@@ -119,6 +179,8 @@ function render(container, fontData, context) {
 	}
 
 	function invalidate(resetConsent = true) {
+		controller?.abort();
+		controller = null;
 		version++;
 		busy = false;
 		candidate = null;
@@ -159,6 +221,12 @@ function render(container, fontData, context) {
 	const planButton = button('Review repair plan', reviewPlan);
 	let preflightButton = null;
 	actions.append(safeButton, planButton);
+	actions.appendChild(button('Cancel pending work', () => {
+		invalidate();
+		message('Operation cancelled. No candidate committed; original and project unchanged.');
+		updateActions();
+		status.focus();
+	}));
 	if (!fontData._diagnoseOnly) {
 		preflightButton = button('Preflight current project', preflightProject);
 		actions.appendChild(preflightButton);
@@ -190,7 +258,7 @@ function render(container, fontData, context) {
 		}));
 	}
 	wrap.appendChild(element('p', 'dx-card-msg',
-		'Undo retains one pre-commit project per face; another commit replaces that step. Candidate previews are supporting evidence, not proof that all glyphs render identically.'));
+		'Undo retains one pre-commit project; a collection commit invalidates older undo steps on its other faces. Separate edits on another face block original-collection repair until reconciled. Candidate previews are supporting evidence, not proof that all glyphs render identically.'));
 
 	let inspectionFace = context.inspectionFace ?? '';
 	if (fontData._collection?.numFonts > 1) {
@@ -209,14 +277,14 @@ function render(container, fontData, context) {
 		chooser.addEventListener('change', () => {
 			inspectionFace = chooser.value;
 			invalidate();
-			renderOriginal();
+			refreshInspections();
 			updateActions();
 		});
 		originalArea.before(label);
 		label.appendChild(chooser);
 	}
 
-	function renderOriginal() {
+	async function renderOriginal(controls, operation) {
 		originalArea.replaceChildren();
 		if (!fontData._originalBuffer) {
 			originalArea.appendChild(element('p', 'dx-empty',
@@ -224,17 +292,20 @@ function render(container, fontData, context) {
 			return;
 		}
 		try {
-			const options = inspectionFace === '' ? {} : { faceIndex: Number(inspectionFace) };
-			const report = FontFlux.inspect(fontData._originalBuffer, options);
+			const options = { ...inspectionOptions(), ...controls, ...(inspectionFace === '' ? {} : { faceIndex: Number(inspectionFace) }) };
+			const report = await FontFlux.inspectAsync(fontData._originalBuffer, { ...options, cache: inspectionCache });
+			if (operation !== version) return;
 			originalArea.appendChild(renderReport(report, inspectionFace === ''
 				? 'Original input (unchanged)' : `Original input — face ${Number(inspectionFace) + 1} (unchanged)`));
 		} catch (error) {
+			if (operation !== version || error.name === 'AbortError') return;
 			originalArea.appendChild(element('p', 'dx-parse-error', `Inspection failed: ${error.message}`));
 		}
 	}
 
-	function showOffers(report, buffer, token) {
+	function showOffers(report, buffer, token, options = {}) {
 		source = buffer;
+		sourceOptions = options;
 		sourceToken = token;
 		selections.clear();
 		consentBoxes.length = 0;
@@ -257,6 +328,7 @@ function render(container, fontData, context) {
 			for (const [title, value] of [
 				['If applied', offer.ifApplied], ['If unfixed', offer.ifUnfixed],
 				['Prerequisites', offer.prerequisites], ['Availability', offer.reason],
+				['Risk rationale', offer.riskReason], ['Preservation', offer.invariants],
 				['Findings', offer.codes],
 			]) {
 				if (value?.length) card.appendChild(element('p', 'dx-card-msg',
@@ -265,10 +337,21 @@ function render(container, fontData, context) {
 			const inputs = new Map();
 			for (const schema of offer.inputs) {
 				const inputLabel = element('label', 'dx-decision', schema.label);
-				const input = element('input', 'field-input');
-				input.type = schema.type === 'integer' ? 'number' : 'text';
+				const input = element(['enum', 'boolean'].includes(schema.type) ? 'select' : 'input', 'field-input');
+				if (['enum', 'boolean'].includes(schema.type)) {
+					const empty = element('option', '', 'Choose explicitly');
+					empty.value = '';
+					input.appendChild(empty);
+					for (const value of schema.type === 'boolean' ? ['true', 'false'] : schema.values) {
+						const option = element('option', '', schema.type === 'boolean' ? value === 'true' ? 'Yes' : 'No' : value);
+						option.value = value;
+						input.appendChild(option);
+					}
+				} else input.type = ['integer', 'number'].includes(schema.type) ? 'number' : 'text';
 				input.required = true;
 				if (schema.type === 'integer') input.step = '1';
+				if (schema.type === 'number') input.step = 'any';
+				input.setAttribute('aria-label', schema.label);
 				for (const key of ['min', 'max', 'maxLength']) {
 					if (schema[key] != null) input[key] = schema[key];
 				}
@@ -304,22 +387,29 @@ function render(container, fontData, context) {
 		updateActions();
 		message('Preflighting current project — export and verification pending…');
 		try {
-			const result = await context.projectFont().preflight({ format: 'sfnt' });
+			const controls = beginWork(), options = inspectionOptions();
+			const result = await context.projectFont().preflightAsync({
+				...options, format: 'sfnt', originalSource: context.originalSource?.(), ...controls,
+			});
 			if (!active(token, operation)) return;
 			currentArea.replaceChildren(element('h3', 'dx-section-heading', 'Current project preflight'));
 			currentArea.appendChild(element('p', 'dx-card-msg', result.error || `Preflight: ${result.state}`));
 			for (const effect of result.effects) currentArea.appendChild(element('p', 'dx-card-msg', effect));
+			for (const stage of result.stages)
+				currentArea.appendChild(element('p', 'dx-card-msg', `${stage.id}: ${stage.status} — ${stage.reasonCode}`));
+			for (const normalization of result.normalizations)
+				currentArea.appendChild(element('p', 'dx-card-msg', `${normalization.kind}: ${normalization.description}`));
 			if (result.output) currentArea.appendChild(renderReport(result.output, 'Current project output (not original input)'));
 			for (const issue of result.validation?.issues ?? []) {
 				currentArea.appendChild(element('p', `dx-card-msg dx-${issue.severity}`,
 					`${issue.severity}: ${issue.code} — ${issue.message}`));
 			}
 			if (result.state !== 'verified' || !result.buffer) {
-				showOffers(result.output, null, token);
+				showOffers(result.output, null, token, options);
 				message(`Project preflight ${result.state}. No verified bytes available; original input and edits unchanged.`, true);
 				return;
 			}
-			showOffers(result.output, result.buffer, token);
+			showOffers(result.output, result.buffer, token, options);
 			await showCandidate({
 				state: 'verified', buffer: result.buffer, before: null, after: result.output,
 				changes: result.effects.map((description) => ({ id: 'export', description })),
@@ -354,7 +444,8 @@ function render(container, fontData, context) {
 						input.focus();
 						throw new Error(`Provide ${schema.label}; no default is assumed.`);
 					}
-					values[key] = schema.type === 'integer' ? Number(input.value) : input.value;
+					values[key] = ['integer', 'number'].includes(schema.type) ? Number(input.value)
+						: schema.type === 'boolean' ? input.value === 'true' : input.value;
 				}
 				if (consent && !consent.checked) throw new Error(`Explicit loss consent is required for ${offer.title}.`);
 				requests.push({ id: offer.id, inputs: values, consent: consent?.checked === true });
@@ -363,14 +454,20 @@ function render(container, fontData, context) {
 			busy = true;
 			updateActions();
 			message('Planning selected repairs…');
-			const plan = await FontFlux.planRepairs(source, requests);
+			const review = await FontFlux.planRepairsAsync(source, requests, {
+				...sourceOptions, projectRevision: token.revision, ...beginWork(),
+			});
+			const plan = review.plan;
 			if (!active(token, operation)) return;
 			candidateArea.replaceChildren(element('h3', 'dx-section-heading', 'Repair plan — review before applying'));
 			for (const step of plan.steps) {
 				candidateArea.appendChild(element('p', 'dx-card-msg',
 					`${step.title} (${step.risk}${step.implicit ? ', required companion' : ''}): ${step.ifApplied} ${JSON.stringify(step.values)}`));
 			}
-			candidateArea.appendChild(button('Apply plan to detached candidate', () => applyPlan(plan, token, operation)));
+			for (const effect of plan.effects) candidateArea.appendChild(element('p', 'dx-card-msg', effect));
+			candidateArea.appendChild(button('Download reviewed plan', () =>
+				download(JSON.stringify(review, null, 2), 'font-repair-plan.json', 'application/json')));
+			candidateArea.appendChild(button('Apply plan to detached candidate', () => applyPlan(review, token, operation)));
 			candidateArea.appendChild(button('Decline plan', () => {
 				invalidate();
 				message('Plan declined. Project, original bytes, and outstanding findings unchanged.');
@@ -395,7 +492,7 @@ function render(container, fontData, context) {
 		candidateArea.replaceChildren();
 		message('Applying to detached candidate; verification pending…');
 		try {
-			const result = await FontFlux.applyRepairs(source, plan);
+			const result = await FontFlux.applyRepairsAsync(source, plan, beginWork());
 			if (!active(token, operation)) return;
 			if (result.state !== 'verified' || !result.verification.passed || !result.buffer) {
 				candidateArea.appendChild(renderReport(result.after, 'Failed candidate inspection'));
@@ -435,20 +532,22 @@ function render(container, fontData, context) {
 		const current = () => candidate === result && active(token, operation);
 		controls.appendChild(button('Download exact candidate', () => {
 			if (!current()) return message('Candidate is stale. Inspect the current project again.', true);
-			const ext = result.after?.format === 'sfnt' ? '.otf' : '.font';
+			const ext = { sfnt: '.otf', woff: '.woff', woff2: '.woff2', collection: '.ttc' }[result.after?.format] ?? '.font';
 			download(result.buffer, `${(fontData._fileName || 'font').replace(/\.[^.]+$/, '')}-candidate${ext}`);
 		}));
 		controls.appendChild(button('Download audit report', () => {
 			if (!current()) return message('Candidate is stale. Inspect the current project again.', true);
 			const { buffer: _buffer, ...audit } = result;
-			download(JSON.stringify({ ...audit, target: 'sfnt', faceIndex: fontData._collectionIndex ?? 0, profile: 'structural' }, null, 2),
+			download(JSON.stringify({ ...audit, target: result.after?.format, faceIndex: result.faceIndex ?? fontData._collectionIndex ?? 0, profile: result.after?.profile }, null, 2),
 				'font-quality-report.json', 'application/json');
 		}));
 		const commit = button('Commit candidate', async () => {
 			if (!current()) return message('Candidate is stale. Inspect the current project again.', true);
 			commit.disabled = true;
 			try {
-				await context.commit(result.buffer, token, current);
+				await context.commit(result.buffer, token, current, {
+					format: result.after?.format, faceIndex: result.faceIndex ?? 0,
+				});
 				disposePreview();
 			} catch (error) {
 				if (current()) {
@@ -470,7 +569,15 @@ function render(container, fontData, context) {
 		candidateArea.appendChild(preview);
 		message('Core-verified candidate; browser preview check pending…');
 		try {
-			const face = new FontFace(`CandidatePreview${Date.now()}${operation}`, result.buffer);
+			let previewBytes = result.buffer;
+			if (result.after?.format === 'collection') {
+				const extracted = FontFlux.open(result.buffer, { faceIndex: result.faceIndex ?? 0 });
+				const previewResult = await extracted.preflightAsync({ format: 'sfnt', ...beginWork() });
+				if (previewResult.state !== 'verified') throw new Error(previewResult.error);
+				previewBytes = previewResult.buffer;
+				preview.textContent += ' (preflighted selected-face extraction; not a whole-collection rendering proof)';
+			}
+			const face = new FontFace(`CandidatePreview${Date.now()}${operation}`, previewBytes);
 			await face.load();
 			if (!current()) return;
 			disposePreview();
@@ -487,25 +594,40 @@ function render(container, fontData, context) {
 		}
 	}
 
-	renderOriginal();
-	const currentBinary = context.repairInput();
-	try {
-		if (currentBinary) {
-			const report = FontFlux.inspect(currentBinary);
-			if (fontData._dirty) currentArea.appendChild(renderReport(report, 'Current committed project (not original input)'));
-			showOffers(report, currentBinary, context.capture());
-		} else {
-			showOffers(null, null, context.capture());
-			message(fontData._dirty
-				? 'Current project contains edits. Preflight it separately; repairs to old input would discard those edits.'
-				: 'Use current-project preflight. Original collection/wrapper/legacy repair support is limited to core offers.');
+	async function refreshInspections() {
+		const operation = version, token = context.capture(), controls = beginWork();
+		busy = true;
+		updateActions();
+		try {
+			await renderOriginal(controls, operation);
+			if (!active(token, operation)) return;
+			const currentBinary = context.repairInput();
+			if (currentBinary) {
+				const options = inspectionOptions(true);
+				const report = await FontFlux.inspectAsync(currentBinary, { ...options, ...controls, cache: inspectionCache });
+				if (!active(token, operation)) return;
+				currentArea.replaceChildren();
+				if (fontData._dirty || report.format === 'collection')
+					currentArea.appendChild(renderReport(report, `Current repair input${report.format === 'collection' ? ` — face ${Number(options.faceIndex) + 1}` : ''} (not original inspection scope)`));
+				showOffers(report, currentBinary, token, options);
+				message('Inspection finished. Review scoped coverage and explicit repair decisions; no changes applied.');
+			} else {
+				showOffers(null, null, token);
+				message(fontData._dirty
+					? 'Current project contains edits. Preflight it separately; repairs to old input would discard those edits.'
+					: 'Use current-project preflight. Unsupported repairs remain unavailable.');
+			}
+		} catch (error) {
+			if (active(token, operation)) message(`Inspection failed: ${error.message}`, true);
+		} finally {
+			if (active(token, operation)) { busy = false; updateActions(); }
 		}
-	} catch (error) {
-		message(`Inspection failed: ${error.message}`, true);
 	}
+	refreshInspections();
 	updateActions();
 	context.onDiagnoseLeave(() => {
 		invalidate();
+		inspectionCache.clear();
 		message('Navigation invalidated pending plans and candidates. Reopen Diagnose to inspect again.');
 	});
 }

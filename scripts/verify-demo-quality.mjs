@@ -7,11 +7,11 @@ import { importFontTables } from '../src/import.js';
 
 const coreURL = '/@fs/' + resolve('src\\main.js').replaceAll('\\', '/');
 
-function entry(buffer, tag) {
+function entry(buffer, tag, base = 0) {
 	const view = new DataView(buffer);
 	const bytes = new Uint8Array(buffer);
-	for (let i = 0; i < view.getUint16(4); i++) {
-		const record = 12 + i * 16;
+	for (let i = 0; i < view.getUint16(base + 4); i++) {
+		const record = base + 12 + i * 16;
 		if (String.fromCharCode(...bytes.slice(record, record + 4)) === tag)
 			return { record, offset: view.getUint32(record + 8) };
 	}
@@ -79,7 +79,8 @@ export async function verifyDemoQuality(page, url, makeFont, engine) {
 	const base = makeFont().export({ format: 'sfnt' });
 	const damaged = base.slice(0);
 	new DataView(damaged).setUint32(entry(damaged, 'head').offset + 8, 0);
-	const expectedPlan = await FontFlux.planRepairs(damaged, [{ id: 'sfnt.checksums' }]);
+	const expectedPlan = await FontFlux.planRepairs(damaged, FontFlux.inspect(damaged).repairs
+		.filter((offer) => offer.risk === 'safe' && offer.availability === 'available').map((offer) => ({ id: offer.id })));
 	const expected = await FontFlux.applyRepairs(damaged, expectedPlan);
 	assert.equal(expected.state, 'verified');
 	const pageErrors = [];
@@ -143,8 +144,8 @@ export async function verifyDemoQuality(page, url, makeFont, engine) {
 	await expect(page.locator('.btn-download')).toBeDisabled();
 	await page.evaluate(async (moduleURL) => {
 		const { FontFlux } = await import(moduleURL);
-		const original = FontFlux.prototype.preflight;
-		FontFlux.prototype.preflight = async function (options) {
+		const original = FontFlux.prototype.preflightAsync;
+		FontFlux.prototype.preflightAsync = async function (options) {
 			const result = await original.call(this, options);
 			window.__preflightBytes = [...new Uint8Array(result.buffer)];
 			return result;
@@ -171,12 +172,11 @@ export async function verifyDemoQuality(page, url, makeFont, engine) {
 	await load(page, url, makeFont().toJSON(), 'authored.json');
 	await page.evaluate(async (moduleURL) => {
 		const { FontFlux } = await import(moduleURL);
-		const original = FontFlux.prototype.preflight;
-		FontFlux.prototype.preflight = async function (options) {
+		const original = FontFlux.prototype.preflightAsync;
+		FontFlux.prototype.preflightAsync = async function (options) {
 			await new Promise((resolve) => { window.__releasePreflight = resolve; });
-			const result = await original.call(this, options);
-			window.__preflightFinished = true;
-			return result;
+			try { return await original.call(this, options); }
+			finally { window.__preflightFinished = true; }
 		};
 	}, coreURL);
 	await page.getByRole('button', { name: 'Export Font', exact: true }).click();
@@ -281,8 +281,8 @@ export async function verifyDemoQuality(page, url, makeFont, engine) {
 	await diagnose(page);
 	await page.evaluate(async (moduleURL) => {
 		const { FontFlux } = await import(moduleURL);
-		const original = FontFlux.applyRepairs;
-		FontFlux.applyRepairs = async (...args) => {
+		const original = FontFlux.applyRepairsAsync;
+		FontFlux.applyRepairsAsync = async (...args) => {
 			const result = await original(...args);
 			return { ...result, state: 'failed', buffer: null, verification: {
 				passed: false, failures: ['Injected verification failure'], evidence: [],
@@ -345,12 +345,11 @@ export async function verifyDemoQuality(page, url, makeFont, engine) {
 	await diagnose(page);
 	await page.evaluate(async (moduleURL) => {
 		const { FontFlux } = await import(moduleURL);
-		const original = FontFlux.applyRepairs;
-		FontFlux.applyRepairs = async (...args) => {
+		const original = FontFlux.applyRepairsAsync;
+		FontFlux.applyRepairsAsync = async (...args) => {
 			await new Promise((resolve) => { window.__releaseRepair = resolve; });
-			const result = await original(...args);
-			window.__repairFinished = true;
-			return result;
+			try { return await original(...args); }
+			finally { window.__repairFinished = true; }
 		};
 	}, coreURL);
 	await reviewSafe(page);
@@ -376,14 +375,114 @@ export async function verifyDemoQuality(page, url, makeFont, engine) {
 	assert.equal(await page.locator('.font-chooser').inputValue(), '0');
 	await expect(page.getByRole('button', { name: 'Review repair plan', exact: true })).toBeDisabled();
 
-	// WOFF and legacy input disclose unsupported repairs instead of fake fixes.
+	// Wrapper inspection is actionable; legacy evidence never claims SFNT repair.
 	await load(page, url, makeFont().export({ format: 'woff' }), 'wrapped.woff');
 	await diagnose(page);
 	await expect(page.locator('.dx-original')).toContainText('woff');
 	await expect(page.getByRole('button', { name: 'Review repair plan', exact: true })).toBeDisabled();
 	await load(page, url, '%!PS-AdobeFont unsupported fixture', 'legacy.pfa');
-	await expect(page.locator('.dx-original')).toContainText('Diagnostics unsupported');
+	await expect(page.locator('.dx-original')).toContainText('LEGACY_STRUCTURE_INVALID');
 	await expect(page.getByRole('button', { name: 'Review repair plan', exact: true })).toBeDisabled();
+
+	await load(page, url, base);
+	await diagnose(page);
+	const style = page.locator('[data-repair-id="metadata.style"]');
+	await expect(style.getByLabel('Regular style-linking bit')).toHaveValue('');
+	await style.locator('.dx-card-header input').check();
+	await style.getByLabel('Intended weight').fill('500');
+	await style.getByLabel('Intended width class').fill('5');
+	for (const [label, value] of [
+		['Bold style-linking bit', 'false'], ['Italic style-linking bit', 'false'],
+		['Regular style-linking bit', 'true'],
+		['I have authority to choose these metadata values', 'true'],
+	]) await style.getByLabel(label, { exact: true }).selectOption(value);
+	await page.getByRole('button', { name: 'Review repair plan', exact: true }).click();
+	await page.getByRole('button', { name: 'Download reviewed plan', exact: true }).waitFor();
+	const savedReview = JSON.parse(await downloaded(page, () =>
+		page.getByRole('button', { name: 'Download reviewed plan', exact: true }).click()));
+	assert.equal(savedReview.kind, 'repair-review');
+	assert.equal(savedReview.plan.steps.find((step) => step.id === 'metadata.style').values.authority, true);
+	await apply(page);
+	const styled = FontFlux.open(await downloaded(page, () =>
+		page.getByRole('button', { name: 'Download exact candidate', exact: true }).click()));
+	assert.equal(styled.info.weightClass, 500);
+	await page.getByRole('button', { name: 'Discard candidate', exact: true }).click();
+	await style.locator('.dx-card-header input').uncheck();
+	const loca = page.locator('[data-repair-id="tt.loca-format"]');
+	await expect(loca.getByLabel('loca representation', { exact: true })).toHaveValue('');
+	await loca.locator('.dx-card-header input').check();
+	await loca.getByLabel('loca representation', { exact: true }).selectOption('long');
+	await page.getByRole('button', { name: 'Review repair plan', exact: true }).click();
+	await apply(page);
+	const longLoca = await downloaded(page, () =>
+		page.getByRole('button', { name: 'Download exact candidate', exact: true }).click());
+	const longBuffer = longLoca.buffer.slice(longLoca.byteOffset, longLoca.byteOffset + longLoca.byteLength);
+	assert.equal(new DataView(longBuffer).getInt16(entry(longBuffer, 'head').offset + 50), 1);
+	await page.getByRole('button', { name: 'Discard candidate', exact: true }).click();
+
+	await page.getByRole('button', { name: 'Export Font', exact: true }).click();
+	const dialog = page.locator('.save-dialog');
+	await dialog.getByLabel('Export quality profile').selectOption('publishing');
+	await dialog.getByLabel('Filename', { exact: true }).fill('approved.ttf');
+	await dialog.locator('.btn-validate').click();
+	await expect(dialog.locator('.validation-results')).toContainText('unsupported');
+	await expect(dialog.locator('.btn-download')).toBeDisabled();
+	await dialog.getByLabel('Expected filename', { exact: true }).fill('approved.ttf');
+	await dialog.getByLabel('Expected family name', { exact: true }).fill(makeFont().info.familyName);
+	await dialog.locator('.btn-validate').click();
+	await expect(dialog.locator('.btn-download')).toBeEnabled();
+	for (const stage of ['original', 'project', 'resolved', 'output'])
+		await expect(dialog.locator('.validation-results')).toContainText(`${stage}: checked`);
+	await dialog.getByLabel('Export quality profile').selectOption('structural');
+	await expect(dialog.locator('.btn-download')).toBeDisabled();
+	await page.keyboard.press('Escape');
+
+	const wrapped = makeFont().export({ format: 'woff' });
+	new DataView(wrapped).setUint16(14, 1);
+	await load(page, url, wrapped, 'wrapper-header.woff');
+	await diagnose(page);
+	await page.locator('[data-repair-id="container.reserved"] .dx-card-header input').check();
+	await page.getByRole('button', { name: 'Review repair plan', exact: true }).click();
+	await apply(page);
+	const fixedWrapper = await downloaded(page, () =>
+		page.getByRole('button', { name: 'Download exact candidate', exact: true }).click());
+	const expectedWrapper = new Uint8Array(wrapped.slice(0));
+	expectedWrapper[14] = 0; expectedWrapper[15] = 0;
+	assert.deepEqual(fixedWrapper, Buffer.from(expectedWrapper));
+
+	const repairableCollection = FontFlux.exportCollection([makeFont(), makeFont(false, 950)]);
+	const secondOffset = new DataView(repairableCollection).getUint32(16);
+	new DataView(repairableCollection).setUint32(entry(repairableCollection, 'head', secondOffset).offset + 12, 0);
+	await load(page, url, repairableCollection, 'repair-face.ttc');
+	await page.locator('.font-chooser').selectOption('1');
+	await diagnose(page);
+	await page.locator('[data-repair-id="head.magic"] .dx-card-header input').check();
+	await page.getByRole('button', { name: 'Review repair plan', exact: true }).click();
+	await apply(page);
+	const fixedCollection = await downloaded(page, () =>
+		page.getByRole('button', { name: 'Download exact candidate', exact: true }).click());
+	assert.equal(FontFlux.open(fixedCollection, { faceIndex: 1 }).glyphs.find((glyph) => glyph.name === 'A').advanceWidth, 950);
+	const prefix = fixedCollection.subarray(0, repairableCollection.byteLength);
+	const originalPrefix = Buffer.from(repairableCollection);
+	for (let index = 0; index < prefix.length; index++)
+		if (index < 16 || index >= 20) assert.equal(prefix[index], originalPrefix[index]);
+	await page.getByRole('button', { name: 'Commit candidate', exact: true }).click();
+	await page.getByRole('button', { name: 'Undo last commit', exact: true }).waitFor();
+	assert((await previewWidth(page)) > 40);
+	await page.getByRole('button', { name: 'Undo last commit', exact: true }).click();
+	await expect(page.getByRole('button', { name: 'Undo last commit', exact: true })).toHaveCount(0);
+	await expect(page.locator('.dx-original')).toContainText('BAD_MAGIC_NUMBER');
+	await page.locator('.font-chooser').selectOption('0');
+	assert((await previewWidth(page)) < 35);
+
+	await load(page, url, damaged);
+	await diagnose(page);
+	await reviewSafe(page);
+	await page.getByRole('button', { name: 'Cancel pending work', exact: true }).click();
+	await expect(page.locator('.dx-status')).toContainText('cancelled');
+	await expect(page.getByRole('button', { name: 'Apply plan to detached candidate', exact: true })).toHaveCount(0);
+	assert.deepEqual(await downloaded(page, () =>
+		page.getByRole('button', { name: 'Download original (unverified)', exact: true }).click()), Buffer.from(damaged));
 	assert.deepEqual(pageErrors, []);
-	console.log(`${engine} quality decisions, JSON/dirty preflight, exact export, consent, failures, stale work, collections and unsupported inputs: passed`);
+	console.log(`${engine} quality decisions, profiles, typed forms, exact wrapper/collection repair, preflight, cancellation, consent and rollback: passed`);
 }

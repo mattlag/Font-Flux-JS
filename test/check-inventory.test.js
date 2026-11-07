@@ -27,7 +27,7 @@ import { repairCatalog } from '../src/validate/quality.js';
 
 const sources = readSources();
 const baseline = readBaseline();
-const repairText = readFileSync(join(ROOT, 'src', 'validate', 'quality.js'), 'utf8');
+const repairText = sources;
 const inventory = buildInventory(sources, baseline, repairText);
 const identifiers = (origins) => [...new Set(origins.map((o) => o.code))].sort();
 const sourceFile = 'src/validate/diagnoseFont.js';
@@ -90,6 +90,13 @@ describe('durable diagnostic identifier inventory', () => {
 			expect(descriptor.repairIds).toEqual(expected);
 			if (!expected.length) expect(descriptor.noFixReason?.length).toBeGreaterThan(30);
 		}
+		expect(extractDiagnosticOrigins(sources).operationalErrors.map((entry) => entry.code).sort()).toEqual([
+			'QUALITY_WORKER_DEADLINE', 'QUALITY_WORKER_STALE_INPUT', 'QUALITY_WORKER_STALE_PLAN',
+			'QUALITY_WORKER_STALE_PROJECT', 'QUALITY_WORKER_STALE_SOURCE',
+		]);
+		expect(extractDiagnosticOrigins(sources).operationalForwarding).toEqual([
+			expect.objectContaining({ file: 'src/validate/workflow-worker-runtime.js', symbol: 'handleQualityWorkerMessage' }),
+		]);
 		expect(getCheckDescriptor('BAD_CHECKSUM').repairIds).toEqual(['sfnt.checksums']);
 		expect(getCheckDescriptor('HEAD_GLYPH_DATA_FORMAT_INVALID').repairIds).toEqual(['head.glyph-data-format']);
 		expect(getCheckDescriptor('TABLE_PARSED').kind).toBe('information');

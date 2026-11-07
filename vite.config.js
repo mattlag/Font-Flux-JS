@@ -16,6 +16,7 @@ const banner = `/*!
  */`;
 
 export default defineConfig({
+	base: './',
 	build: {
 		lib: {
 			entry: resolve(__dirname, 'src/main.js'),

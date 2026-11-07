@@ -431,7 +431,10 @@ Legacy Type 1 fonts are converted to CFF outlines on import. They can then be ex
 ## Font-quality inspection and repair
 
 The [font-quality workflow](./docs/font-quality.md) provides inspection, explicit
-repair plans, verified SFNT candidates, and actual-output export preflight.
+resumable repair plans, verified SFNT/WOFF/selected-collection candidates, and
+actual-output export preflight. Version 2.10.2 adds 56 guarded repair actions,
+[advanced structural diagnostics](./docs/advanced-diagnostics.md) and
+[cancellable workers and explicit family/source/legacy workflows](./docs/quality-workflows.md).
 The [check inventory](./docs/check-inventory.md) records identifiers, provenance,
 reachability, and repair availability; counts are not coverage percentages.
 The [font-quality backlog](./FONT-QUALITY-BACKLOG.md) tracks planned detection and

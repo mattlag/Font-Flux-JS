@@ -723,6 +723,7 @@ function computeGlyphMetrics(glyphs, font, glyf) {
 		yMax = -Infinity;
 	let advanceWidthMax = 0;
 	let advanceWidthSum = 0;
+	let nonzeroAdvanceCount = 0;
 	let minLSB = Infinity;
 	let minRSB = Infinity;
 	let maxExtent = -Infinity;
@@ -733,6 +734,7 @@ function computeGlyphMetrics(glyphs, font, glyf) {
 	for (const [index, glyph] of glyphs.entries()) {
 		const aw = glyph.advanceWidth || 0;
 		advanceWidthSum += aw;
+		if (aw !== 0) nonzeroAdvanceCount++;
 		if (aw > advanceWidthMax) advanceWidthMax = aw;
 
 		const bbox = glyf ? glyf.glyphs[index] : getGlyphBBox(glyph);
@@ -743,7 +745,7 @@ function computeGlyphMetrics(glyphs, font, glyf) {
 			if (bbox.xMax > xMax) xMax = bbox.xMax;
 			if (bbox.yMax > yMax) yMax = bbox.yMax;
 
-			const lsb = glyph.leftSideBearing ?? bbox.xMin;
+			const lsb = glyph.leftSideBearing ?? 0;
 			const rsb = aw - (lsb + (bbox.xMax - bbox.xMin));
 			const extent = lsb + (bbox.xMax - bbox.xMin);
 
@@ -791,7 +793,7 @@ function computeGlyphMetrics(glyphs, font, glyf) {
 		yMax,
 		advanceWidthMax,
 		advanceWidthAvg:
-			glyphs.length > 0 ? Math.round(advanceWidthSum / glyphs.length) : 0,
+			nonzeroAdvanceCount > 0 ? Math.round(advanceWidthSum / nonzeroAdvanceCount) : 0,
 		minLSB,
 		minRSB,
 		maxExtent,
@@ -1433,7 +1435,7 @@ function buildCmapTable(glyphs) {
 /**
  * Build Format 12 groups from sorted (codepoint, glyphID) pairs.
  */
-function buildFormat12Groups(entries) {
+export function buildFormat12Groups(entries) {
 	if (entries.length === 0) return [];
 
 	const groups = [];
@@ -1473,7 +1475,7 @@ function buildFormat12Groups(entries) {
  * Build Format 4 segments from sorted BMP (codepoint, glyphID) pairs.
  * Uses idDelta encoding (idRangeOffset = 0) for simplicity.
  */
-function buildFormat4Data(entries) {
+export function buildFormat4Data(entries) {
 	const segments = [];
 	const glyphIdArray = [];
 	const lastEntry = entries[entries.length - 1];

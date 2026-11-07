@@ -1,5 +1,12 @@
 # Diagnostics Guide
 
+Version 2.10.2 adds [advanced original-byte diagnostics](./advanced-diagnostics.md)
+for supported layout, CFF/TT programs, variation, color, bitmap and specialist
+structures. The [generated inventory](./check-inventory.md) is the authoritative
+identifier/provenance ledger; the historical tables below are not an exhaustive
+list of newer identifiers. Use `FontFlux.inspect` for profiles/repair offers and
+original legacy routing, or `inspectAsync` for cancellable worker execution.
+
 Use `diagnoseFont(buffer, options?)` to inspect a binary font file (TTF/OTF/WOFF/WOFF2/TTC/OTC) and get a structured report of structural problems, spec violations, and cross-table inconsistencies. Unlike `font.validate()` (which works on the parsed JSON), `diagnoseFont()` reads the raw bytes directly — making it the right tool for analyzing fonts that fail to import or that other tools (browsers, sanitizers) reject. Diagnosis is observational: it does not change the supplied buffer or apply repairs.
 
 ## API

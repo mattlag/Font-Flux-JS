@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { importFont } from '../src/import.js';
-import { getCFFGlyphContext } from '../src/otf/cff_common.js';
+import { CFF2_PRIVATE_DICT_OPS, dictEntriesToObject, getCFFGlyphContext } from '../src/otf/cff_common.js';
 import { interpretCharString } from '../src/otf/charstring_interpreter.js';
 import { parseCFF, writeCFF } from '../src/otf/table_CFF.js';
 import { parseCFF2, writeCFF2 } from '../src/otf/table_CFF2.js';
@@ -294,17 +294,119 @@ describe('CFF1 execution context and termination', () => {
 		expect(codes(inspect(table))).toEqual(['CFF_TRUNCATED_OPERATOR']);
 	});
 
-	it('reports unimplemented arithmetic rather than fabricating a subroutine index', () => {
+	it('evaluates deterministic arithmetic when resolving a subroutine index', () => {
 		const table = cff1([[...n(-100), ...n(-7), 12, 10, 10, 14]], [[11]]);
 		const issues = inspect(freeze(table));
-		expect(codes(issues)).toEqual(['CFF_CONTEXT_UNSUPPORTED']);
-		expect(issues[0].severity).toBe('warning');
+		expect(codes(issues)).toEqual([]);
 	});
 });
 
 describe('CFF2 execution and variation context', () => {
 	it('accepts implicit glyph/subroutine termination and empty programs', () => {
 		expect(inspect(cff2([[], [...call(), ...n(0), ...n(0), 21]], [[]]), true)).toEqual([]);
+	});
+
+	describe('CFF2 ordered Private DICT programs', () => {
+		const entry = (operator, ...operands) => ({ operator, operands });
+		const dictionary = (entries, localSubrs = []) => ({
+			privateDictEntries: entries, privateDict: dictEntriesToObject(entries, CFF2_PRIVATE_DICT_OPS), localSubrs,
+		});
+		const make = (entries, program = []) => ({
+			...cff2([program]), variationStore: variationStore(), fontDicts: [dictionary(entries)],
+		});
+		it('preserves prefixes, repeated blends and higher-order blends, then inspects glyph bytecode', () => {
+			const entries = [
+				entry(23, 0, 10, 2, 1), entry(23, 3, 1), entry(23, 20, 4, 1), entry(6, 30),
+			];
+			const table = make(entries);
+			expect(inspect(freeze(table), true)).toEqual([]);
+			const parsed = parseCFF2(writeCFF2(table));
+			expect(inspect(parsed, true)).toEqual([]);
+			parsed.charStrings[0] = [0];
+			expect(codes(inspect(parsed, true))).toEqual(['CFF_INVALID_OPERATOR']);
+			const report = diagnoseFont(sfnt(writeCFF2(table), true));
+			expect(report.checks).toContainEqual(expect.objectContaining({ id: 'binary.CFF2.private-dict.0', outcome: 'passed' }));
+			expect(report.issues.filter((issue) => issue.code.startsWith('CFF_'))).toEqual([]);
+		});
+		it('selects per-FD blend regions/local subrs and allows a glyph to override inherited vsindex', () => {
+			const table = { ...cff2(), variationStore: variationStore(), fdSelect: [0, 1],
+				fontDicts: [
+					dictionary([entry(22, 0), entry(23, 10, 2, 1), entry(10)], [[16, 21]]),
+					dictionary([entry(22, 1), entry(23, 10, 2, 3, 1), entry(11)], [[16, 21]]),
+				],
+				charStrings: [
+					[...n(0), ...n(10), ...n(2), ...n(1), ...call()],
+					[...n(0), ...n(10), ...n(2), ...n(3), ...n(1), ...call()],
+				],
+			};
+			expect(inspect(table, true)).toEqual([]);
+			expect(inspect(parseCFF2(writeCFF2(table)), true)).toEqual([]);
+			table.charStrings[1] = [...n(0), 15, ...n(0), ...n(10), ...n(2), ...n(1), ...call()];
+			expect(inspect(table, true)).toEqual([]);
+		});
+		it.each([
+			[[entry(23, 10, 2, 0)], 'CFF_BLEND_INVALID_COUNT'],
+			[[entry(23, 10, 2, -1)], 'CFF_BLEND_INVALID_COUNT'],
+			[[entry(23, 10, 2, 0.5)], 'CFF_BLEND_INVALID_COUNT'],
+			[[entry(23, 10, 2, 2)], 'CFF_STACK_UNDERFLOW'],
+			[[entry(22, 2)], 'CFF_VSINDEX_OUT_OF_RANGE'],
+			[[entry(23, 10, 2, 1), entry(22)], 'CFF_INVALID_OPERAND_COUNT'],
+			[[entry(23, 10, 2, 1), entry(0x0c09)], 'CFF_PRIVATE_DICT_BLEND_FORBIDDEN'],
+			[[entry(23, 10, 2, 1), entry(19)], 'CFF_PRIVATE_DICT_BLEND_FORBIDDEN'],
+			[[entry(23, 10, 2, 1), entry(6)], 'CFF_INVALID_OPERAND_COUNT'],
+			[[entry(23, 10, 2, 1)], 'CFF_PRIVATE_DICT_TRAILING_VALUES'],
+			[[entry(10, Number.NaN)], 'CFF_INVALID_NUMBER'],
+		])('rejects invalid private operand program %j with %s', (entries, code) => {
+			expect(codes(inspect(make(entries), true))).toEqual([code]);
+		});
+		it('checks missing/invalid region context and permits zero-region blends', () => {
+			const table = make([entry(23, 10, 2, 1), entry(10)]);
+			table.variationStore.itemVariationData[0].regionIndexes = [2];
+			expect(codes(inspect(table, true))).toEqual(['CFF_VARIATION_CONTEXT_INVALID']);
+			delete table.variationStore;
+			expect(codes(inspect(table, true))).toEqual(['CFF_VARIATION_CONTEXT_MISSING']);
+			table.variationStore = variationStore();
+			table.variationStore.itemVariationData[0].regionIndexes = [];
+			table.fontDicts = [dictionary([entry(23, 10, 1), entry(10)])];
+			expect(inspect(table, true)).toEqual([]);
+		});
+		it('enforces the 513-element stack boundary including retained blend results', () => {
+			const operands = Array(512).fill(1);
+			const table = make([entry(23, ...operands, 1), entry(10)]);
+			table.variationStore.variationRegionList.regions = Array.from({ length: 511 }, () => ({
+				regionAxes: [{ startCoord: 0, peakCoord: 1, endCoord: 1 }],
+			}));
+			table.variationStore.itemVariationData[0].regionIndexes = Array.from({ length: 511 }, (_, i) => i);
+			expect(inspect(table, true)).toEqual([]);
+			table.fontDicts[0].privateDictEntries[0].operands.push(1);
+			expect(codes(inspect(table, true))).toEqual(['CFF_STACK_OVERFLOW']);
+			const carried = make([entry(23, 0, 10, 2, 1), entry(23, ...operands)]);
+			expect(codes(inspect(carried, true))).toEqual(['CFF_STACK_OVERFLOW']);
+		});
+		it('caches selected FD programs, remains bounded and does not invent an unordered blend program', () => {
+			const table = make([entry(23, 10, 2, 1), entry(10)]);
+			table.charStrings = Array.from({ length: 100 }, () => []);
+			expect(inspect(table, true, { maxStructureNodes: 10 })).toEqual([]);
+			expect(codes(inspect(table, true, { maxStructureNodes: 3 }))).toEqual(['DIAGNOSTIC_LIMIT_EXCEEDED']);
+			delete table.fontDicts[0].privateDictEntries;
+			expect(codes(inspect(table, true))).toEqual(['CFF_CONTEXT_UNSUPPORTED']);
+		});
+		it('scopes unknown ignored operators without abandoning supported glyph checks', () => {
+			const table = make([entry(24, 1)], [0]);
+			const report = diagnoseFont(sfnt(writeCFF2(table), true));
+			expect(codes(report.issues)).toContain('CFF_INVALID_OPERATOR');
+			expect(report.checks).toContainEqual(expect.objectContaining({ outcome: 'unsupported', reasonCode: 'unsupported-semantics' }));
+		});
+		it('checks unreferenced private structures in binary diagnosis without executing their subroutines', () => {
+			const table = make([]);
+			table.fdSelect = [0];
+			table.fontDicts.push(dictionary([entry(23, 10, 2, 1)], [[0]]));
+			expect(inspect(table, true)).toEqual([]);
+			const report = diagnoseFont(sfnt(writeCFF2(table), true));
+			expect(codes(report.issues)).toContain('CFF_PRIVATE_DICT_TRAILING_VALUES');
+			expect(codes(report.issues)).not.toContain('CFF_INVALID_OPERATOR');
+			expect(report.checks).toContainEqual(expect.objectContaining({ id: 'binary.CFF2.private-dict.1', outcome: 'failed' }));
+		});
 	});
 
 	it.each([
@@ -436,9 +538,9 @@ describe('CFF2 execution and variation context', () => {
 		expect(codes(inspect(table, true))).toEqual(['CFF_CONTEXT_UNSUPPORTED']);
 	});
 
-	it('explicitly reports unsupported ordered Private DICT blend programs', () => {
+	it('requires the variation store for an ordered Private DICT blend program', () => {
 		const table = cff2();
 		table.fontDicts[0].privateDictEntries = [{ operator: 23, operands: [10, 2, 1] }];
-		expect(codes(inspect(freeze(table), true))).toEqual(['CFF_CONTEXT_UNSUPPORTED']);
+		expect(codes(inspect(freeze(table), true))).toEqual(['CFF_VARIATION_CONTEXT_MISSING']);
 	});
 });

@@ -6,14 +6,21 @@ import { diagnosisIncomplete } from './coverage.js';
 import { diagnoseFont } from './diagnoseFont.js';
 import { addProfileFindings, applyProfileCompatibility, evaluateProfile, resolveProfile } from './profiles.js';
 import { ALL_SUPPORTED_TABLES } from './tables.js';
+import { nameLayout } from './repair-data.js';
+import { canonicalJSON, checkCancellation, orderRepairs, qualityPhase, validateRepairCatalog, validateRepairInputs } from './repair-contract.js';
+import { METADATA_REPAIRS, metadataRepairReason, applyMetadataRepair, verifyMetadataRepairs } from './metadata-repairs.js';
+import { CONTAINER_REPAIRS, prepareRepairContainer, emitRepairContainer, verifyRepairContainer } from './repair-containers.js';
+import { EXTENDED_REPAIRS, extendedRepairReason, applyExtendedRepair, verifyExtendedRepairs,
+	extendedTableChanges, extendedSfntVersion } from './repair-extensions.js';
+import { inspectLegacy } from './workflow-legacy.js';
 import { buildReport, validateJSON, validateSimplifiedJSON } from './validateJSON.js';
 
 const plans = new WeakMap();
 const CHECKSUM_CODES = ['BAD_CHECKSUM', 'BAD_CHECKSUM_ADJUSTMENT'];
 const COMMON_PREREQUISITES =
-	'An unambiguous standalone SFNT directory and a complete head table. ' +
+	'An unambiguous SFNT face and a complete head table, with a preserving adapter for wrapped or collection inputs. ' +
 	'Existing signatures require explicitly authorized removal. Original input is never overwritten.';
-const CATALOG = [
+const BASE_REPAIRS = [
 	{
 		id: 'sfnt.checksums',
 		title: 'Recalculate checksums',
@@ -270,9 +277,20 @@ const CATALOG = [
 ].map((fix) => ({
 	...fix,
 	revision: 1,
-	formats: ['sfnt'],
+	formats: ['sfnt', 'woff', 'woff2', 'collection'],
 	prerequisites: COMMON_PREREQUISITES,
+	riskReason: fix.risk === 'safe'
+		? 'Only established structural fields change under the stated preservation prerequisites.'
+		: fix.risk === 'assisted'
+			? 'An authoritative value is required; font identity or consumer behavior can change.'
+			: 'Authentication evidence is removed and cannot be restored without external re-signing.',
+	invariants: ['All unselected table payloads remain byte-preserved.', 'Glyph order, outlines, instructions and all unselected names/mappings are unchanged.'],
 }));
+const CATALOG = [...BASE_REPAIRS, ...METADATA_REPAIRS, ...CONTAINER_REPAIRS,
+	...EXTENDED_REPAIRS.map((fix) => ({ ...fix, formats: ['sfnt', 'woff', 'woff2', 'collection'] }))];
+const metadataIDs = new Set(METADATA_REPAIRS.map((fix) => fix.id));
+const extendedIDs = new Set(EXTENDED_REPAIRS.map((fix) => fix.id));
+validateRepairCatalog(CATALOG);
 
 function freeze(value) {
 	if (value && typeof value === 'object') {
@@ -312,11 +330,10 @@ function formatOf(bytes) {
 		if (signature === 0x774f4646) return 'woff';
 		if (signature === 0x774f4632) return 'woff2';
 		if (
-			bytes[0] === 1 &&
+			(bytes[0] === 1 || bytes[0] === 2) &&
 			bytes[1] === 0 &&
 			bytes[2] >= 4 &&
-			bytes[3] >= 1 &&
-			bytes[3] <= 4
+			(bytes[0] === 2 || (bytes[3] >= 1 && bytes[3] <= 4))
 		)
 			return 'cff';
 	}
@@ -386,57 +403,8 @@ function tableBytes(bytes, entry) {
 	return bytes.subarray(entry.offset, entry.offset + entry.length);
 }
 
-function nameLayout(bytes) {
-	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-	if (bytes.length < 6) throw new Error('The name table header is truncated.');
-	const version = view.getUint16(0),
-		count = view.getUint16(2),
-		storage = view.getUint16(4);
-	if (version > 1 || 6 + count * 12 > bytes.length)
-		throw new Error('Unsupported or truncated name records.');
-	let end = 6 + count * 12;
-	const languages = [];
-	if (version === 1) {
-		if (end + 2 > bytes.length)
-			throw new Error('The language-tag header is truncated.');
-		const languageCount = view.getUint16(end);
-		end += 2;
-		if (end + languageCount * 4 > bytes.length)
-			throw new Error('Language-tag records are truncated.');
-		for (let i = 0; i < languageCount; i++) {
-			const length = view.getUint16(end + i * 4),
-				offset = view.getUint16(end + i * 4 + 2);
-			if (storage + offset + length > bytes.length)
-				throw new Error('A language-tag string is truncated.');
-			languages.push(
-				Array.from(bytes.subarray(storage + offset, storage + offset + length)),
-			);
-		}
-		end += languageCount * 4;
-	}
-	if (storage < end || storage > bytes.length)
-		throw new Error('Invalid name string storage offset.');
-	const records = [];
-	for (let i = 0; i < count; i++) {
-		const offset = 6 + i * 12;
-		const key = [0, 2, 4, 6].map((field) => view.getUint16(offset + field));
-		const length = view.getUint16(offset + 8),
-			stringOffset = view.getUint16(offset + 10);
-		if (storage + stringOffset + length > bytes.length)
-			throw new Error('A name string is truncated.');
-		records.push({
-			key,
-			bytes: Array.from(
-				bytes.subarray(storage + stringOffset, storage + stringOffset + length),
-			),
-			offset,
-		});
-	}
-	return { version, count, storage, end, records, languages };
-}
-
 function requiresRebuild(id) {
-	return [
+	return CATALOG.find((fix) => fix.id === id)?.requiresRebuild || [
 		'name.family',
 		'name.style',
 		'dsig.remove',
@@ -476,7 +444,7 @@ function cmapRecords(bytes) {
 	return records;
 }
 
-function offerReason(fix, bytes, layout, diagnostics) {
+function offerReason(fix, bytes, layout, diagnostics, options = {}) {
 	if (layout.reason) return layout.reason;
 	if (diagnosisIncomplete(diagnostics))
 		return 'Inspection was blocked by a limit, failed check, or unreadable table. Resolve that problem before verifying repairs.';
@@ -517,12 +485,12 @@ function offerReason(fix, bytes, layout, diagnostics) {
 		} catch (error) {
 			return `Name repair blocked: ${error.message}`;
 		}
-		if (fix.id === 'cmap.order') {
-			try {
-				cmapRecords(tableBytes(bytes, table('cmap')));
-			} catch (error) {
-				return `Cmap ordering repair blocked: ${error.message}`;
-			}
+	}
+	if (fix.id === 'cmap.order') {
+		try {
+			cmapRecords(tableBytes(bytes, table('cmap')));
+		} catch (error) {
+			return `Cmap ordering repair blocked: ${error.message}`;
 		}
 	}
 	if (
@@ -535,7 +503,26 @@ function offerReason(fix, bytes, layout, diagnostics) {
 		)
 	)
 		return 'Other cmap or parsing failures must be resolved before declaring the existing cmap structure supported.';
+	if (metadataIDs.has(fix.id)) return metadataRepairReason(fix.id, payloadMap(bytes, layout), options);
+	if (extendedIDs.has(fix.id)) return extendedRepairReason(fix.id, payloadMap(bytes, layout), options);
 	return null;
+}
+
+function payloadMap(bytes, layout) {
+	return new Map(layout.entries.map((entry) => [entry.tag, tableBytes(bytes, entry).slice()]));
+}
+
+function repairSource(bytes, format, options) {
+	try {
+		const source = prepareRepairContainer(bytes, format, options);
+		const layout = directory(source.sfnt, options);
+		if (!layout.reason && source.rewrite &&
+			layout.entries.some((entry) => !ALL_SUPPORTED_TABLES.has(entry.tag)))
+			layout.reason = 'Rewrapping or moving an opaque table is not an approved preservation operation.';
+		return { ...source, layout };
+	} catch (error) {
+		return { format, sfnt: bytes, layout: { reason: error.message } };
+	}
 }
 
 export function inspectFont(input, options = {}) {
@@ -543,24 +530,34 @@ export function inspectFont(input, options = {}) {
 	const bytes = inputBytes(input, options);
 	const format = formatOf(bytes);
 	const unsupported = format === 'cff' || format === 'type1';
+	if (unsupported || (format === 'unknown' &&
+		new TextDecoder().decode(bytes.subarray(0, 16)).startsWith('StartFontMetrics'))) {
+		const legacy = inspectLegacy(bytes, options);
+		return {
+			...legacy, scope: 'binary', format, legacyFormat: legacy.format,
+			diagnostics: legacy.diagnostics.valid === null ? null : legacy.diagnostics,
+		};
+	}
 	const binary = unsupported
 		? null
 		: applyProfileCompatibility(diagnoseFont(bytes.slice().buffer, options), profile);
 	const profileReport = evaluateProfile(binary, options);
 	const diagnostics = addProfileFindings(binary, profileReport);
-	const layout = directory(bytes, options);
+	const source = repairSource(bytes, format, options), layout = source.layout;
 	const codes = new Set(diagnostics?.issues.map((issue) => issue.code));
 	const repairs = CATALOG.filter(
 		(fix) =>
 			fix.codes.some((code) => codes.has(code)) ||
+			fix.optional ||
 			(fix.id === 'dsig.remove' &&
 				layout.entries?.some((entry) => entry.tag === 'DSIG')),
 	).map((fix) => {
-		const reason = offerReason(fix, bytes, layout, diagnostics);
+		const supported = fix.formats.includes(format) || (metadataIDs.has(fix.id) && ['woff', 'woff2', 'collection'].includes(format));
+		const reason = supported ? offerReason(fix, source.sfnt, layout, diagnostics, options) : `This operation is not supported in ${format}.`;
 		return {
 			...fix,
 			availability: reason
-				? format === 'sfnt'
+				? supported
 					? 'blocked'
 					: 'unsupported'
 				: fix.inputs.length
@@ -609,7 +606,8 @@ export function inspectFont(input, options = {}) {
 		limitations: [
 			'Passing these checks does not certify every font behavior or consumer.',
 			'Unknown table payloads may be retained without semantic validation.',
-			'Repair currently targets standalone SFNT; collection, WOFF, and legacy repair are not implemented.',
+			'Container repair preserves its format and auxiliary data; collection repair requires an explicit face and preserves every other original byte.',
+			'Unknown dependencies, unsupported legacy repair, and collection-level signatures remain explicit blockers.',
 		],
 	};
 }
@@ -628,46 +626,24 @@ async function fingerprint(bytes) {
 	).join('');
 }
 
-function validateInputs(fix, values) {
-	if (!values || typeof values !== 'object' || Array.isArray(values))
-		throw new TypeError(`Inputs for ${fix.id} must be an object.`);
-	for (const key of Object.keys(values))
-		if (!fix.inputs.some((input) => input.key === key))
-			throw new Error(`Unknown input ${key} for ${fix.id}.`);
-	for (const field of fix.inputs) {
-		const value = values[field.key];
-		if (field.type === 'integer') {
-			if (
-				!Number.isSafeInteger(value) ||
-				value < field.min ||
-				value > field.max
-			)
-				throw new Error(
-					`${field.label} must be an integer from ${field.min} to ${field.max}.`,
-				);
-		} else if (
-			typeof value !== 'string' ||
-			!value.trim() ||
-			value.length > field.maxLength ||
-			/[\u0000-\u001f\u007f]/.test(value) ||
-			[...value].some((char) => {
-				const code = char.codePointAt(0);
-				return code >= 0xd800 && code <= 0xdfff;
-			})
-		) {
-			throw new Error(
-				`${field.label} must be nonempty well-formed text without control characters (maximum ${field.maxLength} UTF-16 units).`,
-			);
-		}
-	}
-}
-
 export async function planRepairs(input, requests, options = {}) {
-	options = structuredClone(options);
+	const controls = { signal: options.signal, onProgress: options.onProgress };
+	checkCancellation(controls.signal);
+	const { signal: _signal, onProgress: _onProgress, ...persistentOptions } = options;
+	canonicalJSON(persistentOptions);
+	options = structuredClone(persistentOptions);
+	if (options.projectRevision !== undefined &&
+		!(typeof options.projectRevision === 'string' || (Number.isSafeInteger(options.projectRevision) && options.projectRevision >= 0)))
+		throw new TypeError('projectRevision must be a string or nonnegative safe integer.');
+	requests = structuredClone(requests);
 	const bytes = inputBytes(input, options).slice();
+	await qualityPhase(controls, 'inspection');
 	const report = inspectFont(bytes, options);
+	if (options.format !== undefined && options.format !== report.format)
+		throw new Error('Repairs preserve the input format; use separate conversion preflight for a different target.');
 	if (!Array.isArray(requests) || !requests.length)
 		throw new Error('Select at least one applicable repair.');
+	requests.sort((a, b) => String(a?.id).localeCompare(String(b?.id), 'en'));
 	const selected = new Set();
 	for (const request of requests) {
 		if (!request || typeof request.id !== 'string' || selected.has(request.id))
@@ -677,30 +653,29 @@ export async function planRepairs(input, requests, options = {}) {
 	const signatureRemoval = requests.some(
 		(request) => request.id === 'dsig.remove' && request.consent === true,
 	);
-	const layout = directory(bytes, options);
+	const source = repairSource(bytes, report.format, options), layout = source.layout;
+	const wrapperOnly = requests.every((request) => request.id.startsWith('container.'));
+	const effectiveLayout = signatureRemoval && layout.entries
+		? { ...layout, originalEntries: layout.entries, entries: layout.entries.filter((entry) => entry.tag !== 'DSIG') }
+		: layout;
 	const steps = requests.map((request) => {
 		const offer = report.repairs.find((fix) => fix.id === request.id);
 		if (!offer)
 			throw new Error(`Repair ${request.id} is not applicable to this input.`);
-		const effectiveLayout =
-			signatureRemoval && layout.entries
-				? {
-						...layout,
-						originalEntries: layout.entries,
-						entries: layout.entries.filter((entry) => entry.tag !== 'DSIG'),
-					}
-				: layout;
 		const reason = offerReason(
 			offer,
-			bytes,
+			source.sfnt,
 			effectiveLayout,
 			report.diagnostics,
+			options,
 		);
 		if (reason) throw new Error(`${offer.title}: ${reason}`);
 		if (offer.risk === 'potentially-lossy' && request.consent !== true)
 			throw new Error(`${offer.title} requires explicit consent.`);
 		const values = structuredClone(request.inputs ?? {});
-		validateInputs(offer, values);
+		validateRepairInputs(offer, values);
+		if (metadataIDs.has(offer.id)) applyMetadataRepair({ id: offer.id, values }, payloadMap(source.sfnt, effectiveLayout), options);
+		if (extendedIDs.has(offer.id)) applyExtendedRepair({ id: offer.id, values }, payloadMap(source.sfnt, effectiveLayout), options);
 		return {
 			...offer,
 			availability: 'available',
@@ -709,7 +684,20 @@ export async function planRepairs(input, requests, options = {}) {
 			values,
 		};
 	});
-	if (!selected.has('sfnt.checksums'))
+	for (let index = 0; index < steps.length; index++) {
+		const step = steps[index];
+		for (const id of step.companions ?? [])
+			if (!selected.has(id)) {
+				const companion = CATALOG.find((fix) => fix.id === id);
+				if (companion.risk !== 'safe' || companion.inputs.length)
+					throw new Error(`Companion ${id} requires a separate explicit decision.`);
+				const reason = offerReason(companion, source.sfnt, effectiveLayout, report.diagnostics, options);
+				if (reason) throw new Error(`Companion ${id}: ${reason}`);
+				steps.push({ ...companion, availability: 'available', reason: '', implicit: true, values: {} });
+				selected.add(id);
+			}
+	}
+	if (!wrapperOnly && !selected.has('sfnt.checksums'))
 		steps.push({
 			...CATALOG[0],
 			availability: 'available',
@@ -717,20 +705,44 @@ export async function planRepairs(input, requests, options = {}) {
 			implicit: true,
 			values: {},
 		});
+	const checksum = steps.find((step) => step.id === 'sfnt.checksums');
+	if (checksum) checksum.after = steps.filter((step) => step !== checksum).map((step) => step.id);
+	await qualityPhase(controls, 'planning');
 	const plan = freeze({
 		schemaVersion: 1,
 		inputFingerprint: await fingerprint(bytes),
 		profile: report.profile,
 		profileVersion: report.profileVersion,
-		format: 'sfnt',
-		steps,
+		format: report.format,
+		faceIndex: options.faceIndex ?? null,
+		projectRevision: options.projectRevision ?? null,
+		registryRevision: 2,
+		requests,
+		options,
+		effects: source.rewrite && !wrapperOnly
+			? [report.format === 'collection'
+				? 'Copy-on-write face append: original shared payloads and unselected faces stay byte-identical; the collection grows.'
+				: 'Re-encode the original wrapper; preserve decompressed table payloads, metadata, private data and version fields. Compression and storage offsets may change.']
+			: [],
+		steps: orderRepairs(steps),
 	});
 	plans.set(plan, {
 		bytes,
 		options: structuredClone(options),
-		report: freeze(report),
+		report: freeze(report), source, wrapperOnly,
 	});
+	checkCancellation(controls.signal);
 	return plan;
+}
+
+export async function resumeRepairPlan(input, serialized, options = {}) {
+	if (!serialized || serialized.schemaVersion !== 1 || serialized.registryRevision !== 2 ||
+		!Array.isArray(serialized.requests) || !serialized.options)
+		throw new Error('Unsupported serialized repair plan; inspect and plan again.');
+	const fresh = await planRepairs(input, serialized.requests, { ...serialized.options, ...options });
+	if (canonicalJSON(fresh) !== canonicalJSON(serialized))
+		throw new Error('The saved plan is stale or changed: source, profile, face, target, decisions or registry differ.');
+	return fresh;
 }
 
 function appendName(bytes, id, values) {
@@ -805,6 +817,8 @@ function execute(bytes, steps, options) {
 	const ids = new Set(steps.map((step) => step.id));
 	const rebuild = steps.some((step) => requiresRebuild(step.id));
 	for (const step of steps) {
+		if (metadataIDs.has(step.id)) applyMetadataRepair(step, payloads, options);
+		if (extendedIDs.has(step.id)) applyExtendedRepair(step, payloads, options);
 		if (['name.family', 'name.style'].includes(step.id))
 			payloads.set(
 				'name',
@@ -848,7 +862,8 @@ function execute(bytes, steps, options) {
 		candidate = new Uint8Array(
 			exportFont(
 				{
-					header: { sfVersion: new DataView(bytes.buffer).getUint32(0) },
+					header: { sfVersion: extendedSfntVersion(steps.filter((step) => extendedIDs.has(step.id))) ??
+						new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0) },
 					tables: Object.fromEntries(
 						[...payloads].map(([tag, data]) => [tag, { _raw: data }]),
 					),
@@ -881,15 +896,51 @@ function sameBytes(a, b) {
 	return a.length === b.length && a.every((byte, i) => byte === b[i]);
 }
 
+function selectedFields(steps) {
+	const fields = [];
+	for (const step of steps) {
+		const field = {
+			'head.magic': ['head', 12, 4, 0x5f0f3cf5],
+			'head.glyph-data-format': ['head', 52, 2, 0],
+			'cmap.version': ['cmap', 0, 2, 0],
+			'os2.weight': ['OS/2', 4, 2, step.values.value],
+			'os2.width': ['OS/2', 6, 2, step.values.value],
+			'os2.typo-linegap': ['OS/2', 72, 2, step.values.value],
+		}[step.id];
+		if (field) fields.push(field);
+	}
+	return fields;
+}
+
 function preservationFailures(before, after, steps, options) {
 	const left = directory(before, options),
 		right = directory(after, options);
 	if (left.reason || right.reason) return [left.reason || right.reason];
 	const ids = new Set(steps.map((step) => step.id));
 	const failures = [];
+	const extendedSteps = steps.filter((step) => extendedIDs.has(step.id));
+	const expectedVersion = extendedSfntVersion(extendedSteps) ?? new DataView(before.buffer, before.byteOffset).getUint32(0);
+	if (new DataView(after.buffer, after.byteOffset).getUint32(0) !== expectedVersion)
+		failures.push('The SFNT outline flavor differs from the approved plan.');
+	const approvedFields = selectedFields(steps);
+	for (const [tag, offset, length, value] of approvedFields) {
+		const entry = right.entries.find((item) => item.tag === tag);
+		const actual = entry && new DataView(after.buffer, after.byteOffset + entry.offset, entry.length);
+		if (!actual || (length === 4 ? actual.getUint32(offset) : actual.getUint16(offset)) !== value)
+			failures.push(`The selected ${tag} value at ${offset} was not applied.`);
+	}
+	const metadata = verifyMetadataRepairs(payloadMap(before, left), payloadMap(after, right), steps, options, approvedFields);
+	failures.push(...metadata.failures);
+	const extended = verifyExtendedRepairs(payloadMap(before, left), payloadMap(after, right), steps.filter((step) => extendedIDs.has(step.id)), options);
+	failures.push(...extended.failures);
+	const handled = new Set([...metadata.handledTags, ...extended.handledTags]);
+	const tableChanges = extendedTableChanges(extendedSteps, payloadMap(before, left));
+	const removals = new Set(tableChanges.removed);
+	if (ids.has('dsig.remove')) removals.add('DSIG');
 	const expectedTags = left.entries
 		.map((entry) => entry.tag)
-		.filter((tag) => tag !== 'DSIG' || !ids.has('dsig.remove'))
+		.filter((tag) => !removals.has(tag))
+		.concat(tableChanges.added)
 		.sort();
 	if (
 		JSON.stringify(expectedTags) !==
@@ -897,7 +948,8 @@ function preservationFailures(before, after, steps, options) {
 	)
 		failures.push('The retained table set differs from the approved plan.');
 	for (const entry of left.entries) {
-		if (entry.tag === 'DSIG' && ids.has('dsig.remove')) continue;
+		if (handled.has(entry.tag)) continue;
+		if (removals.has(entry.tag)) continue;
 		const other = right.entries.find((item) => item.tag === entry.tag);
 		if (!other) continue;
 		const a = tableBytes(before, entry).slice(),
@@ -994,26 +1046,35 @@ function findings(report) {
 	return counts;
 }
 
-export async function applyRepairs(input, plan) {
+export async function applyRepairs(input, plan, controls = {}) {
 	const state = plans.get(plan);
 	if (!state)
 		throw new Error(
 			'Use an unmodified plan returned by FontFlux.planRepairs; deserialized or forged plans cannot execute.',
 		);
 	const bytes = inputBytes(input, state.options).slice();
+	checkCancellation(controls.signal);
 	if (!sameBytes(bytes, state.bytes))
 		throw new Error(
 			'The repair plan is stale: the input changed. Inspect and plan again.',
 		);
-	const candidate = execute(bytes, plan.steps, state.options);
+	for (const key of ['format', 'faceIndex', 'projectRevision', 'profile', 'profileVersion'])
+		if (controls[key] !== undefined && controls[key] !== plan[key])
+			throw new Error(`The repair plan is stale: ${key} changed.`);
+	await qualityPhase(controls, 'application');
+	const sfntCandidate = state.wrapperOnly ? state.source.sfnt : execute(state.source.sfnt, plan.steps, state.options);
+	const candidate = emitRepairContainer(bytes, state.source, sfntCandidate, plan.steps, state.options);
+	await qualityPhase(controls, 'verification');
 	const after = inspectFont(candidate, state.options);
-	const failures = preservationFailures(
-		bytes,
-		candidate,
+	const emitted = prepareRepairContainer(candidate, plan.format, state.options);
+	const failures = state.wrapperOnly ? [] : preservationFailures(
+		state.source.sfnt,
+		emitted.sfnt,
 		plan.steps,
 		state.options,
 	);
-	const targetCodes = new Set(plan.steps.flatMap((step) => step.codes));
+	failures.push(...verifyRepairContainer(bytes, candidate, state.source, plan.steps, state.options));
+	const targetCodes = new Set(plan.steps.filter((step) => !step.optional).flatMap((step) => step.codes));
 	for (const issue of after.diagnostics?.issues ?? [])
 		if (targetCodes.has(issue.code))
 			failures.push(`The targeted finding ${issue.code} remains after repair.`);
@@ -1023,15 +1084,20 @@ export async function applyRepairs(input, plan) {
 			failures.push(`New unapproved finding: ${JSON.parse(key)[3]}`);
 	if (
 		plan.steps.some((step) => step.id === 'dsig.remove') &&
-		directory(candidate, state.options).entries?.some(
+		directory(emitted.sfnt, state.options).entries?.some(
 			(entry) => entry.tag === 'DSIG',
 		)
 	)
 		failures.push('The selected digital signature removal did not occur.');
 	const passed = failures.length === 0;
+	const outputFingerprint = passed ? await fingerprint(candidate) : null;
+	checkCancellation(controls.signal);
 	return {
 		state: passed ? 'verified' : 'failed',
 		buffer: passed ? candidate.buffer : null,
+		changed: passed && !sameBytes(bytes, candidate),
+		format: plan.format, faceIndex: plan.faceIndex, profile: plan.profile,
+		plan: structuredClone(plan),
 		before: structuredClone(state.report),
 		after,
 		changes: plan.steps
@@ -1039,6 +1105,7 @@ export async function applyRepairs(input, plan) {
 				id: step.id,
 				description: `${step.implicit ? 'Companion operation: ' : ''}${step.description}`,
 			}))
+			.concat(plan.effects.map((description) => ({ id: 'container.preservation', description })))
 			.concat(
 				plan.steps.some((step) => requiresRebuild(step.id))
 					? [
@@ -1061,7 +1128,7 @@ export async function applyRepairs(input, plan) {
 			],
 		},
 		inputFingerprint: plan.inputFingerprint,
-		outputFingerprint: passed ? await fingerprint(candidate) : null,
+		outputFingerprint,
 	};
 }
 

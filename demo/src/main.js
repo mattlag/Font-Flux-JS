@@ -286,7 +286,7 @@ function showApp(fontData, options = {}) {
 	let diagnoseLeave = null;
 	let inspectionFace = '';
 
-	async function installProject(next, buffer, token, restore = null, isAllowed = () => true) {
+	async function installProject(next, buffer, token, restore = null, isAllowed = () => true, binary = buffer) {
 		// Prepare everything before changing either live data or the visible face.
 		// Undo restores the previous preview resource, including an original
 		// CSS fallback for damaged fonts; it must not require repairing it first.
@@ -304,6 +304,9 @@ function showApp(fontData, options = {}) {
 			previewWasCSS: !!document.getElementById('demo-font-face'),
 			binary: state.binary,
 			binaryKey: state.binaryKey,
+			collectionBinaries: (fontData._collectionFonts ?? []).map((data) => ({
+				data, binary: stateFor(data).binary, binaryKey: stateFor(data).binaryKey,
+			})),
 		};
 		diagnoseLeave?.();
 		for (const key of Object.keys(fontData)) if (!transientKeys.has(key)) delete fontData[key];
@@ -312,9 +315,25 @@ function showApp(fontData, options = {}) {
 		fontData._diagnoseOnly = restore?.diagnoseOnly ?? false;
 		fontData._loadError = restore?.loadError;
 		state.revision++;
-		state.binary = restore ? restore.binary : buffer.slice(0);
+		state.binary = restore ? restore.binary : binary.slice(0);
 		state.binaryKey = restore ? restore.binaryKey : projectKey(fontData);
 		state.undo = restore ? null : previous;
+		for (const data of fontData._collectionFonts ?? []) {
+			if (data !== fontData) stateFor(data).undo = null;
+		}
+		if (restore?.collectionBinaries) {
+			for (const previous of restore.collectionBinaries) {
+				const member = stateFor(previous.data);
+				member.binary = previous.binary;
+				member.binaryKey = previous.binaryKey;
+			}
+		} else if (!restore && binary.byteLength >= 4 && new DataView(binary).getUint32(0) === 0x74746366) {
+			for (const data of fontData._collectionFonts ?? []) {
+				const member = stateFor(data);
+				member.binary = state.binary;
+				member.binaryKey = projectKey(data);
+			}
+		}
 		clearFontPreview();
 		if (replacement) {
 			document.fonts.add(replacement);
@@ -340,15 +359,36 @@ function showApp(fontData, options = {}) {
 		capture,
 		isCurrent,
 		projectFont: () => new FontFlux(snapshot(fontData)),
-		repairInput: () => state.binary && state.binaryKey === projectKey(fontData) ? state.binary.slice(0) : null,
+		originalSource: () => fontData._originalBuffer ? {
+			bytes: fontData._originalBuffer,
+			options: fontData._collection ? { faceIndex: fontData._collectionIndex ?? 0 } : {},
+		} : undefined,
+		repairInput: () => {
+			if (!state.binary || state.binaryKey !== projectKey(fontData)) return null;
+			if (new DataView(state.binary).getUint32(0) === 0x74746366 &&
+				fontData._collectionFonts?.some((data) => {
+					const other = stateFor(data);
+					return other.binary !== state.binary || other.binaryKey !== projectKey(data);
+				})) return null;
+			return state.binary.slice(0);
+		},
 		canUndo: () => !!state.undo,
 		canRevert: () => !!state.original,
 		onDiagnoseLeave: (handler) => { diagnoseLeave = handler; },
 		get inspectionFace() { return inspectionFace; },
-		commit: async (buffer, token, isAllowed) => {
+		commit: async (buffer, token, isAllowed, scope = {}) => {
 			if (!isCurrent(token)) throw new Error('Candidate is stale');
-			const next = FontFlux.open(buffer).data;
-			await installProject(next, buffer, token, null, isAllowed);
+			const collection = scope.format === 'collection';
+			if (collection && scope.faceIndex !== (fontData._collectionIndex ?? 0))
+				throw new Error('The repaired collection face is not the active project face.');
+			const font = FontFlux.open(buffer, collection ? { faceIndex: scope.faceIndex } : {});
+			let preview = buffer;
+			if (collection) {
+				const checked = await font.preflightAsync({ format: 'sfnt' });
+				if (checked.state !== 'verified') throw new Error(checked.error);
+				preview = checked.buffer;
+			}
+			await installProject(font.data, preview, token, null, isAllowed, buffer);
 		},
 		undo: async () => {
 			const previous = state.undo;

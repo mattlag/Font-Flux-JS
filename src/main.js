@@ -11,10 +11,13 @@
  * init, not font-scoped.
  */
 
-import { FontFlux } from './font_flux.js';
+import { configureBrowserQualityWorker, FontFlux } from './font_flux.js';
 import { fontFromJSON, fontToJSON } from './json.js';
 import { diagnoseFont } from './validate/index.js';
 import { initBrotli } from './woff/woff2.js';
+
+configureBrowserQualityWorker(() =>
+	new Worker(new URL('./validate/quality-worker-entry.js', import.meta.url), { type: 'module' }));
 
 /**
  * Initialize WOFF2 support by loading the Brotli WASM module.

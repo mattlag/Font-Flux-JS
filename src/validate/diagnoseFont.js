@@ -2,13 +2,19 @@
 import { tableParseOrder, tableParsers } from '../import.js';
 import { getCFFGlyphContext } from '../otf/cff_common.js';
 import { DataReader } from '../reader.js';
-import { DEFAULT_STRUCTURE_LIMITS } from '../structure_limits.js';
+import { DEFAULT_STRUCTURE_LIMITS, StructureLimitError } from '../structure_limits.js';
 import { unwrapWOFF1 } from '../woff/woff1.js';
 import { unwrapWOFF2 } from '../woff/woff2.js';
+import { runAdvancedDiagnostics } from './advanced-diagnostics.js';
+import { advancedContext } from './advanced-common.js';
+import { validateCff2PrivateDictionary } from './advanced-cff-private.js';
+import { executeCffArithmetic, validateCffStructures } from './advanced-programs.js';
 import {
 	completeDiagnosticReport, diagnosticIssue, diagnosticState,
 	runDiagnosticCheck, skipDiagnosticCheck, trackDiagnosticIssues,
 } from './coverage.js';
+import { inspectMetadata, metadataRepairReason } from './metadata-repairs.js';
+import { inspectDerivedRepairCoverage, inspectDerivedRepairs } from './repair-extensions.js';
 import { ALL_SUPPORTED_TABLES, REQUIRED_CORE_TABLES } from './tables.js';
 
 // =========================================================================
@@ -614,6 +620,26 @@ function phaseParseTables(sfnt, entries, issues, options) {
 
 		runDiagnosticCheck(issues, id, () => { try {
 			const raw = new Uint8Array(sfnt, entry.offset, entry.length);
+			// CFF's permissive codec uses direct byte indexing for charset and
+			// FDSelect ranges. Bound those structures before it can expand them.
+			if (tag === 'CFF ' || tag === 'CFF2') {
+				let safe = true;
+				runDiagnosticCheck(issues, `binary.preflight.${tag}`, () => {
+					const preflightIssues = [];
+					try {
+						validateCffStructures(raw, {}, advancedContext(preflightIssues, tag, parsedTables, options));
+					} catch (error) {
+						safe = false;
+						if (error instanceof StructureLimitError)
+							addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED', error.message, location);
+						addIssue(issues, 'error', 'TABLE_PARSE_FAILED',
+							`CFF INDEX/DICT storage preflight rejected the table: ${error.message}`, location);
+						skipDiagnosticCheck(issues, `binary.preflight.${tag}.storage`, 'blocked',
+							'unsafe-storage', 'CFF parsing was not attempted after storage validation failed.', location);
+					}
+				});
+				if (!safe) return;
+			}
 			const rawArray = Array.from(raw);
 			parsedTables[tag] = parser(rawArray, parsedTables, options);
 			const glyphCount = tag === 'maxp'
@@ -2515,11 +2541,11 @@ const CFF_MAX_STACK = 48; // Type 2 / CFF1 spec stack depth
 const CFF2_MAX_STACK = 513; // CFF2 spec stack depth
 const CFF_BLEND_VALUE = Symbol('blended design coordinate');
 
-function resolveDiagnosticCffContext(cffTable, font, gid, isCff2, report, label) {
+function resolveDiagnosticCffContext(cffTable, font, gid, isCff2, report, label, resolvePrivate) {
 	const dictionaries = isCff2 ? font.fontDicts : font.fdArray;
 	const needsFD = isCff2 || font.isCIDFont || font.topDict?.ROS !== undefined ||
 		dictionaries !== undefined || font.fdSelect != null;
-	let dictionary = font;
+	let dictionary = font, dictionaryIndex = 0;
 	if (needsFD) {
 		if (!Array.isArray(dictionaries) || dictionaries.length === 0) {
 			report('CFF_FDARRAY_MISSING', 'error',
@@ -2540,6 +2566,7 @@ function resolveDiagnosticCffContext(cffTable, font, gid, isCff2, report, label)
 			return null;
 		}
 		dictionary = dictionaries[fd];
+		dictionaryIndex = fd;
 	}
 	if (!isCff2) {
 		if ((font.topDict?.CharstringType ?? 2) !== 2) {
@@ -2551,16 +2578,11 @@ function resolveDiagnosticCffContext(cffTable, font, gid, isCff2, report, label)
 		// to FD 0 / the top-level Private DICT must not hide an invalid reference.
 		return getCFFGlyphContext({ ...cffTable, fonts: [font] }, gid);
 	}
-	if (dictionary.privateDict?.blend !== undefined ||
-		dictionary.privateDictEntries?.some((entry) => entry.operator === 23)) {
-		report('CFF_CONTEXT_UNSUPPORTED', 'warning',
-			`${label}: Private DICT blend programs are not evaluated; bytecode checks were skipped.`);
-		return null;
-	}
+	const privateContext = resolvePrivate(dictionary, dictionaryIndex);
+	if (!privateContext) return null;
 	return {
 		localSubrs: dictionary.localSubrs || [],
-		vsindex: dictionary.privateDict?.vsindex ?? 0,
-		hasPrivateVsindex: dictionary.privateDict?.vsindex !== undefined,
+		...privateContext,
 	};
 }
 
@@ -2607,13 +2629,38 @@ function validateCffCharStrings(
 	for (let f = 0; f < fontList.length; f++) {
 		const font = fontList[f];
 		const charStrings = font.charStrings || [];
+		const privateContexts = new Map();
+		const privateCtx = advancedContext(issues, 'CFF2', {}, options);
+		const resolvePrivate = (dictionary, fd) => {
+			if (privateContexts.has(dictionary)) return privateContexts.get(dictionary);
+			const id = `binary.CFF2.private-dict.${fd}`;
+			let context = null;
+			runDiagnosticCheck(issues, id, () => {
+				try {
+					context = validateCff2PrivateDictionary(dictionary, cffTable.variationStore,
+						privateCtx, `fontDicts.${fd}.privateDict`);
+				} catch (error) {
+					if (error instanceof StructureLimitError)
+						addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED', error.message,
+							privateCtx.location(`fontDicts.${fd}.privateDict`));
+					else addIssue(issues, 'error', 'DIAGNOSTIC_CHECK_FAILED',
+						`Private DICT validation stopped: ${error.message}`, privateCtx.location(`fontDicts.${fd}.privateDict`));
+				}
+			}, { location: { table: 'CFF2', path: `fontDicts.${fd}.privateDict` },
+				partial: 'Ordered operand, blend and inherited context checks; no hint interpolation or rasterization.' });
+			if (!context) skipDiagnosticCheck(issues, `${id}.charstrings`, 'blocked',
+				'private-context-invalid', 'Associated glyph bytecode checks require a complete supported Private DICT context.',
+				{ table: 'CFF2', path: `fontDicts.${fd}.privateDict` });
+			privateContexts.set(dictionary, context);
+			return context;
+		};
 
 		for (let gid = 0; gid < charStrings.length; gid++) {
 			location = { table: isCff2 ? 'CFF2' : 'CFF ', fontIndex: f, glyphIndex: gid };
 			const cs = charStrings[gid];
 			const label = `${owner} font ${f}, glyph ${gid}`;
 			const context = resolveDiagnosticCffContext(
-				cffTable, font, gid, isCff2, report, label,
+				cffTable, font, gid, isCff2, report, label, resolvePrivate,
 			);
 			if (!context) continue;
 			if (!cs || (!isCff2 && cs.length === 0)) {
@@ -2772,6 +2819,9 @@ function validateCharStringBytecode(
 				return;
 			}
 			if (flexArgs === undefined) {
+				const evaluated = executeCffArithmetic(b1, ctx, report, `${owner}: glyph ${gid}`);
+				if (evaluated === true) { i += 2; continue; }
+				if (evaluated === false) return;
 				report('CFF_CONTEXT_UNSUPPORTED', 'warning',
 					`${owner}: glyph ${gid} uses Type 2 operator 12 ${b1}, whose stack effects are not evaluated; remaining bytecode checks were skipped.`);
 				return;
@@ -2782,6 +2832,11 @@ function validateCharStringBytecode(
 					'error',
 					`${owner}: charstring for glyph ${gid} two-byte op ${b1} requires ${flexArgs} operands but stack has ${ctx.stack.length}.`,
 				);
+				return;
+			}
+			if (ctx.stack.length !== flexArgs) {
+				report('CFF_INVALID_OPERAND_COUNT', 'error',
+					`${owner}: glyph ${gid} flex operator ${b1} requires exactly ${flexArgs} operands.`);
 				return;
 			}
 			ctx.stack.length = 0;
@@ -2976,6 +3031,18 @@ function validateCharStringBytecode(
 			return;
 		}
 
+		const count = ctx.stack.length;
+		const validDrawCount = b0 === 5 ? count >= 2 && count % 2 === 0 :
+			b0 === 6 || b0 === 7 ? count >= 1 :
+			b0 === 8 ? count >= 6 && count % 6 === 0 :
+			b0 === 24 ? count >= 8 && (count - 2) % 6 === 0 :
+			b0 === 25 ? count >= 8 && (count - 6) % 2 === 0 :
+			[26, 27, 30, 31].includes(b0) ? count >= 4 && (count % 4 === 0 || count % 4 === 1) : true;
+		if (!validDrawCount) {
+			report('CFF_INVALID_OPERAND_COUNT', 'error',
+				`${owner}: glyph ${gid} drawing operator ${b0} has invalid operand count ${count}.`);
+			return;
+		}
 		// Drawing/move operators — clear stack
 		ctx.stack.length = 0;
 		i++;
@@ -3491,7 +3558,7 @@ function validateTrueTypeInstructions(bytes, owner, issues) {
 		}
 
 		// FDEF (0x2C) — function definition (cannot nest)
-		if (op === 0x2c) {
+		if (op === 0x2c || op === 0x89) {
 			if (inFdef && !nestedFdefReported) {
 				nestedFdefReported = true;
 				addIssue(
@@ -4191,8 +4258,122 @@ function runFaceChecks(sfnt, sfntOffset, issues, options, standalone) {
 		() => phaseCrossTableChecks(parsedTables, entries, issues, sfnt, options), {
 			partial: 'Implemented field and cross-table invariants only; not exhaustive font semantics.',
 		});
-	for (const tag of ['COLR', 'CPAL', 'SVG ', 'gvar', 'cvar', 'CBDT', 'CBLC',
-		'EBDT', 'EBLC', 'sbix', 'BASE', 'JSTF', 'MERG', 'bdat', 'bloc', 'ltag']) {
+	runAdvancedDiagnostics(parsedTables, entries, sfnt, issues, options);
+	const payloads = new Map();
+	let completePayloads = true;
+	for (const entry of entries) {
+		if (entry.offset < 0 || entry.length < 0 ||
+			entry.offset > sfnt.byteLength - entry.length || payloads.has(entry.tag)) {
+			completePayloads = false;
+			break;
+		}
+		payloads.set(entry.tag, new Uint8Array(sfnt, entry.offset, entry.length));
+	}
+	runDiagnosticCheck(issues, 'binary.metadata', () => {
+		if (!completePayloads) {
+			skipDiagnosticCheck(issues, 'binary.metadata.prerequisites', 'blocked',
+				'payload-map-incomplete', 'An out-of-bounds or duplicate table prevents a complete, unambiguous original payload map.');
+			return;
+		}
+		const unreadable = ['name', 'OS/2', 'maxp', 'hhea', 'hmtx', 'cmap']
+			.filter((tag) => payloads.has(tag) && !parsedTables[tag]);
+		if (unreadable.length) {
+			skipDiagnosticCheck(issues, 'binary.metadata.prerequisites', 'blocked',
+				'table-not-parsed', `Metadata prerequisites are unreadable: ${unreadable.join(', ')}.`);
+			return;
+		}
+		if (!payloads.has('name'))
+			skipDiagnosticCheck(issues, 'binary.metadata.name', 'blocked',
+				'table-missing', 'Name inspection requires the original name table.', { table: 'name' });
+		const name = parsedTables.name;
+		const nameWork = (name?.names ?? []).reduce((sum, record) => sum + (record.value?.length ?? 0) + 1, 0);
+		if (nameWork > options.maxStructureNodes) {
+			addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED', 'Metadata name inspection exceeds maxStructureNodes.');
+			skipDiagnosticCheck(issues, 'binary.metadata.prerequisites', 'blocked',
+				'resource-limit', 'Metadata inspection stopped before decoding names.');
+			return;
+		}
+		for (const id of ['os2.average-width', 'os2.character-range']) {
+			const reason = metadataRepairReason(id, payloads, options);
+			if (reason) skipDiagnosticCheck(issues, `binary.metadata.${id}`, 'blocked',
+				'derivation-unavailable', reason, { table: 'OS/2' });
+		}
+		try {
+			const findings = inspectMetadata(payloads, options);
+			let forwarded = 0;
+			for (const code of ['QUALITY_NAME_WHITESPACE', 'QUALITY_POSTSCRIPT_NAME_INVALID', 'QUALITY_NAME_ENCODING_INVALID',
+				'QUALITY_AVERAGE_WIDTH_MISMATCH', 'QUALITY_CHARACTER_RANGE_MISMATCH']) {
+				for (const finding of findings) {
+					if (finding.code !== code) continue;
+					forwarded++;
+					diagnosticIssue(issues, finding.severity === 'error' ? 'error' :
+						finding.severity === 'warning' ? 'warning' : 'info',
+					code, finding.message, finding.location);
+				}
+			}
+			if (forwarded !== findings.length)
+				skipDiagnosticCheck(issues, 'binary.metadata.execution', 'blocked',
+					'unregistered-metadata-finding', 'A metadata inspector returned an unregistered finding code.');
+		} catch (error) {
+			skipDiagnosticCheck(issues, 'binary.metadata.execution', 'blocked',
+				'metadata-inspection-failed', `Metadata inspection did not finish: ${error.message}`);
+		}
+	});
+	runDiagnosticCheck(issues, 'binary.derived', () => {
+		const scopeForCode = {
+			TT_DERIVED_BOUNDS_MISMATCH: 'tt.bounds',
+			TT_DERIVED_MAXP_MISMATCH: 'tt.maxp-geometry',
+			HHEA_DERIVED_EXTREMA_MISMATCH: 'hhea.extrema',
+			VHEA_DERIVED_EXTREMA_MISMATCH: 'vhea.extrema',
+			CFF_DERIVED_MAXP_MISMATCH: 'cff.maxp',
+		};
+		const scopes = ['tt.bounds', 'tt.maxp-geometry', 'hhea.extrema', 'vhea.extrema', 'cff.maxp'];
+		const blocked = (reasonCode, reason) => {
+			for (const scope of scopes)
+				skipDiagnosticCheck(issues, `binary.derived.${scope}`, 'blocked', reasonCode, reason);
+		};
+		if (!completePayloads) {
+			blocked('payload-map-incomplete', 'Derived checks require complete, unambiguous original table payloads.');
+			return;
+		}
+		let coverage, findings;
+		try {
+			coverage = inspectDerivedRepairCoverage(payloads, options);
+			findings = coverage.some((scope) => scope.outcome === 'checked')
+				? inspectDerivedRepairs(payloads, options) : [];
+		} catch (error) {
+			blocked('derived-inspection-failed', `Derived inspection did not finish: ${error.message}`);
+			return;
+		}
+		let forwarded = 0;
+		for (const scope of scopes) {
+			const state = coverage.find((item) => item.id === scope);
+			const id = `binary.derived.${scope}`;
+			if (state?.outcome !== 'checked') {
+				const outcome = ['skipped', 'unsupported', 'blocked'].includes(state?.outcome) ? state.outcome : 'blocked';
+				skipDiagnosticCheck(issues, id, outcome, outcome === 'skipped' ? 'not-applicable' : 'derivation-unavailable',
+					state?.reason ?? 'No prerequisite outcome was provided for this derived scope.');
+				continue;
+			}
+			runDiagnosticCheck(issues, id, () => {
+				for (const code of ['TT_DERIVED_BOUNDS_MISMATCH', 'TT_DERIVED_MAXP_MISMATCH',
+					'HHEA_DERIVED_EXTREMA_MISMATCH', 'VHEA_DERIVED_EXTREMA_MISMATCH', 'CFF_DERIVED_MAXP_MISMATCH']) {
+					if (scopeForCode[code] !== scope) continue;
+					for (const finding of findings) {
+						if (finding.code !== code) continue;
+						forwarded++;
+						diagnosticIssue(issues, finding.severity === 'error' ? 'error' :
+							finding.severity === 'warning' ? 'warning' : 'info',
+						code, finding.message, finding.location);
+					}
+				}
+			}, { partial: 'Supported representation-derived fields only; no TrueType VM, variable geometry or rasterization certification.' });
+		}
+		if (forwarded !== findings.length)
+			skipDiagnosticCheck(issues, 'binary.derived.execution', 'blocked',
+				'unrouted-derived-finding', 'A derived finding has no checked registered scope; inspection is incomplete.');
+	});
+	for (const tag of ['ltag']) {
 		if (entries.some((entry) => entry.tag === tag)) {
 			skipDiagnosticCheck(issues, `binary.semantics.${tag}`, 'unsupported',
 				'semantic-check-unavailable',

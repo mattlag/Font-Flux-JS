@@ -181,12 +181,6 @@ export function parseV1Data(reader, v1Header) {
 		? parseDeltaSetIndexMap(reader, v1Header.varIndexMapOffset)
 		: null;
 
-	const itemVariationStore = v1Header.itemVariationStoreOffset
-		? parseItemVariationStore(
-				reader.bytes(0).length ? [] : [], // unused — we re-read below
-			)
-		: null;
-
 	// IVS needs raw bytes from the offset to end of table (or next subtable)
 	let ivs = null;
 	if (v1Header.itemVariationStoreOffset) {

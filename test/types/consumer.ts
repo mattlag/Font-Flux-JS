@@ -63,6 +63,30 @@ for (const stage of preflight.stages) {
 	}
 }
 void [references, profiles, complete];
+const cache = FontFlux.createInspectionCache({ maxEntries: 2, maxBytes: 1024 * 1024 });
+await FontFlux.inspectAsync(bytes, { cache, maxDurationMs: 30000, onProgress: (event) => {
+	const phase: string = event.phase;
+	void phase;
+} });
+const review = await FontFlux.planRepairsAsync(bytes, [{ id: 'sfnt.checksums' }]);
+const reviewed = await FontFlux.applyRepairsAsync(bytes, review);
+const digest: string = await FontFlux.fingerprintRepairPlan(review.plan);
+await FontFlux.applyRepairsAsync(bytes, review.plan, { reviewedPlanFingerprint: digest });
+await font.preflightAsync({ format: 'woff2', originalSource: { bytes }, maxProjectBytes: 1024 * 1024 });
+FontFlux.inspectFamily([{ id: 'regular', input: font }], {
+	family: { id: 'declared', profile: 'my-policy-v1', expectedMembers: ['regular'] },
+});
+FontFlux.inspectExpectations(font, { repertoires: [{ id: 'demo', version: '1', codePoints: [65] }] });
+FontFlux.inspectSourceQuality([{ id: 'master', input: font, source: { format: 'project' } }]);
+const legacyValid: boolean | null = FontFlux.inspectLegacy(bytes).diagnostics.valid;
+const replacement = FontFlux.recoverLegacy(bytes, bytes, { authorizeReplacement: true });
+if (replacement.state === 'inspected') {
+	const replaced: ArrayBuffer = replacement.buffer;
+	void replaced;
+}
+void [reviewed, legacyValid];
+// @ts-expect-error Worker entry URLs are chosen by FFJS, not by font data.
+FontFlux.inspectAsync(bytes, { entryURL: 'https://untrusted.invalid/worker.js' });
 // @ts-expect-error Unsupported foundry profiles must not silently become structural.
 FontFlux.inspect(bytes, { profile: 'googlefonts' });
 fontFromJSON(restored.toJSON());

@@ -439,8 +439,10 @@ describe('quality inspection and repair contracts', () => {
 		expect(FontFlux.inspect(woff).format).toBe('woff');
 		const legacy = FontFlux.inspect(new TextEncoder().encode('%!PS-AdobeFont'));
 		expect(legacy.format).toBe('type1');
-		expect(legacy.diagnostics).toBeNull();
-		expect(legacy.coverage[0].status).toBe('unsupported');
+		expect(legacy.diagnostics.errors.map((issue) => issue.code)).toContain('LEGACY_STRUCTURE_INVALID');
+		expect(legacy.diagnostics.errors.some((issue) => issue.code === 'REQUIRED_TABLE_MISSING')).toBe(false);
+		expect(legacy.profileReport.complete).toBe(false);
+		expect(legacy.repairs).toEqual([]);
 	});
 });
 

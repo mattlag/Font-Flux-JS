@@ -41,6 +41,7 @@ import {
 	planRepairs,
 	preflightFont,
 	repairCatalog,
+	resumeRepairPlan,
 	scopedValidation,
 } from './validate/quality.js';
 import {
@@ -48,8 +49,26 @@ import {
 	validateSimplifiedJSON,
 } from './validate/validateJSON.js';
 import { initBrotli } from './woff/woff2.js';
+import * as qualityWorkflows from './validate/quality-workflows.js';
 
 const originalSources = new WeakMap();
+let browserWorkerFactory;
+
+export function configureBrowserQualityWorker(factory) {
+	if (typeof factory !== 'function') throw new TypeError('Expected a browser worker factory.');
+	browserWorkerFactory = factory;
+}
+
+function workerOptions(options = {}) {
+	if (options.onProgress !== undefined && typeof options.onProgress !== 'function')
+		throw new TypeError('onProgress must be a function.');
+	return {
+		...options, entryURL: import.meta.url, browserWorkerFactory,
+		onProgress: options.onProgress
+			? (progress) => options.onProgress({ ...progress, phase: progress.stage })
+			: undefined,
+	};
+}
 
 // ============================================================================
 //  INPUT DETECTION — distinguish JSON vs. binary font input
@@ -408,6 +427,54 @@ export class FontFlux {
 		return inspectFont(input, options);
 	}
 
+	static inspectAsync(input, options) {
+		return qualityWorkflows.inspectInWorker(input, workerOptions(options));
+	}
+
+	static createInspectionCache(options) {
+		return qualityWorkflows.createInspectionCache(options);
+	}
+
+	static fingerprintRepairPlan(plan, options) {
+		return qualityWorkflows.fingerprintRepairPlan(plan, options);
+	}
+
+	static repairAsync(input, requests, options) {
+		return qualityWorkflows.repairInWorker(input, requests, workerOptions(options));
+	}
+
+	static planRepairsAsync(input, requests, options) {
+		return qualityWorkflows.planInWorker(input, requests, workerOptions(options));
+	}
+
+	static applyRepairsAsync(input, plan, options) {
+		return qualityWorkflows.applyPlanInWorker(input, plan, workerOptions(options));
+	}
+
+	static inspectFamily(inputs, options) {
+		return qualityWorkflows.inspectFamily(inputs, options);
+	}
+
+	static repairFamily(inputs, requests, options) {
+		return qualityWorkflows.repairFamily(inputs, requests, options, FontFlux);
+	}
+
+	static inspectExpectations(input, options) {
+		return qualityWorkflows.inspectExpectations(input, options);
+	}
+
+	static inspectSourceQuality(projects, options) {
+		return qualityWorkflows.inspectSourceQuality(projects, options);
+	}
+
+	static inspectLegacy(input, options) {
+		return qualityWorkflows.inspectLegacy(input, options);
+	}
+
+	static recoverLegacy(input, replacement, options) {
+		return qualityWorkflows.recoverLegacy(input, replacement, options, FontFlux);
+	}
+
 	static checkCatalog() {
 		return CHECK_CATALOG;
 	}
@@ -424,8 +491,12 @@ export class FontFlux {
 		return planRepairs(input, requests, options);
 	}
 
-	static applyRepairs(input, plan) {
-		return applyRepairs(input, plan);
+	static resumeRepairPlan(input, serialized, options) {
+		return resumeRepairPlan(input, serialized, options);
+	}
+
+	static applyRepairs(input, plan, options) {
+		return applyRepairs(input, plan, options);
 	}
 
 	/** Convert an SVG path `d` string to font contours. */
@@ -1212,7 +1283,13 @@ export class FontFlux {
 	}
 
 	async preflight(options) {
-		return preflightFont(this._data, options, originalSources.get(this));
+		return preflightFont(this._data, options, originalSources.get(this) ?? options?.originalSource);
+	}
+
+	async preflightAsync(options) {
+		return qualityWorkflows.preflightInWorker(this._data, {
+			...workerOptions(options), originalSource: originalSources.get(this) ?? options?.originalSource,
+		});
 	}
 
 	/**

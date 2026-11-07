@@ -536,11 +536,27 @@ Non-decomposed tables (COLR, gvar, bitmap data, etc.) are lost.
 | `FontFlux.repairCatalog()` | Immutable repair descriptions, input constraints, risks, and consequences |
 | `await FontFlux.planRepairs(bytes, requests, options?)` | Frozen, source-bound plan with explicit decisions and companion operations |
 | `await FontFlux.applyRepairs(bytes, plan)` | Verified candidate bytes or an explicit failed verification; never mutates the source |
+| `await FontFlux.resumeRepairPlan(bytes, savedPlan, options?)` | Fresh source/registry/decision validation before explicit serialized-plan resumption |
+| `await FontFlux.inspectAsync(bytes, options?)` | Disposable-worker inspection with cancellation, deadlines and optional fingerprinted cache |
+| `FontFlux.createInspectionCache(options?)` | Bounded immutable report reuse; detached `stats` and `clear()` |
+| `await FontFlux.planRepairsAsync(bytes, requests, options?)` | Serializable source/plan-fingerprinted review envelope |
+| `await FontFlux.applyRepairsAsync(bytes, review, options?)` | Resume and apply the exact reviewed plan in a worker |
+| `await FontFlux.fingerprintRepairPlan(plan)` | Digest to persist alongside a raw serialized plan; pass as `reviewedPlanFingerprint` on worker application |
+| `await FontFlux.repairAsync(bytes, requests, options?)` | Explicit plan-and-apply worker convenience workflow |
 | `await font.preflight(options?)` | Original/project/resolved/emitted reports, normalization evidence, and exact selected-format output; accepts export and inspection/profile options |
+| `await font.preflightAsync(options?)` | Cancellable worker preflight; private original or explicit caller-declared baseline |
+| `FontFlux.inspectFamily(members, { family })` | Explicit family-policy evidence, never inferred collection membership |
+| `await FontFlux.repairFamily(members, requestsById, { family })` | All-or-none detached candidates; caller remains responsible for atomic publication |
+| `FontFlux.inspectExpectations(input, options?)` | Versioned repertoires, glyph/spacing policy and bounded reachability evidence |
+| `FontFlux.inspectSourceQuality(projects, options?)` | Declared masters, topology and selected interpolation/outline evidence |
+| `FontFlux.inspectLegacy(bytes, options?)` | Original CFF1/Type 1 evidence with explicit unsupported context |
+| `FontFlux.recoverLegacy(original, replacement, { authorizeReplacement: true })` | Inspected caller-supplied source replacement, not a verified repair |
 
 See [Font Quality](./font-quality.md) for supported fixes, signature and opaque-data
 guards, assisted inputs, errors, and important verification limitations. Repair
-currently targets standalone SFNT. These APIs do not replace the existing
+supports guarded SFNT/wrappers and explicitly selected collection faces.
+[Advanced workflow contracts](./quality-workflows.md) document contextual inputs,
+resource limits and engine-dependent limitations. These APIs do not replace the existing
 `validate()` or `export()` contracts.
 
 ## Static utilities
