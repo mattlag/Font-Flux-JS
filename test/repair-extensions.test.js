@@ -4,6 +4,15 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { buildFormat4Data } from '../src/expand.js';
 import { exportFont } from '../src/export.js';
+import { FontFlux } from '../src/font_flux.js';
+import { parseAvar } from '../src/sfnt/table_avar.js';
+import { parseHVAR } from '../src/sfnt/table_HVAR.js';
+import { writeBASE } from '../src/sfnt/table_BASE.js';
+import { writeCPAL } from '../src/sfnt/table_CPAL.js';
+import { writeGPOS } from '../src/sfnt/table_GPOS.js';
+import { writeGSUB } from '../src/sfnt/table_GSUB.js';
+import { writeSVG } from '../src/sfnt/table_SVG.js';
+import { writeSbix } from '../src/sfnt/table_sbix.js';
 import { writeINDEXv1 } from '../src/otf/cff_common.js';
 import { writeCFF } from '../src/otf/table_CFF.js';
 import { writeCFF2 } from '../src/otf/table_CFF2.js';
@@ -107,11 +116,24 @@ function repair(before, steps, options) {
 	return after;
 }
 
-function shapePayloads(payloads, text, variations = []) {
-	const bytes = exportFont({
+function fontBytes(payloads) {
+	return exportFont({
 		header: { sfVersion: payloads.has('glyf') ? 0x10000 : 0x4f54544f },
 		tables: Object.fromEntries([...payloads].map(([tag, data]) => [tag, { _raw: Array.from(data) }])),
 	}, { format: 'sfnt' });
+}
+
+function fontPayloads(buffer) {
+	const bytes = new Uint8Array(buffer), v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength), result = new Map();
+	for (let i = 0; i < v.getUint16(4); i++) {
+		const at = 12 + i * 16, start = v.getUint32(at + 8);
+		result.set(String.fromCharCode(...bytes.slice(at, at + 4)), bytes.slice(start, start + v.getUint32(at + 12)));
+	}
+	return result;
+}
+
+function shapePayloads(payloads, text, variations = []) {
+	const bytes = fontBytes(payloads);
 	const font = new hb.Font(new hb.Face(new hb.Blob(new Uint8Array(bytes))));
 	font.setVariations(variations.map(([tag, value]) => new hb.Variation(tag, value)));
 	const buffer = new hb.Buffer();
@@ -534,15 +556,47 @@ describe('narrow CFF structural repair', () => {
 				encoding: 'Standard', charStrings: [[32, 10, 14], [32, 10, 14]],
 				privateDict: {}, localSubrs: [], fdSelect: [0, 1],
 				fdArray: [
-					{ fontDict: {}, privateDict: { defaultWidthX: 400 }, localSubrs: [[139, 139, 21, 11]] },
-					{ fontDict: {}, privateDict: { defaultWidthX: 700 }, localSubrs: [[149, 159, 21, 11]] },
+					{ fontDict: {}, privateDict: { defaultWidthX: 400 }, localSubrs: [[139, 139, 21, 239, 139, 5, 139, 239, 5, 11]] },
+					{ fontDict: {}, privateDict: { defaultWidthX: 700 }, localSubrs: [[149, 159, 21, 189, 139, 5, 139, 189, 5, 11]] },
 				],
 			}],
 		});
 		const original = cffFixture();
 		original.set('CFF ', Uint8Array.from(cff));
+		original.set('maxp', Uint8Array.of(0, 0, 0x50, 0, 0, 2));
+		addCmap(original, [[65, 0], [66, 1]]);
 		const after = repair(original, [step('cff.maxp'), step('cff.charstrings-index')]);
 		expect(readCff(after).parsed).toEqual(readCff(original).parsed);
+		const beforeShape = shapePayloads(original, 'AB');
+		expect(beforeShape.paths.every((path) => path.length > 0), JSON.stringify(beforeShape)).toBe(true);
+		expect(beforeShape.paths[0]).not.toEqual(beforeShape.paths[1]);
+		expect(shapePayloads(after, 'AB')).toEqual(beforeShape);
+		expect(FontFlux.open(Uint8Array.from(cff).buffer).glyphs.map((glyph) => glyph.advanceWidth)).toEqual([400, 700]);
+	});
+
+	it('preserves independent CFF2 blend geometry at interior support boundaries', () => {
+		const original = cffFixture([[], []], true);
+		original.set('CFF2', Uint8Array.from(writeCFF2({
+			charStrings: [[], [139, 139, 21, 239, 189, 140, 16, 139, 5, 139, 239, 5]],
+			globalSubrs: [], fontDicts: [{ fontDict: {}, privateDict: {}, localSubrs: [] }],
+			variationStore: { format: 1, variationRegionList: { axisCount: 1,
+				regions: [{ regionAxes: [{ startCoord: 0.25, peakCoord: 0.5, endCoord: 0.75 }] }] },
+			itemVariationData: [{ itemCount: 0, wordDeltaCount: 0, regionIndexes: [0], deltaSets: [] }] },
+		})));
+		original.set('fvar', Uint8Array.from(writeFvar({
+			axes: [{ axisTag: 'wght', minValue: 100, defaultValue: 100, maxValue: 900, axisNameID: 256 }], instances: [],
+		})));
+		original.set('name', names());
+		addCmap(original, [[65, 1]]);
+		const stable = repair(original, [step('cff.maxp')]);
+		const after = repair(stable, [step('cff.charstrings-index')]);
+		const samples = [100, 300, 500, 700, 900].map((weight) => [['wght', weight]]);
+		const shapes = samples.map((coordinates) => shapePayloads(stable, 'A', coordinates));
+		expect(shapes[0].paths[0]).not.toBe('');
+		expect(shapes[2].paths).not.toEqual(shapes[0].paths);
+		expect(shapes[1].paths).toEqual(shapes[3].paths);
+		for (let i = 0; i < samples.length; i++) expect(shapePayloads(after, 'A', samples[i])).toEqual(shapes[i]);
+		expect(after.get('fvar')).toEqual(stable.get('fvar'));
 	});
 
 	it('bounds malformed INDEX counts and unterminated DICT operands', () => {
@@ -763,20 +817,115 @@ describe('assisted variable metadata preservation', () => {
 
 	it('preserves independent variation shaping at selected axis endpoints, default and custom instance', () => {
 		const source = new Uint8Array(readFileSync(resolve('test', 'sample fonts', 'RobotoFlex-online-test.ttf')));
-		const v = view(source);
-		const original = new Map();
-		for (let i = 0; i < v.getUint16(4); i++) {
-			const pos = 12 + i * 16;
-			const tag = String.fromCharCode(...source.subarray(pos, pos + 4));
-			const offset = v.getUint32(pos + 8);
-			original.set(tag, source.slice(offset, offset + v.getUint32(pos + 12)));
-		}
+		const original = fontPayloads(source);
 		const fvar = readFvar(original).parsed;
 		const after = repair(original, [step('fvar.axis-name', { axisIndex: 0, nameID: fvar.axes[1].axisNameID })]);
 		const samples = ['minValue', 'defaultValue', 'maxValue'].map((field) =>
 			fvar.axes.map((axis) => [axis.axisTag, axis[field]]));
 		if (fvar.instances.length) samples.push(fvar.axes.map((axis, i) => [axis.axisTag, fvar.instances[0].coordinates[i]]));
+		const region = parseHVAR(original.get('HVAR')).itemVariationStore.variationRegionList.regions.find((entry) =>
+			entry.regionAxes.some((axis) => [axis.startCoord, axis.peakCoord, axis.endCoord].some((value) => value !== 0 && Math.abs(value) < 1)));
+		expect(region).toBeDefined();
+		const avar = original.has('avar') ? parseAvar(original.get('avar')).segmentMaps : [];
+		for (const field of ['startCoord', 'peakCoord', 'endCoord']) {
+			samples.push(fvar.axes.map((axis, i) => {
+				let coordinate = region.regionAxes[i][field];
+				const points = avar[i]?.axisValueMaps ?? [
+					{ fromCoordinate: -1, toCoordinate: -1 }, { fromCoordinate: 0, toCoordinate: 0 }, { fromCoordinate: 1, toCoordinate: 1 },
+				];
+				const right = points.findIndex((point) => point.toCoordinate >= coordinate);
+				if (right === 0) coordinate = points[0].fromCoordinate;
+				else {
+					expect(right).toBeGreaterThan(0);
+					const a = points[right - 1], b = points[right];
+					expect(b.toCoordinate).toBeGreaterThan(a.toCoordinate);
+					coordinate = a.fromCoordinate + (coordinate - a.toCoordinate) *
+						(b.fromCoordinate - a.fromCoordinate) / (b.toCoordinate - a.toCoordinate);
+				}
+				return [axis.axisTag, axis.defaultValue + coordinate * (coordinate < 0
+					? axis.defaultValue - axis.minValue : axis.maxValue - axis.defaultValue)];
+			}));
+		}
 		for (const coordinates of samples)
 			expect(shapePayloads(after, 'Hamburgefontsiv 0123', coordinates)).toEqual(shapePayloads(original, 'Hamburgefontsiv 0123', coordinates));
+	});
+
+	describe('M3 public repair preservation across advanced representations', () => {
+		function fixture() {
+			const font = FontFlux.create({ family: 'M3 preservation' });
+			for (const [name, unicode, advanceWidth] of [['A', 65, 500], ['B', 66, 600], ['A.alt', undefined, 700]])
+				font.addGlyph({ name, unicode, advanceWidth, path: 'M0 0 L100 0 L100 100 Z', format: 'truetype' });
+			return fontPayloads(font.export({ format: 'sfnt' }));
+		}
+		async function verify(payloads) {
+			const input = fontBytes(payloads);
+			new DataView(input).setUint16(6, 0);
+			const original = input.slice(0);
+			const plan = await FontFlux.planRepairs(input, [{ id: 'sfnt.search-fields' }]);
+			const result = await FontFlux.applyRepairs(input, plan);
+			expect(result.state, result.verification.failures.join('\n')).toBe('verified');
+			expect(input).toEqual(original);
+			const after = fontPayloads(result.buffer);
+			for (const [tag, bytes] of payloads)
+				if (tag !== 'head') expect(after.get(tag), tag).toEqual(bytes);
+			return { after, result };
+		}
+		it('preserves independently shaped contextual extension substitution and positioning', async () => {
+			const payloads = fixture(), coverage = (gid) => ({ format: 1, glyphs: [gid] });
+			const layout = (tag, glyph, extension, chained, single, subtable) => ({
+				majorVersion: 1, minorVersion: 0,
+				scriptList: { scriptRecords: [{ scriptTag: 'DFLT', script: { defaultLangSys: {
+					lookupOrderOffset: 0, requiredFeatureIndex: 0xffff, featureIndices: [0],
+				}, langSysRecords: [] } }] },
+				featureList: { featureRecords: [{ featureTag: tag, feature: { lookupListIndices: [0] } }] },
+				lookupList: { lookups: [
+					{ lookupType: extension, lookupFlag: 0, subtables: [{ format: 1, extensionLookupType: chained, subtable: {
+						format: 3, backtrackCoverages: [coverage(3)], inputCoverages: [coverage(glyph)], lookaheadCoverages: [],
+						seqLookupRecords: [{ sequenceIndex: 0, lookupListIndex: 1 }],
+					} }] },
+					{ lookupType: single, lookupFlag: 0, subtables: [subtable] },
+				] },
+			});
+			payloads.set('GSUB', Uint8Array.from(writeGSUB(layout('calt', 2, 7, 6, 1,
+				{ format: 2, coverage: coverage(2), substituteGlyphIDs: [4] }))));
+			payloads.set('GPOS', Uint8Array.from(writeGPOS(layout('kern', 4, 9, 8, 1,
+				{ format: 1, coverage: coverage(4), valueFormat: 4, valueRecord: { xAdvance: -50 } }))));
+			const shaped = shapePayloads(payloads, 'BA');
+			expect(shaped.glyphs.map((glyph) => glyph.codepoint)).toEqual([3, 4]);
+			expect(shaped.positions.map((position) => position.xAdvance)).toEqual([600, 650]);
+			const { after, result } = await verify(payloads);
+			expect(shapePayloads(after, 'BA')).toEqual(shaped);
+			for (const tag of ['GSUB', 'GPOS'])
+				expect(result.after.checks.find((check) => check.id === `binary.advanced.${tag}`)).toMatchObject({ outcome: 'passed', coverage: 'partial' });
+		});
+
+		it('retains color, SVG, bitmap metrics/payloads and specialist tables with explicit partial evidence', async () => {
+			const payloads = fixture();
+			payloads.set('COLR', Uint8Array.from(writeCOLR({ version: 0,
+				baseGlyphRecords: [{ glyphID: 2, firstLayerIndex: 0, numLayers: 1 }], layerRecords: [{ glyphID: 3, paletteIndex: 0 }] })));
+			payloads.set('CPAL', Uint8Array.from(writeCPAL({ version: 0, numPaletteEntries: 1,
+				palettes: [[{ red: 255, green: 0, blue: 0, alpha: 255 }]] })));
+			payloads.set('SVG ', Uint8Array.from(writeSVG({ version: 0,
+				documents: [{ compressed: false, text: '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0L10 0L0 10Z"/></svg>' }],
+				entries: [{ startGlyphID: 2, endGlyphID: 2, documentIndex: 0 }] })));
+			payloads.set('sbix', Uint8Array.from(writeSbix({ version: 1, flags: 1, strikes: [{ ppem: 16, ppi: 72,
+				glyphs: [null, null, { originOffsetX: 3, originOffsetY: -2, graphicType: 'jpg ', imageData: [255, 216, 255, 217] }, null, null] }] })));
+			const math = new Uint8Array(242), m = view(math);
+			m.setUint32(0, 0x10000); m.setUint16(4, 10); m.setUint16(6, 224); m.setUint16(8, 232);
+			m.setUint16(10, 80); m.setUint16(12, 60);
+			payloads.set('MATH', math);
+			payloads.set('BASE', Uint8Array.from(writeBASE({ majorVersion: 1, minorVersion: 0, horizAxis: {
+				baseTagList: ['romn'], baseScriptList: [{ tag: 'latn', baseValues: {
+					defaultBaselineIndex: 0, baseCoords: [{ format: 1, coordinate: 0 }],
+				}, defaultMinMax: null, baseLangSysRecords: [] }],
+			} })));
+			payloads.set('JSTF', Uint8Array.of(0, 1, 0, 0, 0, 0));
+			payloads.set('MERG', new Uint8Array(10));
+			const { result } = await verify(payloads);
+			for (const tag of ['COLR', 'SVG ', 'sbix', 'MATH', 'BASE', 'JSTF', 'MERG'])
+				expect(result.after.checks.find((check) => check.id === `binary.advanced.${tag}`)).toMatchObject({ outcome: 'passed', coverage: 'partial' });
+			expect(result.after.checks.some((check) => check.outcome === 'unsupported' && check.id.endsWith('.documents'))).toBe(true);
+			expect(result.after.checks.some((check) => check.outcome === 'unsupported' && check.location.path?.includes('glyphs.2'))).toBe(true);
+		});
 	});
 });

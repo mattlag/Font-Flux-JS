@@ -69,7 +69,8 @@ void [references, profiles, complete];
 const cache = FontFlux.createInspectionCache({ maxEntries: 2, maxBytes: 1024 * 1024 });
 await FontFlux.inspectAsync(bytes, { cache, maxDurationMs: 30000, onProgress: (event) => {
 	const phase: string = event.phase;
-	void phase;
+	const member: string | undefined = event.memberId;
+	void [phase, member];
 } });
 const review = await FontFlux.planRepairsAsync(bytes, [{ id: 'sfnt.checksums' }]);
 const reviewed = await FontFlux.applyRepairsAsync(bytes, review);

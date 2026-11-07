@@ -128,6 +128,25 @@ describe('explicit family QA and atomic transactions', () => {
 		await expect(repairFamily(inputs, { unknown: [] }, { family }, adapter)).rejects.toThrow(/unknown member/);
 	});
 
+	it.each(['inspection', 'planning', 'application', 'verification'])('cancels the whole family during the second member %s phase', async (phase) => {
+		const inputs = ['regular', 'bold'].map((id) => {
+			const input = exportFont(project(id), { format: 'sfnt' });
+			new DataView(input).setUint16(6, 0);
+			return { id, input };
+		});
+		const originals = inputs.map(({ input }) => input.slice(0)), controller = new AbortController(), progress = [];
+		const result = await FontFlux.repairFamily(inputs, Object.fromEntries(inputs.map(({ id }) =>
+			[id, [{ id: 'sfnt.search-fields' }]])), {
+			family, signal: controller.signal, onProgress(event) {
+				progress.push(event);
+				if (event.memberId === 'bold' && event.phase === phase) controller.abort();
+			},
+		});
+		expect(progress).toContainEqual({ memberId: 'bold', phase });
+		expect(result).toMatchObject({ state: 'cancelled', candidates: [], committed: false });
+		expect(inputs.map(({ input }) => input)).toEqual(originals);
+	});
+
 	it('discards all results if a caller mutates a source while planning runs', async () => {
 		const source = new Uint8Array([1, 2, 3]);
 		const adapter = {
@@ -210,6 +229,25 @@ describe('versioned optional expectations and potential reachability', () => {
 		expect(report.coverage.find((entry) => entry.domain === 'mark-positioning-and-dotted-circle').status).toBe('unsupported');
 	});
 
+	it('checks explicit nonempty expectations and discloses unexamined representations', () => {
+		const data = project(), behavior = [{ codePoint: 32, empty: false }];
+		expect(codes(inspectExpectations(data, { behavior }))).toContain('EXPECTATION_EMPTY_GLYPH');
+		expect(codes(inspectExpectations(data, { behavior: [{ codePoint: 65, empty: false }] }))).not.toContain('EXPECTATION_EMPTY_GLYPH');
+		data.glyphs[1].charString = [14];
+		const unknown = inspectExpectations(data, { behavior });
+		expect(codes(unknown)).toContain('EXPECTATION_BEHAVIOR_UNSUPPORTED');
+		expect(codes(unknown)).not.toContain('EXPECTATION_EMPTY_GLYPH');
+		expect(unknown.issues.find((entry) => entry.code === 'EXPECTATION_BEHAVIOR_UNSUPPORTED').severity).toBe('info');
+		delete data.glyphs[1].charString;
+		data.tables = { sbix: { strikes: [] } };
+		expect(codes(inspectExpectations(data, { behavior }))).toContain('EXPECTATION_BEHAVIOR_UNSUPPORTED');
+	});
+
+	it.each(['roots', 'requiredGlyphs', 'behavior'])('accounts for work in repeated %s expectations', (key) => {
+		const value = key === 'behavior' ? { codePoint: 65, empty: false } : 'A';
+		expect(() => inspectExpectations(project(), { [key]: Array(100).fill(value), maxWork: 50 })).toThrow(/maxWork/);
+	});
+
 	it('checks optional versioned naming conventions without rewriting intended names', () => {
 		const data = project(); data.glyphs[2].name = 'A with spaces';
 		expect(codes(inspectExpectations(data))).not.toContain('EXPECTATION_GLYPH_NAME_POLICY');
@@ -275,6 +313,16 @@ describe('source geometry evidence and explicit master samples', () => {
 		expect(codes(report)).not.toContain('SOURCE_MASTER_TOPOLOGY_MISMATCH');
 		second.glyphs.find((glyph) => glyph.name === 'A').contours[0].push({ x: 50, y: 50, onCurve: true });
 		expect(codes(inspectSourceQuality([{ id: 'a', input: first }, { id: 'b', input: second }]))).toContain('SOURCE_MASTER_TOPOLOGY_MISMATCH');
+	});
+
+	it.each([true, false])('distinguishes XY and point attachments with object flags: %s', (objectFlags) => {
+		const first = project(), second = structuredClone(first);
+		first.glyphs[2].components = [{ glyphIndex: 0, flags: objectFlags ? { argsAreXYValues: true } : 2 }];
+		second.glyphs[2].components = [{ glyphIndex: 0, flags: objectFlags ? {} : 0 }];
+		const before = structuredClone([first, second]);
+		const report = inspectSourceQuality([{ id: 'xy', input: first }, { id: 'points', input: second }]);
+		expect(codes(report)).toContain('SOURCE_MASTER_TOPOLOGY_MISMATCH');
+		expect([first, second]).toEqual(before);
 	});
 
 	it('finds a degenerate interior linear sample without manufacturing a repaired outline', () => {

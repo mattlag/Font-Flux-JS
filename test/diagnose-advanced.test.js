@@ -383,6 +383,31 @@ describe('advanced CFF and TrueType programs', () => {
 		expect(codes(inspect('glyf', (ctx) => validateAdvancedTrueType(tables, ctx), tables).issues))
 			.toEqual(['TT_INSTR_ELSE_INVALID', 'TT_INSTR_DEFINITION_SCOPE_INVALID']);
 	});
+	it('reports actual binary PUSH damage without certifying dynamic VM execution', () => {
+		const source = ttBytes();
+		const maxima = new DataView(source.maxp.buffer);
+		maxima.setUint16(6, 2);
+		maxima.setUint16(8, 1);
+		expect(codes(diagnoseFont(font({ ...source, prep: [0xb0] })).issues))
+			.toContain('TT_INSTR_TRUNCATED_PUSH');
+		const report = diagnoseFont(font({ ...source, prep: [0xb0, 1, 0x2b] }));
+		const scope = report.checks.find((check) => check.id === 'binary.advanced.truetype');
+		expect(scope).toMatchObject({ outcome: 'passed', coverage: 'partial' });
+		expect(JSON.stringify(scope)).toContain('no TrueType VM');
+	});
+	it('bounds cached TrueType component subtrees reached along longer paths', () => {
+		const tables = core();
+		for (let gid = 1; gid < 4; gid++) tables.glyf.glyphs[gid] = {
+			type: 'composite', instructions: [],
+			components: [{ glyphIndex: gid - 1, argument1: 0, argument2: 0, flags: { argsAreXYValues: true } }],
+		};
+		expect(inspect('glyf', (ctx) => validateAdvancedTrueType(tables, ctx), tables, { maxStructureDepth: 4 }).issues).toEqual([]);
+		expect(() => inspect('glyf', (ctx) => validateAdvancedTrueType(tables, ctx), tables, { maxStructureDepth: 2 })).toThrow(/maxStructureDepth/);
+		const report = diagnoseFont(font(ttBytes(tables)), { maxStructureDepth: 2 });
+		expect(report.issues).toContainEqual(expect.objectContaining({
+			code: 'DIAGNOSTIC_LIMIT_EXCEEDED', executionId: 'binary.advanced.truetype',
+		}));
+	});
 	it('checks point attachment order, conflicting transform flags and maxp', () => {
 		const tables = core(); tables.maxp.maxCompositePoints = 1;
 		tables.glyf.glyphs[3] = { type: 'composite', components: [
@@ -491,6 +516,20 @@ describe('advanced color and image representations', () => {
 		data.baseGlyphPaintRecords[0].paint = { format: 10, glyphID: 1, paint: { format: 2, paletteIndex: 0xffff, alpha: 1 } };
 		expect(() => inspect('COLR', (ctx) => validateAdvancedColor(data, null, ctx), core(), { maxStructureDepth: 1 })).toThrow(/maxStructureDepth/);
 	});
+	it('enforces the full depth of already visited shared paint subtrees', () => {
+		const data = { version: 1, baseGlyphPaintRecords: Array.from({ length: 4 }, (_, glyphID) => ({
+			glyphID, paint: glyphID ? { format: 11, glyphID: glyphID - 1 } : { format: 2, paletteIndex: 0xffff, alpha: 1 },
+		})) };
+		expect(inspect('COLR', (ctx) => validateAdvancedColor(data, null, ctx), core(), { maxStructureDepth: 4 }).issues).toEqual([]);
+		expect(() => inspect('COLR', (ctx) => validateAdvancedColor(data, null, ctx), core(), { maxStructureDepth: 2 })).toThrow(/maxStructureDepth/);
+		const bytes = font({ COLR: writeCOLR({ ...data, baseGlyphRecords: [], layerRecords: [] }), maxp: maxp() });
+		expect(diagnoseFont(bytes, { maxStructureDepth: 4 }).checks).toContainEqual(
+			expect.objectContaining({ id: 'binary.advanced.COLR', outcome: 'passed' }));
+		const limited = diagnoseFont(bytes, { maxStructureDepth: 2 });
+		expect(limited.issues).toContainEqual(expect.objectContaining({ code: 'TABLE_PARSE_FAILED',
+			message: expect.stringContaining('maxStructureDepth'), location: expect.objectContaining({ table: 'COLR' }) }));
+		expect(limited.checks.find((check) => check.id === 'binary.advanced.COLR').outcome).toBe('blocked');
+	});
 	it('checks CPAL metadata in the actual binary pipeline', () => {
 		const bytes = writeCPAL({ version: 1, numPaletteEntries: 1, palettes: [[{ red: 0, green: 0, blue: 0, alpha: 255 }]], paletteTypes: [4] });
 		expect(codes(diagnoseFont(font({ CPAL: bytes })).issues)).toContain('CPAL_METADATA_INVALID');
@@ -522,6 +561,20 @@ describe('advanced color and image representations', () => {
 		expect(valid.checks.some((check) => check.outcome === 'unsupported' && check.location.path?.includes('glyphs.2'))).toBe(true);
 		value.strikes[0].glyphs[0] = { graphicType: 'dupe', imageData: [0, 1] };
 		expect(codes(diagnoseFont(font({ sbix: writeSbix(value), maxp: maxp() })).issues)).toContain('BITMAP_REFERENCE_CYCLE');
+	});
+	it('enforces the full depth of previously checked bitmap duplicate chains', () => {
+		const value = { version: 1, flags: 1, strikes: [{ ppem: 16, ppi: 72,
+			glyphs: Array.from({ length: 4 }, (_, gid) => gid ? { graphicType: 'dupe', imageData: [0, gid - 1] }
+				: { graphicType: 'png ', imageData: [...png()] }),
+		}] };
+		const bytes = Uint8Array.from(writeSbix(value));
+		expect(inspect('sbix', (ctx) => validateAdvancedBitmap(value, bytes, ctx), core(), { maxStructureDepth: 4 }).issues).toEqual([]);
+		expect(() => inspect('sbix', (ctx) => validateAdvancedBitmap(value, bytes, ctx), core(), { maxStructureDepth: 2 })).toThrow(/maxStructureDepth/);
+		const source = font({ sbix: bytes, maxp: maxp() });
+		expect(codes(diagnoseFont(source, { maxStructureDepth: 4 }).issues)).not.toContain('DIAGNOSTIC_LIMIT_EXCEEDED');
+		const limited = diagnoseFont(source, { maxStructureDepth: 2 });
+		expect(limited.issues).toContainEqual(expect.objectContaining({ code: 'DIAGNOSTIC_LIMIT_EXCEEDED', location: expect.objectContaining({ table: 'sbix' }) }));
+		expect(limited.checks.find((check) => check.id === 'binary.advanced.sbix').outcome).not.toBe('passed');
 	});
 	it('checks packed bitmap lengths, sparse glyph ranges and missing data', () => {
 		const value = { sizes: [{ ppemX: 16, ppemY: 16, bitDepth: 1, startGlyphIndex: 1, endGlyphIndex: 1,

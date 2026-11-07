@@ -11,6 +11,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { exportFont } from '../src/export.js';
 import { importFont } from '../src/import.js';
+import { writeCFF } from '../src/otf/table_CFF.js';
 
 const SAMPLES_DIR = resolve(import.meta.dirname, 'sample fonts');
 
@@ -38,6 +39,20 @@ function extractCFFTable(buffer) {
 }
 
 describe('CFF', () => {
+	it.each([
+		{ program: [14], defaultWidthX: 500, nominalWidthX: 100, expected: 500 },
+		{ program: [139, 14], defaultWidthX: 500, nominalWidthX: 100, expected: 100 },
+		{ program: [189, 14], defaultWidthX: 500, nominalWidthX: 100, expected: 150 },
+		{ program: [14], defaultWidthX: 0, nominalWidthX: 100, expected: 0 },
+	])('retains the declared width default or explicit prefix: $expected', ({ program, defaultWidthX, nominalWidthX, expected }) => {
+		const bytes = Uint8Array.from(writeCFF({
+			names: ['WidthEvidence'], strings: [], globalSubrs: [],
+			fonts: [{ topDict: {}, charStrings: [program], charset: [], encoding: 'Standard',
+				privateDict: { defaultWidthX, nominalWidthX }, localSubrs: [] }],
+		}));
+		expect(importFont(bytes.buffer).glyphs[0].advanceWidth).toBe(expected);
+	});
+
 	it('enforces the charstring operation budget for standalone CFF', async () => {
 		const bytes = await readFile(resolve(SAMPLES_DIR, 'oblegg.otf'));
 		const cff = extractCFFTable(

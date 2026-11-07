@@ -33,6 +33,7 @@ const functionTypes = new Set([
 	'FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression',
 	'ClassMethod', 'ObjectMethod',
 ]);
+const sourceExpression = (text, node) => text.slice(node.start, node.end).replaceAll('\r\n', '\n');
 
 function sourceTree(file, text) {
 	const ast = parseAst(text);
@@ -149,13 +150,13 @@ function sourceTree(file, text) {
 					const index = pattern?.type === 'ArrayPattern'
 						? pattern.elements.findIndex((entry) => entry?.name === node.name) : -1;
 					if (index >= 0) {
-						proofs.push({ ...evidence(ancestor.right), expression: text.slice(ancestor.right.start, ancestor.right.end) });
+						proofs.push({ ...evidence(ancestor.right), expression: sourceExpression(text, ancestor.right) });
 						return sorted(ancestor.right.elements.flatMap((entry) => recurse(entry.elements?.[index])));
 					}
 				}
 				if (ancestor.type === 'ForOfStatement' &&
 					ancestor.left.declarations?.some((d) => d.id.name === node.name)) {
-					proofs.push({ ...evidence(ancestor.right), expression: text.slice(ancestor.right.start, ancestor.right.end) });
+					proofs.push({ ...evidence(ancestor.right), expression: sourceExpression(text, ancestor.right) });
 					return recurse(ancestor.right);
 				}
 				if (functionTypes.has(ancestor.type)) {
@@ -171,7 +172,7 @@ function sourceTree(file, text) {
 						if (!name || !calls.length) throw new Error(`no finite callers for ${node.name}`);
 						return sorted(calls.flatMap((call) => {
 							const argument = call.arguments[index] ?? ancestor.params[index].right;
-							proofs.push({ ...evidence(call), expression: text.slice(call.start, call.end) });
+							proofs.push({ ...evidence(call), expression: sourceExpression(text, call) });
 							return recurse(argument);
 						}));
 					}
@@ -264,7 +265,7 @@ export function extractDiagnosticOrigins(sources) {
 			if (parameterIndex(fn, expression) >= 0 &&
 				signatures.has(tree.functionName(fn))) continue;
 			const source = tree.evidence(expression);
-			const expressionText = text.slice(expression.start, expression.end);
+			const expressionText = sourceExpression(text, expression);
 			try {
 				const proofs = [];
 				const codes = sorted(tree.values(expression, new Set(), proofs));
@@ -912,6 +913,7 @@ discovers diagnostic object sinks and forwarding helpers, resolves finite templa
 call arguments and loop domains, and reads actual repair-code registrations. New/unresolved expressions fail closed.
 New functions require reviewed family/table/reachability metadata; removed baseline IDs require an explicit retirement reason.
 It includes \`src/validate/profiles.js\` whenever present and the public wrapper in \`src/font_flux.js\`.
+Source-expression evidence uses LF line endings regardless of checkout line endings, while retaining exact source lines.
 Output is deterministic; \`--check\` never writes and fails if either output is stale.
 
 The installed TypeScript 7 package exposes version metadata but no JavaScript compiler AST API.

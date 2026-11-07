@@ -58,6 +58,13 @@ returns `{ state: 'verified', candidates: [{ id, result }], committed: false }`;
 the caller remains responsible for atomically publishing the candidates.
 Collection-face repairs require explicit extraction first.
 
+`signal` and `onProgress` are forwarded into every member's core inspection,
+planning, application, and verification phases. Progress events include
+`memberId` to identify the active family member. Cancellation even during the
+last member's verification discards earlier detached candidates. These are
+cooperative phase boundaries, not in-phase worker isolation; use the disposable
+worker APIs below when synchronous decode/traversal must be interruptible.
+
 Default limits are 128 members, 128 MiB per binary input, and 256 MiB total
 binary inputs; these limit admitted input, not total process memory.
 
@@ -79,6 +86,15 @@ Other options:
   meaning. A space is not printable-name ASCII under this selected policy.
 - `maxWork` (default 1,000,000) and `maxGlyphs` (default 65,535).
 
+`empty: false` explicitly requires known outline/component/color content; an empty known
+outline produces `EXPECTATION_EMPTY_GLYPH`. `empty: true` conflicts with known
+outline/component/color content through `EXPECTATION_VISIBLE_WHITESPACE`.
+If raw charstring, bitmap, or SVG content prevents establishing emptiness,
+`EXPECTATION_BEHAVIOR_UNSUPPORTED` reports that limitation instead of assuming
+the glyph is empty. Absence of a requested policy never invents one.
+Each explicit root, required glyph, and behavior request consumes `maxWork`,
+including repeated requests, as do the existing graph/repertoire operations.
+
 Per-glyph evidence separates cmap membership from potential uses via simplified
 GSUB substitutions, composite components, COLR layers/paint glyph references,
 and nondefault UVS mappings. Contextual/opaque rules can leave reachability
@@ -96,6 +112,9 @@ collapsed contours, coincident line vertices, straight-edge signed area,
 control-bound overlap evidence, contour/command topology, component identities,
 and units-per-em compatibility. Winding/overlap/tiny-area evidence is heuristic,
 not a specification error or a recommendation to remove intentional overlaps.
+Component compatibility distinguishes XY-offset attachment from point attachment
+for both parsed flag objects and numeric flag masks; the two are not silently
+treated as interchangeable master topology.
 
 `tinyArea` is a nonnegative tolerance in font units squared (default 1).
 Curved-contour winding/area is not evaluated. `samples: [{ id?, weights }]`
@@ -408,3 +427,30 @@ overhead; there is still bounded caller-side admission work.
 
 The observed 1,105 MiB RSS despite a 1,024 MiB VM old-generation setting
 demonstrates why that setting **must not be described as a process-memory cap**.
+
+### M3 refreshed sequential CJK matrix (2026-11-07, 09:11 UTC)
+
+The current [recorded evidence](./quality-worker-baseline.jsonl) uses the same
+hardware/runtime, fixture, and budgets. No other FFJS verification harness ran
+concurrently with this measurement; the machine itself remains shared.
+All five faces were inspected, reused, and actively cancelled independently;
+no faces were skipped, no cancellation returned a candidate, and the original
+collection fingerprint remained unchanged.
+
+| Face | Uncached inspection | Content-keyed reuse | Uncached sampled RSS | Cancellation |
+|---|---:|---:|---:|---:|
+| 0 | 3,684 ms | 41 ms | 1,082 MiB | 203 ms |
+| 1 | 3,609 ms | 64 ms | 1,180 MiB | 211 ms |
+| 2 | 3,549 ms | 41 ms | 1,064 MiB | 216 ms |
+| 3 | 3,627 ms | 42 ms | 1,136 MiB | 196 ms |
+| 4 | 3,696 ms | 41 ms | 1,062 MiB | 193 ms |
+
+Every full inspection retained `complete: false`, 32 skipped checks and two
+unsupported checks. The two-entry cache recorded five hits/five misses, three
+evictions, and 310,027 accounted payload bytes. Fresh inspections recorded
+110-114 main-thread heartbeats; content-keyed reuse still fingerprints the
+source and returns detached reports. The lower-glyph-budget probe explicitly
+reported the 65,535-glyph face exceeding `maxGlyphs: 1000`, rather than treating
+unexecuted checks as passed. The observed 1,180 MiB sampled RSS again exceeds
+the 1,024 MiB old-generation allowance: neither that allowance nor the cache
+budget is a whole-process memory cap or a performance guarantee.

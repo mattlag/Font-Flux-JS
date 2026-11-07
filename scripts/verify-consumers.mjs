@@ -11,6 +11,8 @@ import { createServer } from 'vite';
 import { parse as parseYAML } from 'yaml';
 import { prepareRepairContainer } from '../src/validate/repair-containers.js';
 import { initBrotli as initVerificationWoff2 } from '../src/woff/woff2.js';
+import { importFontTables } from '../src/import.js';
+import { exportFont } from '../src/export.js';
 
 const root = resolve(import.meta.dirname, '..');
 const local = !process.argv.includes('--installed');
@@ -277,6 +279,70 @@ try {
 		original: Array.from(new Uint8Array(converted)), exported: Array.from(new Uint8Array(convertedRepair.buffer)) });
 	console.log('M1 repaired TTF/CFF/WOFF/WOFF2/TTC/OTC, variation samples, derived bounds, decline and unsupported cases passed.');
 	console.log('M1 provenance: FFJS decodes/extracts raw faces for HarfBuzz; browser checks use actual wrapper bytes, or extracted collection faces. No open/export normalization of repaired faces.');
+	const hintedTables = importFontTables(repairFont.export({ format: 'sfnt' }));
+	hintedTables.tables.glyf.glyphs[2].instructions = [0xb0, 0, 0x21];
+	hintedTables.tables.maxp.maxSizeOfInstructions = 3;
+	hintedTables.tables.maxp.maxStackElements = 1;
+	const hinted = exportFont(hintedTables, { format: 'sfnt' });
+	assert.equal(importFontTables(hinted).tables.glyf.glyphs[2].instructions.length, 3);
+	const composite = api.FontFlux.fromJSON(repairFont.toJSON());
+	composite.addGlyph({ name: 'A.helper', advanceWidth: 500,
+		contours: structuredClone(composite.glyphs[2].contours), format: 'truetype' });
+	delete composite.glyphs[2].contours;
+	composite.glyphs[2].components = [{ glyphName: 'A.helper', argument1: 20, argument2: 40,
+		flags: { argsAreWords: true, argsAreXYValues: true, unscaledComponentOffset: true, weHaveAScale: true },
+		transform: { scale: 1.5 } }];
+	const authoredConversion = api.FontFlux.fromJSON(repairFont.toJSON());
+	// This authored .notdef starts at x=50; conversion must not infer bearing intent.
+	authoredConversion.glyphs[0].leftSideBearing = 50;
+	const basic = importFontTables(authoredConversion.export({ format: 'sfnt' }));
+	basic.tables.post.version = 0x00030000;
+	const postScriptName = basic.tables.name.names.find((record) => record.nameID === 6).value;
+	basic.tables.gasp = { version: 1, gaspRanges: [{ rangeMaxPPEM: 65535, rangeGaspBehavior: 15 }] };
+	const optionalSource = exportFont(basic, { format: 'sfnt' });
+	// Conversion requires a separately authorized rasterizer-policy removal.
+	const policyOriginal = optionalSource.slice(0);
+	const policyPlan = await api.FontFlux.planRepairs(optionalSource,
+		[{ id: 'tables.remove-optional', inputs: { tag: 'gasp' }, consent: true }]);
+	const policyRemoval = await api.FontFlux.applyRepairs(optionalSource, policyPlan);
+	assert.equal(policyRemoval.state, 'verified', JSON.stringify(policyRemoval.verification));
+	assert.deepEqual(optionalSource, policyOriginal);
+	const conversionSource = policyRemoval.buffer;
+	const removable = api.FontFlux.fromJSON(repairFont.toJSON());
+	removable.addGlyph({ name: 'unused', advanceWidth: 500,
+		path: 'M0 0 L200 0 L200 100 Z', format: 'truetype' });
+	const removableTables = importFontTables(removable.export({ format: 'sfnt' }));
+	removableTables.tables.post.version = 0x00030000;
+	for (const [input, request] of [
+		[hinted, { id: 'tt.dehint', consent: true }],
+		[composite.export({ format: 'sfnt' }), { id: 'tt.decompose', inputs: { glyphIndex: 2 }, consent: true }],
+		[repairFont.export({ format: 'sfnt' }), { id: 'tt.overlap-flag', inputs: { glyphIndex: 2, overlap: true }, consent: true }],
+		[exportFont(removableTables, { format: 'sfnt' }), { id: 'tt.remove-last-glyph', inputs: { glyphIndex: 3 }, consent: true }],
+		[optionalSource, { id: 'tables.remove-optional', inputs: { tag: 'gasp' }, consent: true }],
+		[conversionSource, { id: 'outlines.to-cff', inputs: { tolerance: 0, allowOutlineLoss: true, postScriptName }, consent: true }],
+	]) {
+		const original = input.slice(0);
+		await assert.rejects(api.FontFlux.planRepairs(input, [{ ...request, consent: false }]), /consent/i);
+		const result = await api.FontFlux.applyRepairs(input, await api.FontFlux.planRepairs(input, [request]));
+		assert.equal(result.state, 'verified', `${request.id}: ${JSON.stringify(result.verification)}`);
+		assert.deepEqual(input, original);
+		const shapeText = request.id === 'outlines.to-cff' ? 'AA\uFFFF' : 'AA';
+		assert.deepEqual(shape(result.buffer, shapeText), shape(input, shapeText), request.id);
+		const tables = importFontTables(result.buffer).tables;
+		const glyph = tables.glyf?.glyphs[2];
+		if (request.id === 'tt.dehint') assert.equal(glyph.instructions.length, 0);
+		if (request.id === 'tt.decompose') assert.equal(glyph.type, 'simple');
+		if (request.id === 'tt.overlap-flag') assert.equal(glyph.overlapSimple, true);
+		if (request.id === 'tt.remove-last-glyph') assert.equal(tables.maxp.numGlyphs, 3);
+		if (request.id === 'tables.remove-optional') assert.equal(tables.gasp, undefined);
+		if (request.id === 'outlines.to-cff') {
+			assert.equal(tables.glyf, undefined);
+			assert.equal(tables['CFF '].fonts[0].charStrings.length, 3);
+		}
+		samples.push({ name: `repair/M3/${request.id}`, text: 'AA', sizes: [12, 24, 48],
+			original: Array.from(new Uint8Array(input)), exported: Array.from(new Uint8Array(result.buffer)) });
+	}
+	console.log('M3 six explicit mitigation actions: consent, source preservation and independent paths/positions passed.');
 	for (const name of [
 		'oblegg.ttf',
 		'oblegg.otf',
@@ -582,45 +648,51 @@ try {
 						coordinates,
 						sampleIndex,
 						text = 'AVATAR office',
+						sizes = [48],
 					}) => {
 						const widths = [];
-						for (const [index, bytes] of [original, exported].entries()) {
-							const family = `Consumer${sampleIndex}_${index}`;
-							const face = await new FontFace(family, new Uint8Array(bytes), {
-								variationSettings:
-									Object.entries(coordinates || {})
-										.map(([tag, value]) => `"${tag}" ${value}`)
-										.join(', ') || 'normal',
-							}).load();
-							document.fonts.add(face);
-							const canvas = document.querySelector('canvas');
-							const context = canvas.getContext('2d');
-							context.clearRect(0, 0, canvas.width, canvas.height);
-							context.font = `48px ${family}`;
-							context.fillText(text, 10, 70);
-							const pixels = context.getImageData(
-								0,
-								0,
-								canvas.width,
-								canvas.height,
-							).data;
-							if (
-								!pixels.some(
-									(value, position) => position % 4 === 3 && value > 0,
+						for (const size of sizes) {
+							const pair = [];
+							for (const [index, bytes] of [original, exported].entries()) {
+								const family = `Consumer${sampleIndex}_${index}`;
+								const face = await new FontFace(family, new Uint8Array(bytes), {
+									variationSettings:
+										Object.entries(coordinates || {})
+											.map(([tag, value]) => `"${tag}" ${value}`)
+											.join(', ') || 'normal',
+								}).load();
+								document.fonts.add(face);
+								const canvas = document.querySelector('canvas');
+								const context = canvas.getContext('2d');
+								context.clearRect(0, 0, canvas.width, canvas.height);
+								context.font = `${size}px ${family}`;
+								context.fillText(text, 10, 70);
+								const pixels = context.getImageData(
+									0,
+									0,
+									canvas.width,
+									canvas.height,
+								).data;
+								if (
+									!pixels.some(
+										(value, position) => position % 4 === 3 && value > 0,
+									)
 								)
-							)
-								throw new Error('Font rendered blank.');
-							widths.push(context.measureText(text).width);
-							document.fonts.delete(face);
+									throw new Error('Font rendered blank.');
+								pair.push(context.measureText(text).width);
+								document.fonts.delete(face);
+							}
+							widths.push({ size, pair });
 						}
 						return widths;
 					},
 					{ ...sample, sampleIndex },
 				);
-				assert(
-					Math.abs(result[0] - result[1]) < 0.1,
-					`${engine.name()} ${sample.name}/${JSON.stringify(sample.coordinates)}: advance widths changed ${result[0]} -> ${result[1]}`,
-				);
+				for (const { size, pair } of result)
+					assert(
+						Math.abs(pair[0] - pair[1]) < 0.1,
+						`${engine.name()} ${sample.name}/${JSON.stringify(sample.coordinates)} at ${size}px: advance widths changed ${pair[0]} -> ${pair[1]}`,
+					);
 				console.log(
 					`${engine.name()} sanitizer/load/render passed: ${sample.name}`,
 				);

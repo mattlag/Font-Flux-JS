@@ -694,7 +694,7 @@ function importCFF(buffer, options = {}) {
 				context.localSubrs,
 				options,
 			);
-			if (result.width !== undefined)
+			if (result.width != null)
 				width = result.width + context.nominalWidthX;
 		}
 		hMetrics.push({ advanceWidth: width, lsb: 0 });

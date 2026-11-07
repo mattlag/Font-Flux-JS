@@ -62,6 +62,9 @@ jobs:
       - name: Lint (Biome)
         run: npm run lint
 
+      - name: Install browser engines
+        run: npx playwright install --with-deps chromium firefox
+
       - name: Run tests
         run: npm test
 
@@ -70,9 +73,6 @@ jobs:
 
       - name: Build demo and documentation
         run: npm run site:build
-
-      - name: Install browser engines
-        run: npx playwright install --with-deps chromium firefox
 
       - name: Verify built distribution and independent consumers
         run: npm run test:consumers

@@ -419,7 +419,7 @@ export interface RepairResult {
 }
 export interface QualityControls {
 	signal?: AbortSignal;
-	onProgress?: (progress: { phase: string; stage?: string; status?: string; sequence?: number; origin?: string }) => void;
+	onProgress?: (progress: { phase: string; stage?: string; status?: string; sequence?: number; origin?: string; memberId?: string }) => void;
 }
 export interface RepairOptions extends InspectionOptions, QualityControls {
 	format?: 'sfnt' | 'woff' | 'woff2' | 'collection';

@@ -161,7 +161,7 @@ export async function repairFamily(inputs, requests, options = {}, core) {
 	const ids = new Set();
 	let totalBytes = 0;
 	const maximumBytes = positiveLimit(options, 'maxTotalInputBytes', 256 * 1024 * 1024);
-	const { signal, family: _family, onProgress: _onProgress, ...coreOptions } = options;
+	const { signal, family: _family, onProgress, ...coreOptions } = options;
 	const snapshots = inputs.map((entry) => {
 		if (typeof entry.id !== 'string' || !entry.id || ids.has(entry.id)) throw new TypeError('Family member IDs must be unique.');
 		if (entry.faceIndex !== undefined) throw new TypeError('Family repair requires standalone members; extract collection faces explicitly.');
@@ -176,16 +176,17 @@ export async function repairFamily(inputs, requests, options = {}, core) {
 	const checkAbort = () => { if (signal?.aborted) throw abortError(); };
 	const candidates = [], plans = [];
 	let current;
+	const controls = { signal, onProgress: onProgress ? (progress) => onProgress({ ...progress, memberId: current }) : undefined };
 	try {
 		for (const member of snapshots) {
 			checkAbort();
 			current = member.id;
-			plans.push(await core.planRepairs(member.bytes, requests[member.id] ?? [], coreOptions));
+			plans.push(await core.planRepairs(member.bytes, requests[member.id] ?? [], { ...coreOptions, ...controls }));
 		}
 		for (let index = 0; index < snapshots.length; index++) {
 			checkAbort();
 			current = snapshots[index].id;
-			const result = await core.applyRepairs(snapshots[index].bytes, plans[index]);
+			const result = await core.applyRepairs(snapshots[index].bytes, plans[index], controls);
 			checkAbort();
 			if (result.state !== 'verified' || !(result.buffer instanceof ArrayBuffer))
 				throw new Error(`Member repair was not verified (${result.state}).`);
@@ -289,6 +290,7 @@ export function inspectExpectations(input, options = {}) {
 	}
 	if (glyphs.length) reasons[0].add('notdef');
 	for (const reference of options.roots || []) {
+		budget.tick();
 		const gid = resolve(reference);
 		if (!valid(gid)) throw new TypeError('Explicit reachability root does not identify a glyph.');
 		reasons[gid].add('explicit-root');
@@ -307,9 +309,12 @@ export function inspectExpectations(input, options = {}) {
 				issue(report, 'EXPECTATION_REPERTOIRE_MISSING', `Selected repertoire ${repertoire.id}@${repertoire.version} requires U+${cp.toString(16).toUpperCase()}.`,
 					{ repertoireId: repertoire.id, repertoireVersion: repertoire.version, codePoint: cp }, 'warning');
 		}
-	for (const name of options.requiredGlyphs || [])
+	for (const name of options.requiredGlyphs || []) {
+		budget.tick();
 		if (!names.has(name)) issue(report, 'EXPECTATION_GLYPH_MISSING', 'An explicitly required glyph is absent.', { glyphName: name });
+	}
 	for (const expectation of options.behavior || []) {
+		budget.tick();
 		if (!scalar(expectation.codePoint)) throw new TypeError('Behavior expectations require a Unicode scalar codePoint.');
 		if (expectation.advanceWidth !== undefined && !Number.isFinite(expectation.advanceWidth))
 			throw new TypeError('Behavior advanceWidth must be finite.');
@@ -320,8 +325,20 @@ export function inspectExpectations(input, options = {}) {
 		if (expectation.advanceWidth !== undefined && glyph.advanceWidth !== expectation.advanceWidth)
 			issue(report, 'EXPECTATION_ADVANCE_WIDTH', 'Advance width differs from the explicitly selected whitespace/control/mark policy.', { glyphIndex: gid, codePoint: expectation.codePoint }, 'warning',
 				{ expected: expectation.advanceWidth, actual: glyph.advanceWidth ?? null });
-		if (expectation.empty === true && (glyph.contours?.some((contour) => contour.length) || glyph.components?.length || data.colorGlyphs?.some((color) => color.name === glyph.name)))
-			issue(report, 'EXPECTATION_VISIBLE_WHITESPACE', 'Selected empty glyph policy conflicts with outline/component/color content.', { glyphIndex: gid });
+		if (expectation.empty !== undefined) {
+			const hasContent = glyph.contours?.some((contour) => contour.length) || glyph.components?.length ||
+				data.colorGlyphs?.some((color) => color.name === glyph.name);
+			const unexamined = glyph.charString != null ||
+				['sbix', 'CBDT', 'EBDT', 'bdat', 'SVG '].some((tag) => data.tables?.[tag]);
+			if (expectation.empty && hasContent)
+				issue(report, 'EXPECTATION_VISIBLE_WHITESPACE', 'Selected empty glyph policy conflicts with outline/component/color content.', { glyphIndex: gid });
+			else if (!hasContent && unexamined)
+				issue(report, 'EXPECTATION_BEHAVIOR_UNSUPPORTED', 'Glyph emptiness requires unexamined program, bitmap or SVG content; no empty/nonempty outcome is inferred.',
+					{ glyphIndex: gid, codePoint: expectation.codePoint }, 'info');
+			else if (!expectation.empty && !hasContent)
+				issue(report, 'EXPECTATION_EMPTY_GLYPH', 'Selected nonempty glyph policy conflicts with absent outline/component/color content.',
+					{ glyphIndex: gid, codePoint: expectation.codePoint });
+		}
 	}
 	report.glyphs = glyphs.map((glyph, gid) => ({
 		glyphIndex: gid, name: glyph.name ?? null, encoded: reasons[gid].has('cmap'),

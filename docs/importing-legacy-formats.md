@@ -19,7 +19,10 @@ console.log(font.format); // 'cff'
 On import, Font Flux synthesizes the missing SFNT metadata (head, hhea, hmtx, name, OS/2, etc.) from CFF Top DICT values like `FontBBox` and the font name. Advance widths are extracted by interpreting each charstring.
 
 Subroutine and private-dictionary context is retained, including per-FD context
-for CID fonts. Imported CID outline/topology edits remain guarded. A standalone
+for CID fonts. A missing width operand uses that FD's `defaultWidthX`; an
+explicit operand (including zero) is added to its `nominalWidthX`. Omitted
+operands are not interpreted as zero-width glyphs. Imported CID outline/topology
+edits remain guarded. A standalone
 CFF does not carry an OpenType Unicode cmap: if no mappings are recovered,
 SFNT export emits a valid empty cmap rather than inventing character assignments.
 Assign Unicode values explicitly when needed for text display.

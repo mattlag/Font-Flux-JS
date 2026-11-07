@@ -1,8 +1,8 @@
 # Narrow geometry, CFF, mitigation, and variable-metadata repairs
 
-These are bounded additions to the byte-preserving repair registry, not a claim
-that FQ-018/FQ-023/FQ-025/FQ-027 or all M1–M3 acceptance criteria are complete.
-No upstream implementation was copied.
+These are bounded operations in the byte-preserving repair registry. Milestone
+acceptance covers these declared guards and evidence, not arbitrary restoration
+of damaged fonts. No upstream implementation was copied.
 
 ## Integration contract
 
@@ -240,7 +240,7 @@ existing default coordinates. Existing custom instances and all deltas remain
 byte-identical. An existing coordinate tuple is refused rather than overwritten,
 duplicated, or reported as a successful addition.
 
-## Limits, evidence, and remaining acceptance gaps
+## Limits, acceptance evidence, and unsupported operations
 
 Limits are bounded by `maxRepairPoints` (default 1,000,000; ceiling 10,000,000),
 `maxRepairDepth` (default/ceiling 64), and `maxRepairCffObjects` (default 100,000;
@@ -256,16 +256,37 @@ instruction and opaque suffix preservation, verifier tampering, malformed CFF
 programs, CFF1/CFF2 emptiness, CID private/subroutine context, supported STAT
 formats, existing custom instances, and exact coordinate/name decisions.
 Independent HarfBuzz tests compare shaping and paths across supported integer
-transformed/point-attached decomposition, and compare a real variable font at
-selected min/default/max coordinates and a named instance after metadata editing.
-These are sampled checks, not exhaustive region-boundary certification.
+transformed/point-attached decomposition, isolated final-glyph removal, exact
+line conversion, and distinct CID per-FD subroutines. CFF2 blend geometry is
+sampled at normalized 0/.25/.5/.75/1 around an interior support region.
+RobotoFlex metadata repairs retain independent shaping/paths at selected
+min/default/max coordinates, a custom instance, and all-axis start/peak/end
+vectors of a selected interior HVAR region (with inverse avar v1 mapping).
+Unchanged variation payloads and custom instance bytes are checked separately.
+These are finite samples, not exhaustive design-space certification.
 
-**Still open:** arbitrary damaged loca/metric-count recovery, all-instance
+The built-distribution `scripts/verify-consumers.mjs` gate separately selects
+all six mitigation actions: dehinting, decomposition, overlap flag, final-glyph
+removal, one optional-table removal, and TT-to-CFF conversion. It checks refusal
+without consent, immutable originals, the actual requested changes, and
+HarfBuzz glyph sequences/positions/paths. Chromium and Firefox load the exact
+original/candidate bytes and check nonblank rasterization and advance stability
+at 12, 24, and 48 px. Pixel identity is deliberately not asserted: removing hints
+or changing rasterizer policy/overlap interpretation can affect pixels.
+Authored fixtures meet the guards; this does not authorize applying a mitigation
+to a font whose dependencies cannot be preserved.
+
+Public safe-repair tests also retain contextual/extension GSUB/GPOS behavior,
+exact artwork/image/metric payloads, and specialist-table bytes while preserving
+explicit unsupported/partial coverage.
+
+**Unsupported, not silently repaired:** arbitrary damaged loca/metric-count recovery, all-instance
 variable bounds, general CFF offset-graph rewriting and corrupted program
 recovery, TrueType VM inference, contour union, general glyph deletion/reference
 rewriting, arbitrary optional-table removal, general bidirectional outline
 conversion, rasterizer-policy editing, static instancing, and bulk automatic
 standard-instance generation.
 Hint loss/rounding can change rasterization; no exhaustive multi-platform or
-small-size rasterization equivalence is claimed. Full FQ/M1–M3 acceptance
-must therefore remain partial.
+small-size rasterization equivalence is claimed. See the
+[criterion-level backlog](../FONT-QUALITY-BACKLOG.md) for milestone acceptance
+within this declared scope.

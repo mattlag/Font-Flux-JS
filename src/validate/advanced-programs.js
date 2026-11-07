@@ -52,7 +52,11 @@ export function validateAdvancedTrueType(tables, ctx) {
 	function count(gid, depth) {
 		ctx.limits.consume();
 		ctx.limits.checkDepth(depth);
-		if (counts.has(gid)) return counts.get(gid);
+		if (counts.has(gid)) {
+			const cached = counts.get(gid);
+			ctx.limits.checkDepth(depth + cached.depth);
+			return cached;
+		}
 		if (active.has(gid)) return null; // Existing cycle diagnostic owns this finding.
 		const glyph = glyphs[gid];
 		if (!glyph) return { points: 0, contours: 0, depth: 0 };

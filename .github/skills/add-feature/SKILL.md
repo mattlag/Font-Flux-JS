@@ -1,9 +1,9 @@
 ---
+name: add-feature
 description: 'Add a new feature end-to-end: outline, plan, code, test, fix bugs, and write docs'
-agent: 'agent'
+disable-model-invocation: true
 argument-hint: 'Describe the feature you want to add...'
 ---
-
 # Feature Implementation Workflow for Vibe Coded Projects
 
 This document outlines the standard approach for adding new features to this project. Follow these steps to ensure consistency, quality, and maintainable code.

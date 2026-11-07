@@ -1,5 +1,5 @@
 /*!
-* Font Flux JS v2.10.2
+* Font Flux JS v2.10.4
 * Copyright (c) 2026 Matt LaGrandeur
 * Licensed under GPL-3.0-only. See LICENSE for details.
 */
@@ -15200,7 +15200,7 @@ function dy(e, t = {}) {
 		let r = we(n, e), i = r.defaultWidthX;
 		if (a[e] && a[e].length > 0) {
 			let n = Me(a[e], r.globalSubrs, r.localSubrs, t);
-			n.width !== void 0 && (i = n.width + r.nominalWidthX);
+			n.width != null && (i = n.width + r.nominalWidthX);
 		}
 		p.push({
 			advanceWidth: i,
@@ -17376,7 +17376,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-bitmap.js",
-			line: 79,
+			line: 84,
 			symbol: "validateAdvancedBitmap"
 		},
 		references: [
@@ -17421,7 +17421,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-bitmap.js",
-				line: 79,
+				line: 84,
 				symbol: "validateAdvancedBitmap"
 			},
 			references: [
@@ -17460,7 +17460,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-bitmap.js",
-				line: 161,
+				line: 166,
 				symbol: "validateAdvancedBitmap"
 			},
 			references: [
@@ -17502,7 +17502,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-bitmap.js",
-			line: 116,
+			line: 121,
 			symbol: "validateAdvancedBitmap"
 		},
 		references: [
@@ -17547,7 +17547,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-bitmap.js",
-				line: 116,
+				line: 121,
 				symbol: "validateAdvancedBitmap"
 			},
 			references: [
@@ -17589,7 +17589,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-bitmap.js",
-			line: 90,
+			line: 95,
 			symbol: "validateAdvancedBitmap"
 		},
 		references: [
@@ -17634,7 +17634,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-bitmap.js",
-				line: 90,
+				line: 95,
 				symbol: "validateAdvancedBitmap"
 			},
 			references: [
@@ -17676,7 +17676,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-bitmap.js",
-			line: 54,
+			line: 58,
 			symbol: "referenceGraph"
 		},
 		references: [
@@ -17721,7 +17721,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-bitmap.js",
-				line: 54,
+				line: 58,
 				symbol: "referenceGraph"
 			},
 			references: [
@@ -17760,7 +17760,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-bitmap.js",
-				line: 157,
+				line: 162,
 				symbol: "validateAdvancedBitmap"
 			},
 			references: [
@@ -17802,7 +17802,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-bitmap.js",
-			line: 175,
+			line: 180,
 			symbol: "validateAdvancedBitmap"
 		},
 		references: [
@@ -17847,7 +17847,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-bitmap.js",
-				line: 175,
+				line: 180,
 				symbol: "validateAdvancedBitmap"
 			},
 			references: [
@@ -17886,7 +17886,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-bitmap.js",
-				line: 183,
+				line: 188,
 				symbol: "validateAdvancedBitmap"
 			},
 			references: [
@@ -18238,7 +18238,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-bitmap.js",
-			line: 108,
+			line: 113,
 			symbol: "validateAdvancedBitmap"
 		},
 		references: [
@@ -18283,7 +18283,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-bitmap.js",
-				line: 108,
+				line: 113,
 				symbol: "validateAdvancedBitmap"
 			},
 			references: [
@@ -18325,7 +18325,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-bitmap.js",
-			line: 127,
+			line: 132,
 			symbol: "validateAdvancedBitmap"
 		},
 		references: [
@@ -18370,7 +18370,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-bitmap.js",
-				line: 127,
+				line: 132,
 				symbol: "validateAdvancedBitmap"
 			},
 			references: [
@@ -18412,7 +18412,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-bitmap.js",
-			line: 135,
+			line: 140,
 			symbol: "validateAdvancedBitmap"
 		},
 		references: [
@@ -18457,7 +18457,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-bitmap.js",
-				line: 135,
+				line: 140,
 				symbol: "validateAdvancedBitmap"
 			},
 			references: [
@@ -18490,7 +18490,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-programs.js",
-			line: 127,
+			line: 131,
 			symbol: "executeCffArithmetic"
 		},
 		references: [
@@ -18523,7 +18523,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-programs.js",
-				line: 127,
+				line: 131,
 				symbol: "executeCffArithmetic"
 			},
 			references: [
@@ -18633,7 +18633,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-programs.js",
-			line: 388,
+			line: 392,
 			symbol: "validateCffStructures"
 		},
 		references: [
@@ -18666,7 +18666,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-programs.js",
-				line: 388,
+				line: 392,
 				symbol: "validateCffStructures"
 			},
 			references: [
@@ -18696,7 +18696,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-programs.js",
-			line: 345,
+			line: 349,
 			symbol: "validateCffStructures"
 		},
 		references: [
@@ -18729,7 +18729,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-programs.js",
-				line: 345,
+				line: 349,
 				symbol: "validateCffStructures"
 			},
 			references: [
@@ -18886,7 +18886,7 @@ var Ly = {
 				publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 				source: {
 					file: "src/validate/advanced-programs.js",
-					line: 173,
+					line: 177,
 					symbol: "executeCffArithmetic"
 				},
 				references: [
@@ -19265,7 +19265,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-programs.js",
-			line: 362,
+			line: 366,
 			symbol: "validateCffStructures"
 		},
 		references: [
@@ -19299,7 +19299,7 @@ var Ly = {
 				publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 				source: {
 					file: "src/validate/advanced-programs.js",
-					line: 362,
+					line: 366,
 					symbol: "validateCffStructures"
 				},
 				references: [
@@ -19327,7 +19327,7 @@ var Ly = {
 				publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 				source: {
 					file: "src/validate/advanced-programs.js",
-					line: 368,
+					line: 372,
 					symbol: "validateCffStructures"
 				},
 				references: [
@@ -19355,7 +19355,7 @@ var Ly = {
 				publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 				source: {
 					file: "src/validate/advanced-programs.js",
-					line: 374,
+					line: 378,
 					symbol: "validateCffStructures"
 				},
 				references: [
@@ -19508,7 +19508,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-programs.js",
-			line: 298,
+			line: 302,
 			symbol: "validateCffStructures"
 		},
 		references: [
@@ -19541,7 +19541,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-programs.js",
-				line: 298,
+				line: 302,
 				symbol: "validateCffStructures"
 			},
 			references: [
@@ -19568,7 +19568,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-programs.js",
-				line: 315,
+				line: 319,
 				symbol: "validateCffStructures"
 			},
 			references: [
@@ -19724,7 +19724,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-programs.js",
-			line: 191,
+			line: 195,
 			symbol: "validateCffStructures"
 		},
 		references: [
@@ -19757,7 +19757,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-programs.js",
-				line: 191,
+				line: 195,
 				symbol: "validateCffStructures"
 			},
 			references: [
@@ -20606,7 +20606,7 @@ var Ly = {
 				publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 				source: {
 					file: "src/validate/advanced-programs.js",
-					line: 123,
+					line: 127,
 					symbol: "executeCffArithmetic"
 				},
 				references: [
@@ -23371,7 +23371,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-color.js",
-			line: 122,
+			line: 127,
 			symbol: "validateAdvancedColor"
 		},
 		references: [
@@ -23406,7 +23406,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-color.js",
-				line: 122,
+				line: 127,
 				symbol: "validateAdvancedColor"
 			},
 			references: [
@@ -23505,7 +23505,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-color.js",
-			line: 169,
+			line: 175,
 			symbol: "validateAdvancedColor"
 		},
 		references: [
@@ -23540,7 +23540,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-color.js",
-				line: 169,
+				line: 175,
 				symbol: "validateAdvancedColor"
 			},
 			references: [
@@ -23572,7 +23572,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-color.js",
-			line: 130,
+			line: 135,
 			symbol: "validateAdvancedColor"
 		},
 		references: [
@@ -23607,7 +23607,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-color.js",
-				line: 130,
+				line: 135,
 				symbol: "validateAdvancedColor"
 			},
 			references: [
@@ -23636,7 +23636,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-color.js",
-				line: 135,
+				line: 140,
 				symbol: "validateAdvancedColor"
 			},
 			references: [
@@ -23668,7 +23668,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-color.js",
-			line: 149,
+			line: 154,
 			symbol: "validateAdvancedColor"
 		},
 		references: [
@@ -23703,7 +23703,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-color.js",
-				line: 149,
+				line: 154,
 				symbol: "validateAdvancedColor"
 			},
 			references: [
@@ -23799,7 +23799,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-color.js",
-				line: 142,
+				line: 147,
 				symbol: "validateAdvancedColor"
 			},
 			references: [
@@ -25820,7 +25820,7 @@ var Ly = {
 		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
 		source: {
 			file: "src/validate/quality-workflows.js",
-			line: 321,
+			line: 326,
 			symbol: "inspectExpectations"
 		},
 		references: [
@@ -25852,7 +25852,7 @@ var Ly = {
 			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
 			source: {
 				file: "src/validate/quality-workflows.js",
-				line: 321,
+				line: 326,
 				symbol: "inspectExpectations"
 			},
 			references: [
@@ -25865,616 +25865,6 @@ var Ly = {
 	},
 	EXPECTATION_BEHAVIOR_GLYPH_MISSING: {
 		id: "EXPECTATION_BEHAVIOR_GLYPH_MISSING",
-		checkId: "profile.inspectExpectations",
-		pipeline: "profile",
-		family: "repertoire-and-glyph-policy",
-		tables: [],
-		formats: [
-			"collection",
-			"declared-context",
-			"sfnt",
-			"simplified-json",
-			"woff1",
-			"woff2"
-		],
-		kind: "finding",
-		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-		source: {
-			file: "src/validate/quality-workflows.js",
-			line: 319,
-			symbol: "inspectExpectations"
-		},
-		references: [
-			"docs/font-quality.md",
-			"docs/quality-workflows.md",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-		],
-		severities: ["warning"],
-		pipelines: ["profile"],
-		checkIds: ["profile.inspectExpectations"],
-		repairIds: [],
-		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
-		status: "active",
-		baseline: !1,
-		origins: [{
-			checkId: "profile.inspectExpectations",
-			pipeline: "profile",
-			family: "repertoire-and-glyph-policy",
-			tables: [],
-			formats: [
-				"declared-context",
-				"simplified-json",
-				"sfnt",
-				"woff1",
-				"woff2",
-				"collection"
-			],
-			kind: "finding",
-			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-			source: {
-				file: "src/validate/quality-workflows.js",
-				line: 319,
-				symbol: "inspectExpectations"
-			},
-			references: [
-				"docs/font-quality.md",
-				"docs/quality-workflows.md",
-				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-			],
-			severities: ["warning"]
-		}]
-	},
-	EXPECTATION_DUPLICATE_GLYPH_NAME: {
-		id: "EXPECTATION_DUPLICATE_GLYPH_NAME",
-		checkId: "profile.inspectExpectations",
-		pipeline: "profile",
-		family: "repertoire-and-glyph-policy",
-		tables: [],
-		formats: [
-			"collection",
-			"declared-context",
-			"sfnt",
-			"simplified-json",
-			"woff1",
-			"woff2"
-		],
-		kind: "finding",
-		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-		source: {
-			file: "src/validate/quality-workflows.js",
-			line: 236,
-			symbol: "inspectExpectations"
-		},
-		references: [
-			"docs/font-quality.md",
-			"docs/quality-workflows.md",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-		],
-		severities: ["warning"],
-		pipelines: ["profile"],
-		checkIds: ["profile.inspectExpectations"],
-		repairIds: [],
-		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
-		status: "active",
-		baseline: !1,
-		origins: [{
-			checkId: "profile.inspectExpectations",
-			pipeline: "profile",
-			family: "repertoire-and-glyph-policy",
-			tables: [],
-			formats: [
-				"declared-context",
-				"simplified-json",
-				"sfnt",
-				"woff1",
-				"woff2",
-				"collection"
-			],
-			kind: "finding",
-			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-			source: {
-				file: "src/validate/quality-workflows.js",
-				line: 236,
-				symbol: "inspectExpectations"
-			},
-			references: [
-				"docs/font-quality.md",
-				"docs/quality-workflows.md",
-				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-			],
-			severities: ["warning"]
-		}]
-	},
-	EXPECTATION_GLYPH_MISSING: {
-		id: "EXPECTATION_GLYPH_MISSING",
-		checkId: "profile.inspectExpectations",
-		pipeline: "profile",
-		family: "repertoire-and-glyph-policy",
-		tables: [],
-		formats: [
-			"collection",
-			"declared-context",
-			"sfnt",
-			"simplified-json",
-			"woff1",
-			"woff2"
-		],
-		kind: "finding",
-		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-		source: {
-			file: "src/validate/quality-workflows.js",
-			line: 311,
-			symbol: "inspectExpectations"
-		},
-		references: [
-			"docs/font-quality.md",
-			"docs/quality-workflows.md",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-		],
-		severities: ["warning"],
-		pipelines: ["profile"],
-		checkIds: ["profile.inspectExpectations"],
-		repairIds: [],
-		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
-		status: "active",
-		baseline: !1,
-		origins: [{
-			checkId: "profile.inspectExpectations",
-			pipeline: "profile",
-			family: "repertoire-and-glyph-policy",
-			tables: [],
-			formats: [
-				"declared-context",
-				"simplified-json",
-				"sfnt",
-				"woff1",
-				"woff2",
-				"collection"
-			],
-			kind: "finding",
-			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-			source: {
-				file: "src/validate/quality-workflows.js",
-				line: 311,
-				symbol: "inspectExpectations"
-			},
-			references: [
-				"docs/font-quality.md",
-				"docs/quality-workflows.md",
-				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-			],
-			severities: ["warning"]
-		}]
-	},
-	EXPECTATION_GLYPH_NAME_POLICY: {
-		id: "EXPECTATION_GLYPH_NAME_POLICY",
-		checkId: "profile.inspectExpectations",
-		pipeline: "profile",
-		family: "repertoire-and-glyph-policy",
-		tables: [],
-		formats: [
-			"collection",
-			"declared-context",
-			"sfnt",
-			"simplified-json",
-			"woff1",
-			"woff2"
-		],
-		kind: "finding",
-		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-		source: {
-			file: "src/validate/quality-workflows.js",
-			line: 241,
-			symbol: "inspectExpectations"
-		},
-		references: [
-			"docs/font-quality.md",
-			"docs/quality-workflows.md",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-		],
-		severities: ["warning"],
-		pipelines: ["profile"],
-		checkIds: ["profile.inspectExpectations"],
-		repairIds: [],
-		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
-		status: "active",
-		baseline: !1,
-		origins: [{
-			checkId: "profile.inspectExpectations",
-			pipeline: "profile",
-			family: "repertoire-and-glyph-policy",
-			tables: [],
-			formats: [
-				"declared-context",
-				"simplified-json",
-				"sfnt",
-				"woff1",
-				"woff2",
-				"collection"
-			],
-			kind: "finding",
-			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-			source: {
-				file: "src/validate/quality-workflows.js",
-				line: 241,
-				symbol: "inspectExpectations"
-			},
-			references: [
-				"docs/font-quality.md",
-				"docs/quality-workflows.md",
-				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-			],
-			severities: ["warning"]
-		}]
-	},
-	EXPECTATION_INVALID_SCALAR: {
-		id: "EXPECTATION_INVALID_SCALAR",
-		checkId: "profile.inspectExpectations",
-		pipeline: "profile",
-		family: "repertoire-and-glyph-policy",
-		tables: [],
-		formats: [
-			"collection",
-			"declared-context",
-			"sfnt",
-			"simplified-json",
-			"woff1",
-			"woff2"
-		],
-		kind: "finding",
-		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-		source: {
-			file: "src/validate/quality-workflows.js",
-			line: 245,
-			symbol: "inspectExpectations"
-		},
-		references: [
-			"docs/font-quality.md",
-			"docs/quality-workflows.md",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-		],
-		severities: ["error"],
-		pipelines: ["profile"],
-		checkIds: ["profile.inspectExpectations"],
-		repairIds: [],
-		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
-		status: "active",
-		baseline: !1,
-		origins: [{
-			checkId: "profile.inspectExpectations",
-			pipeline: "profile",
-			family: "repertoire-and-glyph-policy",
-			tables: [],
-			formats: [
-				"declared-context",
-				"simplified-json",
-				"sfnt",
-				"woff1",
-				"woff2",
-				"collection"
-			],
-			kind: "finding",
-			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-			source: {
-				file: "src/validate/quality-workflows.js",
-				line: 245,
-				symbol: "inspectExpectations"
-			},
-			references: [
-				"docs/font-quality.md",
-				"docs/quality-workflows.md",
-				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-			],
-			severities: ["error"]
-		}]
-	},
-	EXPECTATION_REACHABILITY_INCOMPLETE: {
-		id: "EXPECTATION_REACHABILITY_INCOMPLETE",
-		checkId: "profile.inspectExpectations",
-		pipeline: "profile",
-		family: "repertoire-and-glyph-policy",
-		tables: [],
-		formats: [
-			"collection",
-			"declared-context",
-			"sfnt",
-			"simplified-json",
-			"woff1",
-			"woff2"
-		],
-		kind: "information",
-		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-		source: {
-			file: "src/validate/quality-workflows.js",
-			line: 338,
-			symbol: "inspectExpectations"
-		},
-		references: [
-			"docs/font-quality.md",
-			"docs/quality-workflows.md",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-		],
-		severities: ["info"],
-		pipelines: ["profile"],
-		checkIds: ["profile.inspectExpectations"],
-		repairIds: [],
-		noFixReason: "Informational observation or detached normalization notice, not a registered repair operation.",
-		status: "active",
-		baseline: !1,
-		origins: [{
-			checkId: "profile.inspectExpectations",
-			pipeline: "profile",
-			family: "repertoire-and-glyph-policy",
-			tables: [],
-			formats: [
-				"declared-context",
-				"simplified-json",
-				"sfnt",
-				"woff1",
-				"woff2",
-				"collection"
-			],
-			kind: "information",
-			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-			source: {
-				file: "src/validate/quality-workflows.js",
-				line: 338,
-				symbol: "inspectExpectations"
-			},
-			references: [
-				"docs/font-quality.md",
-				"docs/quality-workflows.md",
-				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-			],
-			severities: ["info"]
-		}]
-	},
-	EXPECTATION_REFERENCE_MISSING: {
-		id: "EXPECTATION_REFERENCE_MISSING",
-		checkId: "profile.inspectExpectations",
-		pipeline: "profile",
-		family: "repertoire-and-glyph-policy",
-		tables: [],
-		formats: [
-			"collection",
-			"declared-context",
-			"sfnt",
-			"simplified-json",
-			"woff1",
-			"woff2"
-		],
-		kind: "finding",
-		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-		source: {
-			file: "src/validate/quality-workflows.js",
-			line: 254,
-			symbol: "inspectExpectations"
-		},
-		references: [
-			"docs/font-quality.md",
-			"docs/quality-workflows.md",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-		],
-		severities: ["warning"],
-		pipelines: ["profile"],
-		checkIds: ["profile.inspectExpectations"],
-		repairIds: [],
-		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
-		status: "active",
-		baseline: !1,
-		origins: [{
-			checkId: "profile.inspectExpectations",
-			pipeline: "profile",
-			family: "repertoire-and-glyph-policy",
-			tables: [],
-			formats: [
-				"declared-context",
-				"simplified-json",
-				"sfnt",
-				"woff1",
-				"woff2",
-				"collection"
-			],
-			kind: "finding",
-			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-			source: {
-				file: "src/validate/quality-workflows.js",
-				line: 254,
-				symbol: "inspectExpectations"
-			},
-			references: [
-				"docs/font-quality.md",
-				"docs/quality-workflows.md",
-				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-			],
-			severities: ["warning"]
-		}]
-	},
-	EXPECTATION_REPERTOIRE_MISSING: {
-		id: "EXPECTATION_REPERTOIRE_MISSING",
-		checkId: "profile.inspectExpectations",
-		pipeline: "profile",
-		family: "repertoire-and-glyph-policy",
-		tables: [],
-		formats: [
-			"collection",
-			"declared-context",
-			"sfnt",
-			"simplified-json",
-			"woff1",
-			"woff2"
-		],
-		kind: "finding",
-		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-		source: {
-			file: "src/validate/quality-workflows.js",
-			line: 307,
-			symbol: "inspectExpectations"
-		},
-		references: [
-			"docs/font-quality.md",
-			"docs/quality-workflows.md",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-		],
-		severities: ["warning"],
-		pipelines: ["profile"],
-		checkIds: ["profile.inspectExpectations"],
-		repairIds: [],
-		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
-		status: "active",
-		baseline: !1,
-		origins: [{
-			checkId: "profile.inspectExpectations",
-			pipeline: "profile",
-			family: "repertoire-and-glyph-policy",
-			tables: [],
-			formats: [
-				"declared-context",
-				"simplified-json",
-				"sfnt",
-				"woff1",
-				"woff2",
-				"collection"
-			],
-			kind: "finding",
-			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-			source: {
-				file: "src/validate/quality-workflows.js",
-				line: 307,
-				symbol: "inspectExpectations"
-			},
-			references: [
-				"docs/font-quality.md",
-				"docs/quality-workflows.md",
-				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-			],
-			severities: ["warning"]
-		}]
-	},
-	EXPECTATION_SHAPING_RULE_UNSUPPORTED: {
-		id: "EXPECTATION_SHAPING_RULE_UNSUPPORTED",
-		checkId: "profile.inspectExpectations",
-		pipeline: "profile",
-		family: "repertoire-and-glyph-policy",
-		tables: [],
-		formats: [
-			"collection",
-			"declared-context",
-			"sfnt",
-			"simplified-json",
-			"woff1",
-			"woff2"
-		],
-		kind: "information",
-		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-		source: {
-			file: "src/validate/quality-workflows.js",
-			line: 265,
-			symbol: "inspectExpectations"
-		},
-		references: [
-			"docs/font-quality.md",
-			"docs/quality-workflows.md",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-		],
-		severities: ["info"],
-		pipelines: ["profile"],
-		checkIds: ["profile.inspectExpectations"],
-		repairIds: [],
-		noFixReason: "Informational observation or detached normalization notice, not a registered repair operation.",
-		status: "active",
-		baseline: !1,
-		origins: [{
-			checkId: "profile.inspectExpectations",
-			pipeline: "profile",
-			family: "repertoire-and-glyph-policy",
-			tables: [],
-			formats: [
-				"declared-context",
-				"simplified-json",
-				"sfnt",
-				"woff1",
-				"woff2",
-				"collection"
-			],
-			kind: "information",
-			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-			source: {
-				file: "src/validate/quality-workflows.js",
-				line: 265,
-				symbol: "inspectExpectations"
-			},
-			references: [
-				"docs/font-quality.md",
-				"docs/quality-workflows.md",
-				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-			],
-			severities: ["info"]
-		}]
-	},
-	EXPECTATION_UVS_GLYPH_MISSING: {
-		id: "EXPECTATION_UVS_GLYPH_MISSING",
-		checkId: "profile.inspectExpectations",
-		pipeline: "profile",
-		family: "repertoire-and-glyph-policy",
-		tables: [],
-		formats: [
-			"collection",
-			"declared-context",
-			"sfnt",
-			"simplified-json",
-			"woff1",
-			"woff2"
-		],
-		kind: "finding",
-		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-		source: {
-			file: "src/validate/quality-workflows.js",
-			line: 287,
-			symbol: "inspectExpectations"
-		},
-		references: [
-			"docs/font-quality.md",
-			"docs/quality-workflows.md",
-			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-		],
-		severities: ["error"],
-		pipelines: ["profile"],
-		checkIds: ["profile.inspectExpectations"],
-		repairIds: [],
-		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
-		status: "active",
-		baseline: !1,
-		origins: [{
-			checkId: "profile.inspectExpectations",
-			pipeline: "profile",
-			family: "repertoire-and-glyph-policy",
-			tables: [],
-			formats: [
-				"declared-context",
-				"simplified-json",
-				"sfnt",
-				"woff1",
-				"woff2",
-				"collection"
-			],
-			kind: "finding",
-			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
-			source: {
-				file: "src/validate/quality-workflows.js",
-				line: 287,
-				symbol: "inspectExpectations"
-			},
-			references: [
-				"docs/font-quality.md",
-				"docs/quality-workflows.md",
-				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
-			],
-			severities: ["error"]
-		}]
-	},
-	EXPECTATION_VISIBLE_WHITESPACE: {
-		id: "EXPECTATION_VISIBLE_WHITESPACE",
 		checkId: "profile.inspectExpectations",
 		pipeline: "profile",
 		family: "repertoire-and-glyph-policy",
@@ -26524,6 +25914,738 @@ var Ly = {
 			source: {
 				file: "src/validate/quality-workflows.js",
 				line: 324,
+				symbol: "inspectExpectations"
+			},
+			references: [
+				"docs/font-quality.md",
+				"docs/quality-workflows.md",
+				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+			],
+			severities: ["warning"]
+		}]
+	},
+	EXPECTATION_BEHAVIOR_UNSUPPORTED: {
+		id: "EXPECTATION_BEHAVIOR_UNSUPPORTED",
+		checkId: "profile.inspectExpectations",
+		pipeline: "profile",
+		family: "repertoire-and-glyph-policy",
+		tables: [],
+		formats: [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		kind: "information",
+		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		source: {
+			file: "src/validate/quality-workflows.js",
+			line: 336,
+			symbol: "inspectExpectations"
+		},
+		references: [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		severities: ["info"],
+		pipelines: ["profile"],
+		checkIds: ["profile.inspectExpectations"],
+		repairIds: [],
+		noFixReason: "Informational observation or detached normalization notice, not a registered repair operation.",
+		status: "active",
+		baseline: !1,
+		origins: [{
+			checkId: "profile.inspectExpectations",
+			pipeline: "profile",
+			family: "repertoire-and-glyph-policy",
+			tables: [],
+			formats: [
+				"declared-context",
+				"simplified-json",
+				"sfnt",
+				"woff1",
+				"woff2",
+				"collection"
+			],
+			kind: "information",
+			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+			source: {
+				file: "src/validate/quality-workflows.js",
+				line: 336,
+				symbol: "inspectExpectations"
+			},
+			references: [
+				"docs/font-quality.md",
+				"docs/quality-workflows.md",
+				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+			],
+			severities: ["info"]
+		}]
+	},
+	EXPECTATION_DUPLICATE_GLYPH_NAME: {
+		id: "EXPECTATION_DUPLICATE_GLYPH_NAME",
+		checkId: "profile.inspectExpectations",
+		pipeline: "profile",
+		family: "repertoire-and-glyph-policy",
+		tables: [],
+		formats: [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		kind: "finding",
+		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		source: {
+			file: "src/validate/quality-workflows.js",
+			line: 237,
+			symbol: "inspectExpectations"
+		},
+		references: [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		severities: ["warning"],
+		pipelines: ["profile"],
+		checkIds: ["profile.inspectExpectations"],
+		repairIds: [],
+		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		status: "active",
+		baseline: !1,
+		origins: [{
+			checkId: "profile.inspectExpectations",
+			pipeline: "profile",
+			family: "repertoire-and-glyph-policy",
+			tables: [],
+			formats: [
+				"declared-context",
+				"simplified-json",
+				"sfnt",
+				"woff1",
+				"woff2",
+				"collection"
+			],
+			kind: "finding",
+			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+			source: {
+				file: "src/validate/quality-workflows.js",
+				line: 237,
+				symbol: "inspectExpectations"
+			},
+			references: [
+				"docs/font-quality.md",
+				"docs/quality-workflows.md",
+				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+			],
+			severities: ["warning"]
+		}]
+	},
+	EXPECTATION_EMPTY_GLYPH: {
+		id: "EXPECTATION_EMPTY_GLYPH",
+		checkId: "profile.inspectExpectations",
+		pipeline: "profile",
+		family: "repertoire-and-glyph-policy",
+		tables: [],
+		formats: [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		kind: "finding",
+		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		source: {
+			file: "src/validate/quality-workflows.js",
+			line: 339,
+			symbol: "inspectExpectations"
+		},
+		references: [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		severities: ["warning"],
+		pipelines: ["profile"],
+		checkIds: ["profile.inspectExpectations"],
+		repairIds: [],
+		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		status: "active",
+		baseline: !1,
+		origins: [{
+			checkId: "profile.inspectExpectations",
+			pipeline: "profile",
+			family: "repertoire-and-glyph-policy",
+			tables: [],
+			formats: [
+				"declared-context",
+				"simplified-json",
+				"sfnt",
+				"woff1",
+				"woff2",
+				"collection"
+			],
+			kind: "finding",
+			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+			source: {
+				file: "src/validate/quality-workflows.js",
+				line: 339,
+				symbol: "inspectExpectations"
+			},
+			references: [
+				"docs/font-quality.md",
+				"docs/quality-workflows.md",
+				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+			],
+			severities: ["warning"]
+		}]
+	},
+	EXPECTATION_GLYPH_MISSING: {
+		id: "EXPECTATION_GLYPH_MISSING",
+		checkId: "profile.inspectExpectations",
+		pipeline: "profile",
+		family: "repertoire-and-glyph-policy",
+		tables: [],
+		formats: [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		kind: "finding",
+		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		source: {
+			file: "src/validate/quality-workflows.js",
+			line: 314,
+			symbol: "inspectExpectations"
+		},
+		references: [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		severities: ["warning"],
+		pipelines: ["profile"],
+		checkIds: ["profile.inspectExpectations"],
+		repairIds: [],
+		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		status: "active",
+		baseline: !1,
+		origins: [{
+			checkId: "profile.inspectExpectations",
+			pipeline: "profile",
+			family: "repertoire-and-glyph-policy",
+			tables: [],
+			formats: [
+				"declared-context",
+				"simplified-json",
+				"sfnt",
+				"woff1",
+				"woff2",
+				"collection"
+			],
+			kind: "finding",
+			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+			source: {
+				file: "src/validate/quality-workflows.js",
+				line: 314,
+				symbol: "inspectExpectations"
+			},
+			references: [
+				"docs/font-quality.md",
+				"docs/quality-workflows.md",
+				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+			],
+			severities: ["warning"]
+		}]
+	},
+	EXPECTATION_GLYPH_NAME_POLICY: {
+		id: "EXPECTATION_GLYPH_NAME_POLICY",
+		checkId: "profile.inspectExpectations",
+		pipeline: "profile",
+		family: "repertoire-and-glyph-policy",
+		tables: [],
+		formats: [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		kind: "finding",
+		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		source: {
+			file: "src/validate/quality-workflows.js",
+			line: 242,
+			symbol: "inspectExpectations"
+		},
+		references: [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		severities: ["warning"],
+		pipelines: ["profile"],
+		checkIds: ["profile.inspectExpectations"],
+		repairIds: [],
+		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		status: "active",
+		baseline: !1,
+		origins: [{
+			checkId: "profile.inspectExpectations",
+			pipeline: "profile",
+			family: "repertoire-and-glyph-policy",
+			tables: [],
+			formats: [
+				"declared-context",
+				"simplified-json",
+				"sfnt",
+				"woff1",
+				"woff2",
+				"collection"
+			],
+			kind: "finding",
+			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+			source: {
+				file: "src/validate/quality-workflows.js",
+				line: 242,
+				symbol: "inspectExpectations"
+			},
+			references: [
+				"docs/font-quality.md",
+				"docs/quality-workflows.md",
+				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+			],
+			severities: ["warning"]
+		}]
+	},
+	EXPECTATION_INVALID_SCALAR: {
+		id: "EXPECTATION_INVALID_SCALAR",
+		checkId: "profile.inspectExpectations",
+		pipeline: "profile",
+		family: "repertoire-and-glyph-policy",
+		tables: [],
+		formats: [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		kind: "finding",
+		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		source: {
+			file: "src/validate/quality-workflows.js",
+			line: 246,
+			symbol: "inspectExpectations"
+		},
+		references: [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		severities: ["error"],
+		pipelines: ["profile"],
+		checkIds: ["profile.inspectExpectations"],
+		repairIds: [],
+		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		status: "active",
+		baseline: !1,
+		origins: [{
+			checkId: "profile.inspectExpectations",
+			pipeline: "profile",
+			family: "repertoire-and-glyph-policy",
+			tables: [],
+			formats: [
+				"declared-context",
+				"simplified-json",
+				"sfnt",
+				"woff1",
+				"woff2",
+				"collection"
+			],
+			kind: "finding",
+			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+			source: {
+				file: "src/validate/quality-workflows.js",
+				line: 246,
+				symbol: "inspectExpectations"
+			},
+			references: [
+				"docs/font-quality.md",
+				"docs/quality-workflows.md",
+				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+			],
+			severities: ["error"]
+		}]
+	},
+	EXPECTATION_REACHABILITY_INCOMPLETE: {
+		id: "EXPECTATION_REACHABILITY_INCOMPLETE",
+		checkId: "profile.inspectExpectations",
+		pipeline: "profile",
+		family: "repertoire-and-glyph-policy",
+		tables: [],
+		formats: [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		kind: "information",
+		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		source: {
+			file: "src/validate/quality-workflows.js",
+			line: 355,
+			symbol: "inspectExpectations"
+		},
+		references: [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		severities: ["info"],
+		pipelines: ["profile"],
+		checkIds: ["profile.inspectExpectations"],
+		repairIds: [],
+		noFixReason: "Informational observation or detached normalization notice, not a registered repair operation.",
+		status: "active",
+		baseline: !1,
+		origins: [{
+			checkId: "profile.inspectExpectations",
+			pipeline: "profile",
+			family: "repertoire-and-glyph-policy",
+			tables: [],
+			formats: [
+				"declared-context",
+				"simplified-json",
+				"sfnt",
+				"woff1",
+				"woff2",
+				"collection"
+			],
+			kind: "information",
+			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+			source: {
+				file: "src/validate/quality-workflows.js",
+				line: 355,
+				symbol: "inspectExpectations"
+			},
+			references: [
+				"docs/font-quality.md",
+				"docs/quality-workflows.md",
+				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+			],
+			severities: ["info"]
+		}]
+	},
+	EXPECTATION_REFERENCE_MISSING: {
+		id: "EXPECTATION_REFERENCE_MISSING",
+		checkId: "profile.inspectExpectations",
+		pipeline: "profile",
+		family: "repertoire-and-glyph-policy",
+		tables: [],
+		formats: [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		kind: "finding",
+		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		source: {
+			file: "src/validate/quality-workflows.js",
+			line: 255,
+			symbol: "inspectExpectations"
+		},
+		references: [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		severities: ["warning"],
+		pipelines: ["profile"],
+		checkIds: ["profile.inspectExpectations"],
+		repairIds: [],
+		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		status: "active",
+		baseline: !1,
+		origins: [{
+			checkId: "profile.inspectExpectations",
+			pipeline: "profile",
+			family: "repertoire-and-glyph-policy",
+			tables: [],
+			formats: [
+				"declared-context",
+				"simplified-json",
+				"sfnt",
+				"woff1",
+				"woff2",
+				"collection"
+			],
+			kind: "finding",
+			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+			source: {
+				file: "src/validate/quality-workflows.js",
+				line: 255,
+				symbol: "inspectExpectations"
+			},
+			references: [
+				"docs/font-quality.md",
+				"docs/quality-workflows.md",
+				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+			],
+			severities: ["warning"]
+		}]
+	},
+	EXPECTATION_REPERTOIRE_MISSING: {
+		id: "EXPECTATION_REPERTOIRE_MISSING",
+		checkId: "profile.inspectExpectations",
+		pipeline: "profile",
+		family: "repertoire-and-glyph-policy",
+		tables: [],
+		formats: [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		kind: "finding",
+		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		source: {
+			file: "src/validate/quality-workflows.js",
+			line: 309,
+			symbol: "inspectExpectations"
+		},
+		references: [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		severities: ["warning"],
+		pipelines: ["profile"],
+		checkIds: ["profile.inspectExpectations"],
+		repairIds: [],
+		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		status: "active",
+		baseline: !1,
+		origins: [{
+			checkId: "profile.inspectExpectations",
+			pipeline: "profile",
+			family: "repertoire-and-glyph-policy",
+			tables: [],
+			formats: [
+				"declared-context",
+				"simplified-json",
+				"sfnt",
+				"woff1",
+				"woff2",
+				"collection"
+			],
+			kind: "finding",
+			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+			source: {
+				file: "src/validate/quality-workflows.js",
+				line: 309,
+				symbol: "inspectExpectations"
+			},
+			references: [
+				"docs/font-quality.md",
+				"docs/quality-workflows.md",
+				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+			],
+			severities: ["warning"]
+		}]
+	},
+	EXPECTATION_SHAPING_RULE_UNSUPPORTED: {
+		id: "EXPECTATION_SHAPING_RULE_UNSUPPORTED",
+		checkId: "profile.inspectExpectations",
+		pipeline: "profile",
+		family: "repertoire-and-glyph-policy",
+		tables: [],
+		formats: [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		kind: "information",
+		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		source: {
+			file: "src/validate/quality-workflows.js",
+			line: 266,
+			symbol: "inspectExpectations"
+		},
+		references: [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		severities: ["info"],
+		pipelines: ["profile"],
+		checkIds: ["profile.inspectExpectations"],
+		repairIds: [],
+		noFixReason: "Informational observation or detached normalization notice, not a registered repair operation.",
+		status: "active",
+		baseline: !1,
+		origins: [{
+			checkId: "profile.inspectExpectations",
+			pipeline: "profile",
+			family: "repertoire-and-glyph-policy",
+			tables: [],
+			formats: [
+				"declared-context",
+				"simplified-json",
+				"sfnt",
+				"woff1",
+				"woff2",
+				"collection"
+			],
+			kind: "information",
+			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+			source: {
+				file: "src/validate/quality-workflows.js",
+				line: 266,
+				symbol: "inspectExpectations"
+			},
+			references: [
+				"docs/font-quality.md",
+				"docs/quality-workflows.md",
+				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+			],
+			severities: ["info"]
+		}]
+	},
+	EXPECTATION_UVS_GLYPH_MISSING: {
+		id: "EXPECTATION_UVS_GLYPH_MISSING",
+		checkId: "profile.inspectExpectations",
+		pipeline: "profile",
+		family: "repertoire-and-glyph-policy",
+		tables: [],
+		formats: [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		kind: "finding",
+		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		source: {
+			file: "src/validate/quality-workflows.js",
+			line: 288,
+			symbol: "inspectExpectations"
+		},
+		references: [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		severities: ["error"],
+		pipelines: ["profile"],
+		checkIds: ["profile.inspectExpectations"],
+		repairIds: [],
+		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		status: "active",
+		baseline: !1,
+		origins: [{
+			checkId: "profile.inspectExpectations",
+			pipeline: "profile",
+			family: "repertoire-and-glyph-policy",
+			tables: [],
+			formats: [
+				"declared-context",
+				"simplified-json",
+				"sfnt",
+				"woff1",
+				"woff2",
+				"collection"
+			],
+			kind: "finding",
+			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+			source: {
+				file: "src/validate/quality-workflows.js",
+				line: 288,
+				symbol: "inspectExpectations"
+			},
+			references: [
+				"docs/font-quality.md",
+				"docs/quality-workflows.md",
+				"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+			],
+			severities: ["error"]
+		}]
+	},
+	EXPECTATION_VISIBLE_WHITESPACE: {
+		id: "EXPECTATION_VISIBLE_WHITESPACE",
+		checkId: "profile.inspectExpectations",
+		pipeline: "profile",
+		family: "repertoire-and-glyph-policy",
+		tables: [],
+		formats: [
+			"collection",
+			"declared-context",
+			"sfnt",
+			"simplified-json",
+			"woff1",
+			"woff2"
+		],
+		kind: "finding",
+		publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+		source: {
+			file: "src/validate/quality-workflows.js",
+			line: 334,
+			symbol: "inspectExpectations"
+		},
+		references: [
+			"docs/font-quality.md",
+			"docs/quality-workflows.md",
+			"https://learn.microsoft.com/en-us/typography/opentype/spec/otff"
+		],
+		severities: ["warning"],
+		pipelines: ["profile"],
+		checkIds: ["profile.inspectExpectations"],
+		repairIds: [],
+		noFixReason: "No registered binary repair for this identifier; correct the authoring data or satisfy the explicit validation/profile requirement.",
+		status: "active",
+		baseline: !1,
+		origins: [{
+			checkId: "profile.inspectExpectations",
+			pipeline: "profile",
+			family: "repertoire-and-glyph-policy",
+			tables: [],
+			formats: [
+				"declared-context",
+				"simplified-json",
+				"sfnt",
+				"woff1",
+				"woff2",
+				"collection"
+			],
+			kind: "finding",
+			publicReachability: "explicit public contextual workflow; caller-declared membership, repertoire or behavior policy, never inferred family completeness",
+			source: {
+				file: "src/validate/quality-workflows.js",
+				line: 334,
 				symbol: "inspectExpectations"
 			},
 			references: [
@@ -26799,7 +26921,7 @@ var Ly = {
 			file: "src/validate/quality-workflows.js",
 			line: 71,
 			symbol: "inspectFamily",
-			expression: "[\r\n			['postScriptName', identities, 'FAMILY_DUPLICATE_IDENTITY'],\r\n			['styleName', styles, 'FAMILY_DUPLICATE_STYLE'],\r\n		]"
+			expression: "[\n			['postScriptName', identities, 'FAMILY_DUPLICATE_IDENTITY'],\n			['styleName', styles, 'FAMILY_DUPLICATE_STYLE'],\n		]"
 		}],
 		pipelines: ["profile"],
 		checkIds: ["profile.inspectFamily"],
@@ -26838,7 +26960,7 @@ var Ly = {
 				file: "src/validate/quality-workflows.js",
 				line: 71,
 				symbol: "inspectFamily",
-				expression: "[\r\n			['postScriptName', identities, 'FAMILY_DUPLICATE_IDENTITY'],\r\n			['styleName', styles, 'FAMILY_DUPLICATE_STYLE'],\r\n		]"
+				expression: "[\n			['postScriptName', identities, 'FAMILY_DUPLICATE_IDENTITY'],\n			['styleName', styles, 'FAMILY_DUPLICATE_STYLE'],\n		]"
 			}]
 		}]
 	},
@@ -26874,7 +26996,7 @@ var Ly = {
 			file: "src/validate/quality-workflows.js",
 			line: 71,
 			symbol: "inspectFamily",
-			expression: "[\r\n			['postScriptName', identities, 'FAMILY_DUPLICATE_IDENTITY'],\r\n			['styleName', styles, 'FAMILY_DUPLICATE_STYLE'],\r\n		]"
+			expression: "[\n			['postScriptName', identities, 'FAMILY_DUPLICATE_IDENTITY'],\n			['styleName', styles, 'FAMILY_DUPLICATE_STYLE'],\n		]"
 		}],
 		pipelines: ["profile"],
 		checkIds: ["profile.inspectFamily"],
@@ -26913,7 +27035,7 @@ var Ly = {
 				file: "src/validate/quality-workflows.js",
 				line: 71,
 				symbol: "inspectFamily",
-				expression: "[\r\n			['postScriptName', identities, 'FAMILY_DUPLICATE_IDENTITY'],\r\n			['styleName', styles, 'FAMILY_DUPLICATE_STYLE'],\r\n		]"
+				expression: "[\n			['postScriptName', identities, 'FAMILY_DUPLICATE_IDENTITY'],\n			['styleName', styles, 'FAMILY_DUPLICATE_STYLE'],\n		]"
 			}]
 		}]
 	},
@@ -28083,7 +28205,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-programs.js",
-			line: 111,
+			line: 115,
 			symbol: "validateAdvancedTrueType"
 		},
 		references: [
@@ -28124,7 +28246,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-programs.js",
-				line: 111,
+				line: 115,
 				symbol: "validateAdvancedTrueType"
 			},
 			references: [
@@ -28282,7 +28404,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-programs.js",
-			line: 73,
+			line: 77,
 			symbol: "validateAdvancedTrueType"
 		},
 		references: [
@@ -28323,7 +28445,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-programs.js",
-				line: 73,
+				line: 77,
 				symbol: "validateAdvancedTrueType"
 			},
 			references: [
@@ -28482,7 +28604,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-programs.js",
-			line: 77,
+			line: 81,
 			symbol: "validateAdvancedTrueType"
 		},
 		references: [
@@ -28523,7 +28645,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-programs.js",
-				line: 77,
+				line: 81,
 				symbol: "validateAdvancedTrueType"
 			},
 			references: [
@@ -28712,7 +28834,7 @@ var Ly = {
 		publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 		source: {
 			file: "src/validate/advanced-programs.js",
-			line: 95,
+			line: 99,
 			symbol: "validateAdvancedTrueType"
 		},
 		references: [
@@ -28753,7 +28875,7 @@ var Ly = {
 			publicReachability: "public-binary-diagnosis; bounded original-byte/table checks with per-face execution coverage; not shaping, VM or rasterizer certification",
 			source: {
 				file: "src/validate/advanced-programs.js",
-				line: 95,
+				line: 99,
 				symbol: "validateAdvancedTrueType"
 			},
 			references: [
@@ -34547,7 +34669,7 @@ var Ly = {
 		publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 		source: {
 			file: "src/validate/workflow-source.js",
-			line: 51,
+			line: 52,
 			symbol: "inspectGlyph"
 		},
 		references: [
@@ -34573,7 +34695,7 @@ var Ly = {
 			publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 			source: {
 				file: "src/validate/workflow-source.js",
-				line: 51,
+				line: 52,
 				symbol: "inspectGlyph"
 			},
 			references: [
@@ -34596,7 +34718,7 @@ var Ly = {
 		publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 		source: {
 			file: "src/validate/workflow-source.js",
-			line: 30,
+			line: 31,
 			symbol: "inspectGlyph"
 		},
 		references: [
@@ -34622,7 +34744,7 @@ var Ly = {
 			publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 			source: {
 				file: "src/validate/workflow-source.js",
-				line: 30,
+				line: 31,
 				symbol: "inspectGlyph"
 			},
 			references: [
@@ -34692,7 +34814,7 @@ var Ly = {
 		publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 		source: {
 			file: "src/validate/workflow-source.js",
-			line: 36,
+			line: 37,
 			symbol: "inspectGlyph"
 		},
 		references: [
@@ -34718,7 +34840,7 @@ var Ly = {
 			publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 			source: {
 				file: "src/validate/workflow-source.js",
-				line: 36,
+				line: 37,
 				symbol: "inspectGlyph"
 			},
 			references: [
@@ -34741,7 +34863,7 @@ var Ly = {
 		publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 		source: {
 			file: "src/validate/workflow-source.js",
-			line: 70,
+			line: 71,
 			symbol: "inspectGlyph"
 		},
 		references: [
@@ -34767,7 +34889,7 @@ var Ly = {
 			publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 			source: {
 				file: "src/validate/workflow-source.js",
-				line: 70,
+				line: 71,
 				symbol: "inspectGlyph"
 			},
 			references: [
@@ -34790,7 +34912,7 @@ var Ly = {
 		publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 		source: {
 			file: "src/validate/workflow-source.js",
-			line: 74,
+			line: 75,
 			symbol: "inspectGlyph"
 		},
 		references: [
@@ -34816,7 +34938,7 @@ var Ly = {
 			publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 			source: {
 				file: "src/validate/workflow-source.js",
-				line: 74,
+				line: 75,
 				symbol: "inspectGlyph"
 			},
 			references: [
@@ -34839,7 +34961,7 @@ var Ly = {
 		publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 		source: {
 			file: "src/validate/workflow-source.js",
-			line: 59,
+			line: 60,
 			symbol: "inspectGlyph"
 		},
 		references: [
@@ -34865,7 +34987,7 @@ var Ly = {
 			publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 			source: {
 				file: "src/validate/workflow-source.js",
-				line: 59,
+				line: 60,
 				symbol: "inspectGlyph"
 			},
 			references: [
@@ -34888,7 +35010,7 @@ var Ly = {
 		publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 		source: {
 			file: "src/validate/workflow-source.js",
-			line: 54,
+			line: 55,
 			symbol: "inspectGlyph"
 		},
 		references: [
@@ -34914,7 +35036,7 @@ var Ly = {
 			publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 			source: {
 				file: "src/validate/workflow-source.js",
-				line: 54,
+				line: 55,
 				symbol: "inspectGlyph"
 			},
 			references: [
@@ -36214,7 +36336,7 @@ var Ly = {
 		publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 		source: {
 			file: "src/validate/workflow-source.js",
-			line: 141,
+			line: 142,
 			symbol: "inspectSourceQuality"
 		},
 		references: [
@@ -36240,7 +36362,7 @@ var Ly = {
 			publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 			source: {
 				file: "src/validate/workflow-source.js",
-				line: 141,
+				line: 142,
 				symbol: "inspectSourceQuality"
 			},
 			references: [
@@ -36263,7 +36385,7 @@ var Ly = {
 		publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 		source: {
 			file: "src/validate/workflow-source.js",
-			line: 127,
+			line: 128,
 			symbol: "inspectSourceQuality"
 		},
 		references: [
@@ -36289,7 +36411,7 @@ var Ly = {
 			publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 			source: {
 				file: "src/validate/workflow-source.js",
-				line: 127,
+				line: 128,
 				symbol: "inspectSourceQuality"
 			},
 			references: [
@@ -36312,7 +36434,7 @@ var Ly = {
 		publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 		source: {
 			file: "src/validate/workflow-source.js",
-			line: 113,
+			line: 114,
 			symbol: "inspectSourceQuality"
 		},
 		references: [
@@ -36338,7 +36460,7 @@ var Ly = {
 			publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 			source: {
 				file: "src/validate/workflow-source.js",
-				line: 113,
+				line: 114,
 				symbol: "inspectSourceQuality"
 			},
 			references: [
@@ -36361,7 +36483,7 @@ var Ly = {
 		publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 		source: {
 			file: "src/validate/workflow-source.js",
-			line: 119,
+			line: 120,
 			symbol: "inspectSourceQuality"
 		},
 		references: [
@@ -36387,7 +36509,7 @@ var Ly = {
 			publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 			source: {
 				file: "src/validate/workflow-source.js",
-				line: 119,
+				line: 120,
 				symbol: "inspectSourceQuality"
 			},
 			references: [
@@ -36410,7 +36532,7 @@ var Ly = {
 		publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 		source: {
 			file: "src/validate/workflow-source.js",
-			line: 125,
+			line: 126,
 			symbol: "inspectSourceQuality"
 		},
 		references: [
@@ -36436,7 +36558,7 @@ var Ly = {
 			publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 			source: {
 				file: "src/validate/workflow-source.js",
-				line: 125,
+				line: 126,
 				symbol: "inspectSourceQuality"
 			},
 			references: [
@@ -36459,7 +36581,7 @@ var Ly = {
 		publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 		source: {
 			file: "src/validate/workflow-source.js",
-			line: 104,
+			line: 105,
 			symbol: "inspectSourceQuality"
 		},
 		references: [
@@ -36485,7 +36607,7 @@ var Ly = {
 			publicReachability: "public source-quality workflow; supplied control geometry/masters and declared samples only, no implicit source recovery",
 			source: {
 				file: "src/validate/workflow-source.js",
-				line: 104,
+				line: 105,
 				symbol: "inspectSourceQuality"
 			},
 			references: [
@@ -41993,15 +42115,14 @@ function ob(e, t, n, r) {
 	(!c || !l) && a("PNG requires IDAT image data and a final IEND chunk.");
 }
 function sb(e, t, n, r) {
-	let i = /* @__PURE__ */ new Set(), a = /* @__PURE__ */ new Set();
+	let i = /* @__PURE__ */ new Set(), a = /* @__PURE__ */ new Map();
 	function o(s, c) {
-		if (n.limits.consume(), n.limits.checkDepth(c), i.has(s)) {
-			G(n.issues, "error", "BITMAP_REFERENCE_CYCLE", "Bitmap duplicate/component references form a cycle.", n.location(`${r}.${s}`));
-			return;
-		}
-		a.has(s) || (i.add(s), n.each(t.get(s), (t) => {
-			e.has(t) ? o(t, c + 1) : G(n.issues, "error", "BITMAP_GLYPH_REFERENCE_INVALID", `Bitmap target ${t} does not exist in this strike.`, n.location(`${r}.${s}`));
-		}), i.delete(s), a.add(s));
+		if (n.limits.consume(), n.limits.checkDepth(c), i.has(s)) return G(n.issues, "error", "BITMAP_REFERENCE_CYCLE", "Bitmap duplicate/component references form a cycle.", n.location(`${r}.${s}`)), 0;
+		if (a.has(s)) return n.limits.checkDepth(c + a.get(s) - 1), a.get(s);
+		let l = 1;
+		return i.add(s), n.each(t.get(s), (t) => {
+			e.has(t) ? l = Math.max(l, 1 + o(t, c + 1)) : G(n.issues, "error", "BITMAP_GLYPH_REFERENCE_INVALID", `Bitmap target ${t} does not exist in this strike.`, n.location(`${r}.${s}`));
+		}), i.delete(s), a.set(s, l), l;
 	}
 	for (let t of e.keys()) o(t, 1);
 }
@@ -42316,7 +42437,7 @@ function fb(e, t, n) {
 	c = -1, n.each(e.baseGlyphPaintRecords, (e, t) => {
 		n.glyph(e.glyphID, `baseGlyphPaintRecords.${t}.glyphID`), e.glyphID <= c && G(a, "error", "COLR_BASE_GLYPH_ORDER_INVALID", "Base glyph paint records must be strictly increasing.", n.location(`baseGlyphPaintRecords.${t}`)), c = e.glyphID, l.set(e.glyphID, e.paint);
 	});
-	let u = /* @__PURE__ */ new Set(), d = /* @__PURE__ */ new Set(), f = (t, r, i) => {
+	let u = /* @__PURE__ */ new Set(), d = /* @__PURE__ */ new Map(), f = (t, r, i) => {
 		if (t !== void 0 && t !== 4294967295) {
 			n.limits.consume(r);
 			for (let a = 0; a < r; a++) {
@@ -42329,18 +42450,15 @@ function fb(e, t, n) {
 		}
 	};
 	function p(t, r, i) {
-		if (n.limits.consume(), n.limits.checkDepth(i), !t) {
-			G(a, "error", "COLR_PAINT_REFERENCE_INVALID", "Paint references a missing node.", n.location(r));
-			return;
-		}
-		if (u.has(t)) {
-			G(a, "error", "COLR_PAINT_CYCLE", "Paint graph contains a direct or indirect cycle.", n.location(r));
-			return;
-		}
-		if (d.has(t)) return;
+		if (n.limits.consume(), n.limits.checkDepth(i), !t) return G(a, "error", "COLR_PAINT_REFERENCE_INVALID", "Paint references a missing node.", n.location(r)), 0;
+		if (u.has(t)) return G(a, "error", "COLR_PAINT_CYCLE", "Paint graph contains a direct or indirect cycle.", n.location(r)), 0;
+		if (d.has(t)) return n.limits.checkDepth(i + d.get(t) - 1), d.get(t);
+		let s = 1, c = (e, t) => {
+			s = Math.max(s, 1 + p(e, t, i + 1));
+		};
 		u.add(t);
-		let s = t.format;
-		if (!Number.isInteger(s) || s < 1 || s > 32) n.unsupported(r, `COLR paint format ${s} is not implemented.`);
+		let m = t.format;
+		if (!Number.isInteger(m) || m < 1 || m > 32) n.unsupported(r, `COLR paint format ${m} is not implemented.`);
 		else {
 			if (t.paletteIndex !== void 0 && o(t.paletteIndex, `${r}.paletteIndex`), t.alpha !== void 0 && (t.alpha < 0 || t.alpha > 1) && G(a, "error", "COLR_ALPHA_INVALID", "Paint alpha must be between zero and one.", n.location(r)), t.glyphID !== void 0 && n.glyph(t.glyphID, `${r}.glyphID`), f(t.varIndexBase, {
 				3: 1,
@@ -42356,7 +42474,7 @@ function fb(e, t, n) {
 				27: 3,
 				29: 2,
 				31: 4
-			}[s] ?? 0, `${r}.varIndexBase`), f(t.transform?.varIndexBase, 6, `${r}.transform.varIndexBase`), t.colorLine) {
+			}[m] ?? 0, `${r}.varIndexBase`), f(t.transform?.varIndexBase, 6, `${r}.transform.varIndexBase`), t.colorLine) {
 				let e = -Infinity;
 				[
 					0,
@@ -42367,12 +42485,12 @@ function fb(e, t, n) {
 					o(t.paletteIndex, s), (t.stopOffset < e || t.alpha < 0 || t.alpha > 1) && G(a, "error", "COLR_COLOR_LINE_INVALID", "Gradient stops must be ordered with alpha in [0, 1].", n.location(s)), e = t.stopOffset, f(t.varIndexBase, 2, `${s}.varIndexBase`);
 				});
 			}
-			if (s === 1) {
+			if (m === 1) {
 				t.firstLayerIndex + t.numLayers > (e.layerPaints?.length ?? 0) && G(a, "error", "COLR_LAYER_RANGE_INVALID", "PaintColrLayers exceeds LayerList.", n.location(r)), n.limits.consume(t.numLayers);
-				for (let n = 0; n < t.numLayers; n++) p(e.layerPaints?.[t.firstLayerIndex + n], `${r}.layers.${n}`, i + 1);
-			} else s === 11 ? p(l.get(t.glyphID), `${r}.glyph.${t.glyphID}`, i + 1) : s === 32 ? ((t.compositeMode < 0 || t.compositeMode > 27) && G(a, "error", "COLR_COMPOSITE_MODE_INVALID", "Unknown composite mode.", n.location(r)), p(t.sourcePaint, `${r}.sourcePaint`, i + 1), p(t.backdropPaint, `${r}.backdropPaint`, i + 1)) : (s === 10 || s >= 12 && s <= 31) && p(t.paint, `${r}.paint`, i + 1);
+				for (let n = 0; n < t.numLayers; n++) c(e.layerPaints?.[t.firstLayerIndex + n], `${r}.layers.${n}`);
+			} else m === 11 ? c(l.get(t.glyphID), `${r}.glyph.${t.glyphID}`) : m === 32 ? ((t.compositeMode < 0 || t.compositeMode > 27) && G(a, "error", "COLR_COMPOSITE_MODE_INVALID", "Unknown composite mode.", n.location(r)), c(t.sourcePaint, `${r}.sourcePaint`), c(t.backdropPaint, `${r}.backdropPaint`)) : (m === 10 || m >= 12 && m <= 31) && c(t.paint, `${r}.paint`);
 		}
-		u.delete(t), d.add(t);
+		return u.delete(t), d.set(t, s), s;
 	}
 	n.each(e.baseGlyphPaintRecords, (e, t) => p(e.paint, `baseGlyphPaintRecords.${t}.paint`, 1)), n.each(e.layerPaints, (e, t) => p(e, `layerPaints.${t}`, 1)), c = -1, e.clipList && e.clipList.format !== 1 && n.unsupported("clipList", `ClipList format ${e.clipList.format} is unsupported.`), n.each(e.clipList?.clips, (e, t) => {
 		let r = e.clipBox;
@@ -42557,7 +42675,10 @@ function hb(e, t) {
 	n(e.fpgm?.instructions, "fpgm.instructions"), n(e.prep?.instructions, "prep.instructions");
 	let r = e.glyf?.glyphs ?? [], i = /* @__PURE__ */ new Map(), a = /* @__PURE__ */ new Set();
 	function o(n, s) {
-		if (t.limits.consume(), t.limits.checkDepth(s), i.has(n)) return i.get(n);
+		if (t.limits.consume(), t.limits.checkDepth(s), i.has(n)) {
+			let e = i.get(n);
+			return t.limits.checkDepth(s + e.depth), e;
+		}
 		if (a.has(n)) return null;
 		let c = r[n];
 		if (!c) return {
@@ -50351,7 +50472,7 @@ function MT(e, t) {
 		contours: (e.contours || []).map((e) => e.map((e) => e.type ?? (e.onCurve ? "on" : "off"))),
 		components: (e.components || []).map((e) => ({
 			glyph: e.glyphName ?? t[e.glyphIndex]?.name ?? `#${e.glyphIndex}`,
-			attachment: e.flags === void 0 ? "authored" : e.flags & 2 ? "xy" : "points"
+			attachment: e.flags === void 0 ? "authored" : (typeof e.flags == "number" ? e.flags & 2 : e.flags.argsAreXYValues) ? "xy" : "points"
 		}))
 	};
 }
@@ -50736,12 +50857,21 @@ async function VT(e, t, n = {}, r) {
 	for (let e of Object.keys(t)) if (!i.has(e)) throw TypeError(`Repair requests reference unknown member ${e}.`);
 	let f = () => {
 		if (s?.aborted) throw lw();
-	}, p = [], m = [], h;
+	}, p = [], m = [], h, g = {
+		signal: s,
+		onProgress: l ? (e) => l({
+			...e,
+			memberId: h
+		}) : void 0
+	};
 	try {
-		for (let e of d) f(), h = e.id, m.push(await r.planRepairs(e.bytes, t[e.id] ?? [], u));
+		for (let e of d) f(), h = e.id, m.push(await r.planRepairs(e.bytes, t[e.id] ?? [], {
+			...u,
+			...g
+		}));
 		for (let e = 0; e < d.length; e++) {
 			f(), h = d[e].id;
-			let t = await r.applyRepairs(d[e].bytes, m[e]);
+			let t = await r.applyRepairs(d[e].bytes, m[e], g);
 			if (f(), t.state !== "verified" || !(t.buffer instanceof ArrayBuffer)) throw Error(`Member repair was not verified (${t.state}).`);
 			p.push({
 				id: h,
@@ -50855,6 +50985,7 @@ function UT(e, t = {}) {
 	for (let e of n.tables?.cmap?.subtables || []) if (e.format === 14) for (let t of e.varSelectorRecords || []) for (let e of t.nonDefaultUVS || []) i.tick(), p(e.glyphID) && e.glyphID !== 0 ? u[e.glyphID].add("uvs") : Q(r, "EXPECTATION_UVS_GLYPH_MISSING", "Nondefault UVS references a missing glyph.", { glyphIndex: e.glyphID }, "error");
 	s.length && u[0].add("notdef");
 	for (let e of t.roots || []) {
+		i.tick();
 		let t = f(e);
 		if (!p(t)) throw TypeError("Explicit reachability root does not identify a glyph.");
 		u[t].add("explicit-root");
@@ -50866,23 +50997,38 @@ function UT(e, t = {}) {
 		repertoireVersion: e.version,
 		codePoint: t
 	}, "warning");
-	for (let e of t.requiredGlyphs || []) c.has(e) || Q(r, "EXPECTATION_GLYPH_MISSING", "An explicitly required glyph is absent.", { glyphName: e });
+	for (let e of t.requiredGlyphs || []) i.tick(), c.has(e) || Q(r, "EXPECTATION_GLYPH_MISSING", "An explicitly required glyph is absent.", { glyphName: e });
 	for (let e of t.behavior || []) {
-		if (!HT(e.codePoint)) throw TypeError("Behavior expectations require a Unicode scalar codePoint.");
+		if (i.tick(), !HT(e.codePoint)) throw TypeError("Behavior expectations require a Unicode scalar codePoint.");
 		if (e.advanceWidth !== void 0 && !Number.isFinite(e.advanceWidth)) throw TypeError("Behavior advanceWidth must be finite.");
 		if (e.empty !== void 0 && typeof e.empty != "boolean") throw TypeError("Behavior empty must be a boolean.");
-		let t = l.get(e.codePoint), i = s[t];
-		if (!i) {
+		let t = l.get(e.codePoint), a = s[t];
+		if (!a) {
 			Q(r, "EXPECTATION_BEHAVIOR_GLYPH_MISSING", "Behavior cannot be checked because the selected code point is absent.", { codePoint: e.codePoint });
 			continue;
 		}
-		e.advanceWidth !== void 0 && i.advanceWidth !== e.advanceWidth && Q(r, "EXPECTATION_ADVANCE_WIDTH", "Advance width differs from the explicitly selected whitespace/control/mark policy.", {
+		if (e.advanceWidth !== void 0 && a.advanceWidth !== e.advanceWidth && Q(r, "EXPECTATION_ADVANCE_WIDTH", "Advance width differs from the explicitly selected whitespace/control/mark policy.", {
 			glyphIndex: t,
 			codePoint: e.codePoint
 		}, "warning", {
 			expected: e.advanceWidth,
-			actual: i.advanceWidth ?? null
-		}), e.empty === !0 && (i.contours?.some((e) => e.length) || i.components?.length || n.colorGlyphs?.some((e) => e.name === i.name)) && Q(r, "EXPECTATION_VISIBLE_WHITESPACE", "Selected empty glyph policy conflicts with outline/component/color content.", { glyphIndex: t });
+			actual: a.advanceWidth ?? null
+		}), e.empty !== void 0) {
+			let i = a.contours?.some((e) => e.length) || a.components?.length || n.colorGlyphs?.some((e) => e.name === a.name), o = a.charString != null || [
+				"sbix",
+				"CBDT",
+				"EBDT",
+				"bdat",
+				"SVG "
+			].some((e) => n.tables?.[e]);
+			e.empty && i ? Q(r, "EXPECTATION_VISIBLE_WHITESPACE", "Selected empty glyph policy conflicts with outline/component/color content.", { glyphIndex: t }) : !i && o ? Q(r, "EXPECTATION_BEHAVIOR_UNSUPPORTED", "Glyph emptiness requires unexamined program, bitmap or SVG content; no empty/nonempty outcome is inferred.", {
+				glyphIndex: t,
+				codePoint: e.codePoint
+			}, "info") : !e.empty && !i && Q(r, "EXPECTATION_EMPTY_GLYPH", "Selected nonempty glyph policy conflicts with absent outline/component/color content.", {
+				glyphIndex: t,
+				codePoint: e.codePoint
+			});
+		}
 	}
 	return r.glyphs = s.map((e, t) => ({
 		glyphIndex: t,
@@ -51422,7 +51568,7 @@ var ZT = class e {
 //#region src/main.js
 KT(() => new Worker(new URL(
 	/* @vite-ignore */
-	"" + new URL("assets/quality-worker-entry-9UM_icCl.js", import.meta.url).href,
+	"" + new URL("assets/quality-worker-entry-BPceipaY.js", import.meta.url).href,
 	"" + import.meta.url
 ), { type: "module" }));
 async function QT() {

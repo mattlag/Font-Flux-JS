@@ -88,7 +88,7 @@ export function validateAdvancedColor(value, raw, ctx) {
 		previous = record.glyphID;
 		bases.set(record.glyphID, record.paint);
 	});
-	const active = new Set(), done = new Set();
+	const active = new Set(), done = new Map();
 	const variable = (base, count, path) => {
 		if (base === undefined || base === 0xffffffff) return;
 		ctx.limits.consume(count);
@@ -105,13 +105,18 @@ export function validateAdvancedColor(value, raw, ctx) {
 		ctx.limits.checkDepth(depth);
 		if (!node) {
 			addIssue(issues, 'error', 'COLR_PAINT_REFERENCE_INVALID', 'Paint references a missing node.', ctx.location(path));
-			return;
+			return 0;
 		}
 		if (active.has(node)) {
 			addIssue(issues, 'error', 'COLR_PAINT_CYCLE', 'Paint graph contains a direct or indirect cycle.', ctx.location(path));
-			return;
+			return 0;
 		}
-		if (done.has(node)) return;
+		if (done.has(node)) {
+			ctx.limits.checkDepth(depth + done.get(node) - 1);
+			return done.get(node);
+		}
+		let height = 1;
+		const child = (value, at) => { height = Math.max(height, 1 + paint(value, at, depth + 1)); };
 		active.add(node);
 		const format = node.format;
 		if (!Number.isInteger(format) || format < 1 || format > 32) {
@@ -142,17 +147,18 @@ export function validateAdvancedColor(value, raw, ctx) {
 					addIssue(issues, 'error', 'COLR_LAYER_RANGE_INVALID', 'PaintColrLayers exceeds LayerList.', ctx.location(path));
 				ctx.limits.consume(node.numLayers);
 				for (let i = 0; i < node.numLayers; i++)
-					paint(value.layerPaints?.[node.firstLayerIndex + i], `${path}.layers.${i}`, depth + 1);
-			} else if (format === 11) paint(bases.get(node.glyphID), `${path}.glyph.${node.glyphID}`, depth + 1);
+					child(value.layerPaints?.[node.firstLayerIndex + i], `${path}.layers.${i}`);
+			} else if (format === 11) child(bases.get(node.glyphID), `${path}.glyph.${node.glyphID}`);
 			else if (format === 32) {
 				if (node.compositeMode < 0 || node.compositeMode > 27)
 					addIssue(issues, 'error', 'COLR_COMPOSITE_MODE_INVALID', 'Unknown composite mode.', ctx.location(path));
-				paint(node.sourcePaint, `${path}.sourcePaint`, depth + 1);
-				paint(node.backdropPaint, `${path}.backdropPaint`, depth + 1);
-			} else if (format === 10 || (format >= 12 && format <= 31)) paint(node.paint, `${path}.paint`, depth + 1);
+				child(node.sourcePaint, `${path}.sourcePaint`);
+				child(node.backdropPaint, `${path}.backdropPaint`);
+			} else if (format === 10 || (format >= 12 && format <= 31)) child(node.paint, `${path}.paint`);
 		}
 		active.delete(node);
-		done.add(node);
+		done.set(node, height);
+		return height;
 	}
 	ctx.each(value.baseGlyphPaintRecords, (record, i) => paint(record.paint, `baseGlyphPaintRecords.${i}.paint`, 1));
 	ctx.each(value.layerPaints, (node, i) => paint(node, `layerPaints.${i}`, 1));

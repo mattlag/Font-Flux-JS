@@ -443,7 +443,11 @@ Version 2.10.3 completes the
 keeps originals, offers explicit safe/assisted/lossy review, and downloads exact
 verified bytes with fingerprinted audits. Failed/partial results remain visible;
 commit, one-step undo and original-project revert are guarded transactions.
+Version 2.10.4 completes M3's documented advanced-core scope, including
+context-correct CFF widths, bounded shared graphs, cancellable family repairs,
+explicit glyph/source expectations, and independent shaping, variation,
+mitigation, and large-font verification.
 The [font-quality backlog](./FONT-QUALITY-BACKLOG.md) tracks planned detection and
 repair improvements, fix safety and user decisions, verification requirements,
-and core-first Demo integration. Its implementation status distinguishes shipped
-increments from remaining work; it is not a claim that the full roadmap is done.
+and core-first Demo integration. M0–M3 are accepted within their documented
+scopes; unsupported semantics and source-required recovery remain explicit.

@@ -69,7 +69,11 @@ variation phantom points. Transforming or attaching a component does not
 change its point numbering. Cached subtree heights still enforce depth limits
 when a shared component is reached along a longer path. Empty glyphs have zero
 points; missing outlines are blocked and CFF point numbering is unsupported.
-No geometric decomposition or hinted anchor positioning is claimed.
+The same cached-height discipline bounds TrueType component counting, COLR
+paint graphs, and bitmap duplicate/component graphs, including a shared subtree
+reached later through a longer path. Actual binary-path regressions distinguish
+parser limits from advanced traversal limits; neither is a passing scope.
+No geometric decomposition or hinted anchor positioning is claimed by diagnosis.
 
 The only coupled codec correction is removal of an erroneous empty-store
 parse in COLR v1. No upstream implementation was translated or copied. Formats were
@@ -81,40 +85,54 @@ unless a separate repair establishes intent and preservation. Sorting coverage,
 dropping lookups, appending charstring terminators, inventing deltas or replacing
 pixels is not a diagnostic repair.
 
-## Explicitly outstanding acceptance evidence
+## M3 acceptance evidence and semantic boundaries
 
-These changes do **not** close every acceptance criterion of FQ-021–FQ-030:
+The original fixtures and independent repair consumers establish the following
+bounded evidence; diagnostic execution itself is still structural, not a shaping
+engine, virtual machine, or rasterizer:
 
-- No shaping-before/after repair comparison or execution of recursive contextual
-  actions. Hinted anchor placement and CFF contour-point numbering remain
+- Public repair tests retain contextual/extension GSUB and GPOS payloads and
+  compare actual HarfBuzz glyph sequences, positions, and nonempty paths before
+  and after repairing SFNT search fields. Hinted anchor placement and CFF contour-point numbering remain
   unimplemented; supported TrueType simple/composite point-index references
   are checked. Unknown feature-condition/anchor formats are not interpreted.
 - CFF random/obsolete operators, uninitialized transient values, endchar
   composite execution and numeric Private DICT hint interpolation remain unsupported.
   Ordered CFF2 Private DICT blend structure and inherited context are checked;
   malformed programs require authoritative source, not invented hint values.
-  Complete outline/width/variation equivalence has not been independently
-  established by this structural checker. Predefined charset semantics and
+  Independent tests distinguish two CID FDs with different local subroutines
+  and compare nonempty glyph paths before/after structural repair. Standalone
+  import tests verify each FD's declared default width and explicit width
+  prefixes, including zero. Predefined charset semantics and
   every DICT operator's semantic constraints are not exhaustively certified.
 - No dynamic TrueType stack, function ID, jump target, CVT access, VM-derived
   maxima or rasterizer verification. This is not an autohinter.
-- No exhaustive axis-order/semantic correspondence proof, avar v2 evaluation,
-  interpolation/IUP execution, or sampled variation geometry. No sample set is
-  advertised because no interpolation samples were taken.
+- Independent CFF2 geometry tests sample a declared blend region at weights
+  100, 300, 500, 700, and 900 (normalized 0, .25, .5, .75, and 1).
+  Real RobotoFlex metadata-repair tests sample axis minima/defaults/maxima, a
+  custom instance, and the start/peak/end vectors of a selected interior HVAR
+  region, inverse-mapped through avar v1. This is a finite sample set, not
+  exhaustive axis-order correspondence, avar v2 evaluation, or all-instance
+  interpolation/IUP certification.
 - No color compositing/rendering, SVG XML/gzip validation, scripts or external
   resources. Geometric transform singularities and full artwork semantics are
   not certified.
 - No PNG CRC or compressed-pixel validation; JPEG/TIFF/other image codecs remain
   explicitly unsupported. Bitmap index-table layout is not an exhaustive
   proof of all permitted overlap/aliasing arrangements.
-- JSTF embedded positioning subtables beyond their headers/offsets remain
-  unsupported. No independent MATH/BASE/JSTF/MERG consumer-equivalence evidence.
+- Safe public repair tests preserve exact COLR/CPAL, SVG, sbix image bytes and
+  origin metrics, and MATH/BASE/JSTF/MERG payloads. Unexamined SVG/image codecs
+  and each specialist scope remain explicitly partial. JSTF positioning beyond
+  embedded headers/offsets and independent specialist-rendering equivalence
+  remain unsupported; byte preservation is not a rendering claim.
 
 The dedicated original fixtures include valid/bad/boundary/unsupported cases,
 shared and cyclic references, conditional definitions, source-byte truncation,
 interior multi-axis regions and deterministic repeated reports. Existing
 diagnostic/CFF-context suites remain compatibility evidence, not an external
-rendering oracle.
+rendering oracle. Independent HarfBuzz and Chromium/Firefox repair evidence is
+described in [repair extensions](./repair-extensions.md); criterion-level
+closeout is tracked in the [backlog](../FONT-QUALITY-BACKLOG.md).
 
 ## Internal hooks and inventory integration
 
@@ -141,9 +159,9 @@ Stable export-to-scope mapping:
 | `advanced-bitmap`: `validateAdvancedBitmap`, `inspectPng` | `binary.advanced.CBLC`, `.EBLC`, `.bloc`, `.sbix`, `.EBSC` |
 | `advanced-specialist`: `validateAdvancedSpecialist` | `binary.advanced.MATH`, `.BASE`, `.JSTF`, `.MERG` |
 
-The inventory extractor discovers the literal/finite IDs; its **classification**
-still needs parent-owned family/table/reachability metadata for these modules
-and the metadata/derived forwarding sites. With the pipeline's helper signatures
+The inventory extractor discovers literal/finite IDs and records
+family/table/reachability metadata for these modules and the metadata/derived
+forwarding sites in the generated ledger. With the pipeline's helper signatures
 included, the advanced modules emit 88 distinct codes: 77 new codes below plus
 the existing `CFF_BLEND_INVALID_COUNT`, `CFF_CONTEXT_UNSUPPORTED`,
 `CFF_INVALID_NUMBER`, `CFF_INVALID_OPERAND_COUNT`, `CFF_STACK_OVERFLOW`,

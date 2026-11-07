@@ -38,25 +38,30 @@ export function inspectPng(bytes, metrics, ctx, path) {
 }
 
 function referenceGraph(glyphs, edges, ctx, path) {
-	const active = new Set(), done = new Set();
+	const active = new Set(), done = new Map();
 	function visit(gid, depth) {
 		ctx.limits.consume();
 		ctx.limits.checkDepth(depth);
 		if (active.has(gid)) {
 			addIssue(ctx.issues, 'error', 'BITMAP_REFERENCE_CYCLE',
 				'Bitmap duplicate/component references form a cycle.', ctx.location(`${path}.${gid}`));
-			return;
+			return 0;
 		}
-		if (done.has(gid)) return;
+		if (done.has(gid)) {
+			ctx.limits.checkDepth(depth + done.get(gid) - 1);
+			return done.get(gid);
+		}
+		let height = 1;
 		active.add(gid);
 		ctx.each(edges.get(gid), (target) => {
 			if (!glyphs.has(target))
 				addIssue(ctx.issues, 'error', 'BITMAP_GLYPH_REFERENCE_INVALID',
 					`Bitmap target ${target} does not exist in this strike.`, ctx.location(`${path}.${gid}`));
-			else visit(target, depth + 1);
+			else height = Math.max(height, 1 + visit(target, depth + 1));
 		});
 		active.delete(gid);
-		done.add(gid);
+		done.set(gid, height);
+		return height;
 	}
 	for (const gid of glyphs.keys()) visit(gid, 1);
 }

@@ -196,6 +196,17 @@ describe('durable diagnostic identifier inventory', () => {
 		expect(invalid.status).toBe(1);
 	});
 
+	it('renders identical artifacts from LF and CRLF source checkouts', () => {
+		const lfSources = Object.fromEntries(Object.entries(sources).map(([file, text]) =>
+			[file, text.replaceAll('\r\n', '\n')]));
+		const crlfSources = Object.fromEntries(Object.entries(lfSources).map(([file, text]) =>
+			[file, text.replaceAll('\n', '\r\n')]));
+		const lfInventory = buildInventory(lfSources, baseline, lfSources);
+		const crlfInventory = buildInventory(crlfSources, baseline, crlfSources);
+		expect(renderCatalog(crlfInventory)).toBe(renderCatalog(lfInventory));
+		expect(renderDocs(crlfInventory)).toBe(renderDocs(lfInventory));
+	});
+
 	it('keeps durable backlog/provenance/specification links and never labels counts as coverage', () => {
 		const docs = renderDocs(inventory);
 		expect(docs).toContain('Identifier counts are not independent check counts');
@@ -216,6 +227,41 @@ describe('durable diagnostic identifier inventory', () => {
 });
 
 describe('AST extraction regression guards', () => {
+	it('normalizes multiline expressions, loop domains and caller evidence without shifting source locations', () => {
+		const text = `
+function validateLayoutLookups(tableName, issues) {
+	addIssue(issues, 'error',
+		tableName +
+			'_LOOKUP_TYPE_INVALID', 'message');
+}
+function phaseCrossTableChecks(issues) {
+	validateLayoutLookups(
+		'GSUB',
+		issues
+	);
+	for (const dep of [
+		'HVAR',
+		'avar',
+	])
+		addIssue(issues, 'error', \`\${dep.toUpperCase()}_WITHOUT_FVAR\`, 'message');
+	for (const [code] of [
+		['FIRST_CODE'],
+		['SECOND_CODE'],
+	])
+		addIssue(issues, 'warning', code, 'message');
+}`;
+		const lf = extractDiagnosticOrigins({ [sourceFile]: text });
+		const crlf = extractDiagnosticOrigins({ [sourceFile]: text.replaceAll('\n', '\r\n') });
+		expect(crlf).toEqual(lf);
+		expect(lf.dynamicSites).toHaveLength(3);
+		expect(lf.dynamicSites[0].expression).toContain('\n');
+		for (const site of lf.dynamicSites) {
+			expect(site.expansionEvidence.some((proof) => proof.expression.includes('\n'))).toBe(true);
+			for (const proof of site.expansionEvidence)
+				expect(text.split('\n')[proof.line - 1]).toContain(proof.expression.split('\n')[0]);
+		}
+	});
+
 	it('expands templates from real caller arguments and loop domains, including changed domains', () => {
 		const result = extractDiagnosticOrigins({
 			[sourceFile]: `

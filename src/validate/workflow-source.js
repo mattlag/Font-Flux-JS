@@ -8,7 +8,8 @@ function topology(glyph, glyphs) {
 		components: (glyph.components || []).map((component) => ({
 			glyph: component.glyphName ?? glyphs[component.glyphIndex]?.name ?? `#${component.glyphIndex}`,
 			// Point attachment versus XY offsets changes how interpolation is interpreted.
-			attachment: component.flags === undefined ? 'authored' : component.flags & 2 ? 'xy' : 'points',
+			attachment: component.flags === undefined ? 'authored'
+				: (typeof component.flags === 'number' ? component.flags & 2 : component.flags.argsAreXYValues) ? 'xy' : 'points',
 		})),
 	};
 }

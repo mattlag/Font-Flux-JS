@@ -1,9 +1,9 @@
 # Font quality: detection and repair backlog
 
-Status: **M0 and M1 complete in v2.10.2; M2 complete in v2.10.3**.
-M2 closes FQ-038 through FQ-044.
-Earlier M3 implementation remains recorded below; its separate criterion-level
-acceptance is not advanced by this Demo/documentation closeout.
+Status: **M0 and M1 complete in v2.10.2; M2 complete in v2.10.3;
+M3 complete in v2.10.4**. M3 closes FQ-021 through FQ-035 within their
+documented supported scopes and guards. All milestone work items are accepted;
+unsupported semantics and source-required recovery remain explicit.
 Criterion-level verification is recorded below. **Isolated package installation
 is optional, not a release requirement**. Required consumer verification uses the
 built distribution and existing dependencies; it does not claim installation coverage.
@@ -19,7 +19,7 @@ fixers. The current registry provides **57 actions: 20 conditionally safe,
 registry, profile/context, format, face and optional project revision.
 Container-preserving adapters, operation-specific verification, resumable review,
 real worker cancellation and the Demo use these shared contracts.
-The inventory contains **398 active identifiers** (369 findings and 29
+The inventory contains **400 active identifiers** (370 findings and 30
 informational identifiers), retaining all 228 baseline IDs. Counts are not
 coverage percentages.
 
@@ -33,14 +33,14 @@ coverage percentages.
 | FQ-016, FQ-017 | Complete under declared guards (M1) | SFNT normalization, exact WOFF header patches, preserving rewrap, copy-on-write selected collection faces, localized/legacy record preservation, guarded post/maxp encodings |
 | FQ-018 | Complete (M1 acceptance verified) | Static TT bounds, geometric maxp, horizontal/vertical extrema, metric compaction and coordinated loca; missing geometry/metrics, ambiguous transforms and variable-bound assumptions are refused |
 | FQ-019, FQ-020 | Complete (M1 acceptance verified) | Localized names, style/caret/fixed-pitch policy, embedding authority, versioned average/character bounds, assisted Unicode-range presence policy, declared code pages, selected mappings/widths and line/clipping policy; no inferred artwork, rights or language completeness |
-| FQ-021, FQ-022 | Implemented for supported structures | Bounded layout graphs and point references; CFF storage/arithmetic/transient/stack checks and supported CFF2 Private DICT programs; no general shaping/PostScript execution guarantee |
-| FQ-023 through FQ-027 | Implemented with declared guards | CFF header/INDEX/confirmed-empty actions; TT instruction/composite checks and opt-in dehint/decompose/flag/removal/conversion; variation structures, existing name references and additive instance policy |
-| FQ-028 through FQ-030 | Implemented for supported structures | Color/paint/palette/SVG, bitmap/storage/PNG-header, and MATH/BASE/JSTF/MERG checks; unsupported image codecs, embedded execution and rendering remain explicit |
-| FQ-031 through FQ-034 | Implemented as explicit-context workflows | Declared family/repertoire/source-master evidence, atomic detached family candidates, bounded reachability/interpolation samples, original CFF1/Type 1 inspection and authorized source replacement |
-| FQ-035 | Implemented | Disposable Node/browser workers, phase progress, cancellation/deadlines, stale-source checks and bounded content-keyed report reuse; five CJK faces measured; VM/cache limits are not RSS caps |
+| FQ-021, FQ-022 | Complete for supported structures (M3) | Bounded layout graphs and point references; context-correct CFF storage/programs/default widths; independent contextual shaping and CID FD geometry evidence; no general shaping/PostScript execution guarantee |
+| FQ-023 through FQ-027 | Complete under declared guards (M3) | CFF header/INDEX/confirmed-empty actions; bounded TT instruction/composite checks; six independently consumed opt-in mitigations; variation structures and guarded metadata/instances with finite interior-region samples |
+| FQ-028 through FQ-030 | Complete for supported structures (M3) | Bounded shared paint/bitmap graphs, palette/SVG/image storage, and MATH/BASE/JSTF/MERG checks; exact safe-repair payload preservation and explicit unexamined rendering/codecs |
+| FQ-031 through FQ-034 | Complete as explicit-context workflows (M3) | Declared family/repertoire/source-master evidence, cancellable atomic family candidates, bounded explicit expectations, attachment-aware topology, original CFF1/Type 1 inspection and authorized replacement |
+| FQ-035 | Complete (M3 acceptance verified) | Disposable Node/browser workers, phase progress, cancellation/deadlines, stale-source checks and bounded content-keyed report reuse; all five CJK faces remeasured; VM/cache limits are not RSS caps |
 | FQ-036, FQ-037 | Complete (M1 acceptance verified) | Public types/examples, source and production-worker tests, built-distribution artifacts, independent repaired-output HarfBuzz and browser consumers; isolated installation is optional |
 | FQ-038 through FQ-043 | Complete (M2 acceptance verified) | Core-driven findings and semantic occurrence deltas, policy/scope disclosures, empty decisions and consent, exact fingerprinted success/failure audits, guarded candidate/collection/preview/undo/revert and diagnose-only behavior; desktop/mobile Chromium/Firefox regressions |
-| FQ-044 | Complete for shipped scope (M2) | Generated contracts and regression links for all 57 actions, 398-ID ledger, migration/failure/recovery examples, PR/release Demo gates and explicit unsupported/source-required boundaries; later M3 releases must update this evidence |
+| FQ-044 | Complete for shipped scope (M2, updated for M3) | Generated contracts and regression links for all 57 actions, 400-ID ledger, migration/failure/recovery examples, PR/release Demo gates and explicit unsupported/source-required boundaries; M3 evidence recorded below |
 
 ### M1–M3 delivery evidence
 
@@ -54,7 +54,7 @@ coverage percentages.
 | Demo | [Chromium/Firefox acceptance harness](./scripts/verify-demo-quality.mjs) |
 | Inventory | [Generated ledger](./docs/check-inventory.md), [AST/baseline drift tests](./test/check-inventory.test.js) |
 
-Verified delivery:
+Initial integration verification (superseded by the milestone closeouts below):
 
 - The full regression run passed **1,545 tests across 102 files**. Subsequent
   source-entry and actual-distribution browser regressions both passed (one
@@ -83,6 +83,59 @@ Installation verification is now optional via
 `npm run test:consumers -- --installed`, not a blocker for release acceptance.
 The default `npm run test:consumers` retains declarations/schema, built-library,
 HarfBuzz and browser verification without installing the package.
+
+### M3 criterion-level acceptance evidence
+
+FQ-021 through FQ-035 are complete in **v2.10.4**, audited against their original
+acceptance criteria rather than just the presence of implementations. The full
+HarfBuzz/Chromium/Firefox consumer matrix and Demo gates pass within the scopes below.
+
+| Work item | Acceptance evidence and retained boundaries |
+| --- | --- |
+| FQ-021 | Original nested/contextual/extension/class/reference/limit cases pass. Public SFNT repair preserves contextual extension GSUB/GPOS payloads and independently measured HarfBuzz glyph sequences, positions and nonempty paths. Structural diagnosis does not execute shaping. |
+| FQ-022 | Distinct CID FDs select different local subroutines and nonempty independent geometry. Standalone import now retains per-FD default widths instead of coercing an absent operand to zero; explicit zero/nominal widths are tested. CFF1/CFF2 storage, operator, stack/call and blend context cases pass. |
+| FQ-023 | Guarded CFF maxp/INDEX/confirmed-empty actions preserve raw programs, private data and FD assignments; independent CFF2 geometry samples cover normalized 0/.25/.5/.75/1 around an interior support region. Unsupported/truncated programs remain refused, not replaced with invented empties. |
+| FQ-024 | Actual binary truncated-PUSH reporting and explicitly partial/no-VM coverage are tested. Shared component subtree depth limits now include cached descendant height. Point/transform/control-flow/maxp fixtures pass; VM-dependent maxima and dynamic execution are not inferred. |
+| FQ-025 | Six separately selected public actions test consent refusal, immutable sources, actual action effects and independent HarfBuzz paths/positions: dehint, decomposition, overlap flag, final-glyph removal, one optional-table removal and TT-to-CFF conversion. Browser specimens exercise 12/24/48 px without claiming pixel identity. Conversion keeps its bearing and separately authorized policy-removal prerequisites. |
+| FQ-026 | Original variation tuple/store/region/reference cases pass. Real RobotoFlex behavior is independently sampled at selected minima/defaults/maxima, a custom instance, and all-axis start/peak/end vectors of a selected interior HVAR region via inverse avar v1 mapping. No exhaustive design-space or avar v2 evaluation is claimed. |
+| FQ-027 | Existing fvar/STAT references and additive instance policies preserve custom tuples/names and unmodified delta bytes. Independent selected-instance and interior-region samples agree after metadata repair; axis reordering/range changes and lost deltas remain blocked. |
+| FQ-028 | Shared COLR paint depth checks retain cached subtree heights; public parser-limit and narrow graph regressions pass. Safe public repair preserves COLR/CPAL/SVG payloads exactly and retains unsupported SVG execution/artwork semantics. |
+| FQ-029 | Shared bitmap duplicate/component depth is bounded on later longer paths. Mixed/truncated/cyclic/unsupported fixtures pass; safe repair retains exact sbix image bytes and origin metrics. Unrun codecs, PNG decompression/CRC and pixels are not certified. |
+| FQ-030 | Separate versioned MATH/BASE/JSTF/MERG scopes and malformed reference/array cases pass. Public safe repair retains exact specialist payloads and partial coverage; independent specialist behavior remains explicitly unexamined rather than falsely certified. |
+| FQ-031 | Declared mixed/incomplete/static/variable family evidence and atomic source-bound failures pass. Cancellation/progress now reaches every member's core inspection/planning/application/verification; `memberId` identifies progress, and cancellation of a later member discards all candidates. |
+| FQ-032 | Versioned optional repertoire, mark, shaping/component/color/UVS reachability and naming cases pass. Explicit `empty: false` is honored; undisassembled representations produce unsupported evidence. Repeated roots, required glyphs and behavior requests now consume the work budget. |
+| FQ-033 | Intentional overlaps, degeneracy, missing/incompatible masters and supplied interior linear samples remain heuristic/source evidence. Parsed-object and numeric component flags distinguish XY and point attachment topology. No contour union or fabricated source reconstruction is offered. |
+| FQ-034 | Original CFF/PFA/PFB framing/program/budget and unsupported-input cases pass; authorized replacement is reinspected as modern output, with original bytes retained and `equivalent: null`. Correct default-width import does not invent missing Type 1 metrics or imply legacy repair/re-export. |
+| FQ-035 | Chromium/Firefox workers pass actual-phase and deterministic busy-worker cancellation, cache/review/preflight/CSP and responsiveness checks. Refreshed sequential CJK evidence covers all five faces, fresh fingerprints, detached reuse and active cancellation with no candidates. Limits and sampled process RSS remain distinct. |
+
+Persistent evidence:
+
+- [Advanced original fixtures](./test/diagnose-advanced.test.js),
+  [CFF context](./test/diagnose-cff-context.test.js),
+  [standalone CFF widths](./test/cff-standalone.test.js),
+  [repair preservation and finite sample sets](./test/repair-extensions.test.js),
+  [family/repertoire/source workflows](./test/quality-workflows.test.js), and
+  [original legacy/recovery fixtures](./test/quality-legacy.test.js).
+- The final combined-worktree regression suite passes **1,634 tests across 105 files**. Strict
+  declaration checking, lint, generated inventory baseline/drift checks, and
+  the library build pass. The full Demo gate passes Chromium and Firefox,
+  including desktop/mobile and injected failure/recovery cases.
+- Package and lockfiles are **2.10.4**; library/Demo/documentation builds pass,
+  and dry-run packaging includes the production worker and declarations without
+  installing the package.
+- [Consumer gate](./scripts/verify-consumers.mjs): built distribution and
+  existing dependencies, not isolated package installation. Actual candidate
+  bytes are consumed without an intervening normalizing open/export. All six
+  mitigation specimens pass HarfBuzz and both browsers at the declared sizes.
+- [Recorded CJK baseline](./docs/quality-worker-baseline.jsonl): faces 0-4,
+  3,549-3,696 ms inspection, 41-64 ms reuse, 1,062-1,180 MiB sampled process RSS;
+  193-216 ms cancellation, immutable originals, 32 skipped/two unsupported
+  checks per full inspection, and `complete: false`.
+- [Advanced boundaries](./docs/advanced-diagnostics.md),
+  [repair contracts](./docs/repair-extensions.md), and
+  [workflow/measurement contracts](./docs/quality-workflows.md) distinguish
+  accepted bounded scope from unsupported semantics. Counts are not conformance
+  percentages; acceptance does not mean every font error is fixable.
 
 ### M2 criterion-level acceptance evidence
 
@@ -1214,9 +1267,10 @@ Useful pinned references:
 
 ## Release verification checklist
 
-Core/consumer/CJK evidence below was verified for M1. M2 additionally closes the
-Demo gate and revalidates the full unit suite, declarations, lint, builds,
-documentation and package contents; see the milestone evidence above.
+M1 established the core/consumer/CJK gates and M2 added the Demo acceptance gate.
+M3 revalidates the full suite and Demo, expands independent consumer specimens,
+and refreshes the browser-worker and sequential all-five-face CJK evidence.
+See the milestone evidence above for measured scope and limitations.
 
 - [x] Focused core regressions first, including:
   `npm test -- test/diagnose.test.js test/common/validate_json.test.js test/ots-compliance.test.js`.
