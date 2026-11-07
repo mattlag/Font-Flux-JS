@@ -3059,7 +3059,7 @@ export const CHECK_INVENTORY_SUMMARY = {
 	"legacyIdentifiers": 0,
 	"informationIdentifiers": 29,
 	"findingIdentifiers": 369,
-	"registeredRepairs": 56,
+	"registeredRepairs": 57,
 	"identifiersWithRepairLinks": 36,
 	"dynamicEmissionSites": 7,
 	"unresolvedDynamicExpressions": 0
@@ -27989,7 +27989,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage",
 				"source": {
 					"file": "src/validate/metadata-repairs.js",
-					"line": 479,
+					"line": 507,
 					"symbol": "inspectMetadata"
 				},
 				"references": [
@@ -28119,7 +28119,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage",
 				"source": {
 					"file": "src/validate/metadata-repairs.js",
-					"line": 483,
+					"line": 511,
 					"symbol": "inspectMetadata"
 				},
 				"references": [
@@ -28246,7 +28246,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage",
 				"source": {
 					"file": "src/validate/metadata-repairs.js",
-					"line": 468,
+					"line": 496,
 					"symbol": "inspectMetadata"
 				},
 				"references": [
@@ -28371,7 +28371,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage",
 				"source": {
 					"file": "src/validate/metadata-repairs.js",
-					"line": 472,
+					"line": 500,
 					"symbol": "inspectMetadata"
 				},
 				"references": [
@@ -28496,7 +28496,7 @@ export const CHECK_CATALOG = {
 				"publicReachability": "public-binary-diagnosis; original table payloads, complete derivation prerequisites and explicit per-face blocked/unsupported coverage",
 				"source": {
 					"file": "src/validate/metadata-repairs.js",
-					"line": 474,
+					"line": 502,
 					"symbol": "inspectMetadata"
 				},
 				"references": [

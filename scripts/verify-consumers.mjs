@@ -9,6 +9,8 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createServer } from 'vite';
 import { parse as parseYAML } from 'yaml';
+import { prepareRepairContainer } from '../src/validate/repair-containers.js';
+import { initBrotli as initVerificationWoff2 } from '../src/woff/woff2.js';
 
 const root = resolve(import.meta.dirname, '..');
 const local = !process.argv.includes('--installed');
@@ -38,6 +40,35 @@ function shape(bytes, text, coordinates = {}) {
 			.getGlyphInfos()
 			.map((info) => font.glyphToPath(info.codepoint)),
 	};
+}
+
+function tablePayloads(buffer) {
+	const bytes = new Uint8Array(buffer), view = new DataView(buffer);
+	const tables = new Map();
+	for (let i = 0; i < view.getUint16(4); i++) {
+		const offset = 12 + i * 16;
+		tables.set(String.fromCharCode(...bytes.subarray(offset, offset + 4)),
+			bytes.slice(view.getUint32(offset + 8), view.getUint32(offset + 8) + view.getUint32(offset + 12)));
+	}
+	return tables;
+}
+
+function encodedNames(bytes) {
+	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength), result = new Map();
+	for (let i = 0; i < view.getUint16(2); i++) {
+		const offset = 6 + i * 12;
+		const key = [0, 2, 4, 6].map((delta) => view.getUint16(offset + delta)).join(',');
+		const start = view.getUint16(4) + view.getUint16(offset + 10);
+		assert(!result.has(key), 'Consumer fixture must have unambiguous name keys.');
+		result.set(key, bytes.slice(start, start + view.getUint16(offset + 8)));
+	}
+	return result;
+}
+
+function decodedRepairFace(input, format, options) {
+	const source = prepareRepairContainer(new Uint8Array(input), format, options);
+	assert(!source.reason, source.reason);
+	return source.sfnt.buffer.slice(source.sfnt.byteOffset, source.sfnt.byteOffset + source.sfnt.byteLength);
 }
 
 try {
@@ -114,6 +145,7 @@ try {
 		].sort(),
 	);
 	await api.initWoff2();
+	await initVerificationWoff2();
 	const repairFont = api.FontFlux.create({ family: 'Repair Consumer' });
 	repairFont.addGlyph({
 		name: 'A', unicode: 65, advanceWidth: 500,
@@ -131,6 +163,120 @@ try {
 	assert.equal((await repairFont.preflight({ format: 'woff2' })).state, 'verified');
 	console.log(`${packageLabel} repair, source preservation, HarfBuzz, and WOFF2 preflight passed.`);
 	const samples = [];
+	for (const name of ['authored.ttf', 'oblegg.ttf', 'oblegg.otf', 'AdobeVFPrototype-online-test.otf', 'SegUIVar-test.ttf']) {
+		const source = name === 'authored.ttf' ? repairFont.export({ format: 'sfnt' }) :
+			await readFile(join(root, 'test/sample fonts', name));
+		const originalSource = source instanceof ArrayBuffer ? source :
+			source.buffer.slice(source.byteOffset, source.byteOffset + source.byteLength);
+		const font = api.FontFlux.open(originalSource);
+		const locations = font.axes?.length ? ['min', 'default', 'max'].map((position) =>
+			Object.fromEntries(font.axes.map((axis) => [axis.tag, axis[position]]))) : [{}];
+		for (const format of font.axes?.length || name === 'oblegg.ttf' ? ['sfnt'] : ['sfnt', 'woff', 'woff2', 'collection']) {
+			const input = format === 'collection' ? api.FontFlux.exportCollection([font, font]) :
+				format === 'sfnt' ? originalSource.slice(0) : font.export({ format });
+			const options = format === 'collection' ? { faceIndex: 1 } : {};
+			const before = decodedRepairFace(input, format, options);
+			const baseline = new Uint8Array(input).slice();
+			const request = name === 'oblegg.ttf' ? { id: 'rights.embedding', inputs: { value: 4, authority: true } } : { id: 'name.record', inputs: {
+				nameID: 1, languageID: 1033, value: 'Reviewed Consumer Family', authority: true,
+			} };
+			const removeSignature = tablePayloads(before).has('DSIG');
+			const requests = removeSignature ? [request, { id: 'dsig.remove', consent: true }] : [request];
+			const plan = await api.FontFlux.planRepairs(input, requests, options);
+			// A preview can be declined without changing the upload or live project.
+			assert.deepEqual(new Uint8Array(input), baseline);
+			const result = await api.FontFlux.applyRepairs(input, plan);
+			assert.equal(result.state, 'verified', `${name}/${format}: ${JSON.stringify(result.verification)}`);
+			assert.equal(result.format, format);
+			assert.deepEqual(new Uint8Array(input), baseline);
+			const after = decodedRepairFace(result.buffer, format, options);
+			const beforeTables = tablePayloads(before), afterTables = tablePayloads(after);
+			assert.deepEqual([...afterTables.keys()].sort(), [...beforeTables.keys()].filter((tag) => tag !== 'DSIG').sort());
+			for (const [tag, bytes] of beforeTables) {
+				if (tag === 'name' || tag === 'DSIG') continue;
+				if (tag === 'head') { bytes.fill(0, 8, 12); afterTables.get(tag).fill(0, 8, 12); }
+				if (tag === 'OS/2' && request.id === 'rights.embedding') {
+					assert.equal(new DataView(afterTables.get(tag).buffer).getUint16(8), request.inputs.value);
+					bytes.fill(0, 8, 10); afterTables.get(tag).fill(0, 8, 10);
+				}
+				assert.deepEqual(afterTables.get(tag), bytes, `${name}/${format}: retained ${tag}`);
+			}
+			const originalNames = encodedNames(beforeTables.get('name')), outputNames = encodedNames(afterTables.get('name'));
+			if (request.id === 'name.record') {
+				assert.equal(new TextDecoder('utf-16be').decode(outputNames.get('3,1,1033,1')), request.inputs.value);
+				originalNames.delete('3,1,1033,1'); outputNames.delete('3,1,1033,1');
+			}
+			assert.deepEqual(outputNames, originalNames, `${name}/${format}: unselected encoded names`);
+			if (format === 'collection') {
+				const prefix = new Uint8Array(result.buffer).slice(0, input.byteLength);
+				prefix.set(baseline.subarray(16, 20), 16);
+				assert.deepEqual(prefix, baseline, `${name}: only selected face pointer may change`);
+			}
+			for (const coordinates of locations) {
+				for (const text of ['AVATAR office', '\u0391\u03a9 \u0410\u0411 \u0627\u0644'])
+					assert.deepEqual(shape(after, text, coordinates), shape(before, text, coordinates),
+						`${name}/${format}: repaired glyphs, positions and paths`);
+				samples.push({
+					name: `repair/${name}/${format}`, coordinates,
+					original: Array.from(new Uint8Array(format === 'collection' ? before : input)),
+					exported: Array.from(new Uint8Array(format === 'collection' ? after : result.buffer)),
+				});
+			}
+			const repeated = await api.FontFlux.applyRepairs(result.buffer,
+				await api.FontFlux.planRepairs(result.buffer, [request], options));
+			assert.equal(repeated.state, 'verified', JSON.stringify(repeated.verification));
+			assert.deepEqual(decodedRepairFace(repeated.buffer, format, options), after,
+				`${name}/${format}: semantic repair idempotence`);
+			if (format !== 'collection') assert.equal(repeated.changed, false, `${name}/${format}: byte-level no-op`);
+		}
+	}
+	const opaqueFont = api.FontFlux.open(await readFile(join(root, 'test/sample fonts/oblegg.ttf')));
+	for (const format of ['woff', 'woff2', 'collection']) {
+		const input = format === 'collection' ? api.FontFlux.exportCollection([opaqueFont, opaqueFont]) : opaqueFont.export({ format });
+		const original = new Uint8Array(input).slice();
+		await assert.rejects(api.FontFlux.planRepairs(input,
+			[{ id: 'rights.embedding', inputs: { value: 4, authority: true } }],
+			format === 'collection' ? { faceIndex: 1 } : {}), /opaque/);
+		assert.deepEqual(new Uint8Array(input), original);
+	}
+	console.log('M1 opaque-table relocation refused; in-place SFNT retention separately verified.');
+	const limitedInput = await readFile(join(root, 'test/sample fonts/SegUIVar-test.ttf'));
+	const limitedOriginal = Uint8Array.from(limitedInput);
+	await assert.rejects(api.FontFlux.planRepairs(limitedInput, [
+		{ id: 'name.record', inputs: { nameID: 1, languageID: 1033, value: 'Must not apply', authority: true } },
+		{ id: 'dsig.remove', consent: true },
+	], { maxGlyphs: 1 }), /Inspection was blocked/);
+	assert.deepEqual(new Uint8Array(limitedInput), limitedOriginal);
+	console.log('M1 repair intentionally blocked, not counted as verified: explicit maxGlyphs limit stops inspection.');
+	const derivedInput = repairFont.export({ format: 'sfnt' }), derivedBefore = derivedInput.slice(0);
+	const derivedView = new DataView(derivedInput);
+	for (let i = 0; i < derivedView.getUint16(4); i++) {
+		const offset = 12 + i * 16;
+		if (derivedView.getUint32(offset) === 0x68656164)
+			derivedView.setInt16(derivedView.getUint32(offset + 8) + 36, -7);
+	}
+	const derived = await api.FontFlux.applyRepairs(derivedInput,
+		await api.FontFlux.planRepairs(derivedInput, [{ id: 'tt.bounds' }]));
+	assert.equal(derived.state, 'verified', JSON.stringify(derived.verification));
+	assert.deepEqual(shape(derived.buffer, 'AA'), shape(derivedBefore, 'AA'));
+	samples.push({ name: 'repair/derived-bounds', text: 'AA',
+		original: Array.from(new Uint8Array(derivedBefore)), exported: Array.from(new Uint8Array(derived.buffer)) });
+	const standalone = api.FontFlux.open(await readFile(join(root, 'test/sample fonts/oblegg.otf'))).export({ format: 'cff' });
+	const unsupported = api.FontFlux.inspect(standalone);
+	assert.equal(unsupported.diagnostics.complete, false);
+	assert.equal(unsupported.profileReport.valid, null);
+	assert.equal(unsupported.repairs.length, 0);
+	await assert.rejects(api.FontFlux.planRepairs(standalone, [{ id: 'sfnt.checksums' }]), /unsupported|Inspection|applicable|SFNT/i);
+	const converted = api.FontFlux.open(standalone).export({ format: 'sfnt' });
+	const convertedRepair = await api.FontFlux.applyRepairs(converted, await api.FontFlux.planRepairs(converted, [
+		{ id: 'name.record', inputs: { nameID: 1, languageID: 1033, value: 'Reviewed Converted CFF', authority: true } },
+	]));
+	assert.equal(convertedRepair.state, 'verified', JSON.stringify(convertedRepair.verification));
+	assert.deepEqual(shape(convertedRepair.buffer, 'AVATAR office'), shape(converted, 'AVATAR office'));
+	samples.push({ name: 'repair/converted-standalone-cff',
+		original: Array.from(new Uint8Array(converted)), exported: Array.from(new Uint8Array(convertedRepair.buffer)) });
+	console.log('M1 repaired TTF/CFF/WOFF/WOFF2/TTC/OTC, variation samples, derived bounds, decline and unsupported cases passed.');
+	console.log('M1 provenance: FFJS decodes/extracts raw faces for HarfBuzz; browser checks use actual wrapper bytes, or extracted collection faces. No open/export normalization of repaired faces.');
 	for (const name of [
 		'oblegg.ttf',
 		'oblegg.otf',

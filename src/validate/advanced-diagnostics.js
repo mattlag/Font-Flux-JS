@@ -121,5 +121,5 @@ export function runAdvancedDiagnostics(tables, entries, sfnt, issues, options = 
 				addIssue(issues, 'error', 'DIAGNOSTIC_LIMIT_EXCEEDED', error.message, { table: 'glyf' });
 			}
 		}, { partial: 'Static control-flow, point references and observed maxima only; no TrueType VM, dynamic stack, function/jump target or rasterization verification.' });
-	}
+	} else skipDiagnosticCheck(issues, 'binary.advanced.truetype', 'skipped', 'not-applicable', 'No TrueType outline or instruction tables are present.');
 }

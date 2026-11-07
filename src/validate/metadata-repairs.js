@@ -1,6 +1,7 @@
 import { buildFormat12Groups, buildFormat4Data } from '../expand.js';
 import { parseCmap, writeCmap } from '../sfnt/table_cmap.js';
 import { encodeUtf16BE } from '../sfnt/table_name.js';
+import { computeUnicodeRangeBits, UNICODE_RANGE_POLICY } from '../sfnt/unicode_ranges.js';
 import { dataView, equalBytes, metricAdvances, nameLayout } from './repair-data.js';
 import { derivedMetricExtrema, readMetrics } from './repair-tt.js';
 
@@ -84,10 +85,18 @@ export const METADATA_REPAIRS = [
 	{
 		id: 'os2.character-range', title: 'Recalculate Unicode character bounds', risk: 'safe', affectedTables: ['OS/2'],
 		codes: ['QUALITY_CHARACTER_RANGE_MISMATCH'],
-		description: 'Derive first/last character indices from nonzero mappings in supported Unicode format 4/12/13 subtables, saturating supplementary values at 65535.',
+		description: 'Derive first/last character indices from nonzero Windows symbol/Unicode format 4/12/13 mappings, saturating supplementary values at 65535.',
 		ifApplied: 'Only the two OS/2 character bounds and checksums change; mappings and UVS bytes are unchanged.',
 		ifUnfixed: 'Consumers may receive inaccurate character-bound metadata.',
 		inputs: [], policyVersion: 'OpenType-OS2-character-indices-v1',
+		after: ['cmap.mapping', 'cmap.remove-mapping'],
+	},
+	{
+		id: 'os2.unicode-ranges', title: 'Choose mapped-character Unicode range declarations', affectedTables: ['OS/2'],
+		codes: [], description: 'For OS/2 v4/v5, explicitly choose the OpenType 1.5 / Unicode 5.1 bit assignments using presence in Windows Unicode mappings. Functional range support is a designer decision, not inferred conformance.',
+		ifApplied: 'Only the four Unicode-range words and checksums change. Reserved bits are cleared; consumer coverage classification can change. Newer Unicode blocks without assigned bits are not invented.',
+		ifUnfixed: 'The existing designer-selected Unicode-range declarations remain; they need not equal a presence-based policy.',
+		inputs: [authority], policyVersion: UNICODE_RANGE_POLICY,
 		after: ['cmap.mapping', 'cmap.remove-mapping'],
 	},
 	{
@@ -176,15 +185,26 @@ export function subtableMappings(subtable, options = {}) {
 	return result;
 }
 
-function unicodeBounds(payloads, options) {
-	const cmap = parseCmap(payloads.get('cmap')), points = new Set(), seen = new Set();
+function windowsMappings(payloads, options, includeSymbols = false) {
+	if (!payloads.has('cmap')) throw new Error('A complete cmap table is required for coverage metadata.');
+	const cmap = parseCmap(payloads.get('cmap')), points = new Set(), seen = new Set(), encodings = new Set();
+	let matched = false;
 	for (const record of cmap.encodingRecords) {
-		if (!(record.platformID === 0 || (record.platformID === 3 && [1, 10].includes(record.encodingID)))) continue;
+		if (record.platformID !== 3 || ![1, 10, ...(includeSymbols ? [0] : [])].includes(record.encodingID)) continue;
+		if (encodings.has(record.encodingID)) throw new Error('Ambiguous duplicate Windows cmap encoding.');
+		encodings.add(record.encodingID);
+		matched = true;
 		const subtable = cmap.subtables[record.subtableIndex];
-		if (subtable.format === 14 || seen.has(record.subtableIndex)) continue;
+		if (seen.has(record.subtableIndex)) continue;
 		seen.add(record.subtableIndex);
 		for (const code of subtableMappings(subtable, options).keys()) points.add(code);
 	}
+	if (!matched) throw new Error('No supported Windows cmap encoding is available for this OS/2 derivation.');
+	return points;
+}
+
+function unicodeBounds(payloads, options) {
+	const points = windowsMappings(payloads, options, true);
 	if (!points.size) throw new Error('No complete nonempty supported Unicode repertoire is available.');
 	let first = 65535, last = 0;
 	for (const code of points) {
@@ -221,6 +241,11 @@ export function metadataRepairReason(id, payloads, options = {}) {
 			average(payloads);
 		}
 		if (id === 'os2.character-range') unicodeBounds(payloads, options);
+		if (id === 'os2.unicode-ranges') {
+			if (![4, 5].includes(dataView(payloads.get('OS/2')).getUint16(0)))
+				throw new Error('This Unicode-range policy requires OS/2 v4 or v5; earlier assignments may encode different designer intent.');
+			computeUnicodeRangeBits(windowsMappings(payloads, options));
+		}
 		if (id === 'os2.code-pages' && (payloads.get('OS/2').length < 86 || dataView(payloads.get('OS/2')).getUint16(0) < 1))
 			throw new Error('Code-page fields require OS/2 version 1 or later.');
 		if (id === 'metrics.line' && dataView(payloads.get('OS/2')).getUint16(0) < 4)
@@ -264,6 +289,9 @@ function fieldChanges(step, payloads, options) {
 			return [['OS/2', 64, 'Uint16', first], ['OS/2', 66, 'Uint16', last]];
 		}
 		case 'os2.code-pages': return [['OS/2', 78, 'Uint32', v.range1], ['OS/2', 82, 'Uint32', v.range2]];
+		case 'os2.unicode-ranges':
+			return computeUnicodeRangeBits(windowsMappings(payloads, options))
+				.map((value, index) => ['OS/2', 42 + index * 4, 'Uint32', value]);
 		default: return [];
 	}
 }
@@ -423,7 +451,7 @@ export function verifyMetadataRepairs(before, after, steps, options = {}, approv
 			handled.add('hmtx'); handled.add('hhea');
 		} else {
 			const basis = new Map(before);
-			if (step.id === 'os2.character-range' && selected.some((item) => item.id.startsWith('cmap.')))
+			if (['os2.character-range', 'os2.unicode-ranges'].includes(step.id) && selected.some((item) => item.id.startsWith('cmap.')))
 				basis.set('cmap', after.get('cmap'));
 			if (step.id === 'os2.average-width' && selected.some((item) => item.id === 'metrics.advance')) {
 				basis.set('hmtx', after.get('hmtx'));

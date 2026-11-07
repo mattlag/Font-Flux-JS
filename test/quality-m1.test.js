@@ -9,6 +9,10 @@ import { orderRepairs, validateRepairCatalog } from '../src/validate/repair-cont
 import { nameLayout } from '../src/validate/repair-data.js';
 import { subtableMappings } from '../src/validate/metadata-repairs.js';
 import * as exporter from '../src/export.js';
+import * as diagnostics from '../src/validate/diagnoseFont.js';
+import * as metadataRepairs from '../src/validate/metadata-repairs.js';
+import * as extendedRepairs from '../src/validate/repair-extensions.js';
+import * as containers from '../src/validate/repair-containers.js';
 
 function fixture() {
 	const font = FontFlux.create({ family: 'M1 original', style: 'Regular' });
@@ -44,6 +48,135 @@ async function repair(buffer, requests, options) {
 }
 
 beforeAll(() => FontFlux.initWoff2());
+
+describe('M1 acceptance guards', () => {
+	it.each(['sfnt', 'woff', 'woff2', 'collection'].flatMap((format) =>
+		['metadata-first', 'metadata-last', 'extended', 'serialization', 'checksums', 'container', 'inspection'].map((stage) => [format, stage])))(
+		'keeps %s transactions atomic after an injected %s failure', async (format, stage) => {
+			const project = FontFlux.open(fixture()), json = project.toJSON();
+			const bytes = format === 'collection' ? FontFlux.exportCollection([project, project]) : project.export({ format });
+			const options = format === 'collection' ? { faceIndex: 1 } : {};
+			const original = new Uint8Array(bytes).slice();
+			const plan = await FontFlux.planRepairs(bytes, [
+				{ id: 'name.record', inputs: { nameID: 1, languageID: 1033, value: 'Reviewed', authority: true } },
+				{ id: 'rights.embedding', inputs: { value: 4, authority: true } },
+				{ id: 'hmtx.compact' },
+			], options);
+			const [module, method] = stage.startsWith('metadata') ? [metadataRepairs, 'applyMetadataRepair'] :
+				stage === 'extended' ? [extendedRepairs, 'applyExtendedRepair'] :
+				stage === 'serialization' ? [exporter, 'exportFont'] :
+				stage === 'checksums' ? [exporter, 'computeTableChecksum'] :
+				stage === 'container' ? [containers, 'emitRepairContainer'] : [diagnostics, 'diagnoseFont'];
+			const implementation = module[method];
+			let calls = 0;
+			const spy = vi.spyOn(module, method).mockImplementation((...args) => {
+				const result = implementation(...args);
+				if (++calls === (stage === 'metadata-last' ? 2 : 1)) throw new Error(`Injected ${stage} failure`);
+				return result;
+			});
+			try { await expect(FontFlux.applyRepairs(bytes, plan)).rejects.toThrow(/Injected/); }
+			finally { spy.mockRestore(); }
+			expect(new Uint8Array(bytes)).toEqual(original);
+			expect(project.toJSON()).toBe(json);
+			expect((await FontFlux.applyRepairs(bytes, plan)).state).toBe('verified');
+		});
+
+	it.each([
+		{ formats: 'sfnt' }, { formats: ['future'] }, { invariants: 'preserve' },
+		{ invariants: [''] }, { inputs: [{ key: 'value', label: 'Value', type: 'number', min: 10, max: 1 }] },
+		{ inputs: [{ key: 'value', label: 'Value', type: 'string' }] },
+		{ companions: 'sfnt.checksums' },
+	])('rejects malformed descriptor fields %j', (fields) => {
+		expect(() => validateRepairCatalog([{ ...FontFlux.repairCatalog()[0], ...fields }])).toThrow();
+	});
+
+	it.each(['inspection', 'planning', 'application', 'verification'])('rejects source edits during %s', async (phase) => {
+		const bytes = fixture(), view = new DataView(bytes);
+		view.setUint16(6, 0);
+		const requests = [{ id: 'sfnt.search-fields' }];
+		const controls = { onProgress: (progress) => {
+			if (progress.phase === phase) view.setUint16(6, 1);
+		} };
+		if (phase === 'inspection' || phase === 'planning')
+			await expect(FontFlux.planRepairs(bytes, requests, controls)).rejects.toThrow(/stale|changed/);
+		else {
+			const plan = await FontFlux.planRepairs(bytes, requests);
+			await expect(FontFlux.applyRepairs(bytes, plan, controls)).rejects.toThrow(/stale|changed/);
+		}
+		expect(view.getUint16(6)).toBe(1);
+	});
+
+	it.each(['blocked-existing', 'blocked-partial', 'new-blocked', 'missing-existing', 'partial-existing'])(
+		'rejects lost candidate check coverage without a new finding: %s', async (failure) => {
+		const bytes = fixture(), original = bytes.slice(0);
+		const plan = await FontFlux.planRepairs(bytes, [{ id: 'name.record', inputs: {
+			nameID: 1, languageID: 1033, value: 'Reviewed', authority: true,
+		} }]);
+		const diagnose = diagnostics.diagnoseFont;
+		const spy = vi.spyOn(diagnostics, 'diagnoseFont').mockImplementationOnce((input, options) => {
+			const report = diagnose(input, options);
+			const check = report.checks.find((item) => item.coverage ===
+				(failure === 'blocked-partial' ? 'partial' : 'complete') && ['passed', 'failed'].includes(item.outcome));
+			if (failure === 'missing-existing') report.checks.splice(report.checks.indexOf(check), 1);
+			else if (failure === 'new-blocked') report.checks.push({
+				...check, id: 'binary.metadata.execution', outcome: 'blocked', coverage: 'not-checked', reasonCode: 'metadata-inspection-failed',
+			});
+			else Object.assign(check, {
+				outcome: failure === 'partial-existing' ? 'passed' : 'blocked',
+				coverage: failure === 'partial-existing' ? 'partial' : 'not-checked', reasonCode: 'injected-interruption',
+			});
+			return report;
+		});
+		try {
+			const result = await FontFlux.applyRepairs(bytes, plan);
+			expect(result.state).toBe('failed');
+			expect(result.buffer).toBeNull();
+			expect(result.verification.failures.join(' ')).toMatch(/check|coverage/i);
+			expect(new Uint8Array(bytes)).toEqual(new Uint8Array(original));
+		} finally { spy.mockRestore(); }
+	});
+
+	it('distinguishes new finding locations rather than comparing only counts and messages', async () => {
+		const bytes = fixture();
+		new DataView(bytes).setUint16(6, 0);
+		const diagnose = diagnostics.diagnoseFont;
+		let languageID = 1033;
+		const spy = vi.spyOn(diagnostics, 'diagnoseFont').mockImplementation((input, options) => {
+			const report = diagnose(input, options);
+			report.issues.push({ severity: 'warning', code: 'M1_LOCATION_WARNING',
+				message: 'Identical text at a different location.', location: { table: 'name', languageID } });
+			return report;
+		});
+		try {
+			const plan = await FontFlux.planRepairs(bytes, [{ id: 'sfnt.search-fields' }]);
+			languageID = 1041;
+			const result = await FontFlux.applyRepairs(bytes, plan);
+			expect(result.state).toBe('failed');
+			expect(result.buffer).toBeNull();
+			expect(result.verification.failures.join(' ')).toMatch(/New unapproved finding/);
+		} finally { spy.mockRestore(); }
+	});
+
+	it('rejects an exporter that changes an unrelated mapping', async () => {
+		const bytes = fixture(), original = bytes.slice(0);
+		const plan = await FontFlux.planRepairs(bytes, [{ id: 'name.record', inputs: {
+			nameID: 1, languageID: 1033, value: 'Reviewed', authority: true,
+		} }]);
+		const emit = exporter.exportFont;
+		const spy = vi.spyOn(exporter, 'exportFont').mockImplementationOnce((data, options) => {
+			const output = emit(data, options), cmap = table(output, 'cmap');
+			// The encoding record now points at an unapproved subtable.
+			new DataView(cmap.buffer, cmap.byteOffset).setUint32(8, 0);
+			return output;
+		});
+		try {
+			const result = await FontFlux.applyRepairs(bytes, plan);
+			expect(result.state).toBe('failed');
+			expect(result.buffer).toBeNull();
+			expect(new Uint8Array(bytes)).toEqual(new Uint8Array(original));
+		} finally { spy.mockRestore(); }
+	});
+});
 
 describe('M1 registry and resumable transactions', () => {
 	it('exports authored metric headers from the bearings actually emitted and excludes zero advances from the average', () => {
@@ -255,6 +388,107 @@ describe('M1 registry and resumable transactions', () => {
 });
 
 describe('M1 localized metadata and explicit policies', () => {
+	it('adds a missing locale while preserving conflicting legacy values and rejects duplicate authority', async () => {
+		const raw = importFontTables(fixture());
+		raw.tables.name.names.push({ platformID: 1, encodingID: 0, languageID: 0, nameID: 1, value: 'Legacy Family' });
+		const bytes = exportFont(raw), before = nameLayout(table(bytes, 'name'));
+		const result = await repair(bytes, [{ id: 'name.record', inputs: {
+			nameID: 1, languageID: 1041, value: 'Chosen Japanese Family', authority: true,
+		} }]);
+		const after = nameLayout(table(result.buffer, 'name'));
+		expect(after.records.filter((record) => record.key.join(',') !== '3,1,1041,1')
+			.map(({ key, bytes }) => ({ key, bytes }))).toEqual(before.records.map(({ key, bytes }) => ({ key, bytes })));
+		raw.tables.name.names.push({ ...raw.tables.name.names.find((record) => record.platformID === 3 && record.nameID === 1), value: 'Conflicting Family' });
+		const ambiguous = exportFont(raw);
+		await expect(FontFlux.planRepairs(ambiguous, [{ id: 'name.record', inputs: {
+			nameID: 1, languageID: 1033, value: 'Chosen', authority: true,
+		} }])).rejects.toThrow(/ambiguous|duplicate/i);
+		await expect(FontFlux.planRepairs(bytes, [{ id: 'name.record', inputs: {
+			nameID: 1, languageID: 1033, value: 'Trailing space ', authority: true,
+		} }])).rejects.toThrow(/whitespace/);
+		await expect(FontFlux.planRepairs(bytes, [{ id: 'rights.embedding', inputs: { value: 0x8000, authority: true } }]))
+			.rejects.toThrow(/reserved/);
+	});
+
+	it('refuses static style and metric policies for variable fonts without changing their source', () => {
+		const font = FontFlux.open(fixture());
+		font.addAxis({ tag: 'wght', min: 100, default: 400, max: 900 });
+		const bytes = font.export(), original = new Uint8Array(bytes).slice();
+		const report = FontFlux.inspect(bytes);
+		for (const id of ['metadata.style', 'metadata.italic', 'metadata.fixed-pitch', 'metrics.line', 'metrics.advance'])
+			expect(report.repairs.find((fix) => fix.id === id)).toMatchObject({ availability: 'blocked', reason: expect.stringMatching(/Variable/) });
+		expect(new Uint8Array(bytes)).toEqual(original);
+	});
+
+	it.each([0, 200])('retains explicit CJK line-gap policy %i without changing advances or artwork', async (lineGap) => {
+		const font = FontFlux.open(fixture());
+		font.addGlyph({ name: 'ideograph', unicode: 0x4e00, advanceWidth: 1000 });
+		const bytes = font.export();
+		const result = await repair(bytes, [{ id: 'metrics.line', inputs: {
+			ascender: 1000, descender: -200, lineGap, winAscent: 1100, winDescent: 300, useTypoMetrics: true, authority: true,
+		} }]);
+		const view = new DataView(result.buffer);
+		expect(view.getInt16(entry(result.buffer, 'hhea').offset + 8)).toBe(lineGap);
+		expect(view.getInt16(entry(result.buffer, 'OS/2').offset + 72)).toBe(lineGap);
+		for (const tag of ['hmtx', 'glyf', 'cmap']) expect(table(result.buffer, tag)).toEqual(table(bytes, tag));
+	});
+
+	it('preserves format-14 and legacy cmap payloads through sorting and a selected supplementary mapping edit', async () => {
+		const raw = importFontTables(fixture()), cmap = raw.tables.cmap;
+		const append = (platformID, encodingID, subtable) => {
+			cmap.encodingRecords.push({ platformID, encodingID, subtableIndex: cmap.subtables.length });
+			cmap.subtables.push(subtable);
+		};
+		append(0, 5, { format: 14, varSelectorRecords: [{ varSelector: 0xfe0f,
+			defaultUVS: [{ startUnicodeValue: 32, additionalCount: 0 }], nonDefaultUVS: [{ unicodeValue: 65, glyphID: 2 }],
+		}] });
+		append(1, 0, { format: 0, language: 0, glyphIdArray: Array.from({ length: 256 }, (_, code) => code === 65 ? 2 : 0) });
+		append(3, 10, { format: 12, language: 0, groups: [{ startCharCode: 0x10000, endCharCode: 0x10000, startGlyphID: 2 }] });
+		const bytes = exportFont(raw);
+		const cmapBytes = table(bytes, 'cmap'), first = cmapBytes.slice(4, 12);
+		cmapBytes.copyWithin(4, 12, 20); cmapBytes.set(first, 12);
+		const sorted = await repair(bytes, [{ id: 'cmap.order' }]);
+		const before = parseCmap(table(sorted.buffer, 'cmap'));
+		const result = await repair(sorted.buffer, [{ id: 'cmap.mapping', inputs: {
+			platformID: 3, encodingID: 10, codePoint: 0x1d400, glyphID: 2, authority: true,
+		} }]);
+		const after = parseCmap(table(result.buffer, 'cmap'));
+		for (const record of before.encodingRecords) {
+			if (record.platformID === 3 && record.encodingID === 10) continue;
+			const match = after.encodingRecords.find((item) => item.platformID === record.platformID && item.encodingID === record.encodingID);
+			expect(after.subtables[match.subtableIndex]).toEqual(before.subtables[record.subtableIndex]);
+		}
+		expect(new DataView(result.buffer).getUint16(entry(result.buffer, 'OS/2').offset + 66)).toBe(65535);
+		expect(table(result.buffer, 'glyf')).toEqual(table(bytes, 'glyf'));
+	});
+
+	it('derives character bounds from Windows mappings rather than divergent Unicode-platform mappings', async () => {
+		const raw = importFontTables(fixture()), cmap = raw.tables.cmap;
+		const platformZero = cmap.encodingRecords.find((record) => record.platformID === 0);
+		platformZero.subtableIndex = cmap.subtables.length;
+		cmap.subtables.push({ format: 12, language: 0, groups: [
+			{ startCharCode: 0x0905, endCharCode: 0x0905, startGlyphID: 2 },
+		] });
+		const bytes = exportFont(raw), offset = entry(bytes, 'OS/2').offset;
+		new DataView(bytes).setUint16(offset + 64, 0);
+		new DataView(bytes).setUint16(offset + 66, 0);
+		const result = await repair(bytes, [{ id: 'os2.character-range' }]);
+		const view = new DataView(result.buffer), resultOffset = entry(result.buffer, 'OS/2').offset;
+		expect([view.getUint16(resultOffset + 64), view.getUint16(resultOffset + 66)]).toEqual([32, 65]);
+		expect(table(result.buffer, 'cmap')).toEqual(table(bytes, 'cmap'));
+	});
+
+	it('includes Windows symbol mappings in character bounds but not in Unicode range declarations', async () => {
+		const raw = importFontTables(fixture());
+		raw.tables.cmap.encodingRecords.find((record) => record.platformID === 3).encodingID = 0;
+		const bytes = exportFont(raw), offset = entry(bytes, 'OS/2').offset;
+		new DataView(bytes).setUint16(offset + 66, 0);
+		const result = await repair(bytes, [{ id: 'os2.character-range' }]);
+		expect(new DataView(result.buffer).getUint16(entry(result.buffer, 'OS/2').offset + 66)).toBe(65);
+		await expect(FontFlux.planRepairs(bytes, [{ id: 'os2.unicode-ranges', inputs: { authority: true } }]))
+			.rejects.toThrow(/Windows cmap/);
+	});
+
 	it('replaces one locale without changing other encoded records or glyph data; repeated values are a no-op', async () => {
 		const bytes = fixture(), before = nameLayout(table(bytes, 'name'));
 		const request = { id: 'name.record', inputs: { nameID: 1, languageID: 1033, value: 'Chosen family', authority: true } };

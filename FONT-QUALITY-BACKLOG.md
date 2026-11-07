@@ -1,7 +1,8 @@
 # Font quality: detection and repair backlog
 
-Status: **M0 complete; M1–M3 scoped implementation delivered in v2.10.2**.
-Final integrated verification is recorded below. **Isolated package installation
+Status: **M0 and M1 complete in v2.10.2**. The earlier M2–M3 scoped
+implementation remains recorded below; this acceptance closeout advances only M1.
+Criterion-level verification is recorded below. **Isolated package installation
 is optional, not a release requirement**. Required consumer verification uses the
 built distribution and existing dependencies; it does not claim installation coverage.
 See the status table and [implemented API guide](./docs/font-quality.md), rather
@@ -11,8 +12,8 @@ Work-item IDs remain stable and suitable for later issues.
 ## Implementation progress
 
 All implementations are original FFJS code, not copied or translated upstream
-fixers. The current registry provides **56 actions: 20 conditionally safe,
-26 assisted, and 10 potentially lossy**. Plans bind source bytes, decisions,
+fixers. The current registry provides **57 actions: 20 conditionally safe,
+27 assisted, and 10 potentially lossy**. Plans bind source bytes, decisions,
 registry, profile/context, format, face and optional project revision.
 Container-preserving adapters, operation-specific verification, resumable review,
 real worker cancellation and the Demo use these shared contracts.
@@ -26,18 +27,18 @@ coverage percentages.
 | FQ-005 through FQ-007 | Implemented | Collection offsets/face recovery; legal flags versus GDEF references; Unicode 17 selectors/scalars, supplementary mappings, UVS conflicts, and correct direct/indirect format-4 mapping checks |
 | FQ-008, FQ-009 | Implemented for M0's declared scope | Original-wrapper versus decoded checks, checksums/extents, explicit failure coverage, import-aligned limits, bounded layout/color/composite traversal. WOFF2 collections and exhaustive semantic/process-memory guarantees remain explicitly unsupported, not certified |
 | FQ-010 | Implemented | Retained originals and optional explicitly declared baselines; original/project/resolved/output stages stay distinct |
-| FQ-011 through FQ-015 | Implemented | Complete descriptor validation, deterministic companion/conflict graphs, immutable source-bound plans, explicit serialized resumption, transaction/cancellation guards and selected-operation preservation proofs |
-| FQ-016, FQ-017 | Implemented with declared guards | SFNT normalization, exact WOFF header patches, preserving rewrap, copy-on-write selected collection faces, localized/legacy record preservation, guarded post/maxp encodings |
-| FQ-018 | Implemented | Static TT bounds, geometric maxp, horizontal/vertical extrema, metric compaction and coordinated loca; missing geometry/metrics, ambiguous transforms and variable-bound assumptions are refused |
-| FQ-019, FQ-020 | Implemented | Localized names, style/caret/fixed-pitch policy, embedding authority, versioned average/range derivation, declared code pages, selected mappings/widths and line/clipping policy; no inferred artwork, rights or language completeness |
+| FQ-011 through FQ-015 | Complete (M1 acceptance verified) | Complete descriptor validation, deterministic companion/conflict graphs, immutable source-bound plans, explicit serialized resumption, transaction/cancellation guards and selected-operation preservation proofs |
+| FQ-016, FQ-017 | Complete under declared guards (M1) | SFNT normalization, exact WOFF header patches, preserving rewrap, copy-on-write selected collection faces, localized/legacy record preservation, guarded post/maxp encodings |
+| FQ-018 | Complete (M1 acceptance verified) | Static TT bounds, geometric maxp, horizontal/vertical extrema, metric compaction and coordinated loca; missing geometry/metrics, ambiguous transforms and variable-bound assumptions are refused |
+| FQ-019, FQ-020 | Complete (M1 acceptance verified) | Localized names, style/caret/fixed-pitch policy, embedding authority, versioned average/character bounds, assisted Unicode-range presence policy, declared code pages, selected mappings/widths and line/clipping policy; no inferred artwork, rights or language completeness |
 | FQ-021, FQ-022 | Implemented for supported structures | Bounded layout graphs and point references; CFF storage/arithmetic/transient/stack checks and supported CFF2 Private DICT programs; no general shaping/PostScript execution guarantee |
 | FQ-023 through FQ-027 | Implemented with declared guards | CFF header/INDEX/confirmed-empty actions; TT instruction/composite checks and opt-in dehint/decompose/flag/removal/conversion; variation structures, existing name references and additive instance policy |
 | FQ-028 through FQ-030 | Implemented for supported structures | Color/paint/palette/SVG, bitmap/storage/PNG-header, and MATH/BASE/JSTF/MERG checks; unsupported image codecs, embedded execution and rendering remain explicit |
 | FQ-031 through FQ-034 | Implemented as explicit-context workflows | Declared family/repertoire/source-master evidence, atomic detached family candidates, bounded reachability/interpolation samples, original CFF1/Type 1 inspection and authorized source replacement |
 | FQ-035 | Implemented | Disposable Node/browser workers, phase progress, cancellation/deadlines, stale-source checks and bounded content-keyed report reuse; five CJK faces measured; VM/cache limits are not RSS caps |
-| FQ-036, FQ-037 | Implemented | Public types/examples, source and production-worker tests, built-distribution artifacts, independent HarfBuzz and browser consumers; isolated installation is optional |
+| FQ-036, FQ-037 | Complete (M1 acceptance verified) | Public types/examples, source and production-worker tests, built-distribution artifacts, independent repaired-output HarfBuzz and browser consumers; isolated installation is optional |
 | FQ-038 through FQ-043 | Implemented | Core profiles and typed decision forms, explicit consent, worker cancellation, reviewed-plan/audit downloads, exact bytes, staged preflight, transactional collection/preview/undo handling and browser regressions |
-| FQ-044 | Implemented; acceptance closeout remains | Current API/limitations guides, generated 398-ID ledger, 56-action mapping, independent evidence and explicit unsupported/source-required boundaries |
+| FQ-044 | Implemented; whole-roadmap acceptance closeout remains | Current API/limitations guides, generated 398-ID ledger, 57-action mapping, independent evidence and explicit unsupported/source-required boundaries |
 
 ### M1–M3 delivery evidence
 
@@ -56,7 +57,7 @@ Verified delivery:
 - The full regression run passed **1,545 tests across 102 files**. Subsequent
   source-entry and actual-distribution browser regressions both passed (one
   additional case). Four consumer-mode regressions cover the no-install default,
-  explicit local mode, optional installation and conflicting flags; the current
+  explicit local mode, optional installation and conflicting flags; the then-current
   suite contains 1,550 tests.
 - Chromium and Firefox passed the expanded Demo flows, including typed choices,
   publishing context, persisted reviews, exact WOFF/collection transactions,
@@ -80,6 +81,62 @@ Installation verification is now optional via
 `npm run test:consumers -- --installed`, not a blocker for release acceptance.
 The default `npm run test:consumers` retains declarations/schema, built-library,
 HarfBuzz and browser verification without installing the package.
+
+### M1 criterion-level acceptance evidence
+
+This closeout covers **FQ-011 through FQ-020 and FQ-036/FQ-037**. It does not
+advance M2, change Demo implementation, or declare the entire roadmap complete.
+Versions remain **2.10.2**; no dependency installation is required.
+
+| Requirement | Criteria exercised and persistent evidence |
+| --- | --- |
+| FQ-011 | [Registry validation](./src/validate/repair-contract.js) rejects missing consequences, invalid risk/revision, malformed formats/invariants, duplicate/unknown dependencies, incomplete text/enum/numeric/confirmation schemas, and execution cycles. [Public registry tests](./test/quality-m1.test.js) cover immutable serializable metadata, unavailable repairs and explicit decisions. |
+| FQ-012 | [Core preservation tests](./test/quality.test.js) cover exact opaque payloads, blocked relocation and signature consent. [Container tests](./test/quality-m1.test.js) preserve wrapper metadata/private/version fields, selected-face copy-on-write and other original bytes. [Independent consumers](./scripts/verify-consumers.mjs) compare retained payloads/names and explicitly authorize signature removal; retained opaque semantics remain unverified. |
+| FQ-013 | [Plan/resumption tests](./test/quality-m1.test.js) cover deterministic selection order, checksum companions, conflicts/cycles, forged/deserialized plans, changed context/face/format/decisions and source changes during inspection, planning, application and verification. Safe selection still excludes assisted/lossy/blocked actions. |
+| FQ-014 | [28 fault-injection cases](./test/quality-m1.test.js) fail first/last metadata operations, extended operations, SFNT serialization, checksumming, container serialization and candidate inspection across SFNT/WOFF/WOFF2/collections; original bytes/live projects survive and the same plan can retry. Cancellation, explicit failure, no-op/idempotence, unavailable decompression and incomplete-input refusals are also covered. |
+| FQ-015 | [Verification regressions](./test/quality-m1.test.js) reject new semantic finding locations, missing/blocked/weakened checks, newly blocked scopes and unrelated cmap corruption. [Core tests](./test/quality.test.js) inject unresolved target findings, new warnings and interrupted inspection. Physical relocation and explicitly removed/not-applicable scopes are allowed without treating lost execution as success. |
+| FQ-016 | [Core](./test/quality.test.js) and [container](./test/quality-m1.test.js) fixtures exercise checksum/search/order/alignment mutations, combined companions, wrapper fields, exact preserved bytes, ambiguous extents, idempotence and selected-face transactions. [Consumer matrix](./scripts/verify-consumers.mjs) adds actual repaired TTF/CFF OTF, WOFF1/2 and TTC/OTC faces. |
+| FQ-017 | [Record/encoding fixtures](./test/quality-m1.test.js) preserve legacy/localized names and format-14/legacy cmap subtables while sorting associated records and editing one selected mapping. [Codec/repair guards](./test/repair-extensions.test.js) cover CFF maxp 0.5 versus TT 1.0, complete counts and refusal of unknown future versions; no UVS/name removal or guessed version downgrade is implicit. |
+| FQ-018 | [Geometry/metric fixtures](./test/repair-extensions.test.js) cover empty/simple/transformed/point-attached composites, both loca forms, compact horizontal/vertical metrics, overflow/cycles/missing data and variable refusals; instructions, topology, advances and opaque suffixes are checked. [Public registry](./test/quality-m1.test.js) and [independent HarfBuzz](./scripts/verify-consumers.mjs) exercise repaired bounds, not only helper functions. |
+| FQ-019 | [Metadata tests](./test/quality-m1.test.js) cover conflicting/duplicate names, missing locales, retained legacy values, whitespace/PostScript rejection, variable-style guards, meaningful versus reserved bits, explicit rights authority, declined plans and conflicting choices. No clamping, inferred style/name or permission grant occurs. |
+| FQ-020 | [Policy tests](./test/quality-m1.test.js) cover selected supplementary/NBSP mappings, shared advances, UVS/legacy preservation, Windows-only character bounds, symbol encodings, CJK zero/nonzero line gaps and variable refusals. [Normative Unicode tests](./test/unicode-ranges.test.js) independently check every boundary of all 169 assignments; range presence is an assisted, versioned choice, not a universal correctness rule. Compact/versioned average widths and complete metric requirements remain covered. |
+| FQ-036 | [Declaration consumer](./test/types/consumer.ts), [built public consumers](./scripts/verify-consumers.mjs) and [source/distributed workers](./test/quality-worker-browser-build.test.js) exercise inspection, invalid-upload repair, declined authority, unsupported/blocked inputs, preflight, exact output and preserved existing import/export/collection APIs. No UI, Python/Rust service or package installation is required. |
+| FQ-037 | [Independent matrix](./scripts/verify-consumers.mjs) compares actual repaired glyph sequences/positions/paths, encoded names, payloads, variable coordinates and signature policy in HarfBuzz plus Chromium/Firefox. [Large-font gate](./scripts/verify-large-font.mjs) checks all five 65,535-glyph CJK faces. Extracted faces are distinguished from native wrapper/browser checks; standalone CFF is explicitly converted before SFNT repair, not claimed directly repairable. |
+
+M1 verification results:
+
+- **154 focused tests passed**, followed by **1,605 tests across 104 files**,
+  including source-entry and actual-distribution browser-worker tests.
+- All five large CJK faces passed independent shaping and sampled CID outline
+  comparisons: 13.4-15.3 seconds per face, peak RSS 3,212-3,698 MiB on the shared
+  development host. These observations are not a process-wide memory cap.
+- Repository lint passed; its two existing oversized Demo Unicode-data warnings
+  remain. The immutable inventory baseline passed: 398 active IDs, 57 actions.
+- The complete default **no-install consumer gate passed**: strict declarations,
+  built-library exports, actual repaired-output assertions, HarfBuzz glyphs/
+  positions/paths and Chromium/Firefox sanitizer/load/nonblank-render/width
+  comparisons. It includes TTF, CFF OTF, WOFF1/2, TTC/OTC selected faces, CFF2 and
+  TrueType variable endpoints/defaults, derived bounds and converted standalone
+  CFF. Raw names, unselected tables, source bytes and explicit signature removal
+  are checked separately from rendering.
+- Library and documentation builds, consumer-mode regressions, package dry-run
+  (including the distributed worker asset) and whitespace checks passed.
+
+The Unicode range policy is independently implemented from the
+[normative OS/2 table](./specs/opentype/os2.html), not fontTools code. Authored
+output now uses all assigned ranges and corrected bit positions. Existing
+imported declarations remain unchanged unless explicitly selected.
+
+Consumer evidence distinguishes known blocked inputs from successful repairs:
+the `FFTM`-bearing TrueType sample allows in-place SFNT field changes but not
+opaque relocation/rewrap; an explicit glyph-limit interruption is not promoted
+to repair success. WOFF/collection face extraction for HarfBuzz uses
+FFJS's raw container adapter, not `open().export()` normalization. Browsers load
+the actual repaired wrappers; extracted collection faces are explicitly labeled.
+Fontspector/fontTools and standalone OTS/FreeType were not run as separate QA
+tools; browser acceptance is not standalone certification or universal pixel
+equivalence. Existing CFF2 variation samples and large CID tests retain their
+bounded assertion scope.
 
 ### M0 acceptance evidence
 
@@ -248,9 +305,10 @@ Current contract documentation:
 
 ## Shared check and fix contract
 
-The dimensions below define the roadmap contract. Implemented M0 spellings are
-documented in [Font Quality](./docs/font-quality.md); broader repair execution and
-availability concepts remain subject to the unfinished M1 work.
+The dimensions below define the roadmap contract. Implemented spellings and
+the M1 repair execution/availability contracts are documented in
+[Font Quality](./docs/font-quality.md). Proposed state labels below describe
+concepts; they do not introduce additional public enum values.
 
 ### Separate severity, risk, availability, and execution
 
@@ -1124,24 +1182,28 @@ Useful pinned references:
 
 ## Release verification checklist
 
-- [ ] Focused core regressions first, including:
+Checked items below were revalidated for M1. Demo-specific acceptance is separate
+and is not advanced by this core-only closeout.
+
+- [x] Focused core regressions first, including:
   `npm test -- test/diagnose.test.js test/common/validate_json.test.js test/ots-compliance.test.js`.
   Extend selectors as individual repair tests are introduced.
-- [ ] Public built-distribution/type/consumer verification with `npm run test:consumers`;
+- [x] Public built-distribution/type/consumer verification with `npm run test:consumers`;
   declared supported output formats and repaired invariants are exercised.
   Isolated package installation is optional and is not a release gate.
 - [ ] `npm run test:demo` covers exact downloaded candidates, consent, rollback,
   authored input, collections, and failure states in supported browsers.
-- [ ] `npm run test:large` covers affected large-font paths with measured budgets.
-- [ ] Build/lint and documentation build use existing scripts as applicable;
+  Separate Demo milestone gate; historical results are above, not a new M1 claim.
+- [x] `npm run test:large` covers affected large-font paths with measured budgets.
+- [x] Build/lint and documentation build use existing scripts as applicable;
   no new toolchain is introduced solely for the backlog.
-- [ ] Original-input hashes/data snapshots remain unchanged after inspection,
+- [x] Original-input hashes/data snapshots remain unchanged after inspection,
   planning, failed repair, declined repair, and successful candidate generation.
-- [ ] Every claimed safe repair has a passing post-export check and preservation
+- [x] Every claimed safe repair has a passing post-export check and preservation
   evidence, plus negative tests for its applicability guards.
-- [ ] Profiles, Unicode/spec versions, external tool versions, sampled behaviors,
+- [x] Profiles, Unicode/spec versions, external tool versions, sampled behaviors,
   and unsupported checks appear in the report/documentation.
-- [ ] Product wording says **"passed these checks"** or **"verified this repair"**,
+- [x] Product wording says **"passed these checks"** or **"verified this repair"**,
   never "all font errors fixed" or "guaranteed to render identically everywhere".
 
 The success metric is not the number of automatic fixes. It is the number of

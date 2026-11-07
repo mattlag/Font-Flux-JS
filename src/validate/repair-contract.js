@@ -17,9 +17,12 @@ export function canonicalJSON(value, ancestors = new Set(), depth = 0) {
 }
 
 export function validateRepairCatalog(catalog) {
+	if (!Array.isArray(catalog)) throw new TypeError('Repair metadata must be an array.');
+	const text = (value) => typeof value === 'string' && value.trim().length > 0;
+	const strings = (value) => Array.isArray(value) && value.every(text) && new Set(value).size === value.length;
 	const ids = new Set();
 	for (const fix of catalog) {
-		if (!fix.id || ids.has(fix.id)) throw new Error('Repair IDs must be unique.');
+		if (!fix || !text(fix.id) || ids.has(fix.id)) throw new Error('Repair IDs must be unique nonempty strings.');
 		ids.add(fix.id);
 		for (const key of ['title', 'description', 'prerequisites', 'riskReason', 'ifApplied', 'ifUnfixed'])
 			if (typeof fix[key] !== 'string' || !fix[key].trim())
@@ -27,17 +30,29 @@ export function validateRepairCatalog(catalog) {
 		if (!['safe', 'assisted', 'potentially-lossy'].includes(fix.risk) ||
 			!Number.isSafeInteger(fix.revision) || fix.revision < 1)
 			throw new Error(`${fix.id} has an invalid risk or revision.`);
-		if (!fix.formats?.length || !fix.invariants?.length || !Array.isArray(fix.inputs))
+		if (!strings(fix.formats) || !fix.formats.length ||
+			fix.formats.some((format) => !['sfnt', 'woff', 'woff2', 'collection'].includes(format)) ||
+			!strings(fix.invariants) || !fix.invariants.length || !Array.isArray(fix.inputs))
 			throw new Error(`${fix.id} must declare formats, invariants, and decisions.`);
+		for (const key of ['codes', 'companions', 'after', 'conflicts'])
+			if (fix[key] !== undefined && !strings(fix[key]))
+				throw new Error(`${fix.id}.${key} must contain unique nonempty strings.`);
 		const keys = new Set();
 		for (const field of fix.inputs) {
-			if (!field.key || keys.has(field.key) || !field.label ||
+			if (!field || !text(field.key) || keys.has(field.key) || !text(field.label) ||
 				!['string', 'integer', 'number', 'boolean', 'enum'].includes(field.type))
 				throw new Error(`${fix.id} has an invalid decision schema.`);
 			keys.add(field.key);
-			if (field.type === 'enum' && (!field.values?.length ||
-				field.values.some((value) => typeof value !== 'string')))
+			if (field.type === 'enum' && (!strings(field.values) || !field.values.length))
 				throw new Error(`${fix.id}.${field.key} must declare enum values.`);
+			if (['integer', 'number'].includes(field.type) &&
+				(!Number.isFinite(field.min) || !Number.isFinite(field.max) || field.min > field.max ||
+					(field.type === 'integer' && (!Number.isSafeInteger(field.min) || !Number.isSafeInteger(field.max)))))
+				throw new Error(`${fix.id}.${field.key} must declare valid numeric bounds.`);
+			if (field.type === 'string' && (!Number.isSafeInteger(field.maxLength) || field.maxLength < 1))
+				throw new Error(`${fix.id}.${field.key} must declare a positive text limit.`);
+			if (field.mustBeTrue !== undefined && (field.type !== 'boolean' || typeof field.mustBeTrue !== 'boolean'))
+				throw new Error(`${fix.id}.${field.key} has invalid confirmation metadata.`);
 		}
 	}
 	for (const fix of catalog)

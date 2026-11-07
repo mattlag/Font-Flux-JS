@@ -115,7 +115,8 @@ if (selected.length) {
 
 These APIs never mutate the original bytes. Plans are frozen, associated with
 their source snapshot, and contain a SHA-256 input fingerprint. Applying to
-changed bytes rejects as stale. Reports and plan descriptions can be serialized
+changed bytes rejects as stale, including edits made during an asynchronous
+planning/application phase. Reports and plan descriptions can be serialized
 for review. **A deserialized plan cannot execute directly**: explicitly call
 `resumeRepairPlan(bytes, savedPlan, currentOptions)` to reinspect/replan and
 compare the entire persisted plan. Source, registry, decisions, descriptions,
@@ -137,6 +138,12 @@ and requested signature removal. Added names are checked against the original
 encoded names and language tags. Unchanged payloads are **not** thereby
 semantically certified.
 
+Verification compares findings by semantic location, not physical file offsets.
+Previously executed checks must retain their coverage; disappearing checks or
+new blocked/unsupported execution cannot silently pass. An explicitly removed
+table or a check becoming genuinely not applicable is distinguished from lost
+coverage. Partial inspection remains partial, even when the selected repair passes.
+
 `verified` means **this selected repair was verified**. Unrelated original
 findings can remain; inspect `result.after`. A failure returns no downloadable
 buffer. Invalid input, inapplicable selections, bad decisions, stale/forged plans,
@@ -144,13 +151,17 @@ and execution failures throw explicit errors; callers must display them.
 
 ## Available repairs
 
-The registry contains **56 actions**, with availability evaluated for each input.
+The registry contains **57 actions** (20 conditionally safe, 27 assisted, 10
+potentially lossy), with availability evaluated for each input.
 Guarded SFNT, WOFF1/WOFF2 and selected TTC/OTC faces are supported. Wrapper
 re-encoding preserves metadata/private payloads and version fields. Collection
 repair requires `faceIndex` and appends a copy-on-write face, retaining original
 shared bytes and every other face. WOFF2 collections and collection-level
 signature changes remain blocked. Format conversion is a separate explicit
 operation, never a hidden repair side effect.
+Collection reapplication may append an equivalent face again: idempotence is
+semantic, while `changed` honestly reports changed container bytes. Retain the
+verified result rather than repeatedly rewriting the collection.
 
 | Fix ID | Risk | Decision / exact scope |
 | --- | --- | --- |
@@ -179,7 +190,8 @@ Additional practical actions:
 | `metadata.style`, `metadata.italic`, `metadata.fixed-pitch` | Assisted | Explicit style bits/classes, angle/caret or spacing declaration; no inferred design intent |
 | `rights.embedding` | Assisted | Authorized embedding mask and explicit authority, not a legal permission grant |
 | `metrics.line` | Assisted | Chosen line metrics, clipping extents and typographic policy; disclose reflow |
-| `os2.average-width`, `os2.character-range` | Safe under stated prerequisites | Versioned nonzero-advance average and bounds from complete supported Unicode mappings |
+| `os2.average-width`, `os2.character-range` | Safe under stated prerequisites | Versioned nonzero-advance average and character bounds from complete Windows symbol/Unicode mappings |
+| `os2.unicode-ranges` | Assisted | Explicitly choose mapped-character presence using the OpenType 1.5 / Unicode 5.1 assignments for OS/2 v4/v5; not a claim of functional range or language support |
 | `os2.code-pages` | Assisted | Selected masks plus recorded repertoire/authority evidence, not inferred language completeness |
 | `cmap.mapping`, `cmap.remove-mapping` | Assisted / potentially lossy | One scalar in one selected encoding; preserve other encodings and UVS bytes |
 | `metrics.advance` | Assisted | Existing glyph width with coordinated extrema/average; preserve bearings and geometry |
@@ -212,6 +224,28 @@ chosen on the user's behalf. Name insertion currently supports Windows language
 IDs below `0x8000`; existing language-tag records remain unchanged. No operation
 regenerates missing artwork or grants rights. Boolean, enum, numeric and textual
 decisions are explicit; input schemas never silently supply authority or consent.
+
+### Unicode coverage metadata policy
+
+`os2.unicode-ranges` requires `inputs: { authority: true }`. Its descriptor records
+`policyVersion: 'OpenType-1.5-Unicode-5.1-mapped-characters-v1'`. The four words use
+all 169 ranges assigned to bits 0-122 in the normative OS/2 table, with bit 57
+covering supplementary scalars and reserved bits 123-127 cleared. Only Windows
+Unicode encodings 3/1 and 3/10 contribute. Earlier OS/2 versions are refused
+because their assignments can differ. The specification leaves *functional*
+coverage to the designer: existing declarations are not diagnosed as incorrect
+merely because they differ from this optional presence policy.
+
+Character bounds instead include Windows symbol encoding 3/0 as well as 3/1
+and 3/10, and saturate supplementary values at 65535. Unicode-platform-only
+records do not expand those fields. Duplicate Windows encodings or unsupported
+mapping representations block derivation; unrelated mappings and UVS bytes stay
+intact.
+
+Newly authored fonts share the complete Unicode assignment table, correcting
+the former incomplete/shifted range bits. Imported range declarations are not
+silently replaced by this policy. No artwork, encoding repertoire or licensing
+permission is inferred.
 
 ## Responsive inspection and reviewed plans
 

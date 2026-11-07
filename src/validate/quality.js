@@ -732,6 +732,7 @@ export async function planRepairs(input, requests, options = {}) {
 		report: freeze(report), source, wrapperOnly,
 	});
 	checkCancellation(controls.signal);
+	assertCurrentInput(input, bytes, options);
 	return plan;
 }
 
@@ -896,6 +897,11 @@ function sameBytes(a, b) {
 	return a.length === b.length && a.every((byte, i) => byte === b[i]);
 }
 
+function assertCurrentInput(input, snapshot, options) {
+	if (!sameBytes(inputBytes(input, options), snapshot))
+		throw new Error('The repair input is stale: the source changed during this operation. Inspect and plan again.');
+}
+
 function selectedFields(steps) {
 	const fields = [];
 	for (const step of steps) {
@@ -915,7 +921,7 @@ function selectedFields(steps) {
 function preservationFailures(before, after, steps, options) {
 	const left = directory(before, options),
 		right = directory(after, options);
-	if (left.reason || right.reason) return [left.reason || right.reason];
+	if (left.reason || right.reason) return { failures: [left.reason || right.reason], removedTables: [] };
 	const ids = new Set(steps.map((step) => step.id));
 	const failures = [];
 	const extendedSteps = steps.filter((step) => extendedIDs.has(step.id));
@@ -1028,7 +1034,12 @@ function preservationFailures(before, after, steps, options) {
 		if (!sameBytes(a, b))
 			failures.push(`Unapproved payload changes in ${entry.tag}.`);
 	}
-	return failures;
+	return { failures, removedTables: [...removals] };
+}
+
+function semanticLocation(location = {}) {
+	const { byteOffset: _byteOffset, offset: _offset, ...identity } = location;
+	return identity;
 }
 
 function findings(report) {
@@ -1040,10 +1051,34 @@ function findings(report) {
 			issue.code,
 			issue.faceIndex,
 			issue.message,
+			canonicalJSON(semanticLocation(issue.location)),
 		]);
 		counts.set(key, (counts.get(key) ?? 0) + 1);
 	}
 	return counts;
+}
+
+function lostCheckCoverage(before, after, removedTables) {
+	const key = (check) => canonicalJSON([check.id, semanticLocation(check.location)]);
+	const checks = new Map((after.checks ?? []).map((check) => [key(check), check]));
+	const original = new Map((before.checks ?? []).map((check) => [key(check), check]));
+	const failures = (before.checks ?? []).filter((check) =>
+		['passed', 'failed'].includes(check.outcome) && check.coverage !== 'not-checked' &&
+		!removedTables.includes(check.location?.table)).flatMap((check) => {
+		const current = checks.get(key(check));
+		if ((current?.coverage === 'complete' && ['passed', 'failed'].includes(current.outcome)) ||
+			(current?.outcome === 'skipped' && current.reasonCode === 'not-applicable')) return [];
+		if (check.coverage === 'partial' && current?.coverage === 'partial' &&
+			['passed', 'failed'].includes(current.outcome)) return [];
+		return [`Required check ${check.id} lost its executed coverage after repair.`];
+	});
+	for (const check of after.checks ?? []) {
+		if (!['blocked', 'unsupported', 'skipped'].includes(check.outcome) || check.reasonCode === 'not-applicable') continue;
+		const previous = original.get(key(check));
+		if (!previous || previous.outcome !== check.outcome || previous.reasonCode !== check.reasonCode)
+			failures.push(`New unapproved check coverage: ${check.id} (${check.reasonCode}).`);
+	}
+	return failures;
 }
 
 export async function applyRepairs(input, plan, controls = {}) {
@@ -1067,13 +1102,17 @@ export async function applyRepairs(input, plan, controls = {}) {
 	await qualityPhase(controls, 'verification');
 	const after = inspectFont(candidate, state.options);
 	const emitted = prepareRepairContainer(candidate, plan.format, state.options);
-	const failures = state.wrapperOnly ? [] : preservationFailures(
+	const preservation = state.wrapperOnly ? { failures: [], removedTables: [] } : preservationFailures(
 		state.source.sfnt,
 		emitted.sfnt,
 		plan.steps,
 		state.options,
 	);
+	const failures = preservation.failures;
 	failures.push(...verifyRepairContainer(bytes, candidate, state.source, plan.steps, state.options));
+	if (diagnosisIncomplete(after.diagnostics))
+		failures.push('Candidate inspection was interrupted or incomplete; selected repair verification cannot pass.');
+	failures.push(...lostCheckCoverage(state.report, after, preservation.removedTables));
 	const targetCodes = new Set(plan.steps.filter((step) => !step.optional).flatMap((step) => step.codes));
 	for (const issue of after.diagnostics?.issues ?? [])
 		if (targetCodes.has(issue.code))
@@ -1092,6 +1131,7 @@ export async function applyRepairs(input, plan, controls = {}) {
 	const passed = failures.length === 0;
 	const outputFingerprint = passed ? await fingerprint(candidate) : null;
 	checkCancellation(controls.signal);
+	assertCurrentInput(input, state.bytes, state.options);
 	return {
 		state: passed ? 'verified' : 'failed',
 		buffer: passed ? candidate.buffer : null,

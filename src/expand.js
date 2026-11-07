@@ -44,6 +44,7 @@
  * export.js. Keep this list in sync with `DECOMPOSED_TABLES` in simplify.js.
  */
 
+import { computeUnicodeRangeBits } from './sfnt/unicode_ranges.js';
 import {
 	buildNameToGlyphIdMap,
 	hexToBGRA,
@@ -857,71 +858,6 @@ function estimateMetricForChars(glyphs, chars, fallback) {
 		}
 	}
 	return fallback || 0;
-}
-
-/**
- * Compute Unicode range bits (ulUnicodeRange1-4) from a set of codepoints.
- * Simplified — covers major ranges.
- */
-function computeUnicodeRangeBits(unicodeSet) {
-	const ranges = [0, 0, 0, 0];
-
-	// Each bit in ulUnicodeRange1-4 corresponds to a Unicode block.
-	// This is a simplified implementation covering common ranges.
-	const RANGE_MAP = [
-		// [bitPosition (0-127), rangeStart, rangeEnd]
-		[0, 0x0020, 0x007e], // Basic Latin
-		[1, 0x0080, 0x00ff], // Latin-1 Supplement
-		[2, 0x0100, 0x017f], // Latin Extended-A
-		[3, 0x0180, 0x024f], // Latin Extended-B
-		[7, 0x0370, 0x03ff], // Greek
-		[9, 0x0400, 0x04ff], // Cyrillic
-		[10, 0x0530, 0x058f], // Armenian
-		[11, 0x0590, 0x05ff], // Hebrew
-		[13, 0x0600, 0x06ff], // Arabic
-		[24, 0x0e00, 0x0e7f], // Thai
-		[28, 0x1100, 0x11ff], // Hangul Jamo
-		[30, 0x1e00, 0x1eff], // Latin Extended Additional
-		[31, 0x1f00, 0x1fff], // Greek Extended
-		[32, 0x2000, 0x206f], // General Punctuation
-		[33, 0x2070, 0x209f], // Superscripts and Subscripts
-		[34, 0x20a0, 0x20cf], // Currency Symbols
-		[35, 0x20d0, 0x20ff], // Combining Diacritical Marks for Symbols
-		[36, 0x2100, 0x214f], // Letterlike Symbols
-		[37, 0x2150, 0x218f], // Number Forms
-		[38, 0x2190, 0x21ff], // Arrows
-		[39, 0x2200, 0x22ff], // Mathematical Operators
-		[40, 0x2300, 0x23ff], // Miscellaneous Technical
-		[42, 0x2500, 0x257f], // Box Drawing
-		[43, 0x2580, 0x259f], // Block Elements
-		[44, 0x25a0, 0x25ff], // Geometric Shapes
-		[45, 0x2600, 0x26ff], // Miscellaneous Symbols
-		[46, 0x2700, 0x27bf], // Dingbats
-		[48, 0x3000, 0x303f], // CJK Symbols and Punctuation
-		[49, 0x3040, 0x309f], // Hiragana
-		[50, 0x30a0, 0x30ff], // Katakana
-		[52, 0x3100, 0x312f], // Bopomofo
-		[56, 0xac00, 0xd7af], // Hangul Syllables
-		[57, 0xd800, 0xdfff], // Surrogates (should not appear)
-		[59, 0x4e00, 0x9fff], // CJK Unified Ideographs
-		[60, 0xe000, 0xf8ff], // Private Use Area
-		[62, 0xfe20, 0xfe2f], // Combining Half Marks
-		[69, 0xfb50, 0xfdff], // Arabic Presentation Forms-A
-		[70, 0xfe70, 0xfeff], // Arabic Presentation Forms-B
-		[78, 0xff00, 0xffef], // Halfwidth and Fullwidth Forms
-	];
-
-	for (const [bit, start, end] of RANGE_MAP) {
-		for (const cp of unicodeSet) {
-			if (cp >= start && cp <= end) {
-				const word = Math.floor(bit / 32);
-				ranges[word] |= 1 << (bit % 32);
-				break;
-			}
-		}
-	}
-
-	return ranges;
 }
 
 // ===========================================================================
