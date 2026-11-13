@@ -312,7 +312,7 @@ export function createSaveDialog(root, fontData, context) {
 		validateBtn.disabled = true;
 		valResults.style.display = '';
 		valResults.className = 'validation-results';
-		valResults.textContent = `Preflighting ${fmt.label} — export and verification pending…`;
+		valResults.textContent = `Preflighting ${fmt.label} - export and verification pending…`;
 		try {
 			const font = context?.projectFont() ?? new FontFlux(structuredClone(fontData));
 			const result = await font.preflightAsync({
@@ -324,7 +324,7 @@ export function createSaveDialog(root, fontData, context) {
 					...Object.fromEntries([...expectations].filter(([, input]) => input.value).map(([key, input]) => [key, input.value])),
 				},
 				onProgress: (progress) => {
-					if (!closed && id === operation) valResults.textContent = `${fmt.label}: ${progress.phase} — ${progress.status}`;
+					if (!closed && id === operation) valResults.textContent = `${fmt.label}: ${progress.phase} - ${progress.status}`;
 				},
 			});
 			if (closed || id !== operation) return;
@@ -350,12 +350,12 @@ export function createSaveDialog(root, fontData, context) {
 			const add = (text, className = '') => {
 				const item = document.createElement('li');
 				item.className = className;
-				item.textContent = text;
+				item.textContent = text.replaceAll('\u2014', '-');
 				list.appendChild(item);
 			};
 			add(`Target: ${fmt.format}; source face ${Number(fontData._collectionIndex ?? 0) + 1}; ${profile.value} profile v${report.profileVersion ?? 'unavailable'}.`);
 			if (report.outputFingerprint) add(`Output SHA-256: ${report.outputFingerprint}`);
-			for (const stage of result.stages) add(`${stage.id}: ${stage.status} — ${stage.reasonCode}`);
+			for (const stage of result.stages) add(`${stage.id}: ${stage.status} - ${stage.reasonCode}`);
 			for (const normalization of result.normalizations) add(`${normalization.kind}: ${normalization.description}`);
 			for (const effect of result.effects) add(`Export effect: ${effect}`);
 			const findings = [...(result.validation?.issues ?? []), ...(result.output?.diagnostics?.issues ?? []),
@@ -367,10 +367,10 @@ export function createSaveDialog(root, fontData, context) {
 				seen.add(text);
 				add(text, issue.severity === 'error' ? 'val-error' : issue.severity === 'warning' ? 'val-warning' : '');
 			}
-			add('Partial coverage — review skipped and unsupported checks:');
-			for (const coverage of result.output?.coverage ?? []) add(`${coverage.domain}: ${coverage.status} — ${coverage.reason}`);
+			add('Partial coverage - review skipped and unsupported checks:');
+			for (const coverage of result.output?.coverage ?? []) add(`${coverage.domain}: ${coverage.status} - ${coverage.reason}`);
 			for (const limitation of result.output?.limitations ?? []) add(limitation);
-			for (const check of result.output?.checks ?? []) add(`${check.id}: ${check.outcome}, ${check.coverage} — ${check.reason}`);
+			for (const check of result.output?.checks ?? []) add(`${check.id}: ${check.outcome}, ${check.coverage} - ${check.reason}`);
 			valResults.appendChild(list);
 			if (ok) {
 				verified = { buffer: result.buffer, token, format: fmt.id, filename: fileInput.value, profile: profile.value };

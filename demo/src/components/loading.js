@@ -13,7 +13,7 @@ export function createLoadingScreen(container, onFontLoaded) {
 				<img class="hero-logo" src="${new URL('../assets/font-flux-js-logo.svg', import.meta.url).href}" alt="font flux js">
 				<p class="hero-tagline">Convert fonts to JSON, make edits, then convert them back!</p>
 				<p class="hero-links">An open source frontend library. Read the <a href="docs/" target="_blank" rel="noopener">Docs</a>, use it with <a href="https://www.npmjs.com/package/font-flux-js" target="_blank" rel="noopener">NPM</a> or <a href="https://github.com/mattlag/Font-Flux-JS" target="_blank" rel="noopener">GitHub</a></p>
-				<p class="hero-demo-hint">This demo app can edit metadata, subset glyphs, and change file formats.<br>${versionLine}</p>
+				<p class="hero-demo-hint">This demo app can edit metadata, subset glyphs, and fix font file errors.<br>${versionLine}</p>
 				<div class="beta-notice"><strong>Fall 2026</strong><br>Things seem good - have you tried it yet? <a href="mailto:mail@glyphrstudio.com">mail@glyphrstudio.com</a></div>
 				<p class="tagline">Drop a font file anywhere, or <a href="#" class="browse-link">browse for files</a></p>
 				<p class="supported-formats">Supports OTF, TTF, WOFF, WOFF2, TTC, OTC, CFF, PFB, PFA, JSON</p>

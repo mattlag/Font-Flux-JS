@@ -279,6 +279,7 @@ function showApp(fontData, options = {}) {
 	function markDirty() {
 		fontData._dirty = true;
 		state.revision++;
+		updateQualitySummary(null);
 		window.dispatchEvent(new Event('fontflux:project-change'));
 	}
 
@@ -308,7 +309,7 @@ function showApp(fontData, options = {}) {
 	let diagnoseLeave = null;
 	let inspectionFace = '';
 
-	async function installProject(next, buffer, token, restore = null, isAllowed = () => true, binary = buffer) {
+	async function installProject(next, buffer, token, restore = null, isAllowed = () => true, binary = buffer, receipt = null) {
 		// Prepare everything before changing either live data or the visible face.
 		// Undo restores the previous preview resource, including an original
 		// CSS fallback for damaged fonts; it must not require repairing it first.
@@ -331,6 +332,7 @@ function showApp(fontData, options = {}) {
 			previewWasCSS: !!document.getElementById('demo-font-face'),
 			binary: state.binary,
 			binaryKey: state.binaryKey,
+			qualityReceipt: state.binaryKey === token.key ? state.qualityReceipt : null,
 			collectionBinaries: (fontData._collectionFonts ?? []).map((data) => ({
 				data, binary: stateFor(data).binary, binaryKey: stateFor(data).binaryKey,
 			})),
@@ -347,9 +349,13 @@ function showApp(fontData, options = {}) {
 		state.revision++;
 		state.binary = nextBinary;
 		state.binaryKey = nextBinaryKey;
+		state.qualityReceipt = restore ? restore.qualityReceipt ?? null : receipt;
 		state.undo = restore ? null : previous;
 		for (const data of fontData._collectionFonts ?? []) {
-			if (data !== fontData) stateFor(data).undo = null;
+			if (data !== fontData) {
+				stateFor(data).undo = null;
+				stateFor(data).qualityReceipt = null;
+			}
 		}
 		if (restore?.collectionBinaries) {
 			for (const previous of restore.collectionBinaries) {
@@ -373,16 +379,13 @@ function showApp(fontData, options = {}) {
 		currentPreviewBuffer = nextPreview;
 		window.dispatchEvent(new Event('fontflux:project-change'));
 		showApp(fontData, { initialTab: 'diagnose' });
-		const heading = app.querySelector('.diagnose-page h2');
-		if (heading) {
-			heading.tabIndex = -1;
-			heading.focus();
-		}
+		app.querySelector('#dx-tab-current')?.focus();
 	}
 
 	const appContext = {
 		fontData,
 		markDirty,
+		updateQualitySummary,
 		invalidateL1Cache,
 		refreshPreview: (buffer) => refreshFontPreview(buffer, fontData),
 		capture,
@@ -402,6 +405,7 @@ function showApp(fontData, options = {}) {
 			return state.binary.slice(0);
 		},
 		canUndo: () => !!state.undo,
+		get qualityReceipt() { return state.binaryKey === projectKey(fontData) ? state.qualityReceipt : null; },
 		canRevert: () => !!state.original,
 		onDiagnoseLeave: (handler) => { diagnoseLeave = handler; },
 		get inspectionFace() { return inspectionFace; },
@@ -417,7 +421,7 @@ function showApp(fontData, options = {}) {
 				if (checked.state !== 'verified') throw new Error(checked.error);
 				preview = checked.buffer;
 			}
-			await installProject(font.data, preview, token, null, isAllowed, buffer);
+			await installProject(font.data, preview, token, null, isAllowed, buffer, scope.receipt);
 		},
 		undo: async () => {
 			const previous = state.undo;
@@ -516,7 +520,7 @@ function showApp(fontData, options = {}) {
 		{ key: 'preview', label: 'Preview' },
 		{ key: 'subset', label: 'Subset' },
 		{ key: 'tables', label: 'Tables' },
-		{ key: 'diagnose', label: 'Diagnose' },
+		{ key: 'diagnose', label: 'Diagnose & fix' },
 		{ key: 'info', label: 'Info' },
 	];
 
@@ -529,7 +533,7 @@ function showApp(fontData, options = {}) {
 		if (disabled) {
 			btn.disabled = true;
 			btn.classList.add('l1-tab-disabled');
-			btn.title = 'Not available — fix the font errors first.';
+			btn.title = 'Not available - fix the font errors first.';
 		} else {
 			btn.addEventListener('click', () => setL1Active(key));
 		}
@@ -537,33 +541,30 @@ function showApp(fontData, options = {}) {
 		l1Buttons[key] = btn;
 	});
 
-	// Diagnose tab badge: red error count, or orange warning count.
-	if (fontData._originalBuffer) {
-		try {
-			const diag = FontFlux.inspect(fontData._originalBuffer).diagnostics;
-			const errs = diag?.summary.errorCount || 0;
-			const warns = diag?.summary.warningCount || 0;
-			if (errs > 0 || warns > 0) {
-				const badge = document.createElement('span');
-				badge.className =
-					'l1-tab-badge ' +
-					(errs > 0 ? 'l1-tab-badge-error' : 'l1-tab-badge-warning');
-				badge.textContent = String(errs > 0 ? errs : warns);
-				badge.title =
-					errs > 0
-						? `${errs} error${errs !== 1 ? 's' : ''}`
-						: `${warns} warning${warns !== 1 ? 's' : ''}`;
-				l1Buttons.diagnose.appendChild(badge);
-			}
-		} catch (error) {
-			console.error('Original-input badge inspection failed:', error);
-			const badge = document.createElement('span');
-			badge.className = 'l1-tab-badge l1-tab-badge-error';
-			badge.textContent = '!';
-			badge.title = `Inspection failed: ${error.message}`;
-			badge.setAttribute('aria-label', badge.title);
-			l1Buttons.diagnose.appendChild(badge);
-		}
+	function updateQualitySummary(summary, failure = null) {
+		l1Buttons.diagnose.querySelector('.l1-tab-badge')?.remove();
+		if (!failure && summary?.errorCount === 0 && summary.warningCount === 0) return;
+		const errors = summary?.errorCount, warnings = summary?.warningCount;
+		const badge = document.createElement('span');
+		const severity = failure || errors > 0 ? 'error' : warnings > 0 ? 'warning' : 'neutral';
+		badge.className = `l1-tab-badge l1-tab-badge-${severity}`;
+		badge.textContent = failure ? '!' : summary ? String(errors > 0 ? errors : warnings) : '?';
+		badge.title = failure ? `Inspection failed: ${failure}` : !summary
+			? 'Current font needs checking'
+			: errors > 0 ? `${errors} error${errors !== 1 ? 's' : ''}`
+				: `${warnings} warning${warnings !== 1 ? 's' : ''}`;
+		badge.setAttribute('aria-label', badge.title);
+		l1Buttons.diagnose.appendChild(badge);
+	}
+
+	try {
+		const binary = appContext.repairInput();
+		const report = binary ? FontFlux.inspect(binary,
+			fontData._collection ? { faceIndex: fontData._collectionIndex ?? 0 } : {}) : null;
+		updateQualitySummary(report?.diagnostics?.summary ?? null);
+	} catch (error) {
+		console.error('Current-font badge inspection failed:', error);
+		updateQualitySummary(null, error.message);
 	}
 
 	// Tables tab badge: medium-gray count of parsed tables.

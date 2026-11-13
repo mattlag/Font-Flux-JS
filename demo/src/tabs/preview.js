@@ -193,7 +193,7 @@ function buildGlyphSample(fontData) {
 			const uni = glyph.unicode != null
 				? `U+${glyph.unicode.toString(16).toUpperCase().padStart(4, '0')}`
 				: '';
-			label.textContent = name || uni || '—';
+			label.textContent = name || uni || '-';
 			cell.title = [name, formatUnicodeLabel(glyph.unicode)]
 				.filter(Boolean).join(' · ');
 
@@ -495,8 +495,8 @@ function showLigatureDetail(
 	data.append(
 		title,
 		makeMetricGrid([
-			['Feature', ligature.feature || '—'],
-			['Script', ligature.script || '—'],
+			['Feature', ligature.feature || '-'],
+			['Script', ligature.script || '-'],
 			['Language', ligature.language || 'Default'],
 			['Components', ligature.components.length],
 			['Result glyph', ligature.ligature],
@@ -606,9 +606,9 @@ function showKerningDetail(panel, entry, glyphsByName) {
 		['Preview glyphs', `${entry.displayLeft} + ${entry.displayRight}`],
 	];
 	if (entry.leftMembers)
-		metrics.push(['Left class members', entry.leftMembers.join(', ') || '—']);
+		metrics.push(['Left class members', entry.leftMembers.join(', ') || '-']);
 	if (entry.rightMembers)
-		metrics.push(['Right class members', entry.rightMembers.join(', ') || '—']);
+		metrics.push(['Right class members', entry.rightMembers.join(', ') || '-']);
 	data.append(title, makeMetricGrid(metrics));
 	layout.appendChild(data);
 }
@@ -667,7 +667,7 @@ function makeFontSpecimen(text, large = false) {
 	const specimen = document.createElement('div');
 	specimen.className = `rule-specimen${large ? ' rule-specimen-large' : ''}`;
 	specimen.style.fontFamily = "'DemoLoadedFont', sans-serif";
-	specimen.textContent = text || '—';
+	specimen.textContent = text || '-';
 	return specimen;
 }
 

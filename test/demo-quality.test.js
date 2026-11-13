@@ -4,6 +4,46 @@ import { parse } from 'yaml';
 import { describe, expect, it } from 'vitest';
 import { FontFlux } from '../src/font_flux.js';
 import { candidateExtension, preflightAudit } from '../demo/src/quality-report.js';
+import { qualityReferences, repairInputHelp } from '../demo/src/quality-help.js';
+
+describe('Demo repair guidance', () => {
+	it('covers every visible input in the public repair catalog without authorizing hidden inputs', () => {
+		for (const repair of FontFlux.repairCatalog()) {
+			for (const input of repair.inputs) {
+				if (input.key === 'authority' && input.type === 'boolean' && input.mustBeTrue) {
+					expect(repairInputHelp(repair.id, input.key)).toBeUndefined();
+				} else {
+					expect(repairInputHelp(repair.id, input.key), `${repair.id}.${input.key}`).toEqual(expect.any(String));
+					expect(repairInputHelp(repair.id, input.key).trim().length).toBeGreaterThan(0);
+				}
+			}
+		}
+	});
+
+	it('combines and deduplicates issue and optional-repair specifications', () => {
+		const catalog = FontFlux.checkCatalog();
+		const offer = FontFlux.repairCatalog().find((repair) => repair.id === 'metadata.style');
+		const references = qualityReferences(catalog, { code: 'BAD_MAGIC_NUMBER' }, offer);
+		expect(references.map((ref) => ref.url)).toEqual([
+			'https://learn.microsoft.com/en-us/typography/opentype/spec/head',
+			'https://learn.microsoft.com/en-us/typography/opentype/spec/os2',
+		]);
+		expect(qualityReferences(catalog, null, FontFlux.repairCatalog().find((repair) => repair.id === 'dsig.remove')))
+			.toContainEqual({ url: 'https://learn.microsoft.com/en-us/typography/opentype/spec/dsig', label: 'OpenType: DSIG' });
+	});
+
+	it('omits unavailable, relative and unsafe references without inventing unknown-table links', () => {
+		const catalog = { EXAMPLE: { references: [
+			'docs/font-quality.md', 'javascript:alert(1)',
+			'https://learn.microsoft.com/en-us/typography/opentype/spec/cff2charstr',
+			'https://www.w3.org/TR/WOFF2/',
+		] } };
+		expect(qualityReferences(catalog, { code: 'EXAMPLE' })).toEqual([
+			{ url: 'https://www.w3.org/TR/WOFF2/', label: 'WOFF 2 specification' },
+		]);
+		expect(qualityReferences(catalog, { code: 'UNKNOWN' }, { affectedTables: ['unknown'] })).toEqual([]);
+	});
+});
 
 describe('M2 export evidence', () => {
 	it.each(['test', 'release'])('gates %s CI on the complete Demo workflows', (name) => {

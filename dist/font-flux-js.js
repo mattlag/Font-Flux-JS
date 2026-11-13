@@ -1,5 +1,5 @@
 /*!
-* Font Flux JS v2.10.4
+* Font Flux JS v2.10.5
 * Copyright (c) 2026 Matt LaGrandeur
 * Licensed under GPL-3.0-only. See LICENSE for details.
 */

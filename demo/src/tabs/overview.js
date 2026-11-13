@@ -278,7 +278,7 @@ function setDisplayMode(valueEl, value, field) {
 	const str = formatDisplayValue(value, field);
 	if (!str) {
 		valueEl.classList.add('empty');
-		valueEl.textContent = '—';
+		valueEl.textContent = '-';
 	} else {
 		valueEl.classList.remove('empty');
 		valueEl.textContent = str;

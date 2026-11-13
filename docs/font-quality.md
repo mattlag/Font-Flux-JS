@@ -364,17 +364,115 @@ or automatic source recovery.
 
 ## Demo review and export
 
+**Diagnose & fix** has two tabs: **Current font** and **Original file**. The first is the
+working copy; the second is a read-only reference that stays unchanged after
+repairs. Current font has compact icon/count indicators for open errors, warnings,
+and unfixed actionable suggestions (excluding unavailable operations). Unknown counts
+show `?`, not a successful zero. Original file has no tab badge.
+The main **Diagnose & fix** badge also follows the current working copy: errors
+take priority, then remaining warnings, and the badge disappears when both are
+clear. Repairs, undo, revert and current-font checks update it. Unchecked edits
+show `?` instead of retaining a stale count; viewing Original file does not
+replace the current count with original-file findings.
+
+**Errors and warnings** expands by default in both tabs, with errors before
+warnings. Top-level collapsible
+sections use larger, bold, dark subtitles; nested details retain lighter styling.
+Warnings use light, saturated amber-orange accents. Card titles include severity and the
+specific issue message, with the bold fix subtitle directly below. Risk labels
+use subtle pills. A single **Details and consequences** expander combines issue
+metadata and compact, two-column fix explanations. Each issue includes its core-linked fix
+details, required inputs, a red consequence warning for potentially lossy changes, and an
+**Apply fix** button. That one action plans only the requested fix and required
+safe companions, verifies the exact repaired bytes, checks browser compatibility,
+and atomically updates the working copy. There is no separate proposed-changes
+tab or mandatory plan/preview navigation. Inputs in other cards are not applied.
+Unavailable fixes explain their blocker; issues without registered repairs say so.
+One repair may address several issues. Additional non-safe companions must be
+handled separately rather than silently authorized.
+The inline workflow does not assemble arbitrary batches. If independent repairs
+must be combined before the font can pass its browser check, use a grouped core
+repair plan; the Demo will not install an unrenderable intermediate version.
+
+The Demo assumes the author has authority to modify the loaded font. It omits
+repeated authority questions and supplies `authority: true` for that declared
+metadata input when **Apply fix** is clicked; the core API contract is unchanged.
+Intended values and policy evidence still require input. Potentially lossy fixes
+show their specific consequences in a red warning area instead of a consent
+checkbox. Clicking **Apply fix** authorizes only that selected change and supplies
+the core plan's required consent; viewing warnings, navigating to prerequisites
+and changing check profiles never authorize or apply changes.
+Changing embedding or license metadata does not itself grant legal rights.
+Repair inputs use aligned label/value columns, with monospace numeric fields.
+Details use a narrow label column and spaced rows to leave room for explanations.
+Each visible repair input has a small **i** button that reveals expected units,
+constraints and examples, including numeric weight/width classes, decimal Unicode
+values, bit masks and existing-record indices. Help works with click, touch and
+keyboard; Escape closes it. Opening help never fills a value or grants consent.
+Issue and suggestion details include **Learn more** links to relevant official
+specifications when available, including in Original file and unavailable cards.
+Links open in a new tab. Missing or known-broken references are omitted; guidance
+does not relax core validation or make every in-range record ID valid for a font.
+
+Progress and failures appear in the same card. Failed, stale or cancelled work
+never replaces the project. **Cancel pending work** stops in-progress operations;
+it does not reverse an applied change. **Undo last change** restores the previous
+working copy (one step). Resolved issues and applied suggestions stay in their
+original positions as green **Fixed** cards; an issue still present after a change
+remains open rather than being marked fixed. Result evidence, reviewed plans and
+audit downloads live inside the retained cards, not in a top-level applied notice.
+Only the latest exact applied bytes are retained for font download; earlier cards
+keep their audit evidence without accumulating binary snapshots. Undo restores
+the preceding fixed-card state. Revert, related collection transactions or
+subsequent project edits reset this history when its bytes are no longer current.
+
+Edited/authored projects use **Check current font** to inspect a test export.
+Export changes are disclosed before applying a fix to those bytes. **Use checked
+export** can apply that export without a further repair; checking or downloading
+alone never changes the working copy.
+
+**Suggestions** is a counted collapsible section, initially expanded, following
+errors and warnings. It includes actionable changes not already shown with
+those findings. Its count separates remaining suggestions from retained fixed
+cards. These are optional edits, not a count of detected problems. The filter
+defaults to **All suggestions**, with lightweight risk choices that preserve
+entered values and never hide issue cards. Collapsing the section also preserves
+entered values.
+Unavailable operations appear afterward in a collapsed **Unavailable for this
+font** informational section, without inputs, consent controls or Apply buttons.
+Their core blocker and recovery guidance remain visible when the section is
+expanded. Unavailable fixes linked to an error or warning stay with that issue,
+also without unusable controls. Known prerequisites, such as signature removal
+or dehinting, have a **Review prerequisite** link only when that prerequisite is
+actionable. The link never approves or applies a change. Other blockers may
+remain; unsupported structures can require source recovery or another editor.
+Availability is reevaluated after each repair, so an operation can move into the
+actionable section. Core guards remain enforced; authorizing a fix does not
+override unavailable operations.
+Technical check details sit below
+the current font's issues and suggestions. The always-visible **Checks** row
+contains **Structure**, **Compatibility**, and **Publishing** checkboxes alongside
+**Check current font**. Structure is required; Publishing includes Compatibility,
+and clearing Compatibility clears Publishing. These map to existing core
+profiles rather than inventing unsupported check combinations. Explanations
+and the description of which font bytes were checked are collapsed under
+**About these checks**. Changing checks reruns inspection
+and cancels pending operations, unlike the presentation-only suggestion filter.
+Technical details use two-column inspection, coverage, and check tables, with
+monospace identifiers such as `binary.advanced.BASE` and separate status/reason
+text. **Download original** is below the original inspection content.
+
 In v2.10.3, Diagnose and Export use the same core profiles and explicit publishing
 expectations. Decisions and consent start empty. Planning, inspection,
 application and preflight use workers; navigation, profile/target changes and
-Cancel invalidate pending work. Reports distinguish all four preflight stages.
+**Cancel pending work** invalidate pending work. Reports distinguish all four preflight stages.
 Download saves exact verified bytes; audit JSON includes the reviewed plan.
 
 The generated [repair contracts](./check-inventory.md#registered-repair-contracts) document
 every shipped action's scope, input decisions, consequences, guards and regression
 evidence. The Demo displays those same descriptors, including affected tables and
-versioned policy provenance. The review identifies target format, selected face,
-profile/version and source fingerprint before any candidate is applied.
+versioned policy provenance. Saved reviews identify target format, selected face,
+profile/version and source fingerprint for the exact applied operation.
 
 ### Review evidence and exact downloads
 
@@ -395,17 +493,17 @@ Font bytes are not embedded in report JSON.
 
 Repair downloads use `.ttf`/`.otf` and `.ttc`/`.otc` according to actual outline
 signatures, or `.woff`/`.woff2` for wrappers. Export filenames remain editable
-host-level choices, not a core naming policy. Original downloads are always
-explicitly **unverified**. A core-verified candidate that fails the browser preview
-can still be downloaded for investigation; the status and audit disclose the
-preview failure and **Commit candidate** stays disabled.
+host-level choices, not a core naming policy. **Download original** saves the
+unchanged input, not a verified repair. A core-verified result that fails the browser
+check can still be downloaded for investigation; its inline status and audit
+disclose the failure and the working copy is not changed.
 
-Collection candidate previews use a separately preflighted selected-face
-extraction, explicitly labeled as such. Committing retains the complete repaired
+Collection browser checks use a separately preflighted selected-face
+extraction, identified in the audit. Applying retains the complete repaired
 collection while updating the selected editable face and shared source snapshots.
 Separate unreconciled face edits block original-collection repair. Undo is bounded
 to the recent pre-commit project; a collection transaction invalidates older undo
-steps on its other faces. Original downloads remain explicitly unverified.
+steps on its other faces. Downloading the original does not certify or repair it.
 
 Revert restores the selected original project, not all edited family members.
 When the other faces are still original, it also restores their shared source
@@ -413,7 +511,8 @@ references, making original-collection repair available again. Independent edits
 on another face survive revert; they continue to block whole-collection repair
 until reconciled. Undo is one step, not an unlimited editing history.
 Keyboard navigation stays inside Export while it is open; Escape restores its
-opener, and commit/undo/revert focus the refreshed Diagnose heading.
+opener. Applying a fix focuses its retained card; undo/revert focus the Current
+font tab.
 
 ### Failure, partial results and recovery
 
